@@ -121,22 +121,7 @@ const formConfigs = {
         { name: 'tempered', label: 'Закаленное', type: 'checkbox' },
         { name: 'shape', label: 'Прямоугольная форма', type: 'checkbox' },
         { name: 'print', label: 'Печать', type: 'checkbox' },
-      ],
-      materialFields: {
-        form: [{
-          name: 'material',
-          label: 'Материал',
-          type: 'select',
-          options: []
-        },
-        {
-          name: 'thickness',
-          label: 'Толщина, мм',
-          type: 'select',
-          options: []
-        }],
-        count: 3
-      }
+      ]
     },
     ceraglassForm: {
       commonFields: [
@@ -159,6 +144,35 @@ const formConfigs = {
           rules: [{ required: true, message: 'Fill this field' }]
         },
       ]
+    },
+    typeMap: { //['Зеркало', 'Стекло', 'Стеновая панель', 'Кухонный фартук']
+      'Зеркало': ['Mirox Bronze', 'Mirox Grey', 'Mirox', 'Morena'],
+      'Стекло': ['Arctic Blue', 'Matelux Bronze', 'Matelux Crystalvision', 'Matelux Grey', 'Matelux', 'Зеркальное Stopsol Bronze', 'Зеркальное Stopsol Grey', 'Зеркальное Stopsol', 'M1', 'Осветленное Crystalvision', 'Осветленное OptiWhite', 'Тонированное Bronze', 'Тонированное Grey', 'Узорчатое Moru'], 
+      'Стеновая панель': ['Arctic Blue', 'Matelux Bronze', 'Matelux Crystalvision', 'Matelux Grey', 'Matelux', 'Зеркальное Stopsol Bronze', 'Зеркальное Stopsol Grey', 'Зеркальное Stopsol', 'M1', 'Осветленное Crystalvision', 'Осветленное OptiWhite', 'Тонированное Bronze', 'Тонированное Grey', 'Узорчатое Moru'],
+      'Кухонный фартук': ['Arctic Blue', 'Matelux Bronze', 'Matelux Crystalvision', 'Matelux Grey', 'Matelux', 'Зеркальное Stopsol Bronze',  'Зеркальное Stopsol Grey', 'Зеркальное Stopsol', 'M1', 'Осветленное Crystalvision', 'Осветленное OptiWhite', 'Тонированное Bronze', 'Тонированное Grey', 'Узорчатое Moru']
+    },
+    thicknessMap: {
+      'Arctic Blue': [4, 6],                      //Стекло
+      'Matelux Bronze': [8],
+      'Matelux Crystalvision': [8, 4],
+      'Matelux Grey': [8],
+      'Matelux': [4, 6, 8, 10],
+      'Зеркальное Stopsol Bronze': [4, 6, 8, 10],
+      'Зеркальное Stopsol Grey': [4, 6, 8, 10],
+      'Зеркальное Stopsol': [4, 5, 6, 8, 10],
+      'M1': [2, 3, 4, 5, 6, 8, 10, 12],
+      'Осветленное Crystalvision': [4, 6, 8, 10],
+      'Осветленное OptiWhite': [4, 5, 6, 8, 10, 12],
+      'Тонированное Bronze': [4, 5, 6, 8, 10],
+      'Тонированное Grey': [4, 5, 6, 8, 10],
+      'Узорчатое Moru': [4, 8],                   //Стекло
+
+      'Mirox Bronze': [4],                        //Зеркало
+      'Mirox Grey': [4],
+      'Mirox': [4, 5, 6],
+      'Morena': [4],                              //Зеркало
+
+      
     }
   };
   export default formConfigs

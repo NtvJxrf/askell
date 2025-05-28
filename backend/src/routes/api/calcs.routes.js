@@ -12,11 +12,5 @@ router
 router
     .route('/getHistory')
     .get(CalcsController.getHistory)
-router
-    .route('/deleteHistory')
-    .delete(CalcsController.deleteHistory)
-router
-    .route('/updateHistory')
-    .put(CalcsController.updateHistory)
     
 export default router

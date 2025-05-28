@@ -2,9 +2,7 @@ import TokenService from '../services/token.service.js';
 import ApiError from '../utils/apiError.js';
 import logger from '../utils/logger.js'
 import ipRangeCheck from 'ip-range-check'
-export const trustedIps = [ '195.34.21.0/24', '185.73.192.0/22', '91.223.93.0/24', //ozon
-
-                            '23.105.238.220',                                      //sklad
+export const trustedIps = [ '23.105.238.220', //sklad
 ]
 const authMiddleware = async (req, res, next) => {
     if (ipRangeCheck(req.ip, trustedIps)) {

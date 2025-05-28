@@ -11,7 +11,6 @@ import triplexForm from './triplexForm.jsx'
 const DynamicForm = React.memo(({type}) => {
     const [messageApi, contextHolder] = message.useMessage();
     const [form] = Form.useForm();
-
     const dispatch = useDispatch();
     const formData = store.getState().forms[type]
     console.log(formData)
@@ -39,6 +38,11 @@ const DynamicForm = React.memo(({type}) => {
         triplexForm,
     }
     const FormComponent = formsMap[type];
+
+    useEffect( ()=> {
+        form.resetFields()
+        form.setFieldsValue(formData)
+    }, [formData])
     return (
         <>
             {contextHolder}
@@ -50,7 +54,6 @@ const DynamicForm = React.memo(({type}) => {
                 size="small"
                 onFinish={onFinish}
                 onValuesChange={handleValuesChange}
-                initialValues={formData}
                 style={{ margin: '0 auto', marginTop: 30 }}
             >
                 {FormComponent ? <FormComponent form={form} /> : <div>Форма не найдена</div>}

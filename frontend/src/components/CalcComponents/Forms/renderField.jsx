@@ -30,7 +30,6 @@ const renderField = (field) => {
     case 'divider': 
         return(
             <Divider>{field.label}</Divider>
-
         )
     default:
         return null;

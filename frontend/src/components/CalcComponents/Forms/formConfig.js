@@ -92,7 +92,7 @@ const formConfigs = {
           rules: [{ required: true, message: 'Fill this field' }]
         },
         { name: 'length', type: 'input', label: 'Длина, мм', rules: [{ required: true, message: 'Fill this field' }] },
-        { name: 'width', type: 'input', label: 'Ширина, мм', rules: [{ required: true, message: 'Fill this field' }] },
+        { name: 'width', type: 'input', label: 'Высота, мм', rules: [{ required: true, message: 'Fill this field' }] },
         {
           name: 'processing',
           label: 'Обработка',
@@ -104,23 +104,69 @@ const formConfigs = {
         { name: 'zenk', type: 'input', label: 'Зенкование, шт', rules: [{ required: true, message: 'Fill this field' }] },
         { name: 'cutsv1', type: 'input', label: 'Вырезы 1 кат. шт', rules: [{ required: true, message: 'Fill this field' }] },
         { name: 'cutsv2', type: 'input', label: 'Вырезы 2 кат. шт', rules: [{ required: true, message: 'Fill this field' }] },
-        {
-          name: 'color',
-          label: 'Окрашивание с обратной стороны',
-          type: 'select',
-          options: ['Нет', 'Красный', 'Черный', 'Розовый'],
-          rules: [{ required: true, message: 'Fill this field' }]
-        },
-        {
-          name: 'tape',
-          label: 'Пленка',
-          type: 'select',
-          options: ['Декор', 'Смарт'],
-          rules: [{ required: true, message: 'Fill this field' }]
-        },
         { name: 'tempered', label: 'Закаленное', type: 'checkbox' },
         { name: 'shape', label: 'Прямоугольная форма', type: 'checkbox' },
         { name: 'print', label: 'Печать', type: 'checkbox' },
+      ],
+      materialFields: [
+        {label: 'Материал 1', type: 'divider'},
+        {
+          name: 'material1',
+          label: 'Материал',
+          type: 'select',
+          options: [],
+          rules: [{ required: true, message: 'Fill this field' }]
+        },
+        {
+          name: 'thickness1',
+          label: 'Толщина, мм',
+          type: 'select',
+          options: [],
+          rules: [{ required: true, message: 'Fill this field' }]
+        },
+        {label: 'Пленка 1', type: 'divider'},
+        {
+          name: 'tape1',
+          label: 'Пленка',
+          type: 'select',
+          options: [],
+          rules: [{ required: true, message: 'Fill this field' }]
+        },
+        {label: 'Материал 2', type: 'divider'},
+        {
+          name: 'material2',
+          label: 'Материал',
+          type: 'select',
+          options: [],
+          rules: [{ required: true, message: 'Fill this field' }]
+        },
+        {
+          name: 'thickness2',
+          label: 'Толщина, мм',
+          type: 'select',
+          options: [],
+          rules: [{ required: true, message: 'Fill this field' }]
+        },
+        {label: 'Пленка 2', type: 'divider'},
+        {
+          name: 'tape2',
+          label: 'Пленка',
+          type: 'select',
+          options: []
+        },
+        {label: 'Материал 3', type: 'divider'},
+        {
+          name: 'material3',
+          label: 'Материал',
+          type: 'select',
+          options: [],
+        },
+        {
+          name: 'thickness3',
+          label: 'Толщина, мм',
+          type: 'select',
+          options: [],
+        },
       ]
     },
     ceraglassForm: {
@@ -149,7 +195,10 @@ const formConfigs = {
       'Зеркало': ['Mirox Bronze', 'Mirox Grey', 'Mirox', 'Morena'],
       'Стекло': ['Arctic Blue', 'Matelux Bronze', 'Matelux Crystalvision', 'Matelux Grey', 'Matelux', 'Зеркальное Stopsol Bronze', 'Зеркальное Stopsol Grey', 'Зеркальное Stopsol', 'M1', 'Осветленное Crystalvision', 'Осветленное OptiWhite', 'Тонированное Bronze', 'Тонированное Grey', 'Узорчатое Moru'], 
       'Стеновая панель': ['Arctic Blue', 'Matelux Bronze', 'Matelux Crystalvision', 'Matelux Grey', 'Matelux', 'Зеркальное Stopsol Bronze', 'Зеркальное Stopsol Grey', 'Зеркальное Stopsol', 'M1', 'Осветленное Crystalvision', 'Осветленное OptiWhite', 'Тонированное Bronze', 'Тонированное Grey', 'Узорчатое Moru'],
-      'Кухонный фартук': ['Arctic Blue', 'Matelux Bronze', 'Matelux Crystalvision', 'Matelux Grey', 'Matelux', 'Зеркальное Stopsol Bronze',  'Зеркальное Stopsol Grey', 'Зеркальное Stopsol', 'M1', 'Осветленное Crystalvision', 'Осветленное OptiWhite', 'Тонированное Bronze', 'Тонированное Grey', 'Узорчатое Moru']
+      'Кухонный фартук': ['Arctic Blue', 'Matelux Bronze', 'Matelux Crystalvision', 'Matelux Grey', 'Matelux', 'Зеркальное Stopsol Bronze',  'Зеркальное Stopsol Grey', 'Зеркальное Stopsol', 'M1', 'Осветленное Crystalvision', 'Осветленное OptiWhite', 'Тонированное Bronze', 'Тонированное Grey', 'Узорчатое Moru'],
+      'Триплекс': ['Arctic Blue', 'Matelux Bronze', 'Matelux Crystalvision', 'Matelux Grey', 'Matelux', 'Зеркальное Stopsol Bronze',  'Зеркальное Stopsol Grey', 'Зеркальное Stopsol', 'M1', 'Осветленное Crystalvision', 'Осветленное OptiWhite', 'Тонированное Bronze', 'Тонированное Grey', 'Узорчатое Moru'],
+      'Триплекс декор': ['Arctic Blue', 'Matelux Bronze', 'Matelux Crystalvision', 'Matelux Grey', 'Matelux', 'Зеркальное Stopsol Bronze',  'Зеркальное Stopsol Grey', 'Зеркальное Stopsol', 'M1', 'Осветленное Crystalvision', 'Осветленное OptiWhite', 'Тонированное Bronze', 'Тонированное Grey', 'Узорчатое Moru'],
+      'Цветное зеркало': ['Arctic Blue', 'Matelux Bronze', 'Matelux Crystalvision', 'Matelux Grey', 'Matelux', 'Зеркальное Stopsol Bronze',  'Зеркальное Stopsol Grey', 'Зеркальное Stopsol', 'M1', 'Осветленное Crystalvision', 'Осветленное OptiWhite', 'Тонированное Bronze', 'Тонированное Grey', 'Узорчатое Moru'],
     },
     thicknessMap: {
       'Arctic Blue': [4, 6],                      //Стекло
@@ -173,6 +222,11 @@ const formConfigs = {
       'Morena': [4],                              //Зеркало
 
       
+    },
+    tapeMap: {
+      'Триплекс': ['плёнка ORACAL 641-OOM 1.26x50ru', 'Пленка Boneva FORCE 0.76', 'Пленка EVA Прозрачная 0,76мм', 'Пленка EVA Прозрачная 0,38мм', 'Пленка EVA №25 Хамелеон Гладкий 1.4', 'Смарт-пленка белая (для Триплекса)', 'Пленка EVA Orange (Оранжевая) 0,38 мм', 'Пленка EVA №1 Black Черная', 'Пленка EvoLam 0,38мм  2,1х50 м (Blue T (синяя))', 'Пленка EVA №2 White (БЕЛАЯ)-MILK(молоко)', 'Пленка EVA Green (зелёный) 0,38мм', 'Пленка EVA Bronze (бронза) 0,38мм', 'пленка EVA №6 Серая непрозрачная', 'Пленка EVA Super White (насыщенно белая) 0,38мм', 'Пленка EVA Black (чёрная) 0,38мм', 'Пленка EVA yellow (желтый) 0,38мм', 'Пленка EVA №7 Бежевая непрозрачная', 'Смарт пленка Magic Glass', 'Пленка EVA sapphire (сапфир) 0,38мм', 'Пленка EVA White (белая) 0,38мм', 'пленка EVA №3 FS (САТИН)', 'Пленка EVA Grey (серая) 0,38мм', 'Пленка EVA №24 черная прозрачная- Dark Grey (темно-серая)'],
+      'Триплекс декор': ['Смарт', 'Хамелеон'],
+      'Цветное зеркало': ['плёнка ORACAL 641-OOM 1.26x50ru', 'Пленка Boneva FORCE 0.76', 'Пленка EVA Прозрачная 0,76мм', 'Пленка EVA Прозрачная 0,38мм', 'Пленка EVA №25 Хамелеон Гладкий 1.4', 'Смарт-пленка белая (для Триплекса)', 'Пленка EVA Orange (Оранжевая) 0,38 мм', 'Пленка EVA №1 Black Черная', 'Пленка EvoLam 0,38мм  2,1х50 м (Blue T (синяя))', 'Пленка EVA №2 White (БЕЛАЯ)-MILK(молоко)', 'Пленка EVA Green (зелёный) 0,38мм', 'Пленка EVA Bronze (бронза) 0,38мм', 'пленка EVA №6 Серая непрозрачная', 'Пленка EVA Super White (насыщенно белая) 0,38мм', 'Пленка EVA Black (чёрная) 0,38мм', 'Пленка EVA yellow (желтый) 0,38мм', 'Пленка EVA №7 Бежевая непрозрачная', 'Смарт пленка Magic Glass', 'Пленка EVA sapphire (сапфир) 0,38мм', 'Пленка EVA White (белая) 0,38мм', 'пленка EVA №3 FS (САТИН)', 'Пленка EVA Grey (серая) 0,38мм', 'Пленка EVA №24 черная прозрачная- Dark Grey (темно-серая)'],
     }
   };
   export default formConfigs

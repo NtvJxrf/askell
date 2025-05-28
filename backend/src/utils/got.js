@@ -10,10 +10,10 @@ const gotClient = got.extend({
     throwHttpErrors: false,
 });
 let moyskladRequestCount = 0;
-const MOYSKLAD_LIMIT = 45;
+const MOYSKLAD_LIMIT = 40;
 
 
-class Client {
+export default class Client {
     static async request(url, type, args, service) {
         const response = await gotClient[type](url, args);
         if (response.statusCode >= 200 && response.statusCode < 300) {
@@ -24,7 +24,6 @@ class Client {
     }
 
     static async sklad(url, type = 'get', data) {
-        console.log(process.env.SkladAuthToken)
         const args = {
             headers: {
                 Authorization: `Bearer ${process.env.SkladAuthToken}`,
@@ -41,5 +40,3 @@ class Client {
         return this.request(url, type, args, 'MoySklad');
     }
 }
-
-export default Client;

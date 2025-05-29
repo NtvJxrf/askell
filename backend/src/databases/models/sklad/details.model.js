@@ -18,7 +18,11 @@ const Details = sequelize.define('Details', {
     initialData: {
         type: DataTypes.JSONB,
         allowNull: false,
-    }
+    },
+    result: {
+        type: DataTypes.JSONB,
+        allowNull: false,
+    },
 },{
     tableName: 'details',
     paranoid: true,

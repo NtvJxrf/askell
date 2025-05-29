@@ -38,7 +38,7 @@ const Row = props => {
         ...props.style,
         transform: CSS.Translate.toString(transform),
         transition,
-        ...(isDragging ? { position: 'relative', zIndex: 9999 } : {}),
+        ...(isDragging ? { position: 'relative', zIndex: 1000 } : {}),
     };
 
     const contextValue = useMemo(() => ({ setActivatorNodeRef, listeners }), [setActivatorNodeRef, listeners]);
@@ -148,7 +148,7 @@ const Positions = () => {
             }
         },
         { title: 'Название', dataIndex: 'name' },
-        { title: 'Цена', dataIndex: 'price', render: (value ) => (value / 100).toFixed(2) },
+        { title: 'Цена', dataIndex: 'price', render: (value ) => value.toFixed(2) },
         { title: 'Создано', dataIndex: 'added', render: (value) => (
             <div style={{ 
                 backgroundColor: value ? 'lightgreen' : 'lightcoral', 
@@ -170,13 +170,18 @@ const Positions = () => {
                     min={0}
                     value={value}
                     onChange={(val) => handleQuantityChange(record.key, val)}
-                    style={{ width: 80 }}
+                    style={{ maxWidth: 80 }}
                 />
             ),
         },
     ];
     const detailsColumns = [
         { title: 'Название', dataIndex: 'name' },
+        { title: 'Себестоимость', dataIndex: 'cost', render: (value) => value.toFixed(2)},
+        { title: 'Количество', dataIndex: 'count', render: (value) => value.toFixed(2) },
+        { title: 'Сумма', dataIndex: 'price', render: (_, record) => {
+            return (record.cost * record.count).toFixed(2)
+        }},
 
     ]
     console.log('render positions')
@@ -214,7 +219,7 @@ const Positions = () => {
                         summary={pageData => {
                             let totalAmount = 0;
                             pageData.forEach(({ price, quantity }) => {
-                            totalAmount += (price / 100) * quantity;
+                            totalAmount += price  * quantity;
                             });
 
                             return (
@@ -234,9 +239,13 @@ const Positions = () => {
                 open={isModalVisible}
                 onCancel={() => setIsModalVisible(false)}
                 footer={null}
+                style={{minWidth: 800}}
             >
-                {selectedRecord && (
-                    <Table dataSource={selectedRecord.details} columns={detailsColumns} pagination={false} />
+                {selectedRecord?.details && (
+                    <>
+                        <Table dataSource={selectedRecord.details.result.materials} columns={detailsColumns} pagination={false} />
+                        <Table dataSource={selectedRecord.details.result.works} columns={detailsColumns} pagination={false} />
+                    </>
                 )}
             </Modal>
         </>

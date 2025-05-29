@@ -21,17 +21,19 @@ const PositionsHeader = () => {
                 withCredentials: true,
             }).then(res => order = res.data)
             console.log(order)
-            const positions = order.order.positions.rows.map( (position) => {
+            const positions = order.positions.rows.map( (position) => {
                 return {
                     key: position.assortment.id,
                     name: position.assortment.name,
-                    price: position.price,
+                    price: position.price / 100,
                     added: true,
-                    quantity: position.quantity
+                    quantity: position.quantity,
+                    details: position.details
                 }
             })
             dispatch(addOrderPositions(positions))
         }catch(error){
+            console.error(error)
             messageApi.error('Не удалось получить заказ')
         }finally{
             setDisabled(false)

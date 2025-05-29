@@ -5,7 +5,7 @@ const renderField = (field) => {
     case 'select':
         return (
             <Form.Item key={field.name} label={field.label} name={field.name} rules={field.rules}>
-                <Select showSearch mode="combobox" options={field.options.map(option => ({ label: option, value: option }))}/>
+                <Select showSearch mode="combobox" options={field.options.map(option => ({ label: option, value: option }))} allowClear={true}/>
             </Form.Item>
         );
     case 'checkbox':

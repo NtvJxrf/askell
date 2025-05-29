@@ -9,6 +9,7 @@ import SMDForm from './SMDForm.jsx'
 import glassForm from './glassForm.jsx'
 import triplexForm from './triplexForm.jsx'
 import triplexCalc from '../calculators/triplexCalc.js'
+import { addNewPosition } from "../../../slices/positionsSlice.js";
 const DynamicForm = ({type}) => {
     const [messageApi, contextHolder] = message.useMessage();
     const [form] = Form.useForm();
@@ -17,10 +18,8 @@ const DynamicForm = ({type}) => {
     const additionalFormData = useSelector(state => state.additionalForm.additionalForm)
     const selfcost = useSelector(state => state.selfcost.selfcost)
     const onFinish = async (value) => {
-        console.log(value);
-        console.log(additionalFormData)
-
-        triplexCalc({...value, ...additionalFormData}, selfcost)
+        const position = triplexCalc({...value, ...additionalFormData}, selfcost)
+        dispatch(addNewPosition(position))
     };
 
 

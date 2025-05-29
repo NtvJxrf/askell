@@ -178,7 +178,7 @@ export default class SkladService {
             const detail = details.find( detail => detail.productId == el.assortment.id)
             detail ? el.details = detail.toJSON() : false
         })
-        return { order, details }
+        return order
     }
     static async calcSelfcost(){
         let materials = {}

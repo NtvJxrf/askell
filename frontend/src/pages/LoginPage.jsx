@@ -3,44 +3,30 @@ import React, { useEffect, useState } from 'react';
 import { LockOutlined, UserOutlined } from '@ant-design/icons';
 import { Button, Form, Input, Row, Col, message } from 'antd';
 import { useNavigate } from 'react-router-dom'
-
-const Login = ({setIsAuth}) => {
+import { setUser, setIsAuth } from '../slices/userSlice.js'
+import { useDispatch } from 'react-redux'
+const Login = () => {
     const [form] = Form.useForm();
-    const [clientReady, setClientReady] = useState(false);
-    const [submitError, setSubmitError] = useState(null);
     const [messageApi, contextHolder] = message.useMessage()
+    const [disabled, setDisabled] = useState(false)
     const navigate = useNavigate()
-    
+    const dispatch = useDispatch()
 
     const handleSubmit = async (value) => {
         try{
-            setClientReady(false)
+            setDisabled(true)
             const response = await axios.post(`${import.meta.env.VITE_API_URL}/api/login`, value, { withCredentials: true })
             if(response.status == 200){
-                localStorage.setItem('id', response.data.user.id)
-                localStorage.setItem('role', response.data.user.role)
-                setIsAuth(true)
-                return navigate('/calcs/ballons')
+                dispatch(setUser(response.data.user))
+                dispatch(setIsAuth(true))
+                return navigate('/')
             }
         }catch(error){
-            setClientReady(true)
-            setSubmitError(error.response?.data?.message || 'An error occurred');
+            messageApi.error(error.response.data.message)
+        }finally{
+            setDisabled(false)
         }
-    };
-    
-    useEffect(() => {
-        setClientReady(true);
-    }, []);
-    useEffect(() => {
-        if (submitError) {
-            messageApi.open({
-                type: 'error',
-                content: submitError,
-                duration: 5
-            });
-            setSubmitError(null);
-        }
-    }, [submitError, messageApi]);
+    }
   return (
     <>
         {contextHolder}
@@ -64,11 +50,7 @@ const Login = ({setIsAuth}) => {
                     <Button
                         type="primary"
                         htmlType="submit"
-                        disabled={
-                        !clientReady ||
-                        !form.isFieldsTouched(true) ||
-                        !!form.getFieldsError().filter(({ errors }) => errors.length).length
-                        }
+                        disabled={disabled}
                     >
                         Log in
                     </Button>

@@ -3,18 +3,24 @@ import { createSlice } from '@reduxjs/toolkit';
 const positionsSlice = createSlice({
   name: 'positions',
   initialState: {
-    positions: [
-  { key: '1', name: 'Очень большое и красиво стекло из М1', price: 12345, added: false },
-  { key: '2', name: 'Самый прочный триплекс', price: 54321, added: false },
-  { key: '3', name: 'Классный стол из керагласа', price: 98765, added: false },
-]
+    positions: [],
   },
+  //                {
+  //                   name: position.assortment.name,
+  //                   price: position.price,
+  //                   added: true,
+  //                   quantity: position.quantity,
+  //                    details: object
+  //               }
   reducers: {
-    addPosition: (state, action) => { state.positions.push(action.payload) },
-    setPositions: (state, action) => { state.positions = action.payload }
-  },
-  
-});
+    addOrderPositions: (state, action) => {
+      const nonAddedPositions = state.positions.filter( el => !el.added)
+      state.positions = action.payload.concat(nonAddedPositions)
+    },
+    addNewPosition: (state, action) => { state.positions.push(action.payload)},
+    setPositions: (state, action) => { state.positions = action.payload}
+  }
+})
 
-export const { addPosition, setPositions } = positionsSlice.actions;
+export const { addNewPosition, addOrderPositions, setPositions } = positionsSlice.actions;
 export default positionsSlice.reducer;

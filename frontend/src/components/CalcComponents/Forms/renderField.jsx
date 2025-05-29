@@ -23,13 +23,13 @@ const renderField = (field) => {
         );
     case 'input':
         return (
-        <Form.Item key={field.name} label={field.label} name={field.name} rules={field.rules}>
-            <InputNumber style={{ width: '100%' }} {...field.props} />
-        </Form.Item>
+            <Form.Item key={field.name} label={field.label} name={field.name} rules={field.rules}>
+                <InputNumber style={{ width: '100%' }}/>
+            </Form.Item>
         );
     case 'divider': 
         return(
-            <Divider>{field.label}</Divider>
+            <Divider key={field.label}>{field.label}</Divider>
         )
     default:
         return null;

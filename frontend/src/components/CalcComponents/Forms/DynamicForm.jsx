@@ -1,24 +1,26 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { Form, InputNumber, Select, Checkbox, Space, message, Divider, Row, Col } from "antd";
-import { useDispatch } from "react-redux";
-import SubmitButton from "./SubmitButton";
-import ResetButton from "./ResetButton";
+import { useDispatch, useSelector } from "react-redux";
+import SubmitButton from "../buttons/SubmitButton.jsx";
+import ResetButton from "../buttons/ResetButton.jsx";
 import { setForm, clearForm } from '../../../slices/formSlice.js'
 import store from '../../../store.js'
 import SMDForm from './SMDForm.jsx'
 import glassForm from './glassForm.jsx'
 import triplexForm from './triplexForm.jsx'
-const DynamicForm = React.memo(({type}) => {
+import triplexCalc from '../calculators/triplexCalc.js'
+const DynamicForm = ({type}) => {
     const [messageApi, contextHolder] = message.useMessage();
     const [form] = Form.useForm();
     const dispatch = useDispatch();
     const formData = store.getState().forms[type]
-    console.log(formData)
+    const additionalFormData = useSelector(state => state.additionalForm.additionalForm)
+    const selfcost = useSelector(state => state.selfcost.selfcost)
     const onFinish = async (value) => {
         console.log(value);
-        const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
-        await delay(1000)
-        messageApi.success('123');
+        console.log(additionalFormData)
+
+        triplexCalc({...value, ...additionalFormData}, selfcost)
     };
 
 
@@ -66,6 +68,6 @@ const DynamicForm = React.memo(({type}) => {
             </Form>
         </>
     );
-});
+}
 
-export default DynamicForm
+export default React.memo(DynamicForm)

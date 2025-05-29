@@ -10,4 +10,12 @@ export default class MoySkladController{
         const result = await SkladService.updateHook(id)
         res.sendStatus(200)
     }
+    static async getOrder(req, res){
+        const name = req.query.orderName
+        const result = await SkladService.getOrder(name)
+        res.send(result)
+    }
+    static async getSelfcost(req, res){
+        res.send(SkladService.selfcost)
+    }
 }

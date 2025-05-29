@@ -17,7 +17,7 @@ const SubmitButton = ({ form, onFinish }) => {
     };
 
     return (
-        <Button type="primary" size="medium" loading={isLoading} onClick={handleClick}>
+        <Button type="primary" size="medium" loading={isLoading} onClick={handleClick} shape="round">
             Рассчитать
         </Button>
     );

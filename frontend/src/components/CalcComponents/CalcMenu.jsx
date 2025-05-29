@@ -11,10 +11,11 @@ const CalcMenu = ({ onChange, selectedKey }) => {
   ];
 
   return (
-    <Header style={{ display: 'flex', borderRadius: '0 0 10px 0' }}>
+    <Header style={{ display: 'flex'}}>
       <Menu
         mode="horizontal"
         selectedKeys={[selectedKey]}
+        defaultSelectedKeys={['SMDForm']}
         onClick={(e) => onChange(e.key)}
         items={items}
         theme="dark"

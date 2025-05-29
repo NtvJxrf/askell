@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import MainLayout from '../layouts/MainLayout.jsx';
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
-// import axios from 'axios'
+import axios from 'axios'
 import { useSelector, useDispatch } from 'react-redux';
 import { setIsAuth } from "../slices/userSlice.js";
 import LoginPage from '../pages/LoginPage.jsx'
@@ -10,15 +10,18 @@ function App() {
     const isAuth = useSelector((state) => state.user.isAuth)
     const dispatch = useDispatch();
     useEffect(() => {
-        const checkAuth = () => {
-        try {
-            const response = { data: { isAuth: true } }
-            dispatch(setIsAuth(response.data.isAuth === true))
-        }catch{
-            dispatch(setIsAuth(false))
-        }finally{
-            setLoading(false);
-        }
+        const checkAuth = async () => {
+            try {
+                const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/isAuthenticated`, {
+                    withCredentials: true,
+                })
+                console.log(response.data)
+                dispatch(setIsAuth(response.data.auth === true))
+            }catch{
+                dispatch(setIsAuth(false))
+            }finally{
+                setLoading(false);
+            }
         };
         checkAuth();
     }, [dispatch]);

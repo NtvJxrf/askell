@@ -18,4 +18,8 @@ export default class MoySkladController{
     static async getSelfcost(req, res){
         res.send(SkladService.selfcost)
     }
+    static async addPositionsToOrder(req, res){
+        const result = await SkladService.addPositionsToOrder(req.body)
+        res.sendStatus(200)
+    }
 }

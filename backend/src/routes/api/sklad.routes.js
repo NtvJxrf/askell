@@ -8,5 +8,8 @@ router
 router
     .route('/getSelfcost')
     .get(MoySkladController.getSelfcost)
+router
+    .route('/addPositionsToOrder')
+    .post(MoySkladController.addPositionsToOrder)
     
 export default router

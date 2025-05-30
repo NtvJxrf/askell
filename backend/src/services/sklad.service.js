@@ -19,7 +19,36 @@ const dictionary = {
                 "href" : "https://api.moysklad.ru/api/remap/1.2/entity/product/metadata/attributes/1cefb31a-65fb-11ef-0a80-0c0e00155150",
                 "type" : "attributemetadata",
                 "mediaType" : "application/json"
-            },
+            },'Длина в мм': {
+                    "href" : "https://api.moysklad.ru/api/remap/1.2/entity/product/metadata/attributes/af7e2ea6-0ff5-11ee-0a80-04e600042beb",
+                    "type" : "attributemetadata",
+                    "mediaType" : "application/json"
+            },'Ширина в мм': {
+                "href" : "https://api.moysklad.ru/api/remap/1.2/entity/product/metadata/attributes/af7e3204-0ff5-11ee-0a80-04e600042bec",
+                "type" : "attributemetadata",
+                "mediaType" : "application/json"
+            },'Кол во вырезов 1 категорий/ шт': {
+                "href" : "https://api.moysklad.ru/api/remap/1.2/entity/product/metadata/attributes/a73e8f44-102d-11ee-0a80-06060010f7cc",
+                "type" : "attributemetadata",
+                "mediaType" : "application/json"
+            },'Кол во вырезов 2 категорий/ шт': {
+                "href" : "https://api.moysklad.ru/api/remap/1.2/entity/product/metadata/attributes/a73e9004-102d-11ee-0a80-06060010f7cd",
+                "type" : "attributemetadata",
+                "mediaType" : "application/json"
+            },'Кол во сверлении/шт': {
+                "href" : "https://api.moysklad.ru/api/remap/1.2/entity/product/metadata/attributes/a73e913f-102d-11ee-0a80-06060010f7cf",
+                "type" : "attributemetadata",
+                "mediaType" : "application/json"
+            },'Кол во зенковании/ шт': {
+                "href" : "https://api.moysklad.ru/api/remap/1.2/entity/product/metadata/attributes/a73e91db-102d-11ee-0a80-06060010f7d0",
+                "type" : "attributemetadata",
+                "mediaType" : "application/json"
+            },'тип станка обрабатывающий': {
+                "href" : "https://api.moysklad.ru/api/remap/1.2/entity/product/metadata/attributes/a73e8b90-102d-11ee-0a80-06060010f7ca",
+                "type" : "attributemetadata",
+                "mediaType" : "application/json"
+            }
+
         },
         attributesValue: {
             'Готовая продукция': {
@@ -33,7 +62,7 @@ const dictionary = {
                 'name': 'Готовая продукция'
             }
         }
-    }
+}
 
 export default class SkladService {
     static selfcost = {
@@ -108,64 +137,124 @@ export default class SkladService {
         console.log(result)
     }
 
-    static async addPositionsToOrder(data){
-        console.time('addPos')
-        let order = null
-        await Client.sklad(`https://api.moysklad.ru/api/remap/1.2/entity/customerorder?filter=name=${data.orderName}&expand=positions&limit=100`).then(response => order = response.rows[0]).catch(() => { throw new ApiError(`Не найден заказ покупателя с номером ${data.orderName}`); });
-        const createdProducts = {}
-        const products = data.positions.map(product => {
-            createdProducts[product.name] = {
-                initialData: product.initialData,
-                selfcost: product.selfcost,
-                quantity: product.quantity
-            }
-            return {
-                name: product.name,
-                productFolder: dictionary.productFolders.glassGuard,
-                attributes: [
-                    {   
-                        meta: dictionary.attributes['Вид номенклатуры'],
-                        name: 'Вид номенклатуры',
-                        value: dictionary.attributesValue['Готовая продукция']
-                    }
-                ]
-
+    static async addPositionsToOrder(data) {
+        console.time('addPos');
+        const indexes = []
+        const positionsToCreate = data.positions.filter((el, index) => {
+            if(!el.added){
+                indexes.push(index)
+                return true
             }
         })
-        const createProductsRequest = await Client.sklad('https://api.moysklad.ru/api/remap/1.2/entity/product', 'post', products)
-        for(const product of createProductsRequest){
-            await Details.create({
-                productId: product.id,
-                selfcost: createdProducts[product.name].selfcost,
-                initialData: createdProducts[product.name].initialData
+        const productsToCreate = positionsToCreate.map(product => {
+            return {
+                name: product.name,
+                salePrices: [
+                {
+                    value: Number(product.price * 100),
+                    priceType: {
+                    meta: {
+                        href: "https://api.moysklad.ru/api/remap/1.2/context/companysettings/pricetype/61e764a9-2ad0-11ee-0a80-0476000bb1a7",
+                        type: "pricetype",
+                        mediaType: "application/json",
+                    },
+                    },
+                    currency: {
+                    meta: {
+                        href: "https://api.moysklad.ru/api/remap/1.2/entity/currency/0664a90c-6e69-11e4-90a2-8ecb0012e9ec",
+                        metadataHref: "https://api.moysklad.ru/api/remap/1.2/entity/currency/metadata",
+                        type: "currency",
+                        mediaType: "application/json",
+                        uuidHref:
+                        "https://online.moysklad.ru/app/#currency/edit?id=0664a90c-6e69-11e4-90a2-8ecb0012e9ec",
+                    },
+                    },
+                },
+                ],
+                productFolder: dictionary.productFolders.glassGuard,
+                attributes: [
+                {
+                    meta: dictionary.attributes["Вид номенклатуры"],
+                    name: "Вид номенклатуры",
+                    value: dictionary.attributesValue["Готовая продукция"],
+                },
+                {
+                    meta: dictionary.attributes["Длина в мм"],
+                    name: "Длина в мм",
+                    value: String(product.details.initialData.length),
+                },
+                {
+                    meta: dictionary.attributes["Ширина в мм"],
+                    name: "Ширина в мм",
+                    value: String(product.details.initialData.width),
+                },
+                {
+                    meta: dictionary.attributes["Кол во вырезов 1 категорий/ шт"],
+                    name: "Кол во вырезов 1 категорий/ шт",
+                    value: String(product.details.initialData.cutsv1),
+                },
+                {
+                    meta: dictionary.attributes["Кол во вырезов 2 категорий/ шт"],
+                    name: "Кол во вырезов 2 категорий/ шт",
+                    value: String(product.details.initialData.cutsv2),
+                },
+                {
+                    meta: dictionary.attributes["Кол во сверлении/шт"],
+                    name: "Кол во сверлении/шт",
+                    value: String(product.details.initialData.drills),
+                },
+                {
+                    meta: dictionary.attributes["Кол во зенковании/ шт"],
+                    name: "Кол во зенковании/ шт",
+                    value: String(product.details.initialData.zenk),
+                },
+                ],
+            }});
+
+        let createdProducts = [];
+        if (productsToCreate.length > 0) {
+            console.time('create')
+            createdProducts = await Client.sklad(
+            "https://api.moysklad.ru/api/remap/1.2/entity/product",
+            "post",
+            productsToCreate
+            );
+            console.timeEnd('create')
+            createdProducts.forEach((el, index) => {
+                data.positions[indexes[index]] = {...data.positions[indexes[index]], position: { assortment: el}}
+                const pos = data.positions[indexes[index]]
+                Details.create({
+                    productId: pos.position.assortment.id,
+                    initialData: pos.details.initialData,
+                    selfcost: pos.details.selfcost
+                })
             })
         }
         const params = {
-            positions: createProductsRequest.map(product => {
-                return {
-                    quantity: createdProducts[product.name].quantity,
-                    //price: createdProducts[product.name].price,
+            positions: data.positions.map((pos) => {
+                return{
                     assortment: {
-                        meta: product.meta
-                    }
+                        meta: pos.position.assortment.meta
+                    },
+                    price: (pos.price || 0) * 100,
+                    quantity: pos.quantity || 1,
                 }
-            }).concat(order.positions.rows.map(product => {
-                return {
-                    quantity: product.quantity,
-                    assortment: product.assortment,
-                    price: product.price,
-                    reserve: product.reserve,
-                }
-            }))
-        }
-        const updateCustomerorderRequest = await Client.sklad(`https://api.moysklad.ru/api/remap/1.2/entity/customerorder/${order.id}`, 'put', params)
-        // console.log(updateCustomerorderRequest)
-        await this.getOrder(6446)
-        console.timeEnd('addPos')
+            }),
+        };
+        console.time('update order')
+        const updateCustomerorderRequest = await Client.sklad(
+          `https://api.moysklad.ru/api/remap/1.2/entity/customerorder/${data.order.id}`,
+          "put",
+          params
+        );
+        console.timeEnd('update order')
+
+        console.timeEnd("addPos");
     }
+
     static async getOrder(name){
         let order = null
-        await Client.sklad(`https://api.moysklad.ru/api/remap/1.2/entity/customerorder?filter=name=${name}&expand=positions.assortment&limit=100`).then(response => order = response.rows[0]).catch(() => { throw new ApiError(`Не найден заказ покупателя с номером ${name}`); });
+        await Client.sklad(`https://api.moysklad.ru/api/remap/1.2/entity/customerorder?filter=name=${name}&expand=positions.assortment,agent&limit=100`).then(response => order = response.rows[0]).catch(() => { throw new ApiError(`Не найден заказ покупателя с номером ${name}`); });
         if(!order) throw new ApiError(`Не найден заказ покупателя с номером ${name}`)
         const details = await Details.findAll({
             where: {

@@ -4,6 +4,7 @@ const positionsSlice = createSlice({
   name: 'positions',
   initialState: {
     positions: [],
+    order: null
   },
   //                {
   //                   name: position.assortment.name,
@@ -18,9 +19,10 @@ const positionsSlice = createSlice({
       state.positions = action.payload.concat(nonAddedPositions)
     },
     addNewPosition: (state, action) => { state.positions.push(action.payload)},
-    setPositions: (state, action) => { state.positions = action.payload}
+    setPositions: (state, action) => { state.positions = action.payload},
+    setOrder: (state, action) => { state.order = action.payload}
   }
 })
 
-export const { addNewPosition, addOrderPositions, setPositions } = positionsSlice.actions;
+export const { addNewPosition, addOrderPositions, setPositions, setOrder } = positionsSlice.actions;
 export default positionsSlice.reducer;

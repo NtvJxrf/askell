@@ -20,6 +20,7 @@ const DynamicForm = ({type}) => {
     const onFinish = async (value) => {
         const position = triplexCalc({...value, ...additionalFormData}, selfcost)
         dispatch(addNewPosition(position))
+        messageApi.success('Позиция добавлена')
     };
 
 

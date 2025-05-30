@@ -1,12 +1,19 @@
-import React, { useContext, useMemo, useEffect } from 'react';
+import React, { useContext, useMemo, useState } from 'react';
 import { HolderOutlined } from '@ant-design/icons';
 import { DndContext } from '@dnd-kit/core';
 import { restrictToVerticalAxis } from '@dnd-kit/modifiers';
-import { arrayMove, SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable';
+import {
+    arrayMove,
+    SortableContext,
+    useSortable,
+    verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { Button, Table, Space, InputNumber, Modal } from 'antd';
 import { useDispatch, useSelector } from 'react-redux';
 import { setPositions } from '../../slices/positionsSlice';
+import PositionDetailsModal from './PositionDetailsModal.jsx';
+
 const RowContext = React.createContext({});
 
 const DragHandle = () => {
@@ -52,77 +59,38 @@ const Row = props => {
 
 const Positions = () => {
     const dispatch = useDispatch();
-    const initialData = useSelector(state => state.positions.positions);
-    const [dataSource, setDataSource] = React.useState(initialData);
-    const [selectedRowKeys, setSelectedRowKeys] = React.useState([]);
-    const [isModalVisible, setIsModalVisible] = React.useState(false);
-    const [selectedRecord, setSelectedRecord] = React.useState(null);
+    const positions = useSelector(state => state.positions.positions);
 
-
-    useEffect(() => {
-        setDataSource(initialData);
-    }, [initialData]);
+    const [selectedRowKeys, setSelectedRowKeys] = useState([]);
+    const [isModalVisible, setIsModalVisible] = useState(false);
+    const [selectedRecord, setSelectedRecord] = useState(null);
+    const [pagination, setPagination] = useState({ current: 1, pageSize: 10 });
 
     const onDragEnd = ({ active, over }) => {
-        if (active.id !== (over?.id)) {
-            setDataSource(prevState => {
-                const activeIndex = prevState.findIndex(record => record.key === active.id);
-                const overIndex = prevState.findIndex(record => record.key === over.id);
-                const newOrder = arrayMove(prevState, activeIndex, overIndex);
-
-                dispatch(setPositions(newOrder));
-                return newOrder;
-            });
+        if (active.id !== over?.id) {
+            const oldIndex = positions.findIndex(item => item.key === active.id);
+            const newIndex = positions.findIndex(item => item.key === over.id);
+            const newOrder = arrayMove(positions, oldIndex, newIndex);
+            dispatch(setPositions(newOrder));
         }
     };
 
     const handleQuantityChange = (key, newQuantity) => {
-        const newData = dataSource.map(item => {
-            if (item.key === key) {
-                return { ...item, quantity: newQuantity };
-            }
-            return item;
-        });
-        setDataSource(newData);
-        dispatch(setPositions(newData));
+        const updated = positions.map(item =>
+            item.key === key ? { ...item, quantity: newQuantity } : item
+        );
+        dispatch(setPositions(updated));
     };
 
-    const handleDelete = (key) => {
-        const newData = dataSource.filter(item => item.key !== key);
-        setDataSource(newData);
-        dispatch(setPositions(newData));
+    const handleDelete = record => {
+        const updated = positions.filter(item => item.key !== record.key);
+        dispatch(setPositions(updated));
     };
 
-    const handleDetails = (record) => {
+    const handleDetails = record => {
         setSelectedRecord(record);
         setIsModalVisible(true);
     };
-
-
-    const [editIndexes, setEditIndexes] = React.useState({});
-    const [pagination, setPagination] = React.useState({
-        current: 1,
-        pageSize: 10,
-    });
-
-    const saveIndexChange = (key) => {
-        const newIndex = (editIndexes[key] ?? 1) - 1;
-        const currentIndex = dataSource.findIndex(item => item.key === key);
-        
-        if (newIndex !== currentIndex && newIndex >= 0 && newIndex < dataSource.length) {
-            const newData = arrayMove(dataSource, currentIndex, newIndex);
-            setDataSource(newData);
-            dispatch(setPositions(newData));
-        }
-
-        setEditIndexes(prev => {
-            const newState = { ...prev };
-            delete newState[key];
-            return newState;
-        });
-    };
-
-
 
     const columns = [
         { key: 'sort', align: 'center', width: 80, render: () => <DragHandle /> },
@@ -130,38 +98,33 @@ const Positions = () => {
             title: '№',
             key: 'index',
             align: 'center',
-            render: (text, record, index) => {
-                const absoluteIndex = (pagination.current - 1) * pagination.pageSize + index;
-                return (
-                    <InputNumber
-                        min={1}
-                        max={dataSource.length}
-                        value={editIndexes[record.key] ?? absoluteIndex + 1}
-                        onChange={(val) => {
-                            setEditIndexes(prev => ({ ...prev, [record.key]: val }));
-                        }}
-                        onBlur={() => saveIndexChange(record.key)}
-                        onPressEnter={() => saveIndexChange(record.key)}
-                        style={{ width: 60 }}
-                    />
-                );
-            }
+            render: (text, record) => positions.findIndex(item => item.key === record.key) + 1,
         },
         { title: 'Название', dataIndex: 'name' },
-        { title: 'Цена', dataIndex: 'price', render: (value ) => value.toFixed(2) },
-        { title: 'Создано', dataIndex: 'added', render: (value) => (
-            <div style={{ 
-                backgroundColor: value ? 'lightgreen' : 'lightcoral', 
-                padding: '4px 8px', 
-                borderRadius: '4px', 
-                textAlign: 'center',
-                color: value ? 'darkgreen' : 'darkred',
-                fontWeight: 'bold',
-                userSelect: 'none'
-            }}>
-            {value ? 'Да' : 'Нет'}
-            </div>
-        )},
+        {
+            title: 'Цена',
+            dataIndex: 'price',
+            render: value => value.toFixed(2),
+        },
+        {
+            title: 'Создано',
+            dataIndex: 'added',
+            render: value => (
+                <div
+                    style={{
+                        backgroundColor: value ? 'lightgreen' : 'lightcoral',
+                        padding: '4px 8px',
+                        borderRadius: '4px',
+                        textAlign: 'center',
+                        color: value ? 'darkgreen' : 'darkred',
+                        fontWeight: 'bold',
+                        userSelect: 'none',
+                    }}
+                >
+                    {value ? 'Да' : 'Нет'}
+                </div>
+            ),
+        },
         {
             title: 'Количество',
             dataIndex: 'quantity',
@@ -169,87 +132,69 @@ const Positions = () => {
                 <InputNumber
                     min={0}
                     value={value}
-                    onChange={(val) => handleQuantityChange(record.key, val)}
+                    onChange={val => handleQuantityChange(record.key, val)}
                     style={{ maxWidth: 80 }}
                 />
             ),
         },
     ];
-    const detailsColumns = [
-        { title: 'Название', dataIndex: 'name' },
-        { title: 'Себестоимость', dataIndex: 'cost', render: (value) => value.toFixed(2)},
-        { title: 'Количество', dataIndex: 'count', render: (value) => value.toFixed(2) },
-        { title: 'Сумма', dataIndex: 'price', render: (_, record) => {
-            return (record.cost * record.count).toFixed(2)
-        }},
-
-    ]
     console.log('render positions')
     return (
         <>
             <DndContext modifiers={[restrictToVerticalAxis]} onDragEnd={onDragEnd}>
-                <SortableContext items={dataSource.map(i => i.key)} strategy={verticalListSortingStrategy}>
+                <SortableContext items={positions.map(i => i.key)} strategy={verticalListSortingStrategy}>
                     <Table
                         rowKey="key"
                         components={{ body: { row: Row } }}
                         columns={columns}
-                        dataSource={dataSource}
+                        dataSource={positions}
                         pagination={{
                             current: pagination.current,
                             pageSize: pagination.pageSize,
                             showSizeChanger: true,
                             pageSizeOptions: ['5', '10', '20', '50', '100', '200'],
                             position: ['topRight'],
-                            onChange: (page, pageSize) => {
-                                setPagination({ current: page, pageSize });
-                            },
+                            onChange: (page, pageSize) => setPagination({ current: page, pageSize }),
                         }}
                         rowSelection={{
                             selectedRowKeys,
-                            onChange: (selectedKeys) => setSelectedRowKeys(selectedKeys),
+                            onChange: setSelectedRowKeys,
                         }}
                         expandable={{
-                            expandedRowRender: (record) => (
+                            expandedRowRender: record => (
                                 <Space size="middle">
-                                    <Button danger onClick={() => handleDelete(record)}>Удалить</Button>
+                                    <Button danger onClick={() => handleDelete(record)}>
+                                        Удалить
+                                    </Button>
                                     <Button onClick={() => handleDetails(record)}>Подробнее</Button>
                                 </Space>
-                            )
+                            ),
                         }}
                         summary={pageData => {
                             let totalAmount = 0;
                             pageData.forEach(({ price, quantity }) => {
-                            totalAmount += price  * quantity;
+                                totalAmount += price * quantity;
                             });
 
                             return (
                                 <Table.Summary.Row>
                                     <Table.Summary.Cell>Итого</Table.Summary.Cell>
-                                        <Table.Summary.Cell>
-                                            <b>{totalAmount.toFixed(2)}</b>
-                                        </Table.Summary.Cell>
+                                    <Table.Summary.Cell>
+                                        <b>{totalAmount.toFixed(2)}</b>
+                                    </Table.Summary.Cell>
                                 </Table.Summary.Row>
                             );
                         }}
                     />
                 </SortableContext>
             </DndContext>
-            <Modal
-                title="Детали позиции"
+
+            <PositionDetailsModal
                 open={isModalVisible}
-                onCancel={() => setIsModalVisible(false)}
-                footer={null}
-                style={{minWidth: 800}}
-            >
-                {selectedRecord?.details && (
-                    <>
-                        <Table dataSource={selectedRecord.details.result.materials} columns={detailsColumns} pagination={false} />
-                        <Table dataSource={selectedRecord.details.result.works} columns={detailsColumns} pagination={false} />
-                    </>
-                )}
-            </Modal>
+                onClose={() => setIsModalVisible(false)}
+                record={selectedRecord}
+            />
         </>
     );
 };
-
 export default React.memo(Positions);

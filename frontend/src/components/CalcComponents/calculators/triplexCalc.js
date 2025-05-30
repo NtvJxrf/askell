@@ -4,8 +4,7 @@ const Calculate = (data, selfcost) => {
     const tapes = [tape1, tape2]
     const materials = [ {m: material1, t: thickness1}, {m: material2, t: thickness2}, {m: material3, t: thickness3} ].filter(material => material.m !== undefined);
     const works = { processing, drills, zenk, cutsv1, cutsv2 }
-    let name = `Триплекс, ${materials.map(el => el.m).join('+')}, [${materials.map(el => el.t).join('+')}], (${length}х${width}, ${processing}
-    ${tempered ? ', Закаленное' : ''}${cutsv1 ? `, Вырезы 1 кат.: ${cutsv1}` : ''}${cutsv2 ? `, Вырезы 2 кат.: ${cutsv2}` : ''}${drills ? `, Сверление: ${drills}` : ''}${zenk ? `, Зенкование: ${zenk}` : ''})`
+    let name = `Триплекс, ${materials.map(el => el.m).join('+')}, [${materials.map(el => el.t).join('+')}], (${length}х${width}, ${processing}${tempered ? ', Закаленное' : ''}${cutsv1 ? `, Вырезы 1 кат.: ${cutsv1}` : ''}${cutsv2 ? `, Вырезы 2 кат.: ${cutsv2}` : ''}${drills ? `, Сверление: ${drills}` : ''}${zenk ? `, Зенкование: ${zenk}` : ''})`
     const S = (length * width) / 1000000
     const P = 2 * (length + width)
     
@@ -22,8 +21,7 @@ const Calculate = (data, selfcost) => {
     //Если смарт, то считать выбранную + 2 шт 'Пленка EVA Прозрачная 0,76мм'
     //Если хамелеон, то считать выбранную + 2 шт 'Пленка EVA Прозрачная 0,38мм'
     //Себестоимость пленки будет S_tape * себестоимость пленок * кол-во
-    let S_tape = null    // Считаем площадь используемой пленки
-    larger <= 2100 ? S_tape = (2100 * lesser) / 1000000 : S_tape = (2100 * larger) / 1000000 //2100 это ширина рулона
+    let S_tape = larger <= 2100 ? S_tape = (2100 * lesser) / 1000000 : S_tape = (2100 * larger) / 1000000    // Считаем площадь используемой пленки | 2100 это ширина рулона
     for (const tape of tapes) {
         if(!tape) continue 
         const mats = result.materials
@@ -76,7 +74,6 @@ const Calculate = (data, selfcost) => {
     if(tempered){
         //result.works.push({name: 'Закалка', cost: selfcost.workPrices['Зенковка'], count: materials.length })
     }
-    console.log(result)
     let price = 0
     for (const item of Object.values(result.materials)) {
         price += item.cost * item.count;
@@ -84,7 +81,7 @@ const Calculate = (data, selfcost) => {
     for (const item of Object.values(result.works)) {
         price += item.cost * item.count;
     }
-
+    console.log(result)
 
     return {
             key: Date.now(),
@@ -92,7 +89,8 @@ const Calculate = (data, selfcost) => {
             price,
             added: false,
             quantity: 1,
-            details: {initialData: data, selfcost, result}
+            details: { initialData: data, selfcost },
+            result
     }
 }
 export default Calculate

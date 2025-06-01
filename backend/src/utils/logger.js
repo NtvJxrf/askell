@@ -1,25 +1,30 @@
-import winston from "winston"
+import winston from 'winston';
+import 'winston-daily-rotate-file';
 
-const { combine, timestamp, printf, colorize, align } = winston.format
+const transport = new winston.transports.DailyRotateFile({
+  filename: 'logs/app-%DATE%.log',
+  datePattern: 'YYYY-MM-DD',
+  zippedArchive: true, 
+  maxFiles: '14d',
+  level: 'info',
+  format: winston.format.json(),
+});
 
-import path from "path"
-import { fileURLToPath } from "url"
-const __dirname = path.dirname(fileURLToPath(import.meta.url))
-const logDirectory = path.join(__dirname, "..", "logs")
 const logger = winston.createLogger({
-  level: process.env.NODE_ENV === "production" ? "info" : "debug",
-  format: combine(
-    timestamp({ format: "YYYY-MM-DD HH:mm:ss" }),
-    colorize(),
-    align(),
-    printf((info) => `[${info.timestamp}] ${info.level}: ${info.message}`)
+  level: 'info',
+  format: winston.format.combine(
+    winston.format.timestamp(),
+    winston.format.json()
   ),
   transports: [
-    new winston.transports.Console(),
-    new winston.transports.File({ filename: path.join(logDirectory, "error.log"), level: "error" }),
-    new winston.transports.File({ filename: path.join(logDirectory, "combined.log") }),
+    transport,
+    new winston.transports.Console({
+      format: winston.format.combine(
+        winston.format.colorize(),
+        winston.format.simple()
+      ),
+    }),
   ],
-  exitOnError: false,
-})
+});
 
-export default logger
+export default logger;

@@ -1,4 +1,4 @@
-import formConfigs from "./formConfig";
+import formConfigs from "./formConfig.js";
 import renderField from './renderField.jsx';
 import { Form } from 'antd';
 

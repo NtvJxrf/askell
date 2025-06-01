@@ -7,18 +7,14 @@ import { errorConverter, errorHandler } from "./middlewares/error.middleware.js"
 import config from "./config/index.js"
 import logger from "./utils/logger.js"
 import cookieParser from 'cookie-parser'
-import bodyParser from "body-parser"
 import { initModels } from "./databases/db.js"
+import  loggerMiddleware  from "./middlewares/logger.middleware.js"
 await initModels()
 
 const app = express()
 
-
-app.use(
-  morgan(config.env === "development" ? "dev" : "combined", {
-    stream: { write: (message) => logger.info(message.trim()) },
-  })
-)
+app.use(loggerMiddleware)
+app.disable('etag');
 app.use(helmet())
 app.use(cookieParser())
 app.use(cors({

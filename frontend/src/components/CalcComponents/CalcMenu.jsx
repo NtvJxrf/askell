@@ -4,10 +4,10 @@ const { Header } = Layout;
 const CalcMenu = ({ onChange, selectedKey }) => {
   const items = [
     { label: 'СМД', key: 'SMDForm' },
-    { label: 'Стекло', key: 'glassForm' },
-    { label: 'Триплекс', key: 'triplexForm' },
-    { label: 'Керагласс', key: 'ceraglassForm' },
-    { label: 'Стеклопакет', key: 'glassPacket' },
+    { label: 'Стекло', key: 'GlassForm' },
+    { label: 'Триплекс', key: 'TriplexForm' },
+    { label: 'Керагласс', key: 'CeraglassForm' },
+    { label: 'Стеклопакет', key: 'GlassPacket' },
   ];
 
   return (

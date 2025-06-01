@@ -24,11 +24,15 @@ const PositionsHeader = () => {
                 withCredentials: true,
             })
             dispatch(setOrder(res.data))
+            if(!res.data.positions){
+                dispatch(addOrderPositions([]))
+                return
+            }
             const positions = res.data.positions.rows.map( (position) => {
                 return {
                     key: position.assortment.id,
                     name: position.assortment.name,
-                    price: position.price / 100,
+                    price: position.price,
                     added: true,
                     quantity: position.quantity,
                     details: position.details,
@@ -82,24 +86,14 @@ const PositionsHeader = () => {
             >
                 <Space style={{ width: '100%' }} align="center" size="middle">
                     <Text style={{color: '#fff'}}>Номер заказа: </Text>
-                    <InputNumber
-                        placeholder="Номер заказа"
-                        style={{ width: 80 }}
-                        onChange={(value) => {
-                            orderNumberRef.current = value;
-                        }}
-                    />
-                    <Button type="primary" shape="round" onClick={handleSearchClick} disabled={disabled}>
-                    Найти
-                    </Button>
-                    <Button type="primary" shape="round" onClick={handleResetClick} disabled={disabled}>
-                    Сбросить
-                    </Button>
+                    <InputNumber min={0} placeholder="Номер заказа" style={{ width: 80 }} onChange={(value) => { orderNumberRef.current = value }} />
+                    <Button type="primary" shape="round" onClick={handleSearchClick} disabled={disabled}>Найти</Button>
+                    <Button type="primary" shape="round" onClick={handleResetClick} disabled={disabled}>Сбросить</Button>
                 </Space>
                 <Space align="center" size="middle" wrap>
                     <Text style={{color: '#fff'}}>Номер заказа: {order?.name}</Text>
                     <Text style={{color: '#fff'}}>Контрагент: {order?.agent?.name}</Text>
-                    <Text style={{color: '#fff'}}>Создано: {order?.created}</Text>
+                    <Text style={{color: '#fff'}}>Создано: {order?.created ? new Date(order.created).toLocaleDateString() : ''}</Text>
                 </Space>
                 <Space>
                     <Button type="default" shape="round" onClick={handleSaveOrder} disabled={disabled}>Сохранить</Button>

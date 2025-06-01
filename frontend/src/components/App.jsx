@@ -17,13 +17,17 @@ function App() {
                 })
                 console.log(response.data)
                 dispatch(setIsAuth(response.data.auth === true))
-            }catch{
+            }catch(error){
+                console.error(error)
                 dispatch(setIsAuth(false))
             }finally{
                 setLoading(false);
             }
         };
         checkAuth();
+        const intervalId = setInterval(checkAuth, 5 * 60 * 1000); // Каждые 5 минут
+
+        return () => clearInterval(intervalId);
     }, [dispatch]);
     if (loading) {
         return <div>Loading...</div>;

@@ -124,7 +124,6 @@ export default class SkladService {
     static async getOrdersInWork(){
         const orders = await Client.sklad('https://api.moysklad.ru/api/remap/1.2/entity/customerorder?filter=state=https://api.moysklad.ru/api/remap/1.2/entity/customerorder/metadata/states/86ef9098-927f-11ee-0a80-145a003ab7bf&expand=agent&limit=100')
         
-        
         const result = []
         orders.rows.forEach( order => {
                 const temp = {
@@ -151,7 +150,7 @@ export default class SkladService {
                 name: product.name,
                 salePrices: [
                 {
-                    value: Number(product.price * 100),
+                    value: Number(product.price),
                     priceType: {
                     meta: {
                         href: "https://api.moysklad.ru/api/remap/1.2/context/companysettings/pricetype/61e764a9-2ad0-11ee-0a80-0476000bb1a7",
@@ -172,53 +171,40 @@ export default class SkladService {
                 },
                 ],
                 productFolder: dictionary.productFolders.glassGuard,
-                attributes: [
-                {
+                attributes: [{
                     meta: dictionary.attributes["Вид номенклатуры"],
                     name: "Вид номенклатуры",
                     value: dictionary.attributesValue["Готовая продукция"],
-                },
-                {
+                },{
                     meta: dictionary.attributes["Длина в мм"],
                     name: "Длина в мм",
                     value: String(product.details.initialData.length),
-                },
-                {
+                },{
                     meta: dictionary.attributes["Ширина в мм"],
                     name: "Ширина в мм",
                     value: String(product.details.initialData.width),
-                },
-                {
+                },{
                     meta: dictionary.attributes["Кол во вырезов 1 категорий/ шт"],
                     name: "Кол во вырезов 1 категорий/ шт",
                     value: String(product.details.initialData.cutsv1),
-                },
-                {
+                },{
                     meta: dictionary.attributes["Кол во вырезов 2 категорий/ шт"],
                     name: "Кол во вырезов 2 категорий/ шт",
                     value: String(product.details.initialData.cutsv2),
-                },
-                {
+                },{
                     meta: dictionary.attributes["Кол во сверлении/шт"],
                     name: "Кол во сверлении/шт",
                     value: String(product.details.initialData.drills),
-                },
-                {
+                },{
                     meta: dictionary.attributes["Кол во зенковании/ шт"],
                     name: "Кол во зенковании/ шт",
                     value: String(product.details.initialData.zenk),
-                },
-                ],
+                }],
             }});
 
-        let createdProducts = [];
         if (productsToCreate.length > 0) {
             console.time('create')
-            createdProducts = await Client.sklad(
-            "https://api.moysklad.ru/api/remap/1.2/entity/product",
-            "post",
-            productsToCreate
-            );
+            const createdProducts = await Client.sklad("https://api.moysklad.ru/api/remap/1.2/entity/product", "post", productsToCreate);
             console.timeEnd('create')
             createdProducts.forEach((el, index) => {
                 data.positions[indexes[index]] = {...data.positions[indexes[index]], position: { assortment: el}}
@@ -236,26 +222,22 @@ export default class SkladService {
                     assortment: {
                         meta: pos.position.assortment.meta
                     },
-                    price: (pos.price || 0) * 100,
+                    price: (pos.price || 0),
                     quantity: pos.quantity || 1,
                 }
             }),
         };
         console.time('update order')
-        const updateCustomerorderRequest = await Client.sklad(
-          `https://api.moysklad.ru/api/remap/1.2/entity/customerorder/${data.order.id}`,
-          "put",
-          params
-        );
+        const updateCustomerorderRequest = await Client.sklad(`https://api.moysklad.ru/api/remap/1.2/entity/customerorder/${data.order.id}`, "put", params);
         console.timeEnd('update order')
 
         console.timeEnd("addPos");
     }
 
     static async getOrder(name){
-        let order = null
-        await Client.sklad(`https://api.moysklad.ru/api/remap/1.2/entity/customerorder?filter=name=${name}&expand=positions.assortment,agent&limit=100`).then(response => order = response.rows[0]).catch(() => { throw new ApiError(`Не найден заказ покупателя с номером ${name}`); });
-        if(!order) throw new ApiError(`Не найден заказ покупателя с номером ${name}`)
+        const response = await Client.sklad(`https://api.moysklad.ru/api/remap/1.2/entity/customerorder?filter=name=${name}&expand=positions.assortment,agent&limit=100`)
+        const order = response.rows[0]
+        if(!order.positions) return order
         const details = await Details.findAll({
             where: {
                 productId: {
@@ -278,7 +260,7 @@ export default class SkladService {
 
         for(const result of results){
             for(const material of result.rows){
-                materials[material.name] = material.salePrices[0].value / 100
+                materials[material.name] = material.salePrices[0].value
             }
         }
         this.selfcost.materials = materials

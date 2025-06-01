@@ -75,12 +75,10 @@ const Positions = () => {
         }
     };
 
-    const handleQuantityChange = (key, newQuantity) => {
-        const updated = positions.map(item =>
-            item.key === key ? { ...item, quantity: newQuantity } : item
-        );
-        dispatch(setPositions(updated));
+    const handleQuantityChange = (key, quantity) => {
+        dispatch(setPositions(positions.map(p => p.key === key ? { ...p, quantity } : p)));
     };
+
 
     const handleDelete = record => {
         const updated = positions.filter(item => item.key !== record.key);
@@ -94,21 +92,18 @@ const Positions = () => {
 
     const columns = [
         { key: 'sort', align: 'center', width: 80, render: () => <DragHandle /> },
-        {
-            title: '№',
-            key: 'index',
-            align: 'center',
-            render: (text, record) => positions.findIndex(item => item.key === record.key) + 1,
-        },
-        { title: 'Название', dataIndex: 'name' },
+        { title: '№', key: 'index', align: 'center', render: (text, record) => positions.findIndex(item => item.key === record.key) + 1 },
+        { title: 'Название', dataIndex: 'name', key: 'name' },
         {
             title: 'Цена',
             dataIndex: 'price',
-            render: value => value.toFixed(2),
+            key: 'price',
+            render: value => value.toFixed(2) / 100,
         },
         {
             title: 'Создано',
             dataIndex: 'added',
+            key: 'added',
             render: value => (
                 <div
                     style={{
@@ -128,13 +123,9 @@ const Positions = () => {
         {
             title: 'Количество',
             dataIndex: 'quantity',
+            key: 'quantity',
             render: (value, record) => (
-                <InputNumber
-                    min={0}
-                    value={value}
-                    onChange={val => handleQuantityChange(record.key, val)}
-                    style={{ maxWidth: 80 }}
-                />
+                <InputNumber min={0} value={value} onChange={val => handleQuantityChange(record.key, val)} style={{ maxWidth: 80 }} />
             ),
         },
     ];
@@ -156,10 +147,7 @@ const Positions = () => {
                             position: ['topRight'],
                             onChange: (page, pageSize) => setPagination({ current: page, pageSize }),
                         }}
-                        rowSelection={{
-                            selectedRowKeys,
-                            onChange: setSelectedRowKeys,
-                        }}
+                        rowSelection={{ selectedRowKeys, onChange: setSelectedRowKeys}}
                         expandable={{
                             expandedRowRender: record => (
                                 <Space size="middle">
@@ -180,7 +168,7 @@ const Positions = () => {
                                 <Table.Summary.Row>
                                     <Table.Summary.Cell>Итого</Table.Summary.Cell>
                                     <Table.Summary.Cell>
-                                        <b>{totalAmount.toFixed(2)}</b>
+                                        <b>{totalAmount.toFixed(2) / 100}</b>
                                     </Table.Summary.Cell>
                                 </Table.Summary.Row>
                             );
@@ -189,11 +177,7 @@ const Positions = () => {
                 </SortableContext>
             </DndContext>
 
-            <PositionDetailsModal
-                open={isModalVisible}
-                onClose={() => setIsModalVisible(false)}
-                record={selectedRecord}
-            />
+            <PositionDetailsModal open={isModalVisible} onClose={() => setIsModalVisible(false)} record={selectedRecord} />
         </>
     );
 };

@@ -32,7 +32,7 @@ export const errorHandler = (err, req, res, next) => {
     ...(process.env.NODE_ENV === 'development' && { stack: err.stack }),
   }
 
-  logger.error(err)
+  logger.error(err, {stack: err.stack})
 
   res.status(statusCode).send(response)
 }

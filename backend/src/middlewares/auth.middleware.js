@@ -44,8 +44,6 @@ const authMiddleware = async (req, res, next) => {
                 } catch (error) {
                     res.clearCookie('accessToken');
                     res.clearCookie('refreshToken');
-                    console.error('Error refreshing token: ', error);
-                    logger.error('Error refreshing token: ', error);
                     return next(new ApiError(401, 'Invalid refresh token'));
                 }
             }

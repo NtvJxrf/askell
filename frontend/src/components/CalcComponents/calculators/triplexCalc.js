@@ -21,7 +21,9 @@ const Calculate = (data, selfcost) => {
     //Если смарт, то считать выбранную + 2 шт 'Пленка EVA Прозрачная 0,76мм'
     //Если хамелеон, то считать выбранную + 2 шт 'Пленка EVA Прозрачная 0,38мм'
     //Себестоимость пленки будет S_tape * себестоимость пленок * кол-во
-    let S_tape = larger <= 2100 ? S_tape = (2100 * lesser) / 1000000 : S_tape = (2100 * larger) / 1000000    // Считаем площадь используемой пленки | 2100 это ширина рулона
+    let S_tape = null
+    if(larger <= 2100) S_tape = (2100 * lesser) / 1000000
+    else S_tape = (2100 * larger) / 1000000    // Считаем площадь используемой пленки | 2100 это ширина рулона
     for (const tape of tapes) {
         if(!tape) continue 
         const mats = result.materials

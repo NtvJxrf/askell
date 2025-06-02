@@ -99,6 +99,12 @@ const formConfigs = {
           options: ['Полировка', 'Шлифовка'],
           rules: [{ required: true, message: 'Fill this field' }]
         },
+        {
+          name: 'color',
+          label: 'Цвет',
+          type: 'select',
+          options: ['Красненький', 'Зелененький'],
+        },
         { name: 'drills', type: 'input', label: 'Сверление, шт', rules: [{ required: true, message: 'Fill this field' }] },
         { name: 'zenk', type: 'input', label: 'Зенкование, шт', rules: [{ required: true, message: 'Fill this field' }] },
         { name: 'cutsv1', type: 'input', label: 'Вырезы 1 кат. шт', rules: [{ required: true, message: 'Fill this field' }] },

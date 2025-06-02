@@ -2,6 +2,7 @@ import ApiError from "../utils/apiError.js"
 import Client from "../utils/got.js"
 import Details from "../databases/models/sklad/details.model.js"
 import { Op } from 'sequelize'
+import logger from "../utils/logger.js"
 const dictionary = {
         productFolders: {
             glassGuard: {
@@ -206,15 +207,27 @@ export default class SkladService {
             console.time('create')
             const createdProducts = await Client.sklad("https://api.moysklad.ru/api/remap/1.2/entity/product", "post", productsToCreate);
             console.timeEnd('create')
+            const promises = []
             createdProducts.forEach((el, index) => {
                 data.positions[indexes[index]] = {...data.positions[indexes[index]], position: { assortment: el}}
                 const pos = data.positions[indexes[index]]
-                Details.create({
+                promises.push(Details.create({
                     productId: pos.position.assortment.id,
                     initialData: pos.details.initialData,
                     selfcost: pos.details.selfcost
-                })
+                }))
             })
+            const detailsResult = await Promise.allSettled(promises)
+            results.forEach((result, i) => {
+                if (result.status !== 'fulfilled') {
+                    const failedPos = data.positions[indexes[i]];
+                    logger.error('Failed to create detail', {
+                        productId: failedPos?.position?.assortment?.id,
+                        error: result.reason,
+                        inputData: failedPos?.details
+                    });
+                }
+            });
         }
         const params = {
             positions: data.positions.map((pos) => {

@@ -11,7 +11,7 @@ import TriplexForm from './TriplexForm.jsx'
 import triplexCalc from '../calculators/triplexCalc.js'
 import { addNewPosition } from "../../../slices/positionsSlice.js";
 const calcMap = {
-    triplexForm: triplexCalc,
+    TriplexForm: triplexCalc,
 }
 const formsMap = {
     SMDForm,

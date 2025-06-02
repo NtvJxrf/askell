@@ -1,11 +1,8 @@
 import express from "express"
 import cors from "cors"
 import helmet from "helmet"
-import morgan from "morgan"
 import routes from "./routes/index.js"
 import { errorConverter, errorHandler } from "./middlewares/error.middleware.js"
-import config from "./config/index.js"
-import logger from "./utils/logger.js"
 import cookieParser from 'cookie-parser'
 import { initModels } from "./databases/db.js"
 import  loggerMiddleware  from "./middlewares/logger.middleware.js"

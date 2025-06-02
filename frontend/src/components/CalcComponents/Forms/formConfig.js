@@ -71,6 +71,12 @@ const formConfigs = {
           options: ['Полировка', 'Шлифовка'],
           rules: [{ required: true, message: 'Fill this field' }]
         },
+        {
+          name: 'color',
+          label: 'Окрашивание',
+          type: 'select',
+          options: ['Красненький', 'Зелененький'],
+        },
         { name: 'shape', label: 'Прямоугольная форма', type: 'checkbox' },
         { name: 'tempered', label: 'Закаленное', type: 'checkbox' },
         { name: 'print', label: 'Печать', type: 'checkbox' },

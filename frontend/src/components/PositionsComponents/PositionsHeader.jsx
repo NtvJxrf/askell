@@ -1,4 +1,4 @@
-import { InputNumber, Button, Space, Typography, message } from 'antd';
+import { Input, Button, Space, Typography, message } from 'antd';
 import React, { useRef, useState } from 'react';
 const { Text } = Typography;
 import axios from 'axios'
@@ -86,7 +86,7 @@ const PositionsHeader = () => {
             >
                 <Space style={{ width: '100%' }} align="center" size="middle">
                     <Text style={{color: '#fff'}}>Номер заказа: </Text>
-                    <InputNumber min={0} placeholder="Номер заказа" style={{ width: 80 }} onChange={(value) => { orderNumberRef.current = value }} />
+                    <Input placeholder="Номер заказа" style={{ width: 80 }} onChange={(e) => { orderNumberRef.current = e.target.value }} />
                     <Button type="primary" shape="round" onClick={handleSearchClick} disabled={disabled}>Найти</Button>
                     <Button type="primary" shape="round" onClick={handleResetClick} disabled={disabled}>Сбросить</Button>
                 </Space>

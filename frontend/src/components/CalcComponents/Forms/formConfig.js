@@ -1,4 +1,3 @@
-
 const formConfigs = {
     SMDForm: {
       commonFields: [
@@ -122,13 +121,6 @@ const formConfigs = {
           options: ['Arctic Blue', 'Matelux Bronze', 'Matelux Crystalvision', 'Matelux Grey', 'Matelux', 'Зеркальное Stopsol Bronze',  'Зеркальное Stopsol Grey', 'Зеркальное Stopsol', 'M1', 'Осветленное Crystalvision', 'Осветленное OptiWhite', 'Тонированное Bronze', 'Тонированное Grey', 'Узорчатое Moru'],
           rules: [{ required: true, message: 'Fill this field' }]
         },
-        {
-          name: 'thickness1',
-          label: 'Толщина, мм',
-          type: 'select',
-          options: [],
-          rules: [{ required: true, message: 'Fill this field' }]
-        },
         {label: 'Пленка 1', type: 'divider'},
         {
           name: 'tape1',
@@ -145,13 +137,6 @@ const formConfigs = {
           options: ['Arctic Blue', 'Matelux Bronze', 'Matelux Crystalvision', 'Matelux Grey', 'Matelux', 'Зеркальное Stopsol Bronze',  'Зеркальное Stopsol Grey', 'Зеркальное Stopsol', 'M1', 'Осветленное Crystalvision', 'Осветленное OptiWhite', 'Тонированное Bronze', 'Тонированное Grey', 'Узорчатое Moru'],
           rules: [{ required: true, message: 'Fill this field' }]
         },
-        {
-          name: 'thickness2',
-          label: 'Толщина, мм',
-          type: 'select',
-          options: [],
-          rules: [{ required: true, message: 'Fill this field' }]
-        },
         {label: 'Пленка 2', type: 'divider'},
         {
           name: 'tape2',
@@ -165,12 +150,6 @@ const formConfigs = {
           label: 'Материал',
           type: 'select',
           options: ['Arctic Blue', 'Matelux Bronze', 'Matelux Crystalvision', 'Matelux Grey', 'Matelux', 'Зеркальное Stopsol Bronze',  'Зеркальное Stopsol Grey', 'Зеркальное Stopsol', 'M1', 'Осветленное Crystalvision', 'Осветленное OptiWhite', 'Тонированное Bronze', 'Тонированное Grey', 'Узорчатое Moru'],
-        },
-        {
-          name: 'thickness3',
-          label: 'Толщина, мм',
-          type: 'select',
-          options: [],
         },
       ]
     },

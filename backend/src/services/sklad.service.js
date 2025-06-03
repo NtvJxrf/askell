@@ -17,42 +17,6 @@ const dictionary = {
                 }
             }
         },
-        attributes: {
-            'Вид номенклатуры': {
-                "href" : "https://api.moysklad.ru/api/remap/1.2/entity/product/metadata/attributes/1cefb31a-65fb-11ef-0a80-0c0e00155150",
-                "type" : "attributemetadata",
-                "mediaType" : "application/json"
-            },'Длина в мм': {
-                    "href" : "https://api.moysklad.ru/api/remap/1.2/entity/product/metadata/attributes/af7e2ea6-0ff5-11ee-0a80-04e600042beb",
-                    "type" : "attributemetadata",
-                    "mediaType" : "application/json"
-            },'Ширина в мм': {
-                "href" : "https://api.moysklad.ru/api/remap/1.2/entity/product/metadata/attributes/af7e3204-0ff5-11ee-0a80-04e600042bec",
-                "type" : "attributemetadata",
-                "mediaType" : "application/json"
-            },'Кол во вырезов 1 категорий/ шт': {
-                "href" : "https://api.moysklad.ru/api/remap/1.2/entity/product/metadata/attributes/a73e8f44-102d-11ee-0a80-06060010f7cc",
-                "type" : "attributemetadata",
-                "mediaType" : "application/json"
-            },'Кол во вырезов 2 категорий/ шт': {
-                "href" : "https://api.moysklad.ru/api/remap/1.2/entity/product/metadata/attributes/a73e9004-102d-11ee-0a80-06060010f7cd",
-                "type" : "attributemetadata",
-                "mediaType" : "application/json"
-            },'Кол во сверлении/шт': {
-                "href" : "https://api.moysklad.ru/api/remap/1.2/entity/product/metadata/attributes/a73e913f-102d-11ee-0a80-06060010f7cf",
-                "type" : "attributemetadata",
-                "mediaType" : "application/json"
-            },'Кол во зенковании/ шт': {
-                "href" : "https://api.moysklad.ru/api/remap/1.2/entity/product/metadata/attributes/a73e91db-102d-11ee-0a80-06060010f7d0",
-                "type" : "attributemetadata",
-                "mediaType" : "application/json"
-            },'тип станка обрабатывающий': {
-                "href" : "https://api.moysklad.ru/api/remap/1.2/entity/product/metadata/attributes/a73e8b90-102d-11ee-0a80-06060010f7ca",
-                "type" : "attributemetadata",
-                "mediaType" : "application/json"
-            }
-
-        },
         attributesValue: {
             'Готовая продукция': {
                 'meta': {
@@ -149,10 +113,10 @@ export default class SkladService {
             }
         })
         const productsToCreate = positionsToCreate.map(product => {
+            console.log(product)
             return {
                 name: product.name,
-                salePrices: [
-                {
+                salePrices: [{
                     value: Number(product.price),
                     priceType: {
                     meta: {
@@ -162,46 +126,62 @@ export default class SkladService {
                     },
                     },
                     currency: {
-                    meta: {
-                        href: "https://api.moysklad.ru/api/remap/1.2/entity/currency/0664a90c-6e69-11e4-90a2-8ecb0012e9ec",
-                        metadataHref: "https://api.moysklad.ru/api/remap/1.2/entity/currency/metadata",
-                        type: "currency",
-                        mediaType: "application/json",
-                        uuidHref:
-                        "https://online.moysklad.ru/app/#currency/edit?id=0664a90c-6e69-11e4-90a2-8ecb0012e9ec",
+                        meta: {
+                            href: "https://api.moysklad.ru/api/remap/1.2/entity/currency/0664a90c-6e69-11e4-90a2-8ecb0012e9ec",
+                            metadataHref: "https://api.moysklad.ru/api/remap/1.2/entity/currency/metadata",
+                            type: "currency",
+                            mediaType: "application/json",
+                            uuidHref:
+                            "https://online.moysklad.ru/app/#currency/edit?id=0664a90c-6e69-11e4-90a2-8ecb0012e9ec",
+                        },
                     },
-                    },
-                },
-                ],
+                }],
                 productFolder: dictionary.productFolders.glassGuard,
                 attributes: [{
-                    meta: dictionary.attributes["Вид номенклатуры"],
-                    name: "Вид номенклатуры",
+                    meta: dictionary.productAttributes["Вид номенклатуры"],
                     value: dictionary.attributesValue["Готовая продукция"],
                 },{
-                    meta: dictionary.attributes["Длина в мм"],
-                    name: "Длина в мм",
+                    meta: dictionary.productAttributes["Длина в мм"],
                     value: String(product.details.initialData.length),
                 },{
-                    meta: dictionary.attributes["Ширина в мм"],
-                    name: "Ширина в мм",
+                    meta: dictionary.productAttributes["Ширина в мм"],
                     value: String(product.details.initialData.width),
                 },{
-                    meta: dictionary.attributes["Кол во вырезов 1 категорий/ шт"],
-                    name: "Кол во вырезов 1 категорий/ шт",
+                    meta: dictionary.productAttributes["Кол во вырезов 1 категорий/ шт"],
                     value: String(product.details.initialData.cutsv1),
                 },{
-                    meta: dictionary.attributes["Кол во вырезов 2 категорий/ шт"],
-                    name: "Кол во вырезов 2 категорий/ шт",
+                    meta: dictionary.productAttributes["Кол во вырезов 2 категорий/ шт"],
                     value: String(product.details.initialData.cutsv2),
                 },{
-                    meta: dictionary.attributes["Кол во сверлении/шт"],
-                    name: "Кол во сверлении/шт",
+                    meta: dictionary.productAttributes["Кол во сверлении/шт"],
                     value: String(product.details.initialData.drills),
                 },{
-                    meta: dictionary.attributes["Кол во зенковании/ шт"],
-                    name: "Кол во зенковании/ шт",
+                    meta: dictionary.productAttributes["Кол во зенковании/ шт"],
                     value: String(product.details.initialData.zenk),
+                },{
+                    meta: dictionary.productAttributes["Материал 1"],
+                    value: `${product.details.initialData.material1}`,
+                },{
+                    meta: dictionary.productAttributes["Материал 2"],
+                    value: `${product.details.initialData.material2}`,
+                },{
+                    meta: dictionary.productAttributes["Материал 3"],
+                    value: product.details.initialData.material3 ? `${product.details.initialData.material3}` : '',
+                },{
+                    meta: dictionary.productAttributes["тип станка обрабатывающий"],
+                    value: product.result.other.stanok
+                },{
+                    meta: dictionary.productAttributes["Тип изделия"],
+                    value: product.result.other.type
+                },{
+                    meta: dictionary.productAttributes["Окрашивание"],
+                    value: product.details.initialData.color ? product.details.initialData.color : '',
+                },{
+                    meta: dictionary.productAttributes["Печать"],
+                    value: product.details.initialData.print ? 'Да' : '',
+                },{
+                    meta: dictionary.productAttributes["Полировка"],
+                    value: product.details.initialData.processing ? 'Да' : '',
                 }],
             }});
 
@@ -220,7 +200,7 @@ export default class SkladService {
                 }))
             })
             const detailsResult = await Promise.allSettled(promises)
-            results.forEach((result, i) => {
+            detailsResult.forEach((result, i) => {
                 if (result.status !== 'fulfilled') {
                     const failedPos = data.positions[indexes[i]];
                     logger.error('Failed to create detail', {
@@ -283,6 +263,13 @@ export default class SkladService {
     static async getProcessingStages(){
         const response = await Client.sklad('https://api.moysklad.ru/api/remap/1.2/entity/processingstage')
         dictionary.processingstages = response.rows.reduce(( acc, curr ) => {
+            acc[curr.name] = curr.meta
+            return acc
+        }, {})
+    }
+    static async getProcuctAttributes(){
+        const response = await Client.sklad('https://api.moysklad.ru/api/remap/1.2/entity/product/metadata/attributes')
+        dictionary.productAttributes = response.rows.reduce(( acc, curr ) => {
             acc[curr.name] = curr.meta
             return acc
         }, {})
@@ -354,18 +341,17 @@ export default class SkladService {
 
 const triplex = async (position, attributes, order) => {
     const PFs = [attributes['Материал 1'], attributes['Материал 2'], attributes['Материал 3']]
-    const multiplier = 1
     const createdPFs = []
     const finalPlans = []
     for(const pf of PFs){
-        if(pf) {
-            const processingprocess = await makeprocessingprocess(attributes)
-            const product = await makeProduct(attributes, pf.value)
-            const processingPlan = await makeProcessingPlan(attributes, pf.value, order, processingprocess, product)
-            processingPlan.quantity = position.quantity
-            finalPlans.push(processingPlan)
-            createdPFs.push(product)
-        }
+        if(!pf) continue
+        
+        const processingprocess = await makeprocessingprocess(attributes)
+        const product = await makeProduct(attributes, pf.value)
+        const processingPlan = await makeProcessingPlan(attributes, pf.value, order, processingprocess, product)
+        processingPlan.quantity = position.quantity
+        finalPlans.push(processingPlan)
+        createdPFs.push(product)
     }
     const finalProcessingprocess = await Processingprocess.findOne({where: {name: 'Триплекс'}})
     const finalProcessingPlan = await Client.sklad('https://api.moysklad.ru/api/remap/1.2/entity/processingplan', 'post', {
@@ -386,13 +372,13 @@ const triplex = async (position, attributes, order) => {
     finalPlans.push(finalProcessingPlan)
     return finalPlans
 }
-const ceraglass = () => {
+const ceraglass = async () => {
 
 }
-const glass = () => {
+const glass = async () => {
 
 }
-const smd = () => {
+const smd = async () => {
 
 }
 const makeProcessingPlan = async (attributes, material, order, processingprocess, product, isPF = true) => {
@@ -492,6 +478,7 @@ function getStagesHash(stages) {
 
 await SkladService.calcSelfcost()
 await SkladService.getProcessingStages()
+await SkladService.getProcuctAttributes()
 // setInterval(() => {
 //     SkladService.calcSelfcost()
 //     SkladService.getProcessingStages()

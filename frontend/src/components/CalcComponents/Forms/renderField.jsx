@@ -5,7 +5,12 @@ const renderField = (field) => {
     case 'select':
         return (
             <Form.Item key={field.name} label={field.label} name={field.name} rules={field.rules}>
-                <Select showSearch mode="combobox" options={field.options.map(option => ({ label: option, value: option }))} allowClear={true}/>
+                <Select showSearch mode="combobox" options={field.options.map(option => ({ label: option, value: option }))} allowClear={true} filterOption={(input, option) => {
+                    if (!option?.label) return false;
+                    const inputParts = input.toLowerCase().split(/\s+/).filter(Boolean);
+                    const label = option.label.toLowerCase();
+                    return inputParts.every(part => label.includes(part));
+                }}/>
             </Form.Item>
         );
     case 'checkbox':

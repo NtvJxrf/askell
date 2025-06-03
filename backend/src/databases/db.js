@@ -42,13 +42,7 @@ const initModels = async () => {
     await sequelize.authenticate();
     console.log('Database connection has been established successfully.')
     await loadModels(__dirname)
-
-    Object.keys(models).forEach((modelName) => {
-      if (models[modelName].associate) {
-        models[modelName].associate(models)
-      }
-    })
-    if(config.env === 'development') {
+    if(process.env.NODE_ENV === 'development') {
       await sequelize.sync({alter: true})
       await valkey.flushall()
       const admin = await models.User.findOne({where: {username: 'admin'}})

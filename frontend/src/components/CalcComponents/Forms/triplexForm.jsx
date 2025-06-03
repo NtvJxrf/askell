@@ -1,16 +1,14 @@
+import { useSelector } from "react-redux";
 import formConfigs from "./formConfig.js";
 import renderField from './renderField.jsx';
 import { Row, Col, Form } from 'antd';
 
-const triplexForm = ({ form }) => {
-
-    const material1 = Form.useWatch('material1', form);
-    const material2 = Form.useWatch('material2', form);
-    const material3 = Form.useWatch('material3', form);
-
-    formConfigs.triplexForm.materialFields[2].options = formConfigs.thicknessMap[material1] || [];
-    formConfigs.triplexForm.materialFields[7].options = formConfigs.thicknessMap[material2] || [];
-    formConfigs.triplexForm.materialFields[12].options = formConfigs.thicknessMap[material3] || [];
+const TriplexForm = () => {
+    const materials = useSelector(state => state.selfcost.selfcost.materials)
+    const materialsArray = Object.keys(materials).sort()
+    formConfigs.triplexForm.materialFields[1].options = materialsArray
+    formConfigs.triplexForm.materialFields[5].options = materialsArray
+    formConfigs.triplexForm.materialFields[9].options = materialsArray
 
     return (
         <Row gutter={24} style={{ width: '100%' }}>
@@ -24,4 +22,4 @@ const triplexForm = ({ form }) => {
     );
 };
 
-export default triplexForm;
+export default TriplexForm;

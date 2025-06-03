@@ -20,8 +20,8 @@ app.use(cors({
 }))
 
 
-app.use(express.json({ limit: '5mb' }))
-app.use(express.urlencoded({ extended: true, limit: '5mb' }))
+app.use(express.json({ limit: '15mb' }))
+app.use(express.urlencoded({ extended: true, limit: '15mb' }))
 app.set('trust proxy', 'loopback');
 app.use('/', routes)
 // Error handling

@@ -5,12 +5,12 @@ import triplexCalc from '../CalcComponents/calculators/triplexCalc';
 
 const detailsColumns = [
     { title: 'Название', dataIndex: 'name' },
-    { title: 'Себестоимость', dataIndex: 'cost', render: value => value.toFixed(2) },
+    { title: 'Себестоимость', dataIndex: 'cost', render: value => (value / 100).toFixed(2) },
     { title: 'Количество', dataIndex: 'count', render: value => value.toFixed(2) },
     {
         title: 'Сумма',
         dataIndex: 'price',
-        render: (_, record) => (record.cost * record.count).toFixed(2),
+        render: (_, record) => ((record.cost / 100) * record.count).toFixed(2),
     },
 ];
 

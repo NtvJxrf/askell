@@ -49,7 +49,7 @@ const initModels = async () => {
       }
     })
     if(config.env === 'development') {
-      await sequelize.sync({force: true})
+      await sequelize.sync({alter: true})
       await valkey.flushall()
       const admin = await models.User.findOne({where: {username: 'admin'}})
       if(!admin)

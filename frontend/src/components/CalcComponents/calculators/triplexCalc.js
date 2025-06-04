@@ -1,16 +1,16 @@
 const Calculate = (data, selfcost) => {
     console.log(data)
-    const { length, width, processing, drills, zenk, cutsv1, cutsv2, tempered, shape, print, material1, material2, material3, tape1, tape2, customertype, rounding, trim } = data
+    const { height, width, polishing, drills, zenk, cutsv1, cutsv2, tempered, shape, print, material1, material2, material3, tape1, tape2, customertype, rounding, trim } = data
     const tapes = [tape1, tape2]
     const materials = [material1, material2, material3].filter(material => material !== undefined);
-    const works = { processing, drills, zenk, cutsv1, cutsv2 }
-    let name = `Триплекс, ${materials.join(' + ')}, (${length}х${width}, ${processing}${tempered ? ', Закаленное' : ''}${cutsv1 ? `, Вырезы 1 кат.: ${cutsv1}` : ''}${cutsv2 ? `, Вырезы 2 кат.: ${cutsv2}` : ''}${drills ? `, Сверление: ${drills}` : ''}${zenk ? `, Зенкование: ${zenk}` : ''})`
-    const S = (length * width) / 1000000
-    const P = 2 * (length + width)
+    const works = { polishing, drills, zenk, cutsv1, cutsv2 }
+    let name = `Триплекс, ${materials.join(' + ')}, (${height}х${width}, ${polishing ? 'Полировка' : ''}${tempered ? ', Закаленное' : ''}${cutsv1 ? `, Вырезы 1 кат.: ${cutsv1}` : ''}${cutsv2 ? `, Вырезы 2 кат.: ${cutsv2}` : ''}${drills ? `, Сверление: ${drills}` : ''}${zenk ? `, Зенкование: ${zenk}` : ''})`
+    const S = (height * width) / 1000000
+    const P = 2 * (height + width)
     
     let weight = 0
-    const larger = Math.max(length, width)
-    const lesser = Math.min(length, width)
+    const larger = Math.max(height, width)
+    const lesser = Math.min(height, width)
     const result = {
         materials: [],
         works: [],
@@ -31,20 +31,20 @@ const Calculate = (data, selfcost) => {
         switch (tape) {
             case 'Пленка EVA Прозрачная 0,38мм':
                 mats.push({name: tape, cost: selfcost.materials[tape].salePrices[0].value, count: S_tape * 2})
-                break;
+            break;
             case 'Пленка EVA Прозрачная 0,76мм':
                 mats.push({name: tape, cost: selfcost.materials[tape].salePrices[0].value, count: S_tape})
-                break;
+            break;
             case 'Смарт пленка Magic Glass':
-                mats.push({name: tape, cost: selfcost.materials[tape], count: S_tape})
+                mats.push({name: tape, cost: selfcost.materials[tape].salePrices[0].value, count: S_tape})
                 mats.push({name: 'Пленка EVA Прозрачная 0,76мм', cost: selfcost.materials['Пленка EVA Прозрачная 0,76мм'].salePrices[0].value, count: S_tape * 2})
-                break;
+            break;
             case 'Пленка EVA №25 Хамелеон Гладкий 1.4':
-                mats.push({name: tape, cost: selfcost.materials[tape], count: S_tape})
+                mats.push({name: tape, cost: selfcost.materials[tape].salePrices[0].value, count: S_tape})
                 mats.push({name: 'Пленка EVA Прозрачная 0,38мм', cost: selfcost.materials['Пленка EVA Прозрачная 0,38мм'].salePrices[0].value, count: S_tape * 2})
-                break;
+            break;
             default:
-                mats.push({name: tape, cost: selfcost.materials[tape], count: S_tape})
+                mats.push({name: tape, cost: selfcost.materials[tape].salePrices[0].value, count: S_tape})
                 mats.push({name: 'Пленка EVA Прозрачная 0,38мм', cost: selfcost.materials['Пленка EVA Прозрачная 0,38мм'].salePrices[0].value, count: S_tape})
         }
     }
@@ -57,28 +57,27 @@ const Calculate = (data, selfcost) => {
     for(const work in works){
         if(work === 0) continue
         switch(work){
-            case 'processing':
-                   result.works.push({name: works[work], cost: selfcost.workPrices[works[work]][stanok], count: S * trim})
+            case 'polishing':
+                result.works.push({name: 'Полировка', cost: selfcost.workPrices['Полировка'][stanok], count: S * trim})
             break
             case 'drills':
-                   result.works.push({name: 'Сверление', cost: selfcost.workPrices['Сверление'], count: materials.length * works[work] })
+                result.works.push({name: 'Сверление', cost: selfcost.workPrices['Сверление'], count: materials.length * works[work] })
             break
             case 'zenk':
-                   result.works.push({name: 'Зенковка', cost: selfcost.workPrices['Зенковка'], count: materials.length * works[work]})
+                result.works.push({name: 'Зенковка', cost: selfcost.workPrices['Зенковка'], count: materials.length * works[work]})
             break
             case 'cutsv1':
-                   result.works.push({name: 'Вырез в стекле 1 кат', cost: selfcost.workPrices['Вырез в стекле 1 кат'], count: materials.length * works[work]})
+                result.works.push({name: 'Вырез в стекле 1 кат', cost: selfcost.workPrices['Вырез в стекле 1 кат'], count: materials.length * works[work]})
             break
             case 'cutsv2':
-                   result.works.push({name: 'Вырез в стекле 2 кат', cost: selfcost.workPrices['Вырез в стекле 2 кат'], count: materials.length * works[work] })
+                result.works.push({name: 'Вырез в стекле 2 кат', cost: selfcost.workPrices['Вырез в стекле 2 кат'], count: materials.length * works[work] })
             break
         }
     }
     if(tempered){
-        //result.works.push({name: 'Закалка', cost: selfcost.workPrices['Зенковка'], count: materials.length })
+        //result.works.push({name: 'Закалка', cost: selfcost.workPrices['Зенковка'], count: materials.height })
     }
     let price = 0
-    console.log(result)
     for (const item of Object.values(result.materials)) {
         price += item.cost * item.count;
     }
@@ -91,7 +90,10 @@ const Calculate = (data, selfcost) => {
         trim,
         stanok,
         type: 'Триплекс',
+        productType: true,
+        viz: true
     }
+    console.log(result)
     return {
             key: Date.now(),
             name,

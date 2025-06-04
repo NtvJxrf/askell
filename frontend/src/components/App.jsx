@@ -15,7 +15,6 @@ function App() {
                 const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/isAuthenticated`, {
                     withCredentials: true,
                 })
-                console.log(response.data)
                 dispatch(setIsAuth(response.data.auth === true))
             }catch(error){
                 console.error(error)

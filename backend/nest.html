@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <title>Оптимальный раскрой листа с FFDH и SVG-визуализацией</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+    }
+    #svgContainer {
+      border: 1px solid #ccc;
+      display: inline-block;
+      margin-bottom: 20px;
+    }
+    #results {
+      white-space: pre-wrap;
+    }
+    .rect-label {
+      font-size: 10px;
+      fill: white;
+      pointer-events: none;
+    }
+  </style>
+</head>
+<body>
+  <h1>Оптимальный раскрой листа 3250×2250 мм</h1>
+  <div id="svgContainer"></div>
+  <div id="results"></div>
+
+  <script>
+    // Размер листа в мм
+    const SHEET_WIDTH = 3250;
+    const SHEET_HEIGHT = 2250;
+    const SHEET_AREA_M2 = (SHEET_WIDTH * SHEET_HEIGHT) / 1e6; // 7.3125 м²
+
+    // Массив прямоугольников: каждый объект { id, width, height } в мм.
+    // При необходимости адаптируйте этот список под свои размеры.
+    const rectangles = [
+      { id: 'A', width: 1200, height: 800 },
+      { id: 'B', width: 1000, height: 1500 },
+      { id: 'C', width: 500,  height: 700 },
+      { id: 'D', width: 800,  height: 1200 },
+      { id: 'E', width: 600,  height: 600 },
+      { id: 'F', width: 1300, height: 900 },
+      // Добавьте нужное количество прямоугольников
+    ];
+
+    /**
+     * Запускает перебор всех вариантов поворота, упаковку FFDH,
+     * выбирает лучший результат и визуализирует его.
+     */
+    function runPacking() {
+      const n = rectangles.length;
+      const totalVariants = 1 << n; // 2^n вариантов поворота
+      let bestLayout = null;
+
+      for (let mask = 0; mask < totalVariants; mask++) {
+        // Подготовка списка прямоугольников для данного варианта поворота
+        const rectsVariant = rectangles.map((rect, idx) => {
+          const rotate = ((mask >> idx) & 1) === 1;
+          return {
+            id: rect.id,
+            width: rotate ? rect.height : rect.width,
+            height: rotate ? rect.width : rect.height,
+            origWidth: rect.width,
+            origHeight: rect.height,
+            rotated: rotate,
+            index: idx
+          };
+        });
+
+        // Сортировка по убыванию высоты (FFD-часть)
+        rectsVariant.sort((a, b) => b.height - a.height);
+
+        // Выполнение упаковки FFDH
+        const layout = packFFDH(rectsVariant);
+
+        // Подсчет показателей: число размещенных, площадь занятой области, площадь обрези
+        const placedCount = layout.placed.length;
+        const usedArea = layout.placed.reduce((sum, r) => sum + r.width * r.height, 0);
+        const wasteArea = (SHEET_WIDTH * SHEET_HEIGHT) - usedArea;
+
+        // Сравнение с лучшим: сначала по числу размещенных, далее по минимальной обрези
+        if (
+          !bestLayout ||
+          placedCount > bestLayout.placedCount ||
+          (placedCount === bestLayout.placedCount && wasteArea < bestLayout.wasteArea)
+        ) {
+          bestLayout = {
+            mask,
+            placed: layout.placed,
+            notPlaced: layout.notPlaced,
+            placedCount,
+            usedArea,
+            wasteArea
+          };
+        }
+      }
+
+      // Визуализация лучшего результата
+      renderResult(bestLayout);
+    }
+
+    /**
+     * Алгоритм упаковки FFDH (First Fit Decreasing Height).
+     * Принимает массив прямоугольников с полями { id, width, height, rotated, index }.
+     * Возвращает объект { placed: [...], notPlaced: [...] }.
+     * Для каждого размещенного прямоугольника добавляются поля x, y.
+     */
+    function packFFDH(rects) {
+      const shelves = []; // Список полок: { y, height, xUsed }
+      const placed = [];
+      const notPlaced = [];
+
+      for (const rect of rects) {
+        let placedInShelf = false;
+        // Попытка разместить в первой полке, где подходит по ширине и высоте
+        for (const shelf of shelves) {
+          if (
+            rect.width <= SHEET_WIDTH - shelf.xUsed &&
+            rect.height <= shelf.height
+          ) {
+            // Размещаем в этой полке
+            rect.x = shelf.xUsed;
+            rect.y = shelf.y;
+            shelf.xUsed += rect.width;
+            placed.push(rect);
+            placedInShelf = true;
+            break;
+          }
+        }
+        if (!placedInShelf) {
+          // Попытка создать новую полку ниже
+          const usedHeight = shelves.reduce((sum, s) => sum + s.height, 0);
+          if (usedHeight + rect.height <= SHEET_HEIGHT) {
+            // Создаем новую полку
+            const newShelf = {
+              y: usedHeight,
+              height: rect.height,
+              xUsed: rect.width
+            };
+            // Размещаем прямоугольник в начале новой полки
+            rect.x = 0;
+            rect.y = newShelf.y;
+            placed.push(rect);
+            shelves.push(newShelf);
+          } else {
+            // Не помещается
+            notPlaced.push(rect);
+          }
+        }
+      }
+
+      return { placed, notPlaced };
+    }
+
+    /**
+     * Рендерит SVG-визуализацию упаковки и текстовые результаты.
+     */
+    function renderResult(best) {
+      const container = document.getElementById('svgContainer');
+      const resultsDiv = document.getElementById('results');
+      container.innerHTML = '';
+      resultsDiv.innerHTML = '';
+
+      // Определяем масштаб для SVG (чтобы вписать в ~800px по ширине)
+      const SVG_WIDTH = 800;
+      const scale = SVG_WIDTH / SHEET_WIDTH;
+      const SVG_HEIGHT = SHEET_HEIGHT * scale;
+
+      // Создаем SVG элемент
+      const ns = 'http://www.w3.org/2000/svg';
+      const svg = document.createElementNS(ns, 'svg');
+      svg.setAttribute('width', SVG_WIDTH);
+      svg.setAttribute('height', SVG_HEIGHT);
+      svg.setAttribute('viewBox', `0 0 ${SHEET_WIDTH} ${SHEET_HEIGHT}`);
+      svg.setAttribute('style', `border:1px solid #000; background:#f9f9f9;`);
+
+      // Фон листа
+      const bg = document.createElementNS(ns, 'rect');
+      bg.setAttribute('x', 0);
+      bg.setAttribute('y', 0);
+      bg.setAttribute('width', SHEET_WIDTH);
+      bg.setAttribute('height', SHEET_HEIGHT);
+      bg.setAttribute('fill', '#ffffff');
+      svg.appendChild(bg);
+
+      // Цветовая палитра для прямоугольников
+      const colors = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', '#8c564b',
+                      '#e377c2', '#7f7f7f', '#bcbd22', '#17becf'];
+
+      // Отрисовка размещенных прямоугольников
+      best.placed.forEach((rect, idx) => {
+        const color = colors[idx % colors.length];
+        const rectEl = document.createElementNS(ns, 'rect');
+        rectEl.setAttribute('x', rect.x);
+        rectEl.setAttribute('y', rect.y);
+        rectEl.setAttribute('width', rect.width);
+        rectEl.setAttribute('height', rect.height);
+        rectEl.setAttribute('fill', color);
+        rectEl.setAttribute('stroke', '#000');
+        rectEl.setAttribute('stroke-width', '1');
+        svg.appendChild(rectEl);
+
+        // Метка с ID прямоугольника
+        const label = document.createElementNS(ns, 'text');
+        label.setAttribute('x', rect.x + 5);
+        label.setAttribute('y', rect.y + 15);
+        label.setAttribute('class', 'rect-label');
+        label.textContent = rect.id;
+        svg.appendChild(label);
+      });
+
+      container.appendChild(svg);
+
+      // Текстовая информация о результате
+      const placedIds = best.placed.map(r => r.id).join(', ');
+      const notPlacedIds = best.notPlaced.map(r => r.id).join(', ') || '–';
+      const usedAreaM2 = (best.usedArea / 1e6).toFixed(4);
+      const wasteAreaM2 = (best.wasteArea / 1e6).toFixed(4);
+      const wastePercent = ((wasteAreaM2 / SHEET_AREA_M2) * 100).toFixed(2);
+
+      let text = '';
+      text += `Лучший вариант упаковки (маска поворотов: ${best.mask.toString(2).padStart(rectangles.length, '0')}):\n`;
+      text += `Размещено прямоугольников: ${best.placedCount} из ${rectangles.length}\n`;
+      text += `Список размещенных: ${placedIds}\n`;
+      text += `Список непромещенных: ${notPlacedIds}\n\n`;
+      text += `Площадь занятая: ${usedAreaM2} м²\n`;
+      text += `Площадь обрези: ${wasteAreaM2} м² (${wastePercent} %)\n\n`;
+      text += `Подробная информация о каждом размещенном прямоугольнике:\n`;
+      best.placed.forEach(r => {
+        const rot = r.rotated ? 'да' : 'нет';
+        text += `— ID ${r.id}: x=${r.x} мм, y=${r.y} мм, w=${r.width} мм, h=${r.height} мм, повернут: ${rot}\n`;
+      });
+      resultsDiv.textContent = text;
+    }
+
+    // Запускаем упаковку при загрузке страницы
+    window.onload = runPacking;
+  </script>
+</body>
+</html>

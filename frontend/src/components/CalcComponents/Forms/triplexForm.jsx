@@ -2,10 +2,10 @@ import { useSelector } from "react-redux";
 import formConfigs from "./formConfig.js";
 import renderField from './renderField.jsx';
 import { Row, Col, Form } from 'antd';
-
+const excludedWords = ['пленка', 'плёнка', 'плита'];
 const TriplexForm = () => {
     const materials = useSelector(state => state.selfcost.selfcost.materials)
-    const materialsArray = Object.keys(materials).sort()
+    const materialsArray = Object.keys(materials).filter(el => !excludedWords.some(word => el.toLowerCase().includes(word))).sort();
     formConfigs.triplexForm.materialFields[1].options = materialsArray
     formConfigs.triplexForm.materialFields[5].options = materialsArray
     formConfigs.triplexForm.materialFields[9].options = materialsArray

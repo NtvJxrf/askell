@@ -112,8 +112,9 @@ export default class SkladService {
                 return true
             }
         })
+
         const productsToCreate = positionsToCreate.map(product => {
-            console.log(product)
+            generateProductAttributes(product.details.initialData)
             return {
                 name: product.name,
                 salePrices: [{
@@ -137,54 +138,8 @@ export default class SkladService {
                     },
                 }],
                 productFolder: dictionary.productFolders.glassGuard,
-                attributes: [{
-                    meta: dictionary.productAttributes["Вид номенклатуры"],
-                    value: dictionary.attributesValue["Готовая продукция"],
-                },{
-                    meta: dictionary.productAttributes["Длина в мм"],
-                    value: String(product.details.initialData.length),
-                },{
-                    meta: dictionary.productAttributes["Ширина в мм"],
-                    value: String(product.details.initialData.width),
-                },{
-                    meta: dictionary.productAttributes["Кол во вырезов 1 категорий/ шт"],
-                    value: String(product.details.initialData.cutsv1),
-                },{
-                    meta: dictionary.productAttributes["Кол во вырезов 2 категорий/ шт"],
-                    value: String(product.details.initialData.cutsv2),
-                },{
-                    meta: dictionary.productAttributes["Кол во сверлении/шт"],
-                    value: String(product.details.initialData.drills),
-                },{
-                    meta: dictionary.productAttributes["Кол во зенковании/ шт"],
-                    value: String(product.details.initialData.zenk),
-                },{
-                    meta: dictionary.productAttributes["Материал 1"],
-                    value: `${product.details.initialData.material1}`,
-                },{
-                    meta: dictionary.productAttributes["Материал 2"],
-                    value: `${product.details.initialData.material2}`,
-                },{
-                    meta: dictionary.productAttributes["Материал 3"],
-                    value: product.details.initialData.material3 ? `${product.details.initialData.material3}` : '',
-                },{
-                    meta: dictionary.productAttributes["тип станка обрабатывающий"],
-                    value: product.result.other.stanok
-                },{
-                    meta: dictionary.productAttributes["Тип изделия"],
-                    value: product.result.other.type
-                },{
-                    meta: dictionary.productAttributes["Окрашивание"],
-                    value: product.details.initialData.color ? product.details.initialData.color : '',
-                },{
-                    meta: dictionary.productAttributes["Печать"],
-                    value: product.details.initialData.print ? 'Да' : '',
-                },{
-                    meta: dictionary.productAttributes["Полировка"],
-                    value: product.details.initialData.processing ? 'Да' : '',
-                }],
-            }});
-
+                attributes: generateProductAttributes({...product.details.initialData, ...product.result.other}),
+        }});
         if (productsToCreate.length > 0) {
             console.time('create')
             const createdProducts = await Client.sklad("https://api.moysklad.ru/api/remap/1.2/entity/product", "post", productsToCreate);
@@ -196,7 +151,8 @@ export default class SkladService {
                 promises.push(Details.create({
                     productId: pos.position.assortment.id,
                     initialData: pos.details.initialData,
-                    selfcost: pos.details.selfcost
+                    selfcost: pos.details.selfcost,
+                    result: pos.result
                 }))
             })
             const detailsResult = await Promise.allSettled(promises)
@@ -246,34 +202,6 @@ export default class SkladService {
         })
         return order
     }
-    static async calcSelfcost(){
-        let materials = {}
-        const promises = []
-        promises.push(Client.sklad("https://api.moysklad.ru/api/remap/1.2/entity/product?filter=pathName=0%20Закупки/0.02.03%20Стекло/Материал%20от%20поставщиков,%20Стекло/Матированное%20стекло%20(Matelux);pathName=0%20Закупки/0.02.03%20Стекло/Материал%20от%20поставщиков,%20Стекло/Осветленное%20стекло;pathName=0%20Закупки/0.02.03%20Стекло/Материал%20от%20поставщиков,%20Стекло/Простое%20стекло;pathName=0%20Закупки/0.02.03%20Стекло/Материал%20от%20поставщиков,%20Стекло/Рифленое%20стекло;pathName=0%20Закупки/0.02.03%20Стекло/Материал%20от%20поставщиков,%20Стекло/Стекло%20Stopsol%20и%20Зеркало;pathName=0%20Закупки/0.02.03%20Стекло/Материал%20от%20поставщиков,%20Стекло/Цветное%20стекло"))
-        promises.push(Client.sklad("https://api.moysklad.ru/api/remap/1.2/entity/product?filter=pathName=0%20Закупки/0.02.04%20Пленка%20EVA/Пленка%20EVA%20прозрачная;pathName=0%20Закупки/0.02.04%20Пленка%20EVA/Плёнки%20декоративные%20и%20цветные"))
-        const results = await Promise.all(promises)
-
-        for(const result of results){
-            for(const material of result.rows){
-                materials[material.name] = material
-            }
-        }
-        this.selfcost.materials = materials
-    }
-    static async getProcessingStages(){
-        const response = await Client.sklad('https://api.moysklad.ru/api/remap/1.2/entity/processingstage')
-        dictionary.processingstages = response.rows.reduce(( acc, curr ) => {
-            acc[curr.name] = curr.meta
-            return acc
-        }, {})
-    }
-    static async getProcuctAttributes(){
-        const response = await Client.sklad('https://api.moysklad.ru/api/remap/1.2/entity/product/metadata/attributes')
-        dictionary.productAttributes = response.rows.reduce(( acc, curr ) => {
-            acc[curr.name] = curr.meta
-            return acc
-        }, {})
-    }
     static async createProductionTask(id){
         const order = await Client.sklad(`https://api.moysklad.ru/api/remap/1.2/entity/customerorder/${id}?expand=positions.assortment&limit=100`)
         if(!order){
@@ -285,13 +213,16 @@ export default class SkladService {
             'Стекло': glass,
             'СМД': smd,
         }
+        let includesViz = false
         const result = []
         for(const position of order.positions.rows){
-            const attributes = position.assortment.attributes.reduce( (acc, curr) => {
-                acc[curr.name] = curr
-                return acc
-            }, {})
-            result.push(await map[attributes['Тип изделия'].value](position, attributes, order))
+            const data = await Details.findOne({
+                where: {
+                    productId: position.assortment.id
+                }
+            })
+            data.result.other.viz && (includesViz = true)
+            result.push(await map[data.result.other.type](data, order, position))
         }
         const response = await Client.sklad('https://api.moysklad.ru/api/remap/1.2/entity/productiontask', 'post', {
             materialsStore: {
@@ -333,36 +264,54 @@ export default class SkladService {
                     "mediaType" : "application/json"
                 },
                 value: order.name
+            },includesViz && {
+                meta: {
+                    "href" : "https://api.moysklad.ru/api/remap/1.2/entity/productiontask/metadata/attributes/a389bba7-410a-11f0-0a80-0098000450d3",
+                    "type" : "attributemetadata",
+                    "mediaType" : "application/json"
+                },
+                value: true
             }]
         })
         console.log('done')
     }
 }
 
-const triplex = async (position, attributes, order) => {
-    const PFs = [attributes['Материал 1'], attributes['Материал 2'], attributes['Материал 3']]
+const triplex = async (data, order, position) => {
+    const { initialData } = data
+    const PFs = [initialData.material1, initialData.material2, initialData.material3]
     const createdPFs = []
     const finalPlans = []
     for(const pf of PFs){
         if(!pf) continue
         
-        const processingprocess = await makeprocessingprocess(attributes)
-        const product = await makeProduct(attributes, pf.value)
-        const processingPlan = await makeProcessingPlan(attributes, pf.value, order, processingprocess, product)
+        const processingprocess = await makeprocessingprocess(data)
+        const product = await makeProduct(data, pf)
+        const processingPlan = await makeProcessingPlan(data, pf, order, processingprocess, product)
         processingPlan.quantity = position.quantity
         finalPlans.push(processingPlan)
         createdPFs.push(product)
     }
-    const finalProcessingprocess = await Processingprocess.findOne({where: {name: 'Триплекс'}})
-    const finalProcessingPlan = await Client.sklad('https://api.moysklad.ru/api/remap/1.2/entity/processingplan', 'post', {
-        name: position.assortment.name,
-        processingProcess: finalProcessingprocess,
-        materials: createdPFs.map( el => {
-            return {
+    const finalMaterials = []
+    createdPFs.forEach( el => {
+        finalMaterials.push({
                 assortment: { meta: el.meta },
                 quantity: 1
-            }
-        }),
+            })
+    })
+    data.result.materials.forEach( el => {
+        if(el.name.toLowerCase().includes('пленка')){
+            finalMaterials.push({
+                assortment: { meta: SkladService.selfcost.materials[el.name].meta},
+                quantity: el.count
+            })
+        }
+    })
+    const finalProcessingprocess = await Processingprocess.findOne({where: {name: 'Триплекс'}})
+    const finalProcessingPlan = await Client.sklad('https://api.moysklad.ru/api/remap/1.2/entity/processingplan', 'post', {
+        name: `${order.name}, ${position.assortment.name}`,
+        processingProcess: finalProcessingprocess,
+        materials: finalMaterials,
         products: [{
             assortment: { meta: position.assortment.meta },
             quantity: 1
@@ -376,20 +325,21 @@ const ceraglass = async () => {
 
 }
 const glass = async () => {
+    const { initialData } = data
 
 }
 const smd = async () => {
 
 }
-const makeProcessingPlan = async (attributes, material, order, processingprocess, product, isPF = true) => {
+const makeProcessingPlan = async (data, material, order, processingprocess, product, isPF = true) => {
     const response = await Client.sklad('https://api.moysklad.ru/api/remap/1.2/entity/processingplan', 'post', {
-        name: `${order.name} ${isPF ? 'ПФ' : ''} ${material}, ${attributes['Длина в мм'].value}х${attributes['Ширина в мм'].value} TTTTTEST`,
+        name: `${order.name}, ${isPF ? 'ПФ' : ''} ${material}, ${data.initialData.width}х${data.initialData.height} TTTTTEST`,
         processingProcess: { meta: processingprocess },
         materials: [{
             assortment: {
                 meta: SkladService.selfcost.materials[material].meta
             },
-            quantity: (attributes['Длина в мм'].value * attributes['Ширина в мм'].value) / 1000000
+            quantity: (data.initialData.width * data.initialData.height) / 1000000
         }],
         products: [{
             assortment: {
@@ -400,44 +350,20 @@ const makeProcessingPlan = async (attributes, material, order, processingprocess
     })
     return response
 }
-const makeProduct = async (attributes, material, isPF = true) => {
+const makeProduct = async (data, material, isPF = true) => {
     return await Client.sklad('https://api.moysklad.ru/api/remap/1.2/entity/product', 'post', {
-        name: `${isPF ? 'ПФ' : ''} ${material}, ${attributes['Длина в мм'].value}х${attributes['Ширина в мм'].value} TTTTTEST`,
-        attributes: [{
-                    meta: dictionary.attributes["Длина в мм"],
-                    name: "Длина в мм",
-                    value: String(attributes['Длина в мм'].value),
-                },{
-                    meta: dictionary.attributes["Ширина в мм"],
-                    name: "Ширина в мм",
-                    value: String(attributes['Ширина в мм'].value),
-                },{
-                    meta: dictionary.attributes["Кол во вырезов 1 категорий/ шт"],
-                    name: "Кол во вырезов 1 категорий/ шт",
-                    value: String(attributes['Кол во вырезов 1 категорий/ шт'].value),
-                },{
-                    meta: dictionary.attributes["Кол во вырезов 2 категорий/ шт"],
-                    name: "Кол во вырезов 2 категорий/ шт",
-                    value: String(attributes['Кол во вырезов 2 категорий/ шт'].value),
-                },{
-                    meta: dictionary.attributes["Кол во сверлении/шт"],
-                    name: "Кол во сверлении/шт",
-                    value: String(attributes['Кол во сверлении/шт'].value),
-                },{
-                    meta: dictionary.attributes["Кол во зенковании/ шт"],
-                    name: "Кол во зенковании/ шт",
-                    value: String(attributes['Кол во зенковании/ шт'].value),
-                }],
+        name: `${isPF ? 'ПФ' : ''} ${material}, ${data.initialData.width}х${data.initialData.height} TTTTTEST`,
+        attributes: generateProductAttributes(data.initialData)
     })
 }
-const makeprocessingprocess = async attributes => {
+const makeprocessingprocess = async data => {
     const stages = ['1. РСК (раскрой)']
-    attributes['тип станка обрабатывающий'].value == 'Прямолинейка' ? stages.push('4. ПРЛ (прямолинейная обработка)') : stages.push('3. КРЛ (криволинейная обработка)')
+    data.result.other.stanok == 'Прямолинейка' ? stages.push('4. ПРЛ (прямолинейная обработка)') : stages.push('3. КРЛ (криволинейная обработка)')
     // attributes['Кол во вырезов 1 категорий/ шт'].value != 0 ? stages.push('8. ВРЗ (вырезы в стекле 1 кат.)') : false
     // attributes['Кол во вырезов 2 категорий/ шт'].value != 0 ? stages.push('9. ВРЗ (вырезы в стекле 2 кат.)') : false
     // attributes['Кол во отверстии/ шт'].value != 0 ? stages.push('7. ОТВ (сверление в стекле отверстий)') : false
     // attributes['Кол во зенковании/ шт'].value != 0 ? stages.push('10. Зенковка') : false
-    attributes['Закалка'].value == 'Закалённое' ? stages.push('Закалка') : false
+    data.initialData.tempered ? stages.push('Закалка') : false
     stages.push('ОТК')
     const normalizedStages = stages.map(s => s.trim().toLowerCase()).sort();
     const hash = getStagesHash(normalizedStages)
@@ -475,10 +401,82 @@ function getStagesHash(stages) {
     .update(JSON.stringify(stages))
     .digest('hex');
 }
+const calcSelfcost = async () => {
+    let materials = {}
+    const promises = []
+    promises.push(Client.sklad("https://api.moysklad.ru/api/remap/1.2/entity/product?filter=pathName=0%20Закупки/0.02.03%20Стекло/Материал%20от%20поставщиков,%20Стекло/Матированное%20стекло%20(Matelux);pathName=0%20Закупки/0.02.03%20Стекло/Материал%20от%20поставщиков,%20Стекло/Осветленное%20стекло;pathName=0%20Закупки/0.02.03%20Стекло/Материал%20от%20поставщиков,%20Стекло/Простое%20стекло;pathName=0%20Закупки/0.02.03%20Стекло/Материал%20от%20поставщиков,%20Стекло/Рифленое%20стекло;pathName=0%20Закупки/0.02.03%20Стекло/Материал%20от%20поставщиков,%20Стекло/Стекло%20Stopsol%20и%20Зеркало;pathName=0%20Закупки/0.02.03%20Стекло/Материал%20от%20поставщиков,%20Стекло/Цветное%20стекло"))
+    promises.push(Client.sklad("https://api.moysklad.ru/api/remap/1.2/entity/product?filter=pathName=0%20Закупки/0.02.04%20Пленка%20EVA/Пленка%20EVA%20прозрачная;pathName=0%20Закупки/0.02.04%20Пленка%20EVA/Плёнки%20декоративные%20и%20цветные"))
+    promises.push(Client.sklad("https://api.moysklad.ru/api/remap/1.2/entity/product?filter=pathName=0%20Закупки/0.02.02%20Керамика/LAMINAM;pathName=0%20Закупки/0.02.02%20Керамика/ДЕГОН%20Стандарт"))
+    const results = await Promise.all(promises)
 
-await SkladService.calcSelfcost()
-await SkladService.getProcessingStages()
-await SkladService.getProcuctAttributes()
+    for(const result of results){
+        for(const material of result.rows){
+            materials[material.name] = {
+                meta: material.meta,
+                name: material.name,
+                salePrices: material.salePrices,
+            }
+        }
+    }
+    SkladService.selfcost.materials = materials
+}
+const getProcessingStages = async () => {
+    const response = await Client.sklad('https://api.moysklad.ru/api/remap/1.2/entity/processingstage')
+    dictionary.processingstages = response.rows.reduce(( acc, curr ) => {
+        acc[curr.name] = curr.meta
+        return acc
+    }, {})
+}
+const getProcuctAttributes = async () => {
+    const response = await Client.sklad('https://api.moysklad.ru/api/remap/1.2/entity/product/metadata/attributes')
+    dictionary.productAttributes = response.rows.reduce(( acc, curr ) => {
+        acc[curr.name] = curr.meta
+        return acc
+    }, {})
+}
+const getUnders = async () => {
+    const response = await Client.sklad("https://api.moysklad.ru/api/remap/1.2/entity/product?filter=pathName=Керагласс%20товары%20и%20полуфабрикаты/Подстолья")
+    SkladService.selfcost.unders = response.rows.reduce(( acc, curr ) => {
+        acc[curr.name] = curr.meta
+        return acc
+    }, {})
+}
+const getColors = async () => {
+    const response = await Client.sklad("https://api.moysklad.ru/api/remap/1.2/entity/product?filter=pathName=ТЕСТ/Цвета%20RAL%20(Только%20для%20продажи)")
+    SkladService.selfcost.colors = response.rows.reduce(( acc, curr ) => {
+        acc[curr.name] = curr.meta
+        return acc
+    }, {})
+}
+const generateProductAttributes = (data) => {
+    const result = []
+    for(const attribute in data){
+        switch(attribute) {
+            case 'height': result.push({ meta: dictionary.productAttributes["Длина в мм"], value: String(data.height) }); break;
+            case 'width': result.push({ meta: dictionary.productAttributes["Ширина в мм"], value: String(data.width) }); break;
+            case 'cutsv1': result.push({ meta: dictionary.productAttributes["Кол во вырезов 1 категорий/ шт"], value: String(data.cutsv1) }); break;
+            case 'cutsv2': result.push({ meta: dictionary.productAttributes["Кол во вырезов 2 категорий/ шт"], value: String(data.cutsv2) }); break;
+            case 'drills': result.push({ meta: dictionary.productAttributes["Кол во сверлении/шт"], value: String(data.drills) }); break;
+            case 'zenk': result.push({ meta: dictionary.productAttributes["Кол во зенковании/ шт"], value: String(data.zenk) }); break;
+            case 'material': result.push({ meta: dictionary.productAttributes["Материал 1"], value: data.material }); break;
+            case 'material1': result.push({ meta: dictionary.productAttributes["Материал 1"], value: data.material1 }); break;
+            case 'material2': result.push({ meta: dictionary.productAttributes["Материал 2"], value: data.material2 }); break;
+            case 'material3': result.push({ meta: dictionary.productAttributes["Материал 3"], value: data.material3 }); break;
+            case 'color': result.push({ meta: dictionary.productAttributes["Окрашивание"], value: data.color || '' }); break;
+            case 'print': result.push({ meta: dictionary.productAttributes["Печать"], value: data.print ? 'Да' : '' }); break;
+            case 'polishing': result.push({ meta: dictionary.productAttributes["Полировка"], value: data.processing ? 'Да' : '' }); break;
+            case 'type': result.push({ meta: dictionary.productAttributes["Тип изделия"], value: data.type }); break;
+            case 'stanok': result.push({ meta: dictionary.productAttributes["тип станка обрабатывающий"], value: data.stanok }); break;
+            case 'productType': result.push({ meta: dictionary.productAttributes["Вид номенклатуры"], value: dictionary.attributesValue["Готовая продукция"] }); break;
+        }
+    }
+    return result
+}
+calcSelfcost()
+getProcessingStages()
+getProcuctAttributes()
+getUnders()
+getColors()
 // setInterval(() => {
 //     SkladService.calcSelfcost()
 //     SkladService.getProcessingStages()

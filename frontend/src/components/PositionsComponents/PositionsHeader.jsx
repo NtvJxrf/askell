@@ -59,8 +59,8 @@ const PositionsHeader = () => {
         }
         setDisabled(true)
         try{
-            dispatch(setPositions([]))
             await axios.post(`${import.meta.env.VITE_API_URL}/api/sklad/addPositionsToOrder`, data, { withCredentials: true})
+            dispatch(setPositions([]))
             handleSearchClick(order.name)
             messageApi.success('Заказ обновлен')
         }catch(error){

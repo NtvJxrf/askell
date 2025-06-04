@@ -10,18 +10,25 @@ const gotClient = got.extend({
     throwHttpErrors: false,
 });
 let moyskladRequestCount = 0;
+let moyskladParralelRequestCount = 0
 const MOYSKLAD_LIMIT = 40;
 
 
 export default class Client {
     static async request(url, type, args, service) {
-        const response = await gotClient[type](url, args);
-        if (response.statusCode >= 200 && response.statusCode < 300) {
-            return JSON.parse(response.body);
-        } else {
-            throw new ApiError(response.statusCode, `Ошибка во время запроса к ${service}, ${response.body}`);
+        moyskladParralelRequestCount++;
+        try {
+            const response = await gotClient[type](url, args);
+
+            if (response.statusCode >= 200 && response.statusCode < 300) 
+                return JSON.parse(response.body)
+            else 
+                throw new ApiError(response.statusCode, `Ошибка во время запроса к ${service}, ${response.body}`)
+        } finally {
+            moyskladParralelRequestCount--;
         }
     }
+
 
     static async sklad(url, type = 'get', data) {
         const args = {
@@ -30,7 +37,7 @@ export default class Client {
             },
             json: data || undefined,
         };
-        while (moyskladRequestCount >= MOYSKLAD_LIMIT) {
+        while (moyskladRequestCount >= MOYSKLAD_LIMIT || moyskladParralelRequestCount > 3) {
             await new Promise(resolve => setTimeout(resolve, 100))
         }
         moyskladRequestCount++

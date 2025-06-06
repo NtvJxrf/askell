@@ -33,16 +33,17 @@ const DynamicForm = ({type}) => {
     const formData = store.getState().forms[type]
     const additionalFormData = useSelector(state => state.additionalForm.additionalForm)
     const selfcost = useSelector(state => state.selfcost.selfcost)
+
     const onFinish = async (value) => {
         const position = calcMap[type]({...value, ...additionalFormData}, selfcost)
         dispatch(addNewPosition(position))
         messageApi.success('Позиция добавлена')
-    };
+    }
 
 
     const handleValuesChange = (_, allValues) => {
         dispatch(setForm({ formType: type, values: allValues }));
-    };
+    }
     
     const handleClearForm = () => {
         form.resetFields()

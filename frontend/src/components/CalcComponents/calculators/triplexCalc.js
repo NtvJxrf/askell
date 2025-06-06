@@ -2,7 +2,10 @@ const Calculate = (data, selfcost) => {
     console.log(data)
     const { height, width, polishing, drills, zenk, cutsv1, cutsv2, tempered, shape, print, material1, material2, material3, tape1, tape2, customertype, rounding, trim } = data
     const tapes = [tape1, tape2]
-    const materials = [material1, material2, material3].filter(material => material !== undefined);
+    const materials = Object.entries(data)
+        .filter(([key, value]) => key.startsWith('material') && value !== undefined)
+        .map(([key, value]) => value);
+
     const works = { polishing, drills, zenk, cutsv1, cutsv2 }
     let name = `Триплекс, ${materials.join(' + ')}, (${height}х${width}, ${polishing ? 'Полировка' : ''}${tempered ? ', Закаленное' : ''}${cutsv1 ? `, Вырезы 1 кат.: ${cutsv1}` : ''}${cutsv2 ? `, Вырезы 2 кат.: ${cutsv2}` : ''}${drills ? `, Сверление: ${drills}` : ''}${zenk ? `, Зенкование: ${zenk}` : ''})`
     const S = (height * width) / 1000000

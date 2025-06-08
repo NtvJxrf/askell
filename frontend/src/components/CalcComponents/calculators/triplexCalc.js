@@ -1,15 +1,13 @@
 const Calculate = (data, selfcost) => {
     console.log(data)
-    const { height, width, polishing, drills, zenk, cutsv1, cutsv2, tempered, shape, print, material1, material2, material3, tape1, tape2, customertype, rounding, trim } = data
-    const tapes = [tape1, tape2]
-    const materials = Object.entries(data)
-        .filter(([key, value]) => key.startsWith('material') && value !== undefined)
-        .map(([key, value]) => value);
+    const { height, width, polishing, drills, zenk, cutsv1, cutsv2, cutsv3, tempered, shape, print, customertype, rounding, trim } = data
+    const tapes = Object.entries(data).filter(([key]) => key.startsWith('tape')).map(([_, value]) => value);
+    const materials = Object.entries(data).filter(([key, value]) => key.startsWith('material') && value !== undefined).map(([_, value]) => value);
 
     const works = { polishing, drills, zenk, cutsv1, cutsv2 }
     let name = `Триплекс, ${materials.join(' + ')}, (${height}х${width}, ${polishing ? 'Полировка' : ''}${tempered ? ', Закаленное' : ''}${cutsv1 ? `, Вырезы 1 кат.: ${cutsv1}` : ''}${cutsv2 ? `, Вырезы 2 кат.: ${cutsv2}` : ''}${drills ? `, Сверление: ${drills}` : ''}${zenk ? `, Зенкование: ${zenk}` : ''})`
     const S = (height * width) / 1000000
-    const P = 2 * (height + width)
+    const P = 2 * (height + width) / 1000
     
     let weight = 0
     const larger = Math.max(height, width)
@@ -29,51 +27,46 @@ const Calculate = (data, selfcost) => {
     if(larger <= 2100) S_tape = (2100 * lesser) / 1000000
     else S_tape = (2100 * larger) / 1000000    // Считаем площадь используемой пленки | 2100 это ширина рулона
     for (const tape of tapes) {
-        if(!tape) continue 
         const mats = result.materials
         switch (tape) {
-            case 'Пленка EVA Прозрачная 0,38мм':
-                mats.push({name: tape, cost: selfcost.materials[tape].salePrices[0].value, count: S_tape * 2})
-            break;
-            case 'Пленка EVA Прозрачная 0,76мм':
-                mats.push({name: tape, cost: selfcost.materials[tape].salePrices[0].value, count: S_tape})
+            case undefined:
+                mats.push({name: `Пленка EVA Прозрачная 0,38мм`, value: selfcost.materials[`Пленка EVA Прозрачная 0,38мм`].salePrices[0].value * S_tape * 2, count: S_tape})
             break;
             case 'Смарт пленка Magic Glass':
-                mats.push({name: tape, cost: selfcost.materials[tape].salePrices[0].value, count: S_tape})
-                mats.push({name: 'Пленка EVA Прозрачная 0,76мм', cost: selfcost.materials['Пленка EVA Прозрачная 0,76мм'].salePrices[0].value, count: S_tape * 2})
+                mats.push({name: tape, value: selfcost.materials[tape].salePrices[0].value * S_tape, count: S_tape})
+                mats.push({name: 'Пленка EVA Прозрачная 0,76мм', value: selfcost.materials['Пленка EVA Прозрачная 0,76мм'].salePrices[0].value * S_tape * 2, count: S_tape})
             break;
             case 'Пленка EVA №25 Хамелеон Гладкий 1.4':
-                mats.push({name: tape, cost: selfcost.materials[tape].salePrices[0].value, count: S_tape})
-                mats.push({name: 'Пленка EVA Прозрачная 0,38мм', cost: selfcost.materials['Пленка EVA Прозрачная 0,38мм'].salePrices[0].value, count: S_tape * 2})
+                mats.push({name: tape, value: selfcost.materials[tape].salePrices[0].value * S_tape, count: S_tape})
+                mats.push({name: 'Пленка EVA Прозрачная 0,38мм', value: selfcost.materials['Пленка EVA Прозрачная 0,38мм'].salePrices[0].value * S_tape * 2, count: S_tape})
             break;
             default:
-                mats.push({name: tape, cost: selfcost.materials[tape].salePrices[0].value, count: S_tape})
-                mats.push({name: 'Пленка EVA Прозрачная 0,38мм', cost: selfcost.materials['Пленка EVA Прозрачная 0,38мм'].salePrices[0].value, count: S_tape})
+                mats.push({name: tape, value: selfcost.materials[tape].salePrices[0].value * S_tape, count: S_tape})
+                mats.push({name: 'Пленка EVA Прозрачная 0,38мм', value: selfcost.materials['Пленка EVA Прозрачная 0,38мм'].salePrices[0].value * S_tape, count: S_tape})
         }
     }
     for(const material of materials){
-        if(!material) continue
-        weight += 2.5 * S * material.t
-        result.materials.push({name: `${material}`, cost: selfcost.materials[material].salePrices[0].value, count: S * trim})
+        weight += 2.5 * S * Number(material.match(/\d+/)[0])
+        result.materials.push({name: `${material}`, value: selfcost.materials[material].salePrices[0].value * S * trim})
     }
-    const stanok = (shape && cutsv1 == 0 && cutsv2 == 0 && weight < 50) ? 'Прямолинейка' : 'Криволинейка'
+    const stanok = (shape && cutsv1 == 0 && cutsv2 == 0 && cutsv3 == 0 && weight < 50) ? 'Прямолинейка' : 'Криволинейка'
     for(const work in works){
         if(work === 0) continue
         switch(work){
             case 'polishing':
-                result.works.push({name: 'Полировка', cost: selfcost.workPrices['Полировка'][stanok], count: S * trim})
+                result.works.push({name: 'Полировка', value: selfcost.workPrices['Полировка'][stanok] * P, string: `${selfcost.workPrices['Полировка'][stanok].toFixed(2)} * ${P.toFixed(2)}`})
             break
             case 'drills':
-                result.works.push({name: 'Сверление', cost: selfcost.workPrices['Сверление'], count: materials.length * works[work] })
+                result.works.push({name: 'Сверление', value: selfcost.workPrices['Сверление'] * materials.length * works[work] })
             break
             case 'zenk':
-                result.works.push({name: 'Зенковка', cost: selfcost.workPrices['Зенковка'], count: materials.length * works[work]})
+                result.works.push({name: 'Зенковка', value: selfcost.workPrices['Зенковка'] * materials.length * works[work]})
             break
             case 'cutsv1':
-                result.works.push({name: 'Вырез в стекле 1 кат', cost: selfcost.workPrices['Вырез в стекле 1 кат'], count: materials.length * works[work]})
+                result.works.push({name: 'Вырез в стекле 1 кат', value: selfcost.workPrices['Вырез в стекле 1 кат'] * materials.length * works[work]})
             break
             case 'cutsv2':
-                result.works.push({name: 'Вырез в стекле 2 кат', cost: selfcost.workPrices['Вырез в стекле 2 кат'], count: materials.length * works[work] })
+                result.works.push({name: 'Вырез в стекле 2 кат', value: selfcost.workPrices['Вырез в стекле 2 кат'] * materials.length * works[work] })
             break
         }
     }
@@ -82,10 +75,11 @@ const Calculate = (data, selfcost) => {
     }
     let price = 0
     for (const item of Object.values(result.materials)) {
-        price += item.cost * item.count;
+        console.log(item)
+        price += item.value
     }
     for (const item of Object.values(result.works)) {
-        price += item.cost * item.count;
+        price += item.value
     }
     result.other = {
         S,
@@ -103,7 +97,8 @@ const Calculate = (data, selfcost) => {
             price,
             added: false,
             quantity: 1,
-            details: { initialData: data, selfcost },
+            initialData: data,
+            selfcost,
             result
     }
 }

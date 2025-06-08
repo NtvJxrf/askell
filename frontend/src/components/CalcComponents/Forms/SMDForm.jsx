@@ -4,7 +4,8 @@ import formConfigs from "./formConfig";
 import store from '../../../store.js'
 import renderField from './renderField.jsx'
 const SMDForm = () => {
-    const colors = useSelector(state => state.selfcost.selfcost.colors)
+    const colors = useSelector(state => state.selfcost.selfcost?.colors)
+    if (!colors) return <div>Загрузка данных...</div>
     const colorsArray = Object.keys(colors).sort()
     formConfigs.SMDForm.commonFields[4].options = colorsArray
     return  <div style={{ maxWidth: 400, margin: '0 auto' }}>

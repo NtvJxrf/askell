@@ -114,7 +114,6 @@ export default class SkladService {
         })
 
         const productsToCreate = positionsToCreate.map(product => {
-            generateProductAttributes(product.details.initialData)
             return {
                 name: product.name,
                 salePrices: [{
@@ -138,7 +137,7 @@ export default class SkladService {
                     },
                 }],
                 productFolder: dictionary.productFolders.glassGuard,
-                attributes: generateProductAttributes({...product.details.initialData, ...product.result.other}),
+                attributes: generateProductAttributes({...product.initialData, ...product.result.other}),
         }});
         if (productsToCreate.length > 0) {
             console.time('create')
@@ -150,8 +149,8 @@ export default class SkladService {
                 const pos = data.positions[indexes[index]]
                 promises.push(Details.create({
                     productId: pos.position.assortment.id,
-                    initialData: pos.details.initialData,
-                    selfcost: pos.details.selfcost,
+                    initialData: pos.initialData,
+                    selfcost: pos.selfcost,
                     result: pos.result
                 }))
             })
@@ -162,7 +161,8 @@ export default class SkladService {
                     logger.error('Failed to create detail', {
                         productId: failedPos?.position?.assortment?.id,
                         error: result.reason,
-                        inputData: failedPos?.details
+                        initialData: failedPos?.initialData,
+                        selfcost: failedPos?.selfcost 
                     });
                 }
             });
@@ -203,6 +203,7 @@ export default class SkladService {
         return order
     }
     static async createProductionTask(id){
+        console.time('creatindProudctionTask')
         const order = await Client.sklad(`https://api.moysklad.ru/api/remap/1.2/entity/customerorder/${id}?expand=positions.assortment&limit=100`)
         if(!order){
             throw new ApiError(`Заказ покупателя с ${id} не найден`)
@@ -273,13 +274,13 @@ export default class SkladService {
                 value: true
             }]
         })
-        console.log('done')
+        console.timeEnd('creatindProudctionTask')
     }
 }
 
 const triplex = async (data, order, position) => {
     const { initialData } = data
-    const PFs = [initialData.material1, initialData.material2, initialData.material3]
+    const PFs = Object.entries(initialData).filter(([key, value]) => key.startsWith('material') && value !== undefined).map(([_, value]) => value);
     const createdPFs = []
     const finalPlans = []
     for(const pf of PFs){

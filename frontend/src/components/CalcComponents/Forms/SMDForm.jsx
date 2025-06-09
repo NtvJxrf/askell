@@ -1,16 +1,34 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useMemo } from "react";
 import { useSelector } from "react-redux";
 import formConfigs from "./formConfig";
-import store from '../../../store.js'
-import renderField from './renderField.jsx'
-const SMDForm = () => {
-    const colors = useSelector(state => state.selfcost.selfcost?.colors)
-    if (!colors) return <div>Загрузка данных...</div>
-    const colorsArray = Object.keys(colors).sort()
-    formConfigs.SMDForm.commonFields[4].options = colorsArray
-    return  <div style={{ maxWidth: 400, margin: '0 auto' }}>
-                {formConfigs.SMDForm.commonFields.map((item) => renderField(item))}
-            </div>
-}
+import renderField from './renderField.jsx';
 
-export default SMDForm
+const SMDForm = () => {
+  const colors = useSelector(state => state.selfcost.selfcost?.colors);
+
+  const colorsArray = useMemo(() => {
+    if (!colors) return [];
+    return Object.keys(colors).sort();
+  }, [colors]);
+
+  const smdFormFields = useMemo(() => {
+    return formConfigs.SMDForm.commonFields.map((field, index) => {
+      if (field.name === 'color' || index === 4) {
+        return { ...field, options: colorsArray };
+      }
+      return field;
+    });
+  }, [colorsArray]);
+
+  if (!colorsArray.length) {
+    return <div>Загрузка данных...</div>;
+  }
+
+  return (
+    <div style={{ maxWidth: 400, margin: '0 auto' }}>
+      {smdFormFields.map((item) => renderField(item))}
+    </div>
+  );
+};
+
+export default SMDForm;

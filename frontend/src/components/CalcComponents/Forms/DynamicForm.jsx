@@ -68,7 +68,7 @@ const DynamicForm = ({type}) => {
                 onValuesChange={handleValuesChange}
                 style={{ margin: '0 auto', marginTop: 30 }}
             >
-                {FormComponent ? <FormComponent form={form} /> : <div>Форма не найдена</div>}
+                {FormComponent ? <FormComponent /> : <div>Форма не найдена</div>}
                 <Form.Item style={{ display: 'flex', justifyContent: 'center'}}>
                     <Space size={15}>
                         <SubmitButton form={form} onFinish={onFinish}/>

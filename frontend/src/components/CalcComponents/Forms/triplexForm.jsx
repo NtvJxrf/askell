@@ -2,21 +2,31 @@ import { useSelector } from "react-redux";
 import formConfigs from "./formConfig.js";
 import renderField from './renderField.jsx';
 import { Row, Col, Button } from 'antd';
-import { useState, useRef } from "react";
+import { useState, useRef, useMemo } from "react";
 
 const excludedWords = ['пленка', 'плёнка', 'плита'];
+const tapesArray = ['Пленка EVA №25 Хамелеон Гладкий 1.4', 'Смарт пленка Magic Glass', 'Смарт-пленка белая (для Триплекса)', 'плёнка ORACAL 641-OOM 1.26x50ru', 'Пленка Boneva FORCE 0.76', 'Пленка EVA Orange (Оранжевая) 0,38 мм', 'Пленка EVA №1 Black Черная', 'Пленка EvoLam 0,38мм  2,1х50 м (Blue T (синяя))', 'Пленка EVA №2 White (БЕЛАЯ)-MILK(молоко)', 'Пленка EVA Green (зелёный) 0,38мм', 'Пленка EVA Bronze (бронза) 0,38мм', 'пленка EVA №6 Серая непрозрачная', 'Пленка EVA Super White (насыщенно белая) 0,38мм', 'Пленка EVA Black (чёрная) 0,38мм', 'Пленка EVA yellow (желтый) 0,38мм', 'Пленка EVA №7 Бежевая непрозрачная', 'Пленка EVA sapphire (сапфир) 0,38мм', 'Пленка EVA White (белая) 0,38мм', 'пленка EVA №3 FS (САТИН)', 'Пленка EVA Grey (серая) 0,38мм', 'Пленка EVA №24 черная прозрачная- Dark Grey (темно-серая)']
 
 const TriplexForm = () => {
   const materials = useSelector(state => state.selfcost.selfcost.materials)
-  const materialsArray = Object.keys(materials)
-    .filter(el => !excludedWords.some(word => el.toLowerCase().includes(word)))
-    .sort();
+  const materialsArray = useMemo(() => {
+    return Object.keys(materials)
+      .filter(el => !excludedWords.some(word => el.toLowerCase().includes(word)))
+      .sort();
+  }, [materials]);
 
-  formConfigs.triplexForm.materialFields[1].options = materialsArray;
-  formConfigs.triplexForm.materialFields[5].options = materialsArray;
-  const tapesArray = ['Пленка EVA №25 Хамелеон Гладкий 1.4', 'Смарт пленка Magic Glass', 'Смарт-пленка белая (для Триплекса)', 'плёнка ORACAL 641-OOM 1.26x50ru', 'Пленка Boneva FORCE 0.76', 'Пленка EVA Orange (Оранжевая) 0,38 мм', 'Пленка EVA №1 Black Черная', 'Пленка EvoLam 0,38мм  2,1х50 м (Blue T (синяя))', 'Пленка EVA №2 White (БЕЛАЯ)-MILK(молоко)', 'Пленка EVA Green (зелёный) 0,38мм', 'Пленка EVA Bronze (бронза) 0,38мм', 'пленка EVA №6 Серая непрозрачная', 'Пленка EVA Super White (насыщенно белая) 0,38мм', 'Пленка EVA Black (чёрная) 0,38мм', 'Пленка EVA yellow (желтый) 0,38мм', 'Пленка EVA №7 Бежевая непрозрачная', 'Пленка EVA sapphire (сапфир) 0,38мм', 'Пленка EVA White (белая) 0,38мм', 'пленка EVA №3 FS (САТИН)', 'Пленка EVA Grey (серая) 0,38мм', 'Пленка EVA №24 черная прозрачная- Dark Grey (темно-серая)']
+  const triplexFormFields = useMemo(() => {
+    const updatedFields = [...formConfigs.triplexForm.materialFields];
+    updatedFields[1] = { ...updatedFields[1], options: materialsArray };
+    updatedFields[5] = { ...updatedFields[5], options: materialsArray };
+    return updatedFields;
+  }, [materialsArray]);
 
-  formConfigs.triplexForm.commonFields[11].options = tapesArray;
+  const triplexCommonFields = useMemo(() => {
+    const updatedFields = [...formConfigs.triplexForm.commonFields];
+    updatedFields[11] = { ...updatedFields[11], options: tapesArray };
+    return updatedFields;
+  }, []);
 
   const [additionalMaterials, setAdditionalMaterials] = useState([]);
   const materialCount = useRef(3);
@@ -58,11 +68,11 @@ const TriplexForm = () => {
   return (
     <Row gutter={24} style={{ width: '100%' }}>
       <Col span={12} style={{ paddingLeft: 30 }}>
-        {formConfigs.triplexForm.commonFields.map(item => renderField(item))}
+        {triplexCommonFields.map(item => renderField(item))}
       </Col>
       <Col span={12} style={{ display: 'flex', flexDirection: 'column', height: '500px', paddingRight: 16 }}>
         <div style={{ flex: 1, overflowY: 'auto' }}>
-          {formConfigs.triplexForm.materialFields.map(item => renderField(item))}
+          {triplexFormFields.map(item => renderField(item))}
           {additionalMaterials.map(item => (
             <div key={item.id}>
               {renderField(item)}

@@ -1,59 +1,105 @@
 // components/PositionDetailsModal.js
 import React from 'react';
-import { Modal, Table } from 'antd';
-import triplexCalc from '../CalcComponents/calculators/triplexCalc';
+import { Modal, Tooltip, Typography, Divider } from 'antd';
 
-const detailsColumns = [
-    { title: 'Название', dataIndex: 'name' },
-    { title: 'Себестоимость', dataIndex: 'cost', render: value => (value / 100).toFixed(2) },
-    { title: 'Количество', dataIndex: 'count', render: value => value.toFixed(2) },
-    {
-        title: 'Сумма',
-        dataIndex: 'price',
-        render: (_, record) => ((record.cost / 100) * record.count).toFixed(2),
-    },
-];
+const { Text, Title } = Typography;
 
-const renderDetails = record => {
-    if (record.result) {
-        return (
-            <>
-                <Table
-                    dataSource={record.result.materials}
-                    columns={detailsColumns}
-                    pagination={false}
-                    rowKey={(row, index) => `mat-${index}`}
-                />
-                <Table
-                    dataSource={record.result.works}
-                    columns={detailsColumns}
-                    pagination={false}
-                    rowKey={(row, index) => `work-${index}`}
-                />
-            </>
-        );
-    } else if (record.details) {
-        const result = triplexCalc(record.details.initialData, record.details.selfcost)
-        return (
-            <>
-                <Table
-                    dataSource={result.result.materials}
-                    columns={detailsColumns}
-                    pagination={false}
-                    rowKey={(row, index) => `mat-${index}`}
-                />
-                <Table
-                    dataSource={result.result.works}
-                    columns={detailsColumns}
-                    pagination={false}
-                    rowKey={(row, index) => `work-${index}`}
-                />
-            </>
-        );
-    } else {
-        return <p>Никаких деталей нет</p>;
-    }
+const renderItem = (item, index) => {
+    const hasDetails = item.string || item.formula;
+
+    const formattedValue = (item.value / 100).toFixed(2)
+
+    return (
+        <div key={index} style={{ marginBottom: 4 }}>
+            <Text>
+                {item.name}:{' '}
+                {hasDetails ? (
+                    <Tooltip
+                        title={
+                            <>
+                                {item.formula && (
+                                    <div><strong>Формула:</strong> {item.formula}</div>
+                                )}
+                                {item.string && (
+                                    <div><strong>Пояснение:</strong> {item.string}</div>
+                                )}
+                            </>
+                        }
+                        placement="right"
+                        popupStyle={{ maxWidth: 600, whiteSpace: 'normal' }}
+                    >
+                        <span style={{ textDecoration: 'underline dotted', cursor: 'help' }}>
+                            {formattedValue}
+                        </span>
+                    </Tooltip>
+                ) : (
+                    <strong>{formattedValue}</strong>
+                )}
+            </Text>
+        </div>
+    );
 };
+
+
+const renderDetails = (record) => {
+    console.log(record)
+    const { result } = record || {};
+    if (!result) return null;
+
+    const { materials = [], works = [], expenses = {} } = result;
+
+    const totalMaterials = materials.reduce((sum, item) => sum + (item.value || 0), 0)
+    const totalWorks = works.reduce((sum, item) => sum + (item.value || 0), 0)
+    const totalExpenses = expenses.reduce((sum, item) => sum + (item.value || 0), 0)
+
+    return (
+        <div style={{ display: 'flex', gap: 32 }}>
+            {/* Левая колонка — расчеты */}
+            <div style={{ flex: 2 }}>
+                <Title level={4}>Материалы</Title>
+                {materials.map(renderItem)}
+                <div style={{ marginTop: 8, fontWeight: 'bold' }}>
+                    Итого по материалам: {(totalMaterials / 100).toFixed(2)}
+                </div>
+
+                <Divider />
+
+                <Title level={4}>Работы</Title>
+                {works.map(renderItem)}
+                <div style={{ marginTop: 8, fontWeight: 'bold' }}>
+                    Итого по работам: {(totalWorks / 100).toFixed(2)}
+                </div>
+
+                <Divider />
+
+                <Title level={4}>Расходы</Title>
+                {expenses.map(renderItem)}
+                <div style={{ marginTop: 8, fontWeight: 'bold' }}>
+                    Итого по доп расходам: {(totalExpenses / 100).toFixed(2)}
+                </div>
+
+                <Divider />
+
+                <Title level={4}>Общая себестоимость</Title>
+                {renderItem({
+                    name: 'Итоговая цена',
+                    string: `${(totalMaterials / 100).toFixed(2)} + ${(totalWorks / 100).toFixed(2)} + ${(totalExpenses / 100).toFixed(2)}`,
+                    formula: `Материалы + Работы + Расходы ТУТ НУЖНО ЕЩЕ УМНОЖИТЬ НА НАЦЕНКУ ДЛЯ ВЫБРАННОГО ТИПА КЛИЕНТА`,
+                    value: totalMaterials + totalWorks + totalExpenses
+                })}
+            </div>
+
+            {/* Правая колонка — исходные данные */}
+            <div style={{ flex: 1 }}>
+                {renderLabeledDataBlock('Исходные данные', record.initialData, initialDataLabels)}
+                {renderLabeledDataBlock('Доп информация', result.other, otherLabels)}
+            </div>
+        </div>
+    );
+
+};
+
+
 
 const PositionDetailsModal = ({ open, onClose, record }) => {
     return (
@@ -67,6 +113,73 @@ const PositionDetailsModal = ({ open, onClose, record }) => {
             {record && renderDetails(record)}
         </Modal>
     );
+};
+
+const renderLabeledDataBlock = (title, data, dictionary = {}) => {
+    console.log(data)
+    if (!data || typeof data !== 'object') return null;
+
+    return (
+        <>
+            <Title level={5}>{title}</Title>
+            {Object.entries(data).map(([key, value]) => {
+                let label = dictionary[key] || key;
+
+                if (/^material\d+$/.test(key)) {
+                    label = `Материал ${key.replace('material', '')}`;
+                } else if (/^tape\d+$/.test(key)) {
+                    label = `Плёнка ${key.replace('tape', '')}`;
+                }
+
+                const displayValue =
+                    typeof value === 'boolean'
+                        ? value ? 'Да' : 'Нет'
+                        : typeof value === 'number'
+                            ? value.toFixed(2)
+                            : String(value || '');
+
+                return (
+                    <div key={key}>
+                        <Text type="secondary">{label}:</Text> {displayValue}
+                    </div>
+                );
+            })}
+            <Divider />
+        </>
+    );
+};
+
+
+const initialDataLabels = {
+    height: 'Высота',
+    width: 'Ширина',
+    drills: 'Сверление',
+    zenk: 'Зенковка',
+    cutsv1: 'Вырез 1 кат.',
+    cutsv2: 'Вырез 2 кат.',
+    cutsv3: 'Вырез 3 кат.',
+    shape: 'Прямоугольная форма',
+    tempered: 'Закалка',
+    polishing: 'Полировка',
+    print: 'Печать',
+    addTape: 'Дополнительная плёнка',
+    rounding: 'Округление',
+    customertype: 'Тип клиента',
+    trim: 'Коэфицент обрези',
+    color: 'Цвет',
+    material: 'Материал'
+};
+
+const otherLabels = {
+    P: 'Периметр',
+    S: 'Площадь изделия',
+    S_tape: 'Площадь пленки',
+    trim: 'Коэфицент обрези',
+    stanok: 'Станок',
+    allThickness: 'Общая толщина триплекса, мм',
+    weight: 'Вес, кг',
+    type: 'Тип изделия',
+    viz: 'Учавствует виз',
 };
 
 export default React.memo(PositionDetailsModal);

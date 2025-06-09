@@ -4,7 +4,7 @@ const Calculate = (data, selfcost) => {
     const works = { tempered, polishing, drills, zenk, cutsv1, cutsv2, cutsv3 }
     const S = (height * width) / 1000000
     const P = ((height + width) * 2) / 1000
-    const thickness = Number(material.match(/\d+/)[0])
+    const thickness = Number(material.match(/(\d+(?:[.,]\d+)?)\s*мм/i)[1])
     let weight = S * 2.5 * thickness
     let name = `${material}(${height}х${width}${polishing ? ', Полировка' : ''}${tempered ? ', Закаленное' : ''}${cutsv1 ? `, Вырезы 1 кат.: ${cutsv1}` : ''}${cutsv2 ? `, Вырезы 2 кат.: ${cutsv2}` : ''}${drills ? `, Сверление: ${drills}` : ''}${zenk ? `, Зенкование: ${zenk}` : ''})`
     const stanok = (shape && cutsv1 == 0 && cutsv2 == 0 && cutsv3 == 0 && weight < 50) ? 'Прямолинейка' : 'Криволинейка'
@@ -14,7 +14,7 @@ const Calculate = (data, selfcost) => {
         other: {}
     }
     result.materials.push({name: material, value: selfcost.materials[material].salePrices[0].value * S})
-    result.works.push({name: 'Шлифовка', value: selfcost.workPrices['Шлифовка'][stanok] * P})
+    result.works.push({name: 'Шлифовка', value: selfcost.works[`${stanok} Шлифовка`] * P, string: ``})
     for(const work in works){
         if(!work) continue
         switch(work){

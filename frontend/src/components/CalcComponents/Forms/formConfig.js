@@ -77,6 +77,12 @@ const formConfigs = {
         { name: 'tempered', label: 'Закаленное', type: 'checkbox' },
         { name: 'polishing', label: 'Полировка', type: 'checkbox' },
         { name: 'print', label: 'Печать', type: 'checkbox' },
+        {
+          name: 'addTape',
+          label: 'Доп пленка',
+          type: 'select',
+          options: [],
+        },
       ],
       materialFields: [
         {label: 'Материал 1', type: 'divider'},

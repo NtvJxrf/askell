@@ -32,61 +32,7 @@ const dictionary = {
 }
 
 export default class SkladService {
-    static selfcost = {
-        workPrices: {
-            'Раскрой стекла': 65.05970854,
-            'Раскрой керамики': 654.678932,
-            'Раскрой гидрорез керамика': 245.5045995,
-            'Шлифовка': {
-                'Криволинейка': 85.39086746,
-                'Прямолинейка': 36.92578052
-            },
-            'Полировка': {
-                'Криволинейка': 113.8544899,
-                'Прямолинейка': 36.92578052
-            },
-            'Мойка': 52.18382839,
-            'Закалка': {
-                '4': 30.36119732,
-                '5': 37.95149665,
-                '6': 45.54179598,
-                '8': 60.72239464,
-                '10': 75.9029933,
-                '12': 91.08359196
-            },
-            'Сверление': 113.8544899,
-            'Зенковка': 227.7089799,
-            'Вырез в стекле 1 кат': 455.4179598,
-            'Вырез в стекле 2 кат': 910.8359196,
-            'Окраска стекла': 245.5045995,
-            'УФ печать': 2365,
-            'Триплекс': {
-                '4': 468.7170214,
-                '6': 468.7170214,
-                '8': 468.7170214,
-                '9': 468.7170214,
-                '10': 489.2233911,
-                '11': 505.0,
-                '12': 641.6,
-                '14': 559.112447,
-                '16': 599.8141194,
-                '18': 641.6044474,
-                '20': 686.6293209,
-                '22': 782.7574258,
-                '24': 1739.46,
-                '26': 3478.92,
-                '28': 3478.92,
-                '30': 3478.92,
-                '32': 3478.92,
-                '34': 3478.92,
-                '36': 3478.92
-            },
-            'Ламинирование (Эпоксидный клей)': 869.7304731,
-            'Сборка иных конструкций': 7856.147184,
-            'Сверление СМД': 300.0,
-            'Вырезы СМД': 1300.0
-            }
-    }
+    static selfcost = {}
     static ordersInWork = null
     static async getOrdersInWork(){
         const orders = await Client.sklad('https://api.moysklad.ru/api/remap/1.2/entity/customerorder?filter=state=https://api.moysklad.ru/api/remap/1.2/entity/customerorder/metadata/states/86ef9098-927f-11ee-0a80-145a003ab7bf&expand=agent&limit=100')
@@ -449,6 +395,13 @@ const getColors = async () => {
         return acc
     }, {})
 }
+const getWorks = async () => {
+    const response = await Client.sklad("https://api.moysklad.ru/api/remap/1.2/entity/product?filter=pathName=Стоимость%20работ")
+    SkladService.selfcost.works = response.rows.reduce(( acc, curr ) => {
+        acc[curr.name] = curr.salePrices[0].value
+        return acc
+    }, {})
+}
 const generateProductAttributes = (data) => {
     const result = []
     for(const attribute in data){
@@ -478,6 +431,7 @@ getProcessingStages()
 getProcuctAttributes()
 getUnders()
 getColors()
+getWorks()
 // setInterval(() => {
 //     SkladService.calcSelfcost()
 //     SkladService.getProcessingStages()

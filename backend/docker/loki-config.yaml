@@ -6,12 +6,15 @@ server:
 
 ingester:
   lifecycler:
+    address: 127.0.0.1
     ring:
       kvstore:
         store: inmemory
       replication_factor: 1
   chunk_idle_period: 5m
   max_chunk_age: 1h
+  chunk_target_size: 1048576
+  lifecycler_ring_period: 5s
 
 schema_config:
   configs:
@@ -26,9 +29,8 @@ schema_config:
 storage_config:
   boltdb_shipper:
     active_index_directory: /loki/index
-    cache_location: /loki/boltdb-cache
+    cache_location: /loki/cache
     shared_store: filesystem
-
   filesystem:
     directory: /loki/chunks
 
@@ -42,4 +44,4 @@ chunk_store_config:
 
 table_manager:
   retention_deletes_enabled: true
-  retention_period: 168h
+  retention_period: 720h

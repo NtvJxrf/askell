@@ -23,16 +23,16 @@ services:
       - postgres-data:/var/lib/postgresql/data
     restart: unless-stopped
 
+  services:
   loki:
     image: grafana/loki:2.8.2
     container_name: loki
-    command: -config.file=/etc/loki/local-config.yaml
     volumes:
       - ./loki-config.yaml:/etc/loki/local-config.yaml
-      - ./logs:/loki/chunks
+      - /askell/backend/logs:/var/log/askell # Если понадобятся логи на уровне Loki (но обычно Loki читает через Promtail)
+    command: -config.file=/etc/loki/local-config.yaml
     ports:
       - "3100:3100"
-    restart: unless-stopped
 
 
   promtail:

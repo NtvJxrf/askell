@@ -15,4 +15,4 @@ scrape_configs:
           - localhost
         labels:
           job: backend-logs
-          __path__: /askell/backend/logs/**/*.log
+          __path__: /var/log/askell/*.log

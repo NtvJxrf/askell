@@ -23,6 +23,13 @@ const formConfigs = {
           type: 'select',
           options: [],
         },
+        {
+          name: 'clientType',
+          label: 'Тип клитента',
+          type: 'select',
+          options: ['VIP', 'Дилер', 'Опт', 'Розница'],
+          rules: [{ required: true, message: 'Fill this field' }]
+        },
         { name: 'cuts', type: 'input', label: 'Количество вырезов', rules: [{ required: true, message: 'Fill this field' }] },
         { name: 'print', label: 'Печать', type: 'checkbox' },
       ]

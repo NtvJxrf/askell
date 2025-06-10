@@ -29,7 +29,7 @@ services:
     command: -config.file=/etc/loki/local-config.yaml
     volumes:
       - ./loki-config.yaml:/etc/loki/local-config.yaml
-      - loki-wal:/wal
+      - ./logs:/loki/chunks
     ports:
       - "3100:3100"
     restart: unless-stopped

@@ -49,7 +49,7 @@ const initModels = async () => {
       if(!admin)
         await models.User.create({
           username: 'admin',
-          password: 'admin',
+          password: 'admin1234',
           creator: null,
           role: 'admin'
         })

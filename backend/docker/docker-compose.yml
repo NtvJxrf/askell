@@ -31,22 +31,14 @@ services:
     ports:
       - "3100:3100"
 
-
   promtail:
     image: grafana/promtail:2.8.2
     container_name: promtail
     volumes:
-      - /askell/backend/logs:/askell/backend/logs:ro
-      - /var/log:/var/log
-      - /etc/promtail:/etc/promtail
-      - /etc/machine-id:/etc/machine-id
-      - /etc/hostname:/etc/hostname
-      - /proc:/host/proc:ro
-      - /sys:/host/sys:ro
-      - ./promtail-config.yaml:/etc/promtail/config.yaml
+      - /root/askell/backend/src/logs:/var/log/askell:ro
+      - ./promtail-config.yaml:/etc/promtail/config.yaml:ro
     command: -config.file=/etc/promtail/config.yaml
     restart: unless-stopped
-
   grafana:
     image: grafana/grafana:9.4.0
     container_name: grafana

@@ -5,8 +5,8 @@ const Calculate = (data, selfcost) => {
     const tapes = Object.entries(data).filter(([key]) => key.startsWith('tape')).map(([_, value]) => value);
     const materials = Object.entries(data).filter(([key, value]) => key.startsWith('material') && value !== undefined).map(([_, value]) => value);
     addTape && tapes.push(addTape)
-    const works = { polishing, drills, zenk, cutsv1, cutsv2 }
-    let name = `Триплекс, ${materials.join(' + ')}, (${height}х${width}${polishing ? 'Полировка' : ''}${tempered ? ', Закаленное' : ''}${cutsv1 ? `, Вырезы 1 кат.: ${cutsv1}` : ''}${cutsv2 ? `, Вырезы 2 кат.: ${cutsv2}` : ''}${drills ? `, Сверление: ${drills}` : ''}${zenk ? `, Зенкование: ${zenk}` : ''})`
+    const works = { polishing, drills, zenk, cutsv1, cutsv2, print }
+    let name = `Триплекс, ${materials.join(' + ')}, (${height}х${width}${polishing ? 'Полировка' : ''}${tempered ? ', Закаленное' : ''}${cutsv1 ? `, Вырезы 1 кат.: ${cutsv1}` : ''}${cutsv2 ? `, Вырезы 2 кат.: ${cutsv2}` : ''}${cutsv3 ? `, Вырезы 3 кат.: ${cutsv3}` : ''}${drills ? `, Сверление: ${drills}` : ''}${zenk ? `, Зенкование: ${zenk}` : ''})`
     let S = (height * width) / 1000000
     const P = 2 * (height + width) / 1000
     let allThickness = 0
@@ -103,9 +103,7 @@ const Calculate = (data, selfcost) => {
                 value: selfcost.works[`Закалка ${thickness}`] * S,
                 string: `${selfcost.works[`Закалка ${thickness}`] / 100}мм * ${S}`,
                 formula: `Себестоимость закалки * площадь`
-        });
-
-
+            });
         result.materials.push({
             name: material,
             value: selfcost.materials[material].salePrices[0].value * S * trim,
@@ -114,38 +112,13 @@ const Calculate = (data, selfcost) => {
         });
     }
     const stanok = (shape && cutsv1 == 0 && cutsv2 == 0 && cutsv3 == 0 && weight < 50) ? 'Прямолинейка' : 'Криволинейка'
-
-    result.works.push({
-        name: 'Раскрой',
-        value: selfcost.works[`Раскрой стекла`],
-        string: `${(selfcost.works[`Раскрой стекла`] / 100).toFixed(2)}`,
-        formula: 'Раскрой стекла'
-    });
-
-    result.works.push({
-        name: 'Мойка',
-        value: selfcost.works[`Мойка`],
-        string: `${(selfcost.works[`Мойка`] / 100).toFixed(2)}`,
-        formula: 'Мойка'
-    });
-
-    result.works.push({
-        name: 'Шлифовка',
-        value: selfcost.works[`${stanok} Шлифовка`] * P,
-        string: `${(selfcost.works[`${stanok} Шлифовка`] / 100).toFixed(2)} * ${P.toFixed(2)}`,
-        formula: 'Себестоимость работы * Периметр'
-    });
-
-    result.works.push({
-        name: 'Триплексование',
-        value: selfcost.works[`Триплекс ${allThickness} мм`],
-        string: `${(selfcost.works[`Триплекс ${allThickness} мм`] / 100).toFixed(2)}`,
-        formula: `Фиксированная себестоимость триплексования для общей толщины (${allThickness})`
-    });
-
-    const context = { works, selfcost, result, materials, P, stanok };
+    const context = { works, selfcost, result, materials, P, stanok, S, allThickness };
+    constructWorks('cutting', context);
+    constructWorks('washing', context);
+    constructWorks('grinding', context);
+    constructWorks('triplexing', context);
     for (const work in works) {
-        if (work === 0) continue;
+        if (!work) continue;
         constructWorks(work, context);
     }
 
@@ -207,9 +180,9 @@ const Calculate = (data, selfcost) => {
 }
 
 
-const constructWorks = (work, context)=> {
-    const { works, selfcost, result, materials, P, stanok } = context;
-
+export const constructWorks = (work, context) => {
+    const { works, selfcost, result, materials, P, stanok, thickness, S, allThickness } = context;
+    console.log(work)
     switch (work) {
         case 'polishing':
             if (works[work]) {
@@ -266,6 +239,79 @@ const constructWorks = (work, context)=> {
                 formula: 'Себестоимость выреза 3 кат * Кол-во материалов * Кол-во вырезов'
             });
             break;
+
+        case 'tempered':
+            works[work] && result.works.push({
+                name: `Закалка ${thickness} мм`,
+                value: selfcost.works[`Закалка ${thickness}`] * S,
+                string: `${selfcost.works[`Закалка ${thickness}`] / 100}мм * ${S}`,
+                formula: `Себестоимость закалки * площадь`
+            });
+            break;
+
+        case 'cutting':
+            result.works.push({
+                name: 'Раскрой',
+                value: selfcost.works['Раскрой стекла'],
+                string: `${(selfcost.works['Раскрой стекла'] / 100).toFixed(2)}`,
+                formula: 'Раскрой стекла'
+            });
+            break;
+
+        case 'washing':
+            result.works.push({
+                name: 'Мойка',
+                value: selfcost.works['Мойка'],
+                string: `${(selfcost.works['Мойка'] / 100).toFixed(2)}`,
+                formula: 'Мойка'
+            });
+            break;
+
+        case 'grinding':
+            result.works.push({
+                name: 'Шлифовка',
+                value: selfcost.works[`${stanok} Шлифовка`] * P,
+                string: `${(selfcost.works[`${stanok} Шлифовка`] / 100).toFixed(2)} * ${P.toFixed(2)}`,
+                formula: 'Себестоимость работы * Периметр'
+            });
+            break;
+
+        case 'triplexing':
+            result.works.push({
+                name: 'Триплексование',
+                value: selfcost.works[`Триплекс ${allThickness} мм`],
+                string: `${(selfcost.works[`Триплекс ${allThickness} мм`] / 100).toFixed(2)}`,
+                formula: `Фиксированная себестоимость триплексования для общей толщины (${allThickness})`
+            });
+            break;
+
+        case 'print':
+            works[work] && result.works.push({
+                name: 'Печать',
+                value: selfcost.works[`УФ печать`],
+                string: `${selfcost.works[`УФ печать`] / 100}`,
+                formula: 'Себестоимость уф печати'
+            });
+            break;
+
+        case 'color':
+            works[work] && result.works.push({
+                name: 'Окрашивание',
+                value: selfcost.colors[works[work]].salePrices[1].value,
+                string: `${selfcost.colors[works[work]].salePrices[1].value / 100}`,
+                formula: 'Себестоимость окрашивания (ТУТ ПОКА СЕБЕСТОИМОСТЬ КРАСКИ ИЗ СПРАВОЧНИКА В МОЕМ СКЛАДЕ, ПЕРЕСМОТРТЕ ФОРМУЛУ)'
+            });
+            break;
+            
+        case 'cuts':
+            result.works.push({
+                name: 'Вырезы',
+                value: selfcost.works['Вырезы СМД'] * works[work],
+                string: `${selfcost.works['Вырезы СМД'] / 100} * ${works[work]}`,
+                formula: 'Себестоимость вырезов * Кол-во вырезов'
+            });
+            break;
     }
-}
+};
+
 export default Calculate

@@ -42,7 +42,6 @@ const renderItem = (item, index) => {
 
 
 const renderDetails = (record) => {
-    console.log(record)
     const { result } = record || {};
     if (!result) return null;
 
@@ -116,7 +115,6 @@ const PositionDetailsModal = ({ open, onClose, record }) => {
 };
 
 const renderLabeledDataBlock = (title, data, dictionary = {}) => {
-    console.log(data)
     if (!data || typeof data !== 'object') return null;
 
     return (
@@ -167,7 +165,9 @@ const initialDataLabels = {
     customertype: 'Тип клиента',
     trim: 'Коэфицент обрези',
     color: 'Цвет',
-    material: 'Материал'
+    material: 'Материал',
+    cuts: `Вырезы`,
+    type: 'Тип',
 };
 
 const otherLabels = {

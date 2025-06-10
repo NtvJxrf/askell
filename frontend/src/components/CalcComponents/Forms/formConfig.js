@@ -5,11 +5,11 @@ const formConfigs = {
           name: 'type',
           label: 'Тип СМД',
           type: 'select',
-          options: ['Иное', 'Кристалл', 'Круг', 'Люкс', 'Премиум', 'Стандарт', 'Шестигранник'],
+          options: ['Иное', 'Krystal', 'Round', 'Lux', 'Premium', 'Standart', 'Hexagon'],
           rules: [{ required: true, message: 'Fill this field' }]
         },
-        { name: 'height', type: 'input', label: 'Высота изделия, мм', rules: [{ required: true, message: 'Fill this field' }] },
-        { name: 'width', type: 'input', label: 'Ширина, мм изделия, мм:', rules: [{ required: true, message: 'Fill this field' }] },
+        { name: 'height', type: 'input', label: 'Высота, мм', rules: [{ required: true, message: 'Fill this field' }] },
+        { name: 'width', type: 'input', label: 'Ширина, мм:', rules: [{ required: true, message: 'Fill this field' }] },
         {
           name: 'material',
           label: 'Материал',
@@ -21,18 +21,9 @@ const formConfigs = {
           name: 'color',
           label: 'Цвет',
           type: 'select',
-          options: ['Красный', 'Черный', 'Розовый'],
-          rules: [{ required: true, message: 'Fill this field' }]
+          options: [],
         },
-        { name: 'rounds', type: 'input', label: 'Количество скруглений', rules: [{ required: true, message: 'Fill this field' }] },
         { name: 'cuts', type: 'input', label: 'Количество вырезов', rules: [{ required: true, message: 'Fill this field' }] },
-        {
-          name: 'clientType',
-          label: 'Тип клиента',
-          type: 'select',
-          options: ['VIP', 'Дилер', 'Опт', 'Розница'],
-          rules: [{ required: true, message: 'Fill this field' }]
-        },
         { name: 'print', label: 'Печать', type: 'checkbox' },
       ]
     },

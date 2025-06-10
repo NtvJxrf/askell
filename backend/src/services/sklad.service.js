@@ -391,7 +391,10 @@ const getUnders = async () => {
 const getColors = async () => {
     const response = await Client.sklad("https://api.moysklad.ru/api/remap/1.2/entity/product?filter=pathName=ТЕСТ/Цвета%20RAL%20(Только%20для%20продажи)")
     SkladService.selfcost.colors = response.rows.reduce(( acc, curr ) => {
-        acc[curr.name] = curr.meta
+        acc[curr.name] = {
+            meta: curr.meta,
+            salePrices: curr.salePrices
+        }
         return acc
     }, {})
 }

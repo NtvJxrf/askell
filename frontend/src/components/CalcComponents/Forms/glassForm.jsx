@@ -6,8 +6,8 @@ import { useMemo } from "react";
 const excludedWords = ['пленка', 'плёнка', 'плита'];
 
 const GlassForm = () => {
-  const materials = useSelector(state => state.selfcost.selfcost.materials);
-  const colors = useSelector(state => state.selfcost.selfcost.colors);
+  const materials = useSelector(state => state.selfcost.selfcost?.materials) || [];
+  const colors = useSelector(state => state.selfcost.selfcost?.colors) || [];
 
   const materialsArray = useMemo(() => {
     return Object.keys(materials)

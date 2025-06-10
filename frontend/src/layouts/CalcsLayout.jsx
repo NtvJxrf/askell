@@ -10,18 +10,20 @@ const CalcsLayout = () => {
 
     return (
         <>
-            <Row gutter={24}>
-                <Col span={12}>
-                    <CalcMenu onChange={setSelectedKey} selectedKey={selectedKey} />
-                    <DynamicForm type={selectedKey}/>
-                    <AdditionalForm />
-                </Col>
+            <div style={{ overflowX: 'hidden', width: '100%' }}>
+                <Row gutter={24}>
+                    <Col span={12}>
+                        <CalcMenu onChange={setSelectedKey} selectedKey={selectedKey} />
+                        <DynamicForm type={selectedKey}/>
+                        <AdditionalForm />
+                    </Col>
 
-                <Col span={12}>
-                    <PositionsHeader />
-                    <Positions />
-                </Col>
-            </Row>
+                    <Col span={12}>
+                        <PositionsHeader />
+                        <Positions />
+                    </Col>
+                </Row>
+            </div>
         </>
     )
 };

@@ -1,12 +1,14 @@
+import { constructWorks } from './triplexCalc'
 const Calculate = (data, selfcost) => {
+    console.log(selfcost)
     console.log(data)
-    const { material, height, width, polishing, drills, zenk, cutsv1, cutsv2, cutsv3, tempered, shape, print, customertype, rounding, trim } = data
-    const works = { tempered, polishing, drills, zenk, cutsv1, cutsv2 }
+    const { material, height, width, polishing, drills, zenk, cutsv1, cutsv2, cutsv3, tempered, shape, color, print, customertype, rounding, trim } = data
+    const works = { tempered, polishing, drills, zenk, cutsv1, cutsv2, print, color }
     let S = (height * width) / 1000000
     const P = ((height + width) * 2) / 1000
     const thickness = Number(material.match(/(\d+(?:[.,]\d+)?)\s*мм/i)[1])
     let weight = S * 2.5 * thickness
-    let name = `${material}(${height}х${width}${polishing ? ', Полировка' : ''}${tempered ? ', Закаленное' : ''}${cutsv1 ? `, Вырезы 1 кат.: ${cutsv1}` : ''}${cutsv2 ? `, Вырезы 2 кат.: ${cutsv2}` : ''}${drills ? `, Сверление: ${drills}` : ''}${zenk ? `, Зенкование: ${zenk}` : ''})`
+    let name = `${material} (${height}х${width}${polishing ? ', Полировка' : ''}${tempered ? ', Закаленное' : ''}${cutsv1 ? `, Вырезы 1 кат.: ${cutsv1}` : ''}${cutsv2 ? `, Вырезы 2 кат.: ${cutsv2}` : ''}${cutsv3 ? `, Вырезы 3 кат.: ${cutsv3}` : ''}${drills ? `, Сверление: ${drills}` : ''}${zenk ? `, Зенкование: ${zenk}` : ''})`
     const stanok = (shape && cutsv1 == 0 && cutsv2 == 0 && cutsv3 == 0 && weight < 50) ? 'Прямолинейка' : 'Криволинейка'
     const result = {
         materials: [],
@@ -14,39 +16,17 @@ const Calculate = (data, selfcost) => {
         expenses: [],
         other: {}
     }
-    result.works.push({
-        name: 'Раскрой',
-        value: selfcost.works[`Раскрой стекла`],
-        string: `${(selfcost.works[`Раскрой стекла`] / 100).toFixed(2)}`,
-        formula: 'Раскрой стекла'
-    });
-
-    result.works.push({
-        name: 'Мойка',
-        value: selfcost.works[`Мойка`],
-        string: `${(selfcost.works[`Мойка`] / 100).toFixed(2)}`,
-        formula: 'Мойка'
-    });
-
-    result.works.push({
-        name: 'Шлифовка',
-        value: selfcost.works[`${stanok} Шлифовка`] * P,
-        string: `${(selfcost.works[`${stanok} Шлифовка`] / 100).toFixed(2)} * ${P.toFixed(2)}`,
-        formula: 'Себестоимость работы * Периметр'
-    });
     result.materials.push({
         name: material,
         value: selfcost.materials[material].salePrices[0].value * S * trim,
         string: `${selfcost.materials[material].salePrices[0].value / 100} * ${S.toFixed(2)} * ${trim}`,
         formula: 'Цена за м² * Площадь * Коэффициент обрези'
     });
-    tempered && result.works.push({
-                    name: `Закалка ${thickness} мм`,
-                    value: selfcost.works[`Закалка ${thickness}`] * S,
-                    string: `${selfcost.works[`Закалка ${thickness}`] / 100} * ${S}`,
-                    formula: `Себестоимость закалки * площадь`
-            });
-    const context = { works, selfcost, result, P, stanok };
+    const materials = [material]
+    const context = { works, selfcost, result, P, stanok, materials, thickness, S };
+    constructWorks('cutting', context);
+    constructWorks('washing', context);
+    constructWorks('grinding', context);
     for(const work in works){
         if(!work) continue
         constructWorks(work, context)
@@ -85,7 +65,7 @@ const Calculate = (data, selfcost) => {
     });
     const price = workshopExpenses + commercialExpenses + householdExpenses + materialsandworks
 
-    result.other = {
+    result.other = {...result.other, ...{
         S,
         P,
         trim,
@@ -93,8 +73,7 @@ const Calculate = (data, selfcost) => {
         weight,
         type: 'Стекло',
         productType: true,
-        viz: true
-    }
+    }}
     console.log(result)
     return {
             key: Date.now(),
@@ -109,71 +88,6 @@ const Calculate = (data, selfcost) => {
 }
 
 export default Calculate
-
-
-
-const constructWorks = (work, context)=> {
-    const { works, selfcost, result, P, stanok } = context;
-
-    switch (work) {
-        case 'polishing':
-            if (works[work]) {
-                result.works.push({
-                    name: 'Полировка',
-                    value: selfcost.works[`${stanok} Полировка`] * P,
-                    string: `${selfcost.works[`${stanok} Полировка`] / 100} * ${P.toFixed(2)}`,
-                    formula: 'Себестоимость работы * Периметр'
-                });
-            }
-            break;
-
-        case 'drills':
-            result.works.push({
-                name: 'Сверление',
-                value: selfcost.works['Сверление стекла, керамики'] * works[work],
-                string: `${selfcost.works['Сверление стекла, керамики'] / 100} * ${works[work]}`,
-                formula: 'Себестоимость работы * Кол-во отверстий'
-            });
-            break;
-
-        case 'zenk':
-            result.works.push({
-                name: 'Зенковка',
-                value: selfcost.works['Зенковка'] * works[work],
-                string: `${selfcost.works['Зенковка'] / 100} * ${works[work]}`,
-                formula: 'Себестоимость зенковки * Кол-во зенковок'
-            });
-            break;
-
-        case 'cutsv1':
-            result.works.push({
-                name: 'Вырез в стекле 1 кат',
-                value: selfcost.works['Вырез в стекле 1 кат'] * works[work],
-                string: `${selfcost.works['Вырез в стекле 1 кат'] / 100} * ${works[work]}`,
-                formula: 'Себестоимость выреза 1 кат * Кол-во вырезов'
-            });
-            break;
-
-        case 'cutsv2':
-            result.works.push({
-                name: 'Вырез в стекле 2 кат',
-                value: selfcost.works['Вырез в стекле 2 кат'] * works[work],
-                string: `${selfcost.works['Вырез в стекле 2 кат'] / 100} * ${works[work]}`,
-                formula: 'Себестоимость выреза 2 кат * Кол-во вырезов'
-            });
-            break;
-
-        case 'cutsv3':
-            result.works.push({
-                name: 'Вырез в стекле 3 кат',
-                value: selfcost.works['Вырез в стекле 3 кат'] * works[work],
-                string: `${selfcost.works['Вырез в стекле 3 кат'] / 100}  * ${works[work]}`,
-                formula: 'Себестоимость выреза 3 кат * Кол-во вырезов'
-            });
-            break;
-    }
-}
-
 
 
 

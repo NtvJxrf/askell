@@ -30,7 +30,9 @@ const formConfigs = {
           options: ['VIP', 'Дилер', 'Опт', 'Розница'],
           rules: [{ required: true, message: 'Fill this field' }]
         },
-        { name: 'cuts', type: 'input', label: 'Количество вырезов', rules: [{ required: true, message: 'Fill this field' }] },
+        { name: 'drills', type: 'input', label: 'Сверление, шт', rules: [{ required: true, message: 'Fill this field' }] },
+        { name: 'cuts', type: 'input', label: 'Вырезы, шт', rules: [{ required: true, message: 'Fill this field' }] },
+        { name: 'rounds', type: 'input', label: 'Скругления, шт', rules: [{ required: true, message: 'Fill this field' }] },
         { name: 'print', label: 'Печать', type: 'checkbox' },
       ]
     },

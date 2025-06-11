@@ -1,6 +1,7 @@
 import express from "express"
 import UserRouter from './api/user.routes.js'
 import SkladRouter from './api/sklad.routes.js'
+import PricesAndCoefsRouter from './api/pricesAndCoefs.routes.js'
 import adminRouteMiddleware from "../middlewares/adminRoute.middleware.js"
 import health from '../utils/health.js'
 const router = express.Router()
@@ -13,6 +14,7 @@ router
     })
 router.use('/user', UserRouter)
 router.use('/sklad', SkladRouter)
+router.use('/pricesAndCoefs', PricesAndCoefsRouter)
 router
     .route('/health')
     .get(adminRouteMiddleware, health)

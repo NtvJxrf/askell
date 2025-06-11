@@ -63,7 +63,7 @@ const Calculate = (data, selfcost) => {
         string: `(${(materialsandworks / 100).toFixed(2)} + ${(workshopExpenses / 100).toFixed(2)}) * 0.2525`,
         formula: '(Материалы + Работы + Цеховые) * 25.25%'
     });
-    const price = workshopExpenses + commercialExpenses + householdExpenses + materialsandworks
+    const price = materialsandworks + (commercialExpenses + householdExpenses + workshopExpenses) * selfcost.pricesAndCoefs[`Стекло ${customertype}`]
 
     result.other = {...result.other, ...{
         S,

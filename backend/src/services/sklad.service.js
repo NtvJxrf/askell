@@ -5,6 +5,7 @@ import { Op } from 'sequelize'
 import logger from "../utils/logger.js"
 import Processingprocess from "../databases/models/sklad/processingprocesses.model.js"
 import crypto from 'crypto'
+import PricesAndCoefs from "../databases/models/sklad/pricesAndCoefs.model.js"
 const dictionary = {
         productFolders: {
             glassGuard: {
@@ -398,10 +399,10 @@ const getColors = async () => {
         return acc
     }, {})
 }
-const getWorks = async () => {
-    const response = await Client.sklad("https://api.moysklad.ru/api/remap/1.2/entity/product?filter=pathName=Стоимость%20работ")
-    SkladService.selfcost.works = response.rows.reduce(( acc, curr ) => {
-        acc[curr.name] = curr.salePrices[0].value
+export const getPicesAndCoefs = async () => {
+    const elements = await PricesAndCoefs.findAll()
+    SkladService.selfcost.pricesAndCoefs = elements.reduce((acc, curr) => {
+        acc[curr.name] = curr.value
         return acc
     }, {})
 }
@@ -429,12 +430,12 @@ const generateProductAttributes = (data) => {
     }
     return result
 }
+getPicesAndCoefs()
 calcSelfcost()
 getProcessingStages()
 getProcuctAttributes()
 getUnders()
 getColors()
-getWorks()
 // setInterval(() => {
 //     SkladService.calcSelfcost()
 //     SkladService.getProcessingStages()

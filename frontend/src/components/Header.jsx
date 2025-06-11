@@ -7,6 +7,7 @@ const items = [
     { label: <Link to="/proccessing">Производство</Link>, key: 2},
     { label: <Link to="/materials">Материалы</Link>, key: 3},
     { label: <Link to="/settings">Настройки</Link>, key: 4},
+    { label: <Link to="/pricesandcoefs">Цены и коэфиценты</Link>, key: 5},
 ]
 const HeaderComponent = () => {
     return (

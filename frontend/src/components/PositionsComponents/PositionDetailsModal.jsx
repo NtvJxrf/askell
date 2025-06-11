@@ -50,7 +50,7 @@ const renderDetails = (record) => {
     const totalMaterials = materials.reduce((sum, item) => sum + (item.value || 0), 0)
     const totalWorks = works.reduce((sum, item) => sum + (item.value || 0), 0)
     const totalExpenses = expenses.reduce((sum, item) => sum + (item.value || 0), 0)
-
+    console.log(record)
     return (
         <div style={{ display: 'flex', gap: 32 }}>
             {/* Левая колонка — расчеты */}
@@ -82,9 +82,9 @@ const renderDetails = (record) => {
                 <Title level={4}>Общая себестоимость</Title>
                 {renderItem({
                     name: 'Итоговая цена',
-                    string: `${(totalMaterials / 100).toFixed(2)} + ${(totalWorks / 100).toFixed(2)} + ${(totalExpenses / 100).toFixed(2)}`,
-                    formula: `Материалы + Работы + Расходы ТУТ НУЖНО ЕЩЕ УМНОЖИТЬ НА НАЦЕНКУ ДЛЯ ВЫБРАННОГО ТИПА КЛИЕНТА`,
-                    value: totalMaterials + totalWorks + totalExpenses
+                    string: `${(totalMaterials / 100).toFixed(2)} + ${(totalWorks / 100).toFixed(2)} + ${(totalExpenses / 100).toFixed(2)} * ${record.selfcost.pricesAndCoefs[`${record.result.other.type} ${record.initialData.customertype}`]}`,
+                    formula: `Материалы + Работы + Расходы * Наценка для типа клиента ${record.initialData.customertype}`,
+                    value: totalMaterials + totalWorks + totalExpenses * record.selfcost.pricesAndCoefs[`${record.result.other.type} ${record.initialData.customertype}`]
                 })}
             </div>
 
@@ -168,6 +168,8 @@ const initialDataLabels = {
     material: 'Материал',
     cuts: `Вырезы`,
     type: 'Тип',
+    clientType: 'Тип клиента(Для СМД)',
+    rounds: 'Скругления',
 };
 
 const otherLabels = {

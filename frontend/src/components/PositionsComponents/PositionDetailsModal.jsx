@@ -44,8 +44,7 @@ const renderItem = (item, index) => {
 const renderDetails = (record) => {
     const { result } = record || {};
     if (!result) return null;
-
-    const { materials = [], works = [], expenses = {} } = result;
+    const { materials = [], works = [], expenses = {}, finalPrice = {}} = result;
 
     const totalMaterials = materials.reduce((sum, item) => sum + (item.value || 0), 0)
     const totalWorks = works.reduce((sum, item) => sum + (item.value || 0), 0)
@@ -80,12 +79,7 @@ const renderDetails = (record) => {
                 <Divider />
 
                 <Title level={4}>Общая себестоимость</Title>
-                {renderItem({
-                    name: 'Итоговая цена',
-                    string: `${(totalMaterials / 100).toFixed(2)} + ${(totalWorks / 100).toFixed(2)} + ${(totalExpenses / 100).toFixed(2)} * ${record.selfcost.pricesAndCoefs[`${record.result.other.type} ${record.initialData.customertype}`]}`,
-                    formula: `Материалы + Работы + Расходы * Наценка для типа клиента ${record.initialData.customertype}`,
-                    value: totalMaterials + totalWorks + totalExpenses * record.selfcost.pricesAndCoefs[`${record.result.other.type} ${record.initialData.customertype}`]
-                })}
+                {renderItem(finalPrice)}
             </div>
 
             {/* Правая колонка — исходные данные */}

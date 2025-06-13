@@ -11,10 +11,6 @@ const Details = sequelize.define('Details', {
         type: DataTypes.STRING,
         allowNull: false,
     },
-    selfcost: {
-        type: DataTypes.JSONB,
-        allowNull: false,
-    },
     initialData: {
         type: DataTypes.JSONB,
         allowNull: false,

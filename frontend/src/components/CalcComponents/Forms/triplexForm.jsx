@@ -24,7 +24,6 @@ const TriplexForm = () => {
 
   const triplexCommonFields = useMemo(() => {
     const updatedFields = [...formConfigs.triplexForm.commonFields];
-    updatedFields[11] = { ...updatedFields[11], options: tapesArray };
     return updatedFields;
   }, []);
 

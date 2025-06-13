@@ -25,6 +25,7 @@ export default class Client {
             else 
                 throw new ApiError(response.statusCode, `Ошибка во время запроса к ${service}, ${response.body}`)
         } finally {
+            console.log(moyskladRequestCount)
             moyskladParralelRequestCount--;
         }
     }

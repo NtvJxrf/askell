@@ -4,16 +4,15 @@ import {
 } from 'antd';
 import { SearchOutlined } from '@ant-design/icons';
 import axios from 'axios';
-
+import Init from '../init';
+import { useDispatch } from "react-redux";
 const { Title, Paragraph, Text } = Typography;
 
 const PricesAndCoefsLayout = () => {
     const [messageApi, contextHolder] = message.useMessage();
     const [data, setData] = useState([]);
-    const [addForm] = Form.useForm();
-    const [searchText, setSearchText] = useState('');
-    const [searchedColumn, setSearchedColumn] = useState('');
-
+    const [addForm] = Form.useForm()
+    const dispatch = useDispatch()
     useEffect(() => {
         const fetchData = async () => {
             try {
@@ -29,7 +28,11 @@ const PricesAndCoefsLayout = () => {
             }
         };
         fetchData();
-    }, []);
+
+        return async () => {
+            await Init.getSelfcost(dispatch)
+        }
+    }, [messageApi, dispatch]);
 
     const onAdd = async values => {
         try {
@@ -83,15 +86,12 @@ const PricesAndCoefsLayout = () => {
         }
     };
 
-    const handleSearch = (selectedKeys, confirm, dataIndex) => {
+    const handleSearch = (selectedKeys, confirm) => {
         confirm();
-        setSearchText(selectedKeys[0]);
-        setSearchedColumn(dataIndex);
     };
 
     const handleReset = clearFilters => {
         clearFilters();
-        setSearchText('');
     };
 
     const getColumnSearchProps = dataIndex => ({
@@ -203,7 +203,7 @@ const PricesAndCoefsLayout = () => {
                 </Paragraph>
             </Typography>
 
-            <Card title="Цены и коэффициенты" style={{ maxWidth: 1200, margin: '40px auto' }}>
+            <Card style={{ maxWidth: 1200, margin: '40px auto' }}>
                 {contextHolder}
                 <Form
                     form={addForm}
@@ -235,7 +235,7 @@ const PricesAndCoefsLayout = () => {
 
                 <Table
                     bordered
-                    pagination={{ pageSize: 10 }}
+                    pagination={{ pageSize: 10, showSizeChanger: false }}
                     dataSource={data.sort((a, b) => a.name.localeCompare(b.name))}
                     columns={columns}
                     rowClassName="editable-row"

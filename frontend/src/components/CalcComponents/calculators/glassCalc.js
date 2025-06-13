@@ -3,24 +3,40 @@ const Calculate = (data, selfcost) => {
     console.log(selfcost)
     console.log(data)
     const { material, height, width, polishing, drills, zenk, cutsv1, cutsv2, cutsv3, tempered, shape, color, print, customertype, rounding, trim } = data
-    const works = { tempered, polishing, drills, zenk, cutsv1, cutsv2, print, color }
+    const works = { tempered, polishing, drills, zenk, cutsv1, cutsv2, print }
     let S = (height * width) / 1000000
+    if(S < 0.5){
+        switch (rounding){
+            case 'Округление до 0.5':
+                S = 0.5
+            break
+            case 'Умножить на 2':
+                S = S * 2
+            break
+        }
+    }
     const P = ((height + width) * 2) / 1000
     const thickness = Number(material.match(/(\d+(?:[.,]\d+)?)\s*мм/i)[1])
     let weight = S * 2.5 * thickness
-    let name = `${material} (${height}х${width}${polishing ? ', Полировка' : ''}${tempered ? ', Закаленное' : ''}${cutsv1 ? `, Вырезы 1 кат.: ${cutsv1}` : ''}${cutsv2 ? `, Вырезы 2 кат.: ${cutsv2}` : ''}${cutsv3 ? `, Вырезы 3 кат.: ${cutsv3}` : ''}${drills ? `, Сверление: ${drills}` : ''}${zenk ? `, Зенкование: ${zenk}` : ''})`
+    let name = `${material} (${height}х${width}${polishing ? ', Полировка' : ''}${tempered ? ', Закаленное' : ''}${cutsv1 ? `, Вырезы 1 кат.: ${cutsv1}` : ''}${cutsv2 ? `, Вырезы 2 кат.: ${cutsv2}` : ''}${cutsv3 ? `, Вырезы 3 кат.: ${cutsv3}` : ''}${drills ? `, Сверление: ${drills}` : ''}${zenk ? `, Зенкование: ${zenk}` : ''}${print ? ', Печать' : ''}${color ? `, ${color}` : ''})`
     const stanok = (shape && cutsv1 == 0 && cutsv2 == 0 && cutsv3 == 0 && weight < 50) ? 'Прямолинейка' : 'Криволинейка'
     const result = {
         materials: [],
         works: [],
         expenses: [],
-        other: {}
     }
+
     result.materials.push({
         name: material,
         value: selfcost.materials[material].salePrices[0].value * S * trim,
         string: `${selfcost.materials[material].salePrices[0].value / 100} * ${S.toFixed(2)} * ${trim}`,
         formula: 'Цена за м² * Площадь * Коэффициент обрези'
+    });
+    color && result.materials.push({
+        name: color,
+        value: selfcost.colors[color].salePrices[0].value * 0.3,
+        string: `${selfcost.colors[color].salePrices[0].value / 100} * 0.3`,
+        formula: 'Цена за м² * 0.3'
     });
     const materials = [material]
     const context = { works, selfcost, result, P, stanok, materials, thickness, S };
@@ -65,7 +81,14 @@ const Calculate = (data, selfcost) => {
     });
     const price = materialsandworks + (commercialExpenses + householdExpenses + workshopExpenses) * selfcost.pricesAndCoefs[`Стекло ${customertype}`]
 
-    result.other = {...result.other, ...{
+    result.finalPrice = {
+        name: 'Итоговая цена',
+        string: `${(materialsandworks / 100).toFixed(2)} + ${((commercialExpenses + householdExpenses + workshopExpenses) / 100).toFixed(2)} * ${selfcost.pricesAndCoefs[`Стекло ${customertype}`]}`,
+        formula: `Материалы и Работы + Расходы * Наценка для типа клиента ${customertype}`,
+        value: price
+    }
+
+    result.other = {
         S,
         P,
         trim,
@@ -73,7 +96,8 @@ const Calculate = (data, selfcost) => {
         weight,
         type: 'Стекло',
         productType: true,
-    }}
+        viz: (color || print)
+    }
     console.log(result)
     return {
             key: Date.now(),
@@ -82,7 +106,6 @@ const Calculate = (data, selfcost) => {
             added: false,
             quantity: 1,
             initialData: data,
-            selfcost,
             result
     }
 }

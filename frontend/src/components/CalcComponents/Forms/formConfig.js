@@ -81,7 +81,7 @@ const formConfigs = {
           name: 'addTape',
           label: 'Доп пленка',
           type: 'select',
-          options: [],
+          options: ['Пленка EVA Прозрачная 0,38мм', 'Пленка EVA Прозрачная 0,76мм'],
         },
       ],
       materialFields: [

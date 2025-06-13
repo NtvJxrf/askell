@@ -8,6 +8,16 @@ const Calculate = (data, selfcost) => {
     const works = { polishing, drills, zenk, cutsv1, cutsv2, print }
     let name = `Триплекс, ${materials.join(' + ')}, (${height}х${width}${polishing ? 'Полировка' : ''}${tempered ? ', Закаленное' : ''}${cutsv1 ? `, Вырезы 1 кат.: ${cutsv1}` : ''}${cutsv2 ? `, Вырезы 2 кат.: ${cutsv2}` : ''}${cutsv3 ? `, Вырезы 3 кат.: ${cutsv3}` : ''}${drills ? `, Сверление: ${drills}` : ''}${zenk ? `, Зенкование: ${zenk}` : ''})`
     let S = (height * width) / 1000000
+    if(S < 0.5){
+        switch (rounding){
+            case 'Округление до 0.5':
+                S = 0.5
+            break
+            case 'Умножить на 2':
+                S = S * 2
+            break
+        }
+    }
     const P = 2 * (height + width) / 1000
     let allThickness = 0
     let weight = 0
@@ -154,6 +164,12 @@ const Calculate = (data, selfcost) => {
     });
     console.log(customertype)
     const price = materialsandworks + (commercialExpenses + householdExpenses + workshopExpenses) * selfcost.pricesAndCoefs[`Триплекс ${customertype}`]
+    result.finalPrice = {
+        name: 'Итоговая цена',
+        string: `${(materialsandworks / 100).toFixed(2)} + ${((commercialExpenses + householdExpenses + workshopExpenses) / 100).toFixed(2)} * ${selfcost.pricesAndCoefs[`Триплекс ${customertype}`]}`,
+        formula: `Материалы и Работы + Расходы * Наценка для типа клиента ${customertype}`,
+        value: price
+    }
     result.other = {
         S,
         S_tape,
@@ -174,7 +190,6 @@ const Calculate = (data, selfcost) => {
             added: false,
             quantity: 1,
             initialData: data,
-            selfcost,
             result
     }
 }
@@ -293,14 +308,14 @@ export const constructWorks = (work, context) => {
             });
             break;
 
-        case 'color':
-            works[work] && result.works.push({
-                name: 'Окрашивание',
-                value: selfcost.colors[works[work]].salePrices[1].value,
-                string: `${selfcost.colors[works[work]].salePrices[1].value / 100}`,
-                formula: 'Себестоимость окрашивания (ТУТ ПОКА СЕБЕСТОИМОСТЬ КРАСКИ ИЗ СПРАВОЧНИКА В МОЕМ СКЛАДЕ, ПЕРЕСМОТРТЕ ФОРМУЛУ)'
-            });
-            break;
+        // case 'color':
+        //     works[work] && result.works.push({
+        //         name: 'Окрашивание',
+        //         value: selfcost.colors[works[work]].salePrices[1].value,
+        //         string: `${selfcost.colors[works[work]].salePrices[1].value / 100}`,
+        //         formula: 'Себестоимость окрашивания (ТУТ ПОКА СЕБЕСТОИМОСТЬ КРАСКИ ИЗ СПРАВОЧНИКА В МОЕМ СКЛАДЕ, ПЕРЕСМОТРТЕ ФОРМУЛУ)'
+        //     });
+        //     break;
             
         case 'cuts':
             result.works.push({

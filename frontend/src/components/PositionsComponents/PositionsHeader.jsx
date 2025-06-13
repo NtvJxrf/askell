@@ -35,7 +35,8 @@ const PositionsHeader = () => {
                     price: position.price,
                     added: true,
                     quantity: position.quantity,
-                    details: position.details,
+                    result: position.result,
+                    initialData: position.initialData,
                     position
                 }
             })

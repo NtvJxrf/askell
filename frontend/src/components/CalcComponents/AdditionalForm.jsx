@@ -38,9 +38,6 @@ const AdditionalForm = () => {
                     { value: 'Более 800 тыс.', label: 'Более 800 тыс.' }
                 ]}/>
             </Form.Item>
-            <Form.Item key='Коэфицент обрези' label='Коэфицент обрези' name='trim'>
-                <InputNumber style={{ width: '100%' }}/>
-            </Form.Item>
         </Form>
     )
 }

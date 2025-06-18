@@ -222,7 +222,27 @@ export default class SkladService {
 }
 
 const triplex = async (data, order, position) => {
+    const result = {
+        viz: [],
+        selk: []
+    }  
 
+    const stagesSelk = ['1. РСК (раскрой)']
+    data.result.other.stanok == 'Прямолинейка' ? stagesSelk.push('4. ПРЛ (прямолинейная обработка)') : stagesSelk.push('3. КРЛ (криволинейная обработка)')
+    data.initialData.cutsv1 != 0 && stagesSelk.push('8. ВРЗ (вырезы в стекле 1 кат.)')
+    data.initialData.cutsv2 != 0 && stagesSelk.push('9. ВРЗ (вырезы в стекле 2 кат.)')
+    data.initialData.drills != 0 && stagesSelk.push('7. ОТВ (сверление в стекле отверстий)')
+    data.initialData.zenk != 0 && stagesSelk.push('10. Зенковка')
+    data.initialData.tempered && stagesSelk.push('Закалка')
+    stagesSelk.push('ОТК')
+    const isPF = data.result.other.viz
+    const processingprocess = await makeprocessingprocess(stagesSelk)
+    const product = await makeProduct(data, position.assortment.name, isPF)
+    const plan = await makeProcessingPlanGlass(data, position.assortment.name, order, processingprocess, product, isPF, data.initialData.material)
+    plan.quantity = position.quantity
+    result.selk.push(plan)
+
+    
 }
 const ceraglass = async () => {
 

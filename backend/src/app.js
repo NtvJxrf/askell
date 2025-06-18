@@ -6,7 +6,11 @@ import { errorConverter, errorHandler } from "./middlewares/error.middleware.js"
 import cookieParser from 'cookie-parser'
 import { initModels } from "./databases/db.js"
 import  loggerMiddleware  from "./middlewares/logger.middleware.js"
+import { initQueue } from './utils/rabbitmq.js';
+
+await initQueue();
 await initModels()
+
 
 const app = express()
 

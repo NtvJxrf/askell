@@ -1,14 +1,13 @@
 import SkladService from '../services/sklad.service.js'
+import { getQueueChannel } from '../utils/rabbitmq.js';
 export default class MoySkladController{
-    static async createHook(req, res){
+    static async createPzHook(req, res){
+        const channel = getQueueChannel();
         const id = req.query.id
-        const result = await SkladService.createHook(id)
-        res.sendStatus(200)
-    }
-    static async updateHook(req, res){
-        const id = req.query.id
-        const result = await SkladService.updateHook(id)
-        res.sendStatus(200)
+        const success = channel.sendToQueue('pzwebhook', Buffer.from(id), { persistent: true });
+
+        if (!success) throw new Error('Failed to enqueue task');
+        res.sendStatus(200);
     }
     static async getOrder(req, res){
         const name = req.query.orderName

@@ -2,7 +2,7 @@ import { constructWorks } from './triplexCalc'
 const Calculate = (data, selfcost) => {
     console.log(selfcost)
     console.log(data)
-    const { material, height, width, cuts, type, color, rounds, drills, clientType, print, rounding, trim } = data
+    const { material, height, width, cuts, type, color, rounds, drills, clientType, print, rounding } = data
     const result = {
         materials: [],
         works: [],
@@ -93,7 +93,6 @@ const Calculate = (data, selfcost) => {
     const price = materialsandworks
     result.other = {
         S,
-        trim,
         stanok,
         weight,
         productType: true,

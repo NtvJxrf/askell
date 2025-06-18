@@ -23,11 +23,24 @@ services:
       - postgres-data:/var/lib/postgresql/data
     restart: unless-stopped
 
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: rabbitmq
+    ports:
+      - "127.0.0.1:5672:5672"       # AMQP
+      - "15672:15672"     # Web UI
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    volumes:
+      - rabbitmq-data:/var/lib/rabbitmq
+    restart: unless-stopped
+
   loki:
     image: grafana/loki:2.8.2
     container_name: loki
     volumes:
-      - /askell/backend/logs:/var/log/askell # Если понадобятся логи на уровне Loki (но обычно Loki читает через Promtail)
+      - /askell/backend/logs:/var/log/askell
     ports:
       - "3100:3100"
 
@@ -39,6 +52,7 @@ services:
       - ./promtail-config.yaml:/etc/promtail/config.yaml:ro
     command: -config.file=/etc/promtail/config.yaml
     restart: unless-stopped
+
   grafana:
     image: grafana/grafana:9.4.0
     container_name: grafana
@@ -54,3 +68,4 @@ volumes:
   valkey-data:
   postgres-data:
   grafana-data:
+  rabbitmq-data:

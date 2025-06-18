@@ -11,5 +11,8 @@ router
 router
     .route('/addPositionsToOrder')
     .post(MoySkladController.addPositionsToOrder)
+router
+    .route('/createPzHook')
+    .post(MoySkladController.createPzHook)
     
 export default router

@@ -2,7 +2,7 @@ import { constructWorks } from './triplexCalc'
 const Calculate = (data, selfcost) => {
     console.log(selfcost)
     console.log(data)
-    const { material, height, width, polishing, drills, zenk, cutsv1, cutsv2, cutsv3, tempered, shape, color, print, customertype, rounding, trim } = data
+    const { material, height, width, polishing, drills, zenk, cutsv1, cutsv2, cutsv3, tempered, shape, color, print, customertype, rounding } = data
     const works = { tempered, polishing, drills, zenk, cutsv1, cutsv2, print }
     let S = (height * width) / 1000000
     if(S < 0.5){
@@ -28,9 +28,9 @@ const Calculate = (data, selfcost) => {
 
     result.materials.push({
         name: material,
-        value: selfcost.materials[material].salePrices[0].value * S * trim,
-        string: `${selfcost.materials[material].salePrices[0].value / 100} * ${S.toFixed(2)} * ${trim}`,
-        formula: 'Цена за м² * Площадь * Коэффициент обрези'
+        value: selfcost.materials[material].salePrices[0].value * S,
+        string: `${selfcost.materials[material].salePrices[0].value / 100} * ${S.toFixed(2)}`,
+        formula: 'Цена за м² * Площадь'
     });
     color && result.materials.push({
         name: color,
@@ -91,7 +91,6 @@ const Calculate = (data, selfcost) => {
     result.other = {
         S,
         P,
-        trim,
         stanok,
         weight,
         type: 'Стекло',

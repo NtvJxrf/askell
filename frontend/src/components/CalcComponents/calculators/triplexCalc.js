@@ -1,12 +1,12 @@
 const Calculate = (data, selfcost) => {
     console.log(selfcost)
     console.log(data)
-    const { height, width, polishing, drills, zenk, cutsv1, cutsv2, cutsv3, tempered, shape, addTape, print, customertype, rounding, trim } = data
+    const { height, width, polishing, drills, zenk, cutsv1, cutsv2, cutsv3, tempered, shape, addTape, print, customertype, rounding } = data
     const tapes = Object.entries(data).filter(([key]) => key.startsWith('tape')).map(([_, value]) => value);
     const materials = Object.entries(data).filter(([key, value]) => key.startsWith('material') && value !== undefined).map(([_, value]) => value);
     addTape && tapes.push(addTape)
     const works = { polishing, drills, zenk, cutsv1, cutsv2, print }
-    let name = `Триплекс, ${materials.join(' + ')}, (${height}х${width}${polishing ? 'Полировка' : ''}${tempered ? ', Закаленное' : ''}${cutsv1 ? `, Вырезы 1 кат.: ${cutsv1}` : ''}${cutsv2 ? `, Вырезы 2 кат.: ${cutsv2}` : ''}${cutsv3 ? `, Вырезы 3 кат.: ${cutsv3}` : ''}${drills ? `, Сверление: ${drills}` : ''}${zenk ? `, Зенкование: ${zenk}` : ''})`
+    let name = `Триплекс, ${materials.join(' + ')}, (${height}х${width}${polishing ? ', Полировка' : ''}${tempered ? ', Закаленное' : ''}${cutsv1 ? `, Вырезы 1 кат.: ${cutsv1}` : ''}${cutsv2 ? `, Вырезы 2 кат.: ${cutsv2}` : ''}${cutsv3 ? `, Вырезы 3 кат.: ${cutsv3}` : ''}${drills ? `, Сверление: ${drills}` : ''}${zenk ? `, Зенкование: ${zenk}` : ''})`
     let S = (height * width) / 1000000
     if(S < 0.5){
         switch (rounding){
@@ -40,6 +40,22 @@ const Calculate = (data, selfcost) => {
     for (const tape of tapes) {
         switch (tape) {
             case undefined:
+                    const useThinMaterial = false
+                    for(const material of materials){
+                        const thickness = Number(material.match(/(\d+(?:[.,]\d+)?)\s*мм/i)[1])
+                        console.log(lesser, thickness)
+                        if(thickness < 4) useThinMaterial = true
+                    }
+                    if(useThinMaterial || lesser < 1050){
+                        result.materials.push({
+                            name: 'Пленка EVA Прозрачная 0,38мм',
+                            value: selfcost.materials['Пленка EVA Прозрачная 0,38мм'].salePrices[0].value * S_tape,
+                            count: S_tape,
+                            string: `${selfcost.materials['Пленка EVA Прозрачная 0,38мм'].salePrices[0].value / 100} * ${S_tape.toFixed(2)}`,
+                            formula: 'Цена за м² * Площадь плёнки'
+                        });
+                        break
+                    }
                     result.materials.push({
                         name: 'Пленка EVA Прозрачная 0,76мм',
                         value: selfcost.materials['Пленка EVA Прозрачная 0,76мм'].salePrices[0].value * S_tape,
@@ -115,9 +131,9 @@ const Calculate = (data, selfcost) => {
             });
         result.materials.push({
             name: material,
-            value: selfcost.materials[material].salePrices[0].value * S * trim,
-            string: `${selfcost.materials[material].salePrices[0].value / 100} * ${S.toFixed(2)} * ${trim}`,
-            formula: 'Цена за м² * Площадь * Коэффициент обрези'
+            value: selfcost.materials[material].salePrices[0].value * S,
+            string: `${selfcost.materials[material].salePrices[0].value / 100} * ${S.toFixed(2)}`,
+            formula: 'Цена за м² * Площадь'
         });
     }
     const stanok = (shape && cutsv1 == 0 && cutsv2 == 0 && cutsv3 == 0 && weight < 50) ? 'Прямолинейка' : 'Криволинейка'
@@ -162,7 +178,6 @@ const Calculate = (data, selfcost) => {
         string: `(${(materialsandworks / 100).toFixed(2)} + ${(workshopExpenses / 100).toFixed(2)}) * 0.2525`,
         formula: '(Материалы + Работы + Цеховые) * 25.25%'
     });
-    console.log(customertype)
     const price = materialsandworks + (commercialExpenses + householdExpenses + workshopExpenses) * selfcost.pricesAndCoefs[`Триплекс ${customertype}`]
     result.finalPrice = {
         name: 'Итоговая цена',
@@ -174,7 +189,6 @@ const Calculate = (data, selfcost) => {
         S,
         S_tape,
         P,
-        trim,
         stanok,
         allThickness,
         weight,

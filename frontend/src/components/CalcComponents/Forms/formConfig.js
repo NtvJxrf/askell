@@ -2,7 +2,7 @@ const formConfigs = {
     SMDForm: {
       commonFields: [
         {
-          name: 'type',
+          name: 'smdType',
           label: 'Тип СМД',
           type: 'select',
           options: ['Иное', 'Krystal', 'Round', 'Lux', 'Premium', 'Standart', 'Hexagon'],

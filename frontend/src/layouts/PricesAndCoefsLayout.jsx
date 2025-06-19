@@ -1,18 +1,24 @@
 import React, { useState, useEffect } from 'react';
 import {
-    Table, Form, Input, InputNumber, Button, Space, Card, Popconfirm, message, Typography
+    Table, Form, Input, InputNumber, Button, Space, Card, Popconfirm,
+    message, Typography, Tabs
 } from 'antd';
 import { SearchOutlined } from '@ant-design/icons';
 import axios from 'axios';
 import Init from '../init';
 import { useDispatch } from "react-redux";
+
 const { Title, Paragraph, Text } = Typography;
+const { TabPane } = Tabs;
 
 const PricesAndCoefsLayout = () => {
     const [messageApi, contextHolder] = message.useMessage();
-    const [data, setData] = useState([]);
-    const [addForm] = Form.useForm()
-    const dispatch = useDispatch()
+    const [prices, setPrices] = useState([]);
+    const [coefs, setCoefs] = useState([]);
+    const [type, setType] = useState('price');
+    const [addForm] = Form.useForm();
+    const dispatch = useDispatch();
+
     useEffect(() => {
         const fetchData = async () => {
             try {
@@ -20,8 +26,14 @@ const PricesAndCoefsLayout = () => {
                     `${import.meta.env.VITE_API_URL}/api/pricesAndCoefs/getPricesAndCoefs`,
                     { withCredentials: true }
                 );
-                const formattedData = response.data.map(item => ({ key: item.name, ...item }));
-                setData(formattedData);
+                const formattedData = response.data.map(item => ({
+                    key: item.name,
+                    ...item,
+                    value: item.type === 'price' ? item.value / 100 : item.value
+                }));
+
+                setPrices(formattedData.filter(item => item.type === 'price'));
+                setCoefs(formattedData.filter(item => item.type === 'coef'));
             } catch (err) {
                 messageApi.error(err?.response?.data?.message || 'Ошибка при загрузке данных');
                 console.error(err);
@@ -36,14 +48,21 @@ const PricesAndCoefsLayout = () => {
 
     const onAdd = async values => {
         try {
+            const fullData = { ...values, type, value: type === 'price' ? Math.round(values.value * 100) : values.value };
             await axios.post(
                 `${import.meta.env.VITE_API_URL}/api/pricesAndCoefs/createPricesAndCoefs`,
-                values,
+                fullData,
                 { withCredentials: true }
             );
             messageApi.success('Создано на сервере');
             const newItem = { key: Date.now().toString(), ...values };
-            setData(prev => [...prev, newItem]);
+            console.log(newItem)
+            if (type === 'price') {
+                setPrices(prev => [...prev, newItem]);
+            } else {
+                setCoefs(prev => [...prev, newItem]);
+            }
+
             addForm.resetFields();
         } catch (err) {
             messageApi.error(err.response?.data?.message || 'Ошибка при создании');
@@ -52,16 +71,27 @@ const PricesAndCoefsLayout = () => {
     };
 
     const handleInputChange = (key, field, value) => {
-        setData(prev =>
-            prev.map(item => (item.key === key ? { ...item, [field]: value } : item))
+        const updater = list => list.map(item =>
+            item.key === key ? { ...item, [field]: value } : item
         );
+
+        if (type === 'price') {
+            setPrices(updater);
+        } else {
+            setCoefs(updater);
+        }
     };
+
 
     const save = async record => {
         try {
+            const dataToSend = {
+                ...record,
+                value: type === 'price' ? Math.round(record.value * 100) : record.value
+            };
             await axios.post(
                 `${import.meta.env.VITE_API_URL}/api/pricesAndCoefs/updatePricesAndCoefs`,
-                record,
+                dataToSend,
                 { withCredentials: true }
             );
             messageApi.success('Обновлено на сервере');
@@ -79,20 +109,18 @@ const PricesAndCoefsLayout = () => {
                 { withCredentials: true }
             );
             messageApi.success('Удалено на сервере');
-            setData(prev => prev.filter(item => item.key !== record.key));
+
+            if (type === 'price') {
+                setPrices(prev => prev.filter(item => item.key !== record.key));
+            } else {
+                setCoefs(prev => prev.filter(item => item.key !== record.key));
+            }
         } catch (err) {
             messageApi.error(err.response?.data?.message || 'Ошибка при удалении');
             console.error(err);
         }
     };
 
-    const handleSearch = (selectedKeys, confirm) => {
-        confirm();
-    };
-
-    const handleReset = clearFilters => {
-        clearFilters();
-    };
 
     const getColumnSearchProps = dataIndex => ({
         filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }) => (
@@ -101,20 +129,20 @@ const PricesAndCoefsLayout = () => {
                     placeholder={`Поиск по ${dataIndex}`}
                     value={selectedKeys[0]}
                     onChange={e => setSelectedKeys(e.target.value ? [e.target.value] : [])}
-                    onPressEnter={() => handleSearch(selectedKeys, confirm, dataIndex)}
+                    onPressEnter={() => confirm()}
                     style={{ marginBottom: 8, display: 'block' }}
                 />
                 <Space>
                     <Button
                         type="primary"
-                        onClick={() => handleSearch(selectedKeys, confirm, dataIndex)}
+                        onClick={() => confirm()}
                         icon={<SearchOutlined />}
                         size="small"
                         style={{ width: 90 }}
                     >
                         Поиск
                     </Button>
-                    <Button onClick={() => handleReset(clearFilters)} size="small" style={{ width: 90 }}>
+                    <Button onClick={() => clearFilters()} size="small" style={{ width: 90 }}>
                         Сброс
                     </Button>
                 </Space>
@@ -184,20 +212,17 @@ const PricesAndCoefsLayout = () => {
                     Здесь указываются стоимости работ, коэффициенты и другие значения, используемые в калькуляторах.
                 </Paragraph>
                 <Paragraph>
-                    <Text strong>Важно:</Text> для цен на работы значения указываются в <Text code>копейках</Text>, так как MoySklad отдаёт данные по API в копейках.
+                    <Text strong>Важно:</Text> для цен на работы значения указываются в <Text code>рублях</Text>.
                     Коэффициенты — это просто дробные числа.
                 </Paragraph>
                 <Paragraph>
                     Примеры:
                     <ul>
                         <li>
-                            <Text code>Сверление СМД = 30000</Text> — это означает, что цена за 1 сверление СМД составляет <Text strong>300 рублей</Text>.
+                            <Text code>Сверление СМД = 300</Text> — это означает, что цена за 1 сверление СМД составляет <Text strong>300 рублей</Text>.
                         </li>
                         <li>
-                            <Text code>Прямолинейка Шлифовка = 3692</Text> — это означает, что цена за шлифовку на прямолинейке составляет <Text strong>36.92 рубля</Text>.
-                        </li>
-                        <li>
-                            <Text code>Стекло более 200 тыс = 1.6</Text> — это означает, что при расчетах стекла с выбранным типом клиента более 200 тыс цена будет умножаться на <Text strong>1.6</Text>.
+                            <Text code>Стекло Более 200 тыс. = 1.6</Text> — это означает, что при расчетах стекла с выбранным типом клиента более 200 тыс цена будет умножаться на <Text strong>1.6</Text>.
                         </li>
                     </ul>
                 </Paragraph>
@@ -205,6 +230,17 @@ const PricesAndCoefsLayout = () => {
 
             <Card style={{ maxWidth: 1200, margin: '40px auto' }}>
                 {contextHolder}
+
+                <Tabs
+                    defaultActiveKey="price"
+                    onChange={key => setType(key)}
+                    centered
+                    style={{ marginBottom: 24 }}
+                >
+                    <TabPane tab="Цены" key="price" />
+                    <TabPane tab="Коэффициенты" key="coef" />
+                </Tabs>
+
                 <Form
                     form={addForm}
                     layout="inline"
@@ -236,11 +272,11 @@ const PricesAndCoefsLayout = () => {
                 <Table
                     bordered
                     pagination={{ pageSize: 10, showSizeChanger: false }}
-                    dataSource={data.sort((a, b) => a.name.localeCompare(b.name))}
+                    dataSource={(type === 'price' ? prices : coefs).sort((a, b) => a.name.localeCompare(b.name))}
                     columns={columns}
                     rowClassName="editable-row"
                 />
-            </Card>
+            </Card> 
         </>
     );
 };

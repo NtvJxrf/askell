@@ -7,10 +7,11 @@ import cookieParser from 'cookie-parser'
 import { initModels } from "./databases/db.js"
 import  loggerMiddleware  from "./middlewares/logger.middleware.js"
 import { initQueue } from './utils/rabbitmq.js';
+import { initSkladAdditions } from "./utils/skladAdditions.js"
 
 await initQueue();
 await initModels()
-
+initSkladAdditions()
 
 const app = express()
 

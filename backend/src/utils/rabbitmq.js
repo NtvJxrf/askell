@@ -3,8 +3,7 @@ import amqp from 'amqplib';
 let channel;
 
 export async function initQueue() {
-  const conn = await amqp.connect('amqp://admin:%5EjZG1L%2Fi@localhost'
-);
+  const conn = await amqp.connect('amqp://admin:%5EjZG1L%2Fi@localhost');
   channel = await conn.createChannel();
   await channel.assertQueue('pzwebhook', { durable: true });
   console.log('RabbitMQ connected');

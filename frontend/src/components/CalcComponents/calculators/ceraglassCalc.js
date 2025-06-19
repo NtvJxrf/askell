@@ -1,6 +1,6 @@
 const Calculate = (data, selfcost) => {
     console.log(data)
-    const { height, width, cutsv1, cutsv2, cutsv3, shape, print, material1, material2, customertype, rounding, trim } = data
+    const { height, width, cutsv1, cutsv2, cutsv3, shape, print, material1, material2, customertype, rounding } = data
     const materials = [material1, material2]
     const works = { cutsv1, cutsv2 }
     const S = (height * width) / 1000000

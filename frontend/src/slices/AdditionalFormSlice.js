@@ -5,8 +5,7 @@ const additionalForm = createSlice({
   initialState: {
     additionalForm: {
                 rounding: 'Округление до 0.5',
-                customertype: 'Менее 200 тыс.',
-                trim: 1.2
+                customertype: 'Менее 200 тыс.'
             }
   },
   reducers: {

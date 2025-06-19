@@ -20,8 +20,7 @@ const AdditionalForm = () => {
             style={{ margin: '0 auto', marginTop: 30, maxWidth:400 }}
             initialValues={{
                 rounding: 'Округление до 0.5',
-                customertype: 'Менее 200 тыс.',
-                trim: 1.2
+                customertype: 'Менее 200 тыс.'
             }}
         >
             <Form.Item key='Округление' label='Округление' name='rounding'>

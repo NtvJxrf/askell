@@ -6,12 +6,12 @@ export default class pricesAndCoefsController {
     }
 
     static async updatePricesAndCoefs(req, res) {
-        const result = await pricesAndCoefsService.updatePricesAndCoefs(req.body);
+        const result = await pricesAndCoefsService.updatePricesAndCoefs(req);
         res.send(result);
     }
 
     static async createPricesAndCoefs(req, res) {
-        const result = await pricesAndCoefsService.createPricesAndCoefs(req.body);
+        const result = await pricesAndCoefsService.createPricesAndCoefs(req);
         res.send(result);
     }
     static async deletePricesAndCoefs(req, res) {

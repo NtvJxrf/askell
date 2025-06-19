@@ -11,7 +11,7 @@ const CalcsLayout = () => {
     return (
         <>
             <div style={{ overflowX: 'hidden', width: '100%' }}>
-                <Row gutter={24}>
+                <Row>
                     <Col span={12}>
                         <CalcMenu onChange={setSelectedKey} selectedKey={selectedKey} />
                         <DynamicForm type={selectedKey}/>

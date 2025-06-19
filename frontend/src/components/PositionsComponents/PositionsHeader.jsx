@@ -71,6 +71,14 @@ const PositionsHeader = () => {
             setDisabled(false)
         }
     }
+    const handleDeleteSelected = () => {
+        const selected = store.getState().positions.selectedPosition
+        if(!selected) return 
+        const positions = store.getState().positions.positions.filter( (position) => {
+            return !selected.includes(position.key)
+        })
+        dispatch(setPositions(positions))
+    }
     console.log('render pos header')
     return (
         <>
@@ -98,7 +106,7 @@ const PositionsHeader = () => {
                 </Space>
                 <Space>
                     <Button type="default" shape="round" onClick={handleSaveOrder} disabled={disabled}>Сохранить</Button>
-                    {/* <Button type="default" shape="round" onClick={handleSaveOrder} disabled={disabled}>Доп. кнопка 2</Button> */}
+                    <Button type="default" shape="round" onClick={handleDeleteSelected} disabled={disabled} danger>Удалить выделенное</Button>
                 </Space>
                 </div>
 

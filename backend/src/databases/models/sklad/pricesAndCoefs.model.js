@@ -20,6 +20,19 @@ const PricesAndCoefs = sequelize.define('prices_and_coefs', {
         type: DataTypes.STRING,
         allowNull: true,
     },
+    type: {
+        type: DataTypes.ENUM('price', 'coef'),
+        allowNull: false,
+        defaultValue: 'price',
+    },
+    createdBy: {
+        type: DataTypes.STRING,
+        allowNull: true,
+    },
+    lastUpdatedBy: {
+        type: DataTypes.STRING,
+        allowNull: true,
+    }
 },{
     tableName: 'prices_and_coefs',
     paranoid: true,

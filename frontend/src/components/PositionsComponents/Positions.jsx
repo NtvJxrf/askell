@@ -11,7 +11,7 @@ import {
 import { CSS } from '@dnd-kit/utilities';
 import { Button, Table, Space, InputNumber, Modal } from 'antd';
 import { useDispatch, useSelector } from 'react-redux';
-import { setPositions } from '../../slices/positionsSlice';
+import { setPositions, setSelectedRowKeys } from '../../slices/positionsSlice';
 import PositionDetailsModal from './PositionDetailsModal.jsx';
 
 const RowContext = React.createContext({});
@@ -60,8 +60,8 @@ const Row = props => {
 const Positions = () => {
     const dispatch = useDispatch();
     const positions = useSelector(state => state.positions.positions);
-
-    const [selectedRowKeys, setSelectedRowKeys] = useState([]);
+    const selectedRowKeys = useSelector(state => state.positions.selectedRowKeys);
+    // const [selectedRowKeys, setSelectedRowKeys] = useState([]);
     const [isModalVisible, setIsModalVisible] = useState(false);
     const [selectedRecord, setSelectedRecord] = useState(null);
     const [pagination, setPagination] = useState({ current: 1, pageSize: 10 });
@@ -79,7 +79,9 @@ const Positions = () => {
         dispatch(setPositions(positions.map(p => p.key === key ? { ...p, quantity } : p)));
     };
 
-
+    const handleSelectionChange = (newSelectedKeys) => {
+        dispatch(setSelectedRowKeys(newSelectedKeys));
+    };
     const handleDelete = record => {
         const updated = positions.filter(item => item.key !== record.key);
         dispatch(setPositions(updated));
@@ -147,7 +149,7 @@ const Positions = () => {
                             position: ['topRight'],
                             onChange: (page, pageSize) => setPagination({ current: page, pageSize }),
                         }}
-                        rowSelection={{ selectedRowKeys, onChange: setSelectedRowKeys}}
+                        rowSelection={{ selectedRowKeys, onChange: handleSelectionChange}}
                         expandable={{
                             expandedRowRender: record => (
                                 <Space size="middle">

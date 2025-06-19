@@ -36,14 +36,13 @@ const Calculate = (data, selfcost) => {
     let S_tape = null
     if(larger <= 2100) S_tape = (2100 * lesser) / 1000000
     else S_tape = (2100 * larger) / 1000000    // Считаем площадь используемой пленки | 2100 это ширина рулона
-
+    console.log(tapes)
     for (const tape of tapes) {
         switch (tape) {
             case undefined:
-                    const useThinMaterial = false
+                    let useThinMaterial = false
                     for(const material of materials){
                         const thickness = Number(material.match(/(\d+(?:[.,]\d+)?)\s*мм/i)[1])
-                        console.log(lesser, thickness)
                         if(thickness < 4) useThinMaterial = true
                     }
                     if(useThinMaterial || lesser < 1050){
@@ -96,6 +95,26 @@ const Calculate = (data, selfcost) => {
                     count: S_tape * 2,
                     string: `${selfcost.materials['Пленка EVA Прозрачная 0,38мм'].salePrices[0].value / 100} * ${S_tape.toFixed(2)} * 2`,
                     formula: 'Цена за м² * Площадь плёнки * 2 слоя'
+                });
+                break;
+            
+            case 'Пленка EVA Прозрачная 0,38мм':
+                result.materials.push({
+                    name: tape,
+                    value: selfcost.materials[tape].salePrices[0].value * S_tape,
+                    count: S_tape,
+                    string: `${selfcost.materials[tape].salePrices[0].value / 100} * ${S_tape.toFixed(2)}`,
+                    formula: 'Цена за м² * Площадь плёнки'
+                });
+                break;
+
+            case 'Пленка EVA Прозрачная 0,76мм':
+                result.materials.push({
+                    name: tape,
+                    value: selfcost.materials[tape].salePrices[0].value * S_tape,
+                    count: S_tape,
+                    string: `${selfcost.materials[tape].salePrices[0].value / 100} * ${S_tape.toFixed(2)}`,
+                    formula: 'Цена за м² * Площадь плёнки'
                 });
                 break;
 
@@ -337,6 +356,15 @@ export const constructWorks = (work, context) => {
                 value: selfcost.pricesAndCoefs['Вырезы СМД'] * works[work],
                 string: `${selfcost.pricesAndCoefs['Вырезы СМД'] / 100} * ${works[work]}`,
                 formula: 'Себестоимость вырезов * Кол-во вырезов'
+            });
+            break;
+
+        case 'drillssmd':
+            result.works.push({
+                name: 'Сверление СМД',
+                value: selfcost.pricesAndCoefs['Сверление СМД'] * materials.length * works[work],
+                string: `${selfcost.pricesAndCoefs['Сверление СМД'] / 100} * ${materials.length} * ${works[work]}`,
+                formula: 'Себестоимость работы * Кол-во материалов * Кол-во отверстий'
             });
             break;
     }

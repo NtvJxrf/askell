@@ -10,13 +10,6 @@ const Calculate = (data, selfcost) => {
         other: {}
     }
     const works = { cuts, drillssmd }
-    const map = {
-        'VIP': [1450000, 2650000],
-        'Дилер': [1650000, 3050000],
-        'Опт': [1850000, 3400000],
-        'Розница': [2100000, 3800000],
-        'Optiwhite': 600000
-    }
     const S = (height * width) / 1000000
     const thickness = Number(material.match(/\d+/)[0])
     let weight = S * 2.5 * thickness
@@ -27,20 +20,20 @@ const Calculate = (data, selfcost) => {
     let temp = 0
     if(S >= 1.2){
         result.materials.push({
-                name: 'Цена для типа клиента',
-                value: map[clientType][0] * S,
-                string: `${(map[clientType][0] / 100).toFixed(2)} * ${S.toFixed(2)}`,
+                name: `Цена для типа клиента ${clientType}`,
+                value: selfcost.pricesAndCoefs[`${clientType} S >= 1.2`] * S,
+                string: `${(selfcost.pricesAndCoefs[`${clientType} S >= 1.2`] / 100).toFixed(2)} * ${S.toFixed(2)}`,
                 formula: `Цена для типа клиента ${clientType} при S >= 1.2 * S`
             });
-            temp = map[clientType][0] * S
+            temp = selfcost.pricesAndCoefs[`${clientType} S >= 1.2`] * S
     }else{
         result.materials.push({
                 name: 'Цена для типа клиента',
-                value: map[clientType][1] * S,
-                string: `${(map[clientType][1] / 100).toFixed(2)} * ${S.toFixed(2)}`,
+                value: selfcost.pricesAndCoefs[`${clientType} S < 1.2`] * S,
+                string: `${(selfcost.pricesAndCoefs[`${clientType} S < 1.2`] / 100).toFixed(2)} * ${S.toFixed(2)}`,
                 formula: `Цена для типа клиента ${clientType} при S < 1.2 * S`
             });
-            temp = map[clientType][1] * S
+            temp = selfcost.pricesAndCoefs[`${clientType} S < 1.2`] * S
     }
     const coef = temp * 0.2  // 20% коэфицент какой то
 
@@ -69,8 +62,8 @@ const Calculate = (data, selfcost) => {
         case 'Стекло осветленное OptiWhite, 4 мм':
             result.materials.push({
                 name: material,
-                value: map['Optiwhite'] * S,
-                string: `${(map['Optiwhite'] / 100).toFixed(2)} * ${S.toFixed(2)}`,
+                value: selfcost.pricesAndCoefs[`Optiwhite SMD`] * S,
+                string: `${(selfcost.pricesAndCoefs[`Optiwhite SMD`] / 100).toFixed(2)} * ${S.toFixed(2)}`,
                 formula: 'Цена за Optiwhite * Площадь'
             });
             break

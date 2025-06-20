@@ -14,5 +14,8 @@ router
 router
     .route('/createPzHook')
     .post(MoySkladController.createPzHook)
+router
+    .route('/updateSelfcosts')
+    .post(MoySkladController.updateSelfcosts)
     
 export default router

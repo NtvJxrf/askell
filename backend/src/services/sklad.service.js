@@ -82,6 +82,8 @@ export default class SkladService {
                         },
                     },
                 }],
+                vat: data.order.organization.name === 'ООО "А2"' ? 20 : 0,
+                vatEnabled: true,
                 weight: product.result.other.weight,
                 volume: product.result.other.S,
                 productFolder: dictionary.productFolders.glassGuard,
@@ -123,6 +125,7 @@ export default class SkladService {
                     },
                     price: (pos.price || 0),
                     quantity: pos.quantity || 1,
+                    vat: data.order.organization.name === 'ООО "А2"' ? 20 : 0
                 }
             }),
         };
@@ -134,7 +137,7 @@ export default class SkladService {
     }
 
     static async getOrder(name){
-        const response = await Client.sklad(`https://api.moysklad.ru/api/remap/1.2/entity/customerorder?filter=name=${name}&expand=positions.assortment,agent&limit=100`)
+        const response = await Client.sklad(`https://api.moysklad.ru/api/remap/1.2/entity/customerorder?filter=name=${name}&expand=positions.assortment,agent,organization&limit=100`)
         const order = response.rows[0]
         if(!order.positions) return order
         const details = await Details.findAll({

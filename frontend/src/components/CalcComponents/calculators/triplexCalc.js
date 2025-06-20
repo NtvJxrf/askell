@@ -197,11 +197,11 @@ const Calculate = (data, selfcost) => {
         string: `(${(materialsandworks / 100).toFixed(2)} + ${(workshopExpenses / 100).toFixed(2)}) * 0.2525`,
         formula: '(Материалы + Работы + Цеховые) * 25.25%'
     });
-    const price = materialsandworks + (commercialExpenses + householdExpenses + workshopExpenses) * selfcost.pricesAndCoefs[`Триплекс ${customertype}`]
+    const price = (materialsandworks + commercialExpenses + householdExpenses + workshopExpenses) * selfcost.pricesAndCoefs[`Триплекс ${customertype}`]
     result.finalPrice = {
         name: 'Итоговая цена',
-        string: `${(materialsandworks / 100).toFixed(2)} + ${((commercialExpenses + householdExpenses + workshopExpenses) / 100).toFixed(2)} * ${selfcost.pricesAndCoefs[`Триплекс ${customertype}`]}`,
-        formula: `Материалы и Работы + Расходы * Наценка для типа клиента ${customertype}`,
+        string: `(${(materialsandworks / 100).toFixed(2)} + ${((commercialExpenses + householdExpenses + workshopExpenses) / 100).toFixed(2)}) * ${selfcost.pricesAndCoefs[`Триплекс ${customertype}`]}`,
+        formula: `(Материалы + Работы + Расходы) * Наценка для типа клиента ${customertype}`,
         value: price
     }
     result.other = {

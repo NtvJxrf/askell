@@ -2,7 +2,8 @@ import Client from './got.js'
 import SkladService from '../services/sklad.service.js'
 import PricesAndCoefs from '../databases/models/sklad/pricesAndCoefs.model.js'
 import { dictionary } from '../services/sklad.service.js'
-const calcSelfcost = async () => {
+const updates = {}
+const getMaterials = async () => {
     let materials = {}
     const promises = []
     promises.push(Client.sklad("https://api.moysklad.ru/api/remap/1.2/entity/product?filter=pathName=0%20Закупки/0.02.03%20Стекло/Материал%20от%20поставщиков,%20Стекло/Матированное%20стекло%20(Matelux);pathName=0%20Закупки/0.02.03%20Стекло/Материал%20от%20поставщиков,%20Стекло/Осветленное%20стекло;pathName=0%20Закупки/0.02.03%20Стекло/Материал%20от%20поставщиков,%20Стекло/Простое%20стекло;pathName=0%20Закупки/0.02.03%20Стекло/Материал%20от%20поставщиков,%20Стекло/Рифленое%20стекло;pathName=0%20Закупки/0.02.03%20Стекло/Материал%20от%20поставщиков,%20Стекло/Стекло%20Stopsol%20и%20Зеркало;pathName=0%20Закупки/0.02.03%20Стекло/Материал%20от%20поставщиков,%20Стекло/Цветное%20стекло"))
@@ -20,6 +21,7 @@ const calcSelfcost = async () => {
         }
     }
     SkladService.selfcost.materials = materials
+    updates['Материалы'] = Date.now()
 }
 const getProcessingStages = async () => {
     const response = await Client.sklad('https://api.moysklad.ru/api/remap/1.2/entity/processingstage')
@@ -27,6 +29,7 @@ const getProcessingStages = async () => {
         acc[curr.name] = curr.meta
         return acc
     }, {})
+    updates['Техпроцессы'] = Date.now()
 }
 const getStores = async () => {
     const response = await Client.sklad('https://api.moysklad.ru/api/remap/1.2/entity/store')
@@ -34,6 +37,7 @@ const getStores = async () => {
         acc[curr.name] = curr.meta
         return acc
     }, {})
+    updates['Склады'] = Date.now()
 }
 const getProcuctAttributes = async () => {
     const response = await Client.sklad('https://api.moysklad.ru/api/remap/1.2/entity/product/metadata/attributes')
@@ -41,6 +45,7 @@ const getProcuctAttributes = async () => {
         acc[curr.name] = curr.meta
         return acc
     }, {})
+    updates['Атрибуты товаров'] = Date.now()
 }
 const getUnders = async () => {
     const response = await Client.sklad("https://api.moysklad.ru/api/remap/1.2/entity/product?filter=pathName=Керагласс%20товары%20и%20полуфабрикаты/Подстолья")
@@ -48,6 +53,7 @@ const getUnders = async () => {
         acc[curr.name] = curr.meta
         return acc
     }, {})
+    updates['Подстолья'] = Date.now()
 }
 const getColors = async () => {
     const response = await Client.sklad("https://api.moysklad.ru/api/remap/1.2/entity/product?filter=pathName=ТЕСТ/Цвета%20RAL%20(Только%20для%20продажи)")
@@ -58,6 +64,7 @@ const getColors = async () => {
         }
         return acc
     }, {})
+    updates['Цвета'] = Date.now()
 }
 export const getPicesAndCoefs = async () => {
     const elements = await PricesAndCoefs.findAll()
@@ -65,16 +72,20 @@ export const getPicesAndCoefs = async () => {
         acc[curr.name] = curr.value
         return acc
     }, {})
+    updates['Цены и коэффиценты'] = Date.now()
 }
 
 export const initSkladAdditions = async () => {
-    calcSelfcost()
-    getProcessingStages()
-    getStores()
-    getProcuctAttributes()
-    getUnders()
-    getColors()
-    getPicesAndCoefs()
+    const promises = []
+    promises.push(getMaterials())
+    promises.push(getProcessingStages())
+    promises.push(getStores())
+    promises.push(getProcuctAttributes())
+    promises.push(getUnders())
+    promises.push(getColors())
+    promises.push(getPicesAndCoefs())
+    await Promise.all(promises)
+    SkladService.selfcost.updates = updates
 }
 
 setInterval(() => {

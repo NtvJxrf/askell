@@ -1,30 +1,38 @@
-import { Layout } from "antd"
-const { Content } = Layout;
-import HeaderComponent from "../components/Header"
-import { Routes, Route, Outlet,  } from "react-router-dom";
-import CalcsLayout from '../layouts/CalcsLayout.jsx'
+import { Layout } from "antd";
+import { Routes, Route, Navigate } from "react-router-dom";
 import { useEffect } from "react";
 import { useDispatch } from "react-redux";
-import PricesAndCoefsLayout from '../layouts/PricesAndCoefsLayout.jsx'
+
+import HeaderComponent from "../components/Header";
+import CalcsLayout from "../layouts/CalcsLayout.jsx";
+import PricesAndCoefsLayout from "../layouts/PricesAndCoefsLayout.jsx";
 import Init from "../init.js";
+import Aovam from "../components/Aovam.jsx";
+import Settings from '../components/CalcComponents/Settings.jsx';
 const MainLayout = () => {
-    const dispatch = useDispatch()
+    const dispatch = useDispatch();
+
     useEffect(() => {
-        Init.getSelfcost(dispatch)
-    }, [dispatch])
+        Init.getSelfcost(dispatch);
+    }, [dispatch]);
 
     return (
         <Layout>
             <HeaderComponent />
-            <Content>
-                <Routes>
-                    <Route path="/calculators" element={<CalcsLayout />} />
-                    <Route path="/pricesandcoefs" element={<PricesAndCoefsLayout />} />
-                </Routes>
-                <Outlet />
-            </Content>
-        </Layout>
-    )
-}
+            <Routes>
+                <Route path="/calculators">
+                    <Route index element={<Navigate to="/calculators/smd" replace />} />
+                    <Route path=":type" element={<CalcsLayout />} />
+                </Route>
 
-export default MainLayout
+                <Route path="/pricesandcoefs" element={<PricesAndCoefsLayout />} />
+                <Route path="/aovam" element={<Aovam />} />
+                <Route path="/settings" element={<Settings />} />
+                {/* fallback */}
+                <Route path="*" element={<div>Empty</div>} />
+            </Routes>
+        </Layout>
+    );
+};
+
+export default MainLayout;

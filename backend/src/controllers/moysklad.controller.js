@@ -1,5 +1,6 @@
 import SkladService from '../services/sklad.service.js'
 import { getQueueChannel } from '../utils/rabbitmq.js';
+import { initSkladAdditions } from '../utils/skladAdditions.js';
 export default class MoySkladController{
     static async createPzHook(req, res){
         const channel = getQueueChannel();
@@ -19,6 +20,10 @@ export default class MoySkladController{
     }
     static async addPositionsToOrder(req, res){
         const result = await SkladService.addPositionsToOrder(req.body)
+        res.sendStatus(200)
+    }
+    static async updateSelfcosts(req, res){
+        const result = await initSkladAdditions()
         res.sendStatus(200)
     }
 }

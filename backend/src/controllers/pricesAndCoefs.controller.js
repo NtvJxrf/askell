@@ -1,24 +1,21 @@
 import pricesAndCoefsService from '../services/pricesAndCoefs.service.js';
 export default class pricesAndCoefsController {
-    static async getPricesAndCoefs(req, res) {
-        const result = await pricesAndCoefsService.getPricesAndCoefs();
+    static async getAll(req, res) {
+        const result = await pricesAndCoefsService.getAll();
         res.send(result);
     }
 
-    static async updatePricesAndCoefs(req, res) {
-        const result = await pricesAndCoefsService.updatePricesAndCoefs(req);
-        res.send(result);
+    static async update(req, res) {
+        const result = await pricesAndCoefsService.update(req);
+        return res.sendStatus(200);
     }
 
-    static async createPricesAndCoefs(req, res) {
-        const result = await pricesAndCoefsService.createPricesAndCoefs(req);
-        res.send(result);
+    static async create(req, res) {
+        const result = await pricesAndCoefsService.create(req);
+        return res.sendStatus(200);
     }
-    static async deletePricesAndCoefs(req, res) {
-        const { name } = req.body;
-        if (!name)
-            return res.status(400).send({ message: 'Name is required' })
-        const result = await pricesAndCoefsService.deletePricesAndCoefs(name);
+    static async delete(req, res) {
+        const result = await pricesAndCoefsService.delete(req);
         if (result)
             return res.sendStatus(200);
         return res.sendStatus(404);

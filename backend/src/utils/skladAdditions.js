@@ -1,6 +1,8 @@
 import Client from './got.js'
 import SkladService from '../services/sklad.service.js'
-import PricesAndCoefs from '../databases/models/sklad/pricesAndCoefs.model.js'
+import Coefs from '../databases/models/sklad/coefs.model.js'
+import Prices from '../databases/models/sklad/prices.mode.js'
+import WorkPrices from '../databases/models/sklad/workPrices.model.js'
 import { dictionary } from '../services/sklad.service.js'
 const updates = {}
 const getMaterials = async () => {
@@ -22,6 +24,17 @@ const getMaterials = async () => {
     }
     SkladService.selfcost.materials = materials
     updates['Материалы'] = Date.now()
+}
+const getPackagingMaterials = async () => {
+    const response = await Client.sklad("https://api.moysklad.ru/api/remap/1.2/entity/product?filter=pathName=0%20Закупки/0.02.09%20Упаковка")
+    SkladService.packagingMaterials = response.rows.reduce(( acc, curr ) => {
+        acc[curr.name] = {
+            meta: curr.meta,
+            salePrices: curr.salePrices
+        }
+        return acc
+    }, {})
+    updates['Упаковочные материалы'] = Date.now()
 }
 const getProcessingStages = async () => {
     const response = await Client.sklad('https://api.moysklad.ru/api/remap/1.2/entity/processingstage')
@@ -67,11 +80,20 @@ const getColors = async () => {
     updates['Цвета'] = Date.now()
 }
 export const getPicesAndCoefs = async () => {
-    const elements = await PricesAndCoefs.findAll()
-    SkladService.selfcost.pricesAndCoefs = elements.reduce((acc, curr) => {
-        acc[curr.name] = curr.value
-        return acc
-    }, {})
+    const promises = []
+    promises.push(Coefs.findAll())
+    promises.push(Prices.findAll())
+    promises.push(WorkPrices.findAll())
+    const result = await Promise.all(promises)
+    result[0].forEach( el => {
+        SkladService.selfcost.pricesAndCoefs[el.name] = el.value
+    })
+    result[1].forEach( el => {
+        SkladService.selfcost.pricesAndCoefs[el.name] = el.value
+    })
+    result[2].forEach( el => {
+        SkladService.selfcost.pricesAndCoefs[el.name] = {ratePerHour: el.ratePerHour, costOfWork: el.costOfWork}
+    })
     updates['Цены и коэффиценты'] = Date.now()
 }
 
@@ -84,6 +106,7 @@ export const initSkladAdditions = async () => {
     promises.push(getUnders())
     promises.push(getColors())
     promises.push(getPicesAndCoefs())
+    promises.push(getPackagingMaterials())
     await Promise.all(promises)
     SkladService.selfcost.updates = updates
 }

@@ -5,9 +5,9 @@ import { useDispatch } from "react-redux";
 
 import HeaderComponent from "../components/Header";
 import CalcsLayout from "../layouts/CalcsLayout.jsx";
-import PricesAndCoefsLayout from "../layouts/PricesAndCoefsLayout.jsx";
+import PricesAndCoefsPage from "../pages/PricesAndCoefsPage.jsx";
 import Init from "../init.js";
-import Aovam from "../components/Aovam.jsx";
+import Aovam from "../pages/Aovam.jsx"
 import Settings from '../components/CalcComponents/Settings.jsx';
 const MainLayout = () => {
     const dispatch = useDispatch();
@@ -25,7 +25,7 @@ const MainLayout = () => {
                     <Route path=":type" element={<CalcsLayout />} />
                 </Route>
 
-                <Route path="/pricesandcoefs" element={<PricesAndCoefsLayout />} />
+                <Route path="/pricesandcoefs" element={<PricesAndCoefsPage />} />
                 <Route path="/aovam" element={<Aovam />} />
                 <Route path="/settings" element={<Settings />} />
                 {/* fallback */}

@@ -1,9 +1,9 @@
-import formConfigs from "./formConfig.js";
+import formConfigs from "../../../constants/formConfig.js";
 import renderField from './renderField.jsx';
 import { useSelector } from "react-redux";
 import { useMemo } from "react";
 
-const excludedWords = ['пленка', 'плёнка', 'плита'];
+const filterWrods = ['стекло', 'зеркало'];
 
 const GlassForm = () => {
   const materials = useSelector(state => state.selfcost.selfcost?.materials) || [];
@@ -11,7 +11,7 @@ const GlassForm = () => {
 
   const materialsArray = useMemo(() => {
     return Object.keys(materials)
-      .filter(el => !excludedWords.some(word => el.toLowerCase().includes(word)))
+      .filter(el => filterWrods.some(word => el.toLowerCase().includes(word)))
       .sort();
   }, [materials]);
 

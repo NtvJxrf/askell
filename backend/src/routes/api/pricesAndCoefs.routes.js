@@ -3,15 +3,15 @@ import pricesAndCoefsController from "../../controllers/pricesAndCoefs.controlle
 const router = express.Router()
 //api/pricesAndCoefs
 router
-    .route('/getPricesAndCoefs')
-    .get(pricesAndCoefsController.getPricesAndCoefs)
+    .route('/getAll')
+    .get(pricesAndCoefsController.getAll)
 router
-    .route('/updatePricesAndCoefs')
-    .post(pricesAndCoefsController.updatePricesAndCoefs)
+    .route('/update')
+    .post(pricesAndCoefsController.update)
 router
-    .route('/createPricesAndCoefs')
-    .post(pricesAndCoefsController.createPricesAndCoefs)
+    .route('/create')
+    .post(pricesAndCoefsController.create)
 router
-    .route('/deletePricesAndCoefs')
-    .post(pricesAndCoefsController.deletePricesAndCoefs)
+    .route('/delete')
+    .post(pricesAndCoefsController.delete)
 export default router

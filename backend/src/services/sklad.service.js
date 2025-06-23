@@ -33,7 +33,9 @@ export const dictionary = {
 }
 
 export default class SkladService {
-    static selfcost = {}
+    static selfcost = {
+        pricesAndCoefs: {}
+    }
     static ordersInWork = null
     static async getOrdersInWork(){
         const orders = await Client.sklad('https://api.moysklad.ru/api/remap/1.2/entity/customerorder?filter=state=https://api.moysklad.ru/api/remap/1.2/entity/customerorder/metadata/states/86ef9098-927f-11ee-0a80-145a003ab7bf&expand=agent&limit=100')

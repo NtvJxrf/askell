@@ -1,5 +1,5 @@
 import { useSelector } from "react-redux";
-import formConfigs from "./formConfig.js";
+import formConfigs from "../../../constants/formConfig.js";
 import renderField from './renderField.jsx';
 import { Row, Col, Form } from 'antd';
 const excludedWords = ['пленка', 'плёнка'];

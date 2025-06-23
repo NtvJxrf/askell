@@ -1,6 +1,6 @@
 import React, { useMemo } from "react";
 import { useSelector } from "react-redux";
-import formConfigs from "./formConfig";
+import formConfigs from "../../../constants/formConfig.js";
 import renderField from './renderField.jsx';
 
 const SMDForm = () => {

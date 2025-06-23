@@ -5,6 +5,7 @@ import axios from 'axios'
 import { useDispatch, useSelector } from 'react-redux'
 import { addOrderPositions, setOrder, setPositions } from '../../slices/positionsSlice.js'
 import store from '../../store.js';
+import packaging from '../CalcComponents/calculators/packaging.js';
 const PositionsHeader = () => {
     const orderNumberRef = useRef(null);
     const [disabled, setDisabled] = useState(false)
@@ -79,6 +80,11 @@ const PositionsHeader = () => {
         })
         dispatch(setPositions(positions))
     }
+
+    const handlePackaging = () => {
+        const positions = store.getState().positions.positions
+        const result = packaging(positions, se)
+    }
     console.log('render pos header')
     return (
         <>
@@ -107,6 +113,7 @@ const PositionsHeader = () => {
                 <Space>
                     <Button type="default" shape="round" onClick={handleSaveOrder} disabled={disabled}>Сохранить</Button>
                     <Button type="default" shape="round" onClick={handleDeleteSelected} disabled={disabled} danger>Удалить выделенное</Button>
+                    <Button type="default" shape="round" onClick={handlePackaging} disabled={disabled}>Упаковка</Button>
                 </Space>
                 </div>
 

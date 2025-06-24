@@ -33,7 +33,6 @@ const DynamicForm = ({type}) => {
     const formData = store.getState().forms[type]
     const additionalFormData = useSelector(state => state.additionalForm.additionalForm)
     const selfcost = useSelector(state => state.selfcost.selfcost)
-
     const onFinish = async (value) => {
         const position = calcMap[type]({...value, ...additionalFormData}, selfcost)
         dispatch(addNewPosition(position))

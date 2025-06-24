@@ -3,7 +3,7 @@ import React, { useRef, useState } from 'react';
 const { Text } = Typography;
 import axios from 'axios'
 import { useDispatch, useSelector } from 'react-redux'
-import { addOrderPositions, setOrder, setPositions } from '../../slices/positionsSlice.js'
+import { addOrderPositions, setOrder, setPositions, addNewPosition } from '../../slices/positionsSlice.js'
 import store from '../../store.js';
 import packaging from '../CalcComponents/calculators/packaging.js';
 const PositionsHeader = () => {
@@ -83,7 +83,16 @@ const PositionsHeader = () => {
 
     const handlePackaging = () => {
         const positions = store.getState().positions.positions
-        const result = packaging(positions, se)
+        if(!positions.length) {
+            messageApi.error('Нет позиций')
+            return
+        }
+        const result = packaging(positions)
+        if(!result){
+            messageApi.error('Нет подходящих позиций')
+            return
+        }
+        dispatch(addNewPosition(result))
     }
     console.log('render pos header')
     return (

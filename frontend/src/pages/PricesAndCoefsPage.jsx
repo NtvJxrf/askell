@@ -17,16 +17,16 @@ import {
 import { SearchOutlined } from '@ant-design/icons';
 import axios from 'axios';
 import { tabConfigs } from '../constants/tabConfig.js';
-
-const { Title, Paragraph } = Typography;
-const { TabPane } = Tabs;
+import Init from '../init.js';
+import { useDispatch } from "react-redux";
+const { Title, Paragraph } = Typography
 
 const PricesAndCoefsPage = () => {
   const [messageApi, contextHolder] = message.useMessage();
   const [dataMap, setDataMap] = useState({});
   const [activeTab, setActiveTab] = useState(tabConfigs[0].key);
   const [form] = Form.useForm();
-
+  const dispatch = useDispatch()
   const getTabConfig = (key) => tabConfigs.find(t => t.key === key);
 
   useEffect(() => {
@@ -40,17 +40,26 @@ const PricesAndCoefsPage = () => {
         const formatted = {};
         for (const tab of tabConfigs) {
           const list = response.data[tab.key] || [];
-          formatted[tab.key] = list.map(item => ({
-            key: item.id || item.name,
-            ...item,
-          }));
+          formatted[tab.key] = list.map(item => {
+            const mapped = { key: item.id || item.name, ...item };
+            for (const field of tab.fields) {
+              if (typeof mapped[field] === 'number') {
+                mapped[field] = tab.displayValue(mapped[field]);
+              }
+            }
+            return mapped;
+          });
         }
+
         setDataMap(formatted);
       } catch (err) {
         messageApi.error(err.response?.data?.message || 'Ошибка при загрузке данных');
       }
     };
     fetchData();
+    return () => {
+      Init.getSelfcost(dispatch)
+    }
   }, [messageApi]);
 
   const handleInputChange = (rowKey, field, value) => {
@@ -64,15 +73,21 @@ const PricesAndCoefsPage = () => {
 
   const save = async record => {
     try {
+      const tab = getTabConfig(activeTab);
+      const transformedRecord = { ...record };
+
+      for (const field of tab.fields) {
+        if (typeof transformedRecord[field] === 'number') {
+          transformedRecord[field] = tab.transformValue(transformedRecord[field]);
+        }
+      }
+
       const payload = {
-        ...record,
+        ...transformedRecord,
         type: activeTab,
       };
-      await axios.post(
-        `${import.meta.env.VITE_API_URL}/api/pricesAndCoefs/update`,
-        payload,
-        { withCredentials: true }
-      );
+
+      await axios.post(`${import.meta.env.VITE_API_URL}/api/pricesAndCoefs/update`, payload, { withCredentials: true });
       messageApi.success('Сохранено');
     } catch (err) {
       messageApi.error(err.response?.data?.message || 'Ошибка при сохранении');
@@ -102,19 +117,27 @@ const PricesAndCoefsPage = () => {
 
   const onAdd = async values => {
     try {
+      const tab = getTabConfig(activeTab);
+      const transformedValues = { ...values };
+
+      for (const field of tab.fields) {
+        if (typeof transformedValues[field] === 'number') {
+          transformedValues[field] = tab.transformValue(transformedValues[field]);
+        }
+      }
+
       const payload = {
-        ...values,
+        ...transformedValues,
         type: activeTab,
       };
-      const res = await axios.post(
-        `${import.meta.env.VITE_API_URL}/api/pricesAndCoefs/create`,
-        payload,
-        { withCredentials: true }
-      );
+
+      const res = await axios.post(`${import.meta.env.VITE_API_URL}/api/pricesAndCoefs/create`, payload, { withCredentials: true });
+
       const newItem = {
         key: res.data.id || Date.now().toString(),
-        ...values,
+        ...values, // тут остаётся значения в рублях для отображения
       };
+
       setDataMap(prev => ({
         ...prev,
         [activeTab]: [...(prev[activeTab] || []), newItem],
@@ -125,6 +148,7 @@ const PricesAndCoefsPage = () => {
       messageApi.error(err.response?.data?.message || 'Ошибка при добавлении');
     }
   };
+
 
   const getColumnSearchProps = dataIndex => ({
     filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }) => (

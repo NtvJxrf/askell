@@ -10,6 +10,7 @@ const Calculate = (data, selfcost) => {
     const result = {
         materials: [],
         works: [],
+        expenses: [],
         other: {}
     }
     let price = 12345

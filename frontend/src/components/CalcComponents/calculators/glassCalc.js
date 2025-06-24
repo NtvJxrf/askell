@@ -97,15 +97,14 @@ const Calculate = (data, selfcost) => {
         productType: true,
         viz: (color || print)
     }
-    console.log(result)
     return {
-            key: Date.now(),
-            name,
-            price,
-            added: false,
-            quantity: 1,
-            initialData: data,
-            result
+        key: Date.now(),
+        name,
+        price,
+        added: false,
+        quantity: 1,
+        initialData: data,
+        result
     }
 }
 

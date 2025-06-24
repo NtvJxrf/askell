@@ -49,7 +49,6 @@ const renderDetails = (record) => {
     const totalMaterials = materials.reduce((sum, item) => sum + (item.value || 0), 0)
     const totalWorks = works.reduce((sum, item) => sum + (item.value || 0), 0)
     const totalExpenses = expenses.reduce((sum, item) => sum + (item.value || 0), 0)
-    console.log(record)
     return (
         <div style={{ display: 'flex', gap: 32 }}>
             {/* Левая колонка — расчеты */}

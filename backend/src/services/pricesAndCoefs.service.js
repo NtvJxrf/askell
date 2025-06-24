@@ -83,7 +83,7 @@ export default class pricesAndCoefsService {
         },
     );
 
-    getPicesAndCoefs();
+    await getPicesAndCoefs();
     return record.toJSON();
   }
 
@@ -96,7 +96,7 @@ export default class pricesAndCoefsService {
 
     await model.destroy({ where: { name }, force: true, individualHooks: true, userId: data.user.id });
 
-    getPicesAndCoefs();
+    await getPicesAndCoefs();
     return true;
   }
 }

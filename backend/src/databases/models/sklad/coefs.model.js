@@ -15,7 +15,7 @@ const Coefs = sequelize.define('coefs', {
     allowNull: false,
   },
   value: {
-    type: DataTypes.INTEGER,
+    type: DataTypes.FLOAT,
     allowNull: false,
   },
   description: {

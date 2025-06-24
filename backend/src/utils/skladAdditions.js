@@ -27,7 +27,7 @@ const getMaterials = async () => {
 }
 const getPackagingMaterials = async () => {
     const response = await Client.sklad("https://api.moysklad.ru/api/remap/1.2/entity/product?filter=pathName=0%20Закупки/0.02.09%20Упаковка")
-    SkladService.packagingMaterials = response.rows.reduce(( acc, curr ) => {
+    SkladService.selfcost.packagingMaterials = response.rows.reduce(( acc, curr ) => {
         acc[curr.name] = {
             meta: curr.meta,
             salePrices: curr.salePrices
@@ -85,15 +85,17 @@ export const getPicesAndCoefs = async () => {
     promises.push(Prices.findAll())
     promises.push(WorkPrices.findAll())
     const result = await Promise.all(promises)
+    const pricesAndCoefs = {}
     result[0].forEach( el => {
-        SkladService.selfcost.pricesAndCoefs[el.name] = el.value
+        pricesAndCoefs[el.name] = el.value
     })
     result[1].forEach( el => {
-        SkladService.selfcost.pricesAndCoefs[el.name] = el.value
+        pricesAndCoefs[el.name] = el.value
     })
     result[2].forEach( el => {
-        SkladService.selfcost.pricesAndCoefs[el.name] = {ratePerHour: el.ratePerHour, costOfWork: el.costOfWork}
+        pricesAndCoefs[el.name] = {ratePerHour: el.ratePerHour, costOfWork: el.costOfWork}
     })
+    SkladService.selfcost.pricesAndCoefs = pricesAndCoefs
     updates['Цены и коэффиценты'] = Date.now()
 }
 

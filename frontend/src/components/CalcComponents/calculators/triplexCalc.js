@@ -1,3 +1,6 @@
+import { randomUUID } from 'crypto';
+
+const key = randomUUID();
 const Calculate = (data, selfcost) => {
     console.log(selfcost)
     console.log(data)
@@ -48,18 +51,18 @@ const Calculate = (data, selfcost) => {
                     if(useThinMaterial || lesser < 1050){
                         result.materials.push({
                             name: 'Пленка EVA Прозрачная 0,38мм',
-                            value: selfcost.materials['Пленка EVA Прозрачная 0,38мм'].salePrices[0].value * S_tape,
+                            value: selfcost.materials['Пленка EVA Прозрачная 0,38мм'].value * S_tape,
                             count: S_tape,
-                            string: `${selfcost.materials['Пленка EVA Прозрачная 0,38мм'].salePrices[0].value / 100} * ${S_tape.toFixed(2)}`,
+                            string: `${selfcost.materials['Пленка EVA Прозрачная 0,38мм'].value} * ${S_tape.toFixed(2)}`,
                             formula: 'Цена за м² * Площадь плёнки'
                         });
                         break
                     }
                     result.materials.push({
                         name: 'Пленка EVA Прозрачная 0,76мм',
-                        value: selfcost.materials['Пленка EVA Прозрачная 0,76мм'].salePrices[0].value * S_tape,
+                        value: selfcost.materials['Пленка EVA Прозрачная 0,76мм'].value * S_tape,
                         count: S_tape,
-                        string: `${selfcost.materials['Пленка EVA Прозрачная 0,76мм'].salePrices[0].value / 100} * ${S_tape.toFixed(2)}`,
+                        string: `${selfcost.materials['Пленка EVA Прозрачная 0,76мм'].value} * ${S_tape.toFixed(2)}`,
                         formula: 'Цена за м² * Площадь плёнки'
                     });
                 break;
@@ -67,16 +70,16 @@ const Calculate = (data, selfcost) => {
             case 'Смарт пленка Magic Glass':
                 result.materials.push({
                     name: tape,
-                    value: selfcost.materials[tape].salePrices[0].value * S_tape,
+                    value: selfcost.materials[tape].value * S_tape,
                     count: S_tape,
-                    string: `${selfcost.materials[tape].salePrices[0].value / 100} * ${S_tape.toFixed(2)}`,
+                    string: `${selfcost.materials[tape].value} * ${S_tape.toFixed(2)}`,
                     formula: 'Цена за м² * Площадь плёнки'
                 });
                 result.materials.push({
                     name: 'Пленка EVA Прозрачная 0,76мм',
-                    value: selfcost.materials['Пленка EVA Прозрачная 0,76мм'].salePrices[0].value * S_tape * 2,
+                    value: selfcost.materials['Пленка EVA Прозрачная 0,76мм'].value * S_tape * 2,
                     count: S_tape * 2,
-                    string: `${selfcost.materials['Пленка EVA Прозрачная 0,76мм'].salePrices[0].value / 100} * ${S_tape.toFixed(2)} * 2`,
+                    string: `${selfcost.materials['Пленка EVA Прозрачная 0,76мм'].value} * ${S_tape.toFixed(2)} * 2`,
                     formula: 'Цена за м² * Площадь плёнки * 2 слоя'
                 });
                 break;
@@ -84,16 +87,16 @@ const Calculate = (data, selfcost) => {
             case 'Пленка EVA №25 Хамелеон Гладкий 1.4':
                 result.materials.push({
                     name: tape,
-                    value: selfcost.materials[tape].salePrices[0].value * S_tape,
+                    value: selfcost.materials[tape].value * S_tape,
                     count: S_tape,
-                    string: `${selfcost.materials[tape].salePrices[0].value / 100} * ${S_tape.toFixed(2)}`,
+                    string: `${selfcost.materials[tape].value} * ${S_tape.toFixed(2)}`,
                     formula: 'Цена за м² * Площадь плёнки'
                 });
                 result.materials.push({
                     name: 'Пленка EVA Прозрачная 0,38мм',
-                    value: selfcost.materials['Пленка EVA Прозрачная 0,38мм'].salePrices[0].value * S_tape * 2,
+                    value: selfcost.materials['Пленка EVA Прозрачная 0,38мм'].value * S_tape * 2,
                     count: S_tape * 2,
-                    string: `${selfcost.materials['Пленка EVA Прозрачная 0,38мм'].salePrices[0].value / 100} * ${S_tape.toFixed(2)} * 2`,
+                    string: `${selfcost.materials['Пленка EVA Прозрачная 0,38мм'].value} * ${S_tape.toFixed(2)} * 2`,
                     formula: 'Цена за м² * Площадь плёнки * 2 слоя'
                 });
                 break;
@@ -101,9 +104,9 @@ const Calculate = (data, selfcost) => {
             case 'Пленка EVA Прозрачная 0,38мм':
                 result.materials.push({
                     name: tape,
-                    value: selfcost.materials[tape].salePrices[0].value * S_tape,
+                    value: selfcost.materials[tape].value * S_tape,
                     count: S_tape,
-                    string: `${selfcost.materials[tape].salePrices[0].value / 100} * ${S_tape.toFixed(2)}`,
+                    string: `${selfcost.materials[tape].value} * ${S_tape.toFixed(2)}`,
                     formula: 'Цена за м² * Площадь плёнки'
                 });
                 break;
@@ -111,9 +114,9 @@ const Calculate = (data, selfcost) => {
             case 'Пленка EVA Прозрачная 0,76мм':
                 result.materials.push({
                     name: tape,
-                    value: selfcost.materials[tape].salePrices[0].value * S_tape,
+                    value: selfcost.materials[tape].value * S_tape,
                     count: S_tape,
-                    string: `${selfcost.materials[tape].salePrices[0].value / 100} * ${S_tape.toFixed(2)}`,
+                    string: `${selfcost.materials[tape].value} * ${S_tape.toFixed(2)}`,
                     formula: 'Цена за м² * Площадь плёнки'
                 });
                 break;
@@ -121,16 +124,16 @@ const Calculate = (data, selfcost) => {
             default:
                 result.materials.push({
                     name: tape,
-                    value: selfcost.materials[tape].salePrices[0].value * S_tape,
+                    value: selfcost.materials[tape].value * S_tape,
                     count: S_tape,
-                    string: `${selfcost.materials[tape].salePrices[0].value / 100} * ${S_tape.toFixed(2)}`,
+                    string: `${selfcost.materials[tape].value} * ${S_tape.toFixed(2)}`,
                     formula: 'Цена за м² * Площадь плёнки'
                 });
                 result.materials.push({
                     name: 'Пленка EVA Прозрачная 0,38мм',
-                    value: selfcost.materials['Пленка EVA Прозрачная 0,38мм'].salePrices[0].value * S_tape,
+                    value: selfcost.materials['Пленка EVA Прозрачная 0,38мм'].value * S_tape,
                     count: S_tape,
-                    string: `${selfcost.materials['Пленка EVA Прозрачная 0,38мм'].salePrices[0].value / 100} * ${S_tape.toFixed(2)}`,
+                    string: `${selfcost.materials['Пленка EVA Прозрачная 0,38мм'].value} * ${S_tape.toFixed(2)}`,
                     formula: 'Цена за м² * Площадь плёнки'
                 });
                 break;
@@ -145,13 +148,13 @@ const Calculate = (data, selfcost) => {
         tempered && result.works.push({
                 name: `Закалка ${thickness} мм`,
                 value: selfcost.pricesAndCoefs[`Закалка ${thickness}`] * S,
-                string: `${selfcost.pricesAndCoefs[`Закалка ${thickness}`] / 100}мм * ${S}`,
+                string: `${selfcost.pricesAndCoefs[`Закалка ${thickness}`]}мм * ${S}`,
                 formula: `Себестоимость закалки * площадь`
             });
         result.materials.push({
             name: material,
-            value: selfcost.materials[material].salePrices[0].value * S,
-            string: `${selfcost.materials[material].salePrices[0].value / 100} * ${S.toFixed(2)}`,
+            value: selfcost.materials[material].value * S,
+            string: `${selfcost.materials[material].value} * ${S.toFixed(2)}`,
             formula: 'Цена за м² * Площадь'
         });
     }
@@ -180,27 +183,27 @@ const Calculate = (data, selfcost) => {
     result.expenses.push({
         name: 'Цеховые расходы',
         value: workshopExpenses,
-        string: `${(materialsandworks / 100).toFixed(2)} * 0.48`,
+        string: `${(materialsandworks).toFixed(2)} * 0.48`,
         formula: 'Материалы + работы * 48%'
     });
 
     result.expenses.push({
         name: 'Коммерческие расходы',
         value: commercialExpenses,
-        string: `(${(materialsandworks / 100).toFixed(2)} + ${(workshopExpenses / 100).toFixed(2)}) * 0.064`,
+        string: `(${(materialsandworks).toFixed(2)} + ${(workshopExpenses).toFixed(2)}) * 0.064`,
         formula: '(Материалы + Работы + Цеховые) * 6.4%'
     });
 
     result.expenses.push({
         name: 'Общехозяйственные расходы',
         value: householdExpenses,
-        string: `(${(materialsandworks / 100).toFixed(2)} + ${(workshopExpenses / 100).toFixed(2)}) * 0.2525`,
+        string: `(${(materialsandworks).toFixed(2)} + ${(workshopExpenses).toFixed(2)}) * 0.2525`,
         formula: '(Материалы + Работы + Цеховые) * 25.25%'
     });
     const price = (materialsandworks + commercialExpenses + householdExpenses + workshopExpenses) * selfcost.pricesAndCoefs[`Триплекс ${customertype}`]
     result.finalPrice = {
         name: 'Итоговая цена',
-        string: `(${(materialsandworks / 100).toFixed(2)} + ${((commercialExpenses + householdExpenses + workshopExpenses) / 100).toFixed(2)}) * ${selfcost.pricesAndCoefs[`Триплекс ${customertype}`]}`,
+        string: `(${(materialsandworks).toFixed(2)} + ${((commercialExpenses + householdExpenses + workshopExpenses)).toFixed(2)}) * ${selfcost.pricesAndCoefs[`Триплекс ${customertype}`]}`,
         formula: `(Материалы + Работы + Расходы) * Наценка для типа клиента ${customertype}`,
         value: price
     }
@@ -217,7 +220,7 @@ const Calculate = (data, selfcost) => {
     }
     console.log(result)
     return {
-            key: Date.now(),
+            key: randomUUID(),
             name,
             price,
             added: false,
@@ -230,59 +233,59 @@ const Calculate = (data, selfcost) => {
 
 export const constructWorks = (work, context) => {
     const { works, selfcost, result, materials, P, stanok, thickness, S, allThickness } = context;
+    const workFormula = (quantity, name) => (quantity * selfcost.pricesAndCoefs[name].costOfWork) + (selfcost.pricesAndCoefs['Средний оклад по селькоровской'] / selfcost.pricesAndCoefs['Среднее количество рабочих часов в месяц'] * quantity / selfcost.pricesAndCoefs[name].ratePerHour)
+    
     switch (work) {
         case 'polishing':
-            if (works[work]) {
-                result.works.push({
+            works[work] && result.works.push({
                     name: 'Полировка',
                     value: selfcost.pricesAndCoefs[`${stanok} Полировка`] * P,
-                    string: `${selfcost.pricesAndCoefs[`${stanok} Полировка`] / 100} * ${P.toFixed(2)}`,
+                    string: `${selfcost.pricesAndCoefs[`${stanok} Полировка`]} * ${P.toFixed(2)}`,
                     formula: 'Себестоимость работы * Периметр'
                 });
-            }
             break;
 
         case 'drills':
-            result.works.push({
+            works[work] && result.works.push({
                 name: 'Сверление',
-                value: selfcost.pricesAndCoefs['Сверление стекла, керамики'] * materials.length * works[work],
-                string: `${selfcost.pricesAndCoefs['Сверление стекла, керамики'] / 100} * ${materials.length} * ${works[work]}`,
-                formula: 'Себестоимость работы * Кол-во материалов * Кол-во отверстий'
+                value: workFormula(works[work] * materials.length, 'Сверление'),
+                string: `pupa`,
+                formula: 'pupa'
             });
             break;
 
         case 'zenk':
-            result.works.push({
+            works[work] && result.works.push({
                 name: 'Зенковка',
-                value: selfcost.pricesAndCoefs['Зенковка'] * materials.length * works[work],
-                string: `${selfcost.pricesAndCoefs['Зенковка'] / 100} * ${materials.length} * ${works[work]}`,
-                formula: 'Себестоимость зенковки * Кол-во материалов * Кол-во зенковок'
+                value: workFormula(works[work] * materials.length, 'Зенковка'),
+                string: `pupa`,
+                formula: 'pupa'
             });
             break;
 
         case 'cutsv1':
-            result.works.push({
+            works[work] && result.works.push({
                 name: 'Вырез в стекле 1 кат',
-                value: selfcost.pricesAndCoefs['Вырез в стекле 1 кат'] * materials.length * works[work],
-                string: `${selfcost.pricesAndCoefs['Вырез в стекле 1 кат'] / 100} * ${materials.length} * ${works[work]}`,
+                value: workFormula(works[work] * materials.length, 'Вырез в стекле 1 кат'),
+                string: `${selfcost.pricesAndCoefs['Вырез в стекле 1 кат']} * ${materials.length} * ${works[work]}`,
                 formula: 'Себестоимость выреза 1 кат * Кол-во материалов * Кол-во вырезов'
             });
             break;
 
         case 'cutsv2':
-            result.works.push({
+            works[work] && result.works.push({
                 name: 'Вырез в стекле 2 кат',
-                value: selfcost.pricesAndCoefs['Вырез в стекле 2 кат'] * materials.length * works[work],
-                string: `${selfcost.pricesAndCoefs['Вырез в стекле 2 кат'] / 100} * ${materials.length} * ${works[work]}`,
+                value: workFormula(works[work] * materials.length, 'Вырез в стекле 2 кат'),
+                string: `${selfcost.pricesAndCoefs['Вырез в стекле 2 кат']} * ${materials.length} * ${works[work]}`,
                 formula: 'Себестоимость выреза 2 кат * Кол-во материалов * Кол-во вырезов'
             });
             break;
 
         case 'cutsv3':
-            result.works.push({
+            works[work] && result.works.push({
                 name: 'Вырез в стекле 3 кат',
-                value: selfcost.pricesAndCoefs['Вырез в стекле 3 кат'] * materials.length * works[work],
-                string: `${selfcost.pricesAndCoefs['Вырез в стекле 3 кат'] / 100} * ${materials.length} * ${works[work]}`,
+                value: workFormula(works[work] * materials.length, 'Вырез в стекле 3 кат'),
+                string: `${selfcost.pricesAndCoefs['Вырез в стекле 3 кат']} * ${materials.length} * ${works[work]}`,
                 formula: 'Себестоимость выреза 3 кат * Кол-во материалов * Кол-во вырезов'
             });
             break;
@@ -291,43 +294,43 @@ export const constructWorks = (work, context) => {
             works[work] && result.works.push({
                 name: `Закалка ${thickness} мм`,
                 value: selfcost.pricesAndCoefs[`Закалка ${thickness}`] * S,
-                string: `${selfcost.pricesAndCoefs[`Закалка ${thickness}`] / 100}мм * ${S}`,
+                string: `${selfcost.pricesAndCoefs[`Закалка ${thickness}`]}мм * ${S}`,
                 formula: `Себестоимость закалки * площадь`
             });
             break;
 
         case 'cutting':
-            result.works.push({
+            works[work] && result.works.push({
                 name: 'Раскрой',
-                value: selfcost.pricesAndCoefs['Раскрой стекла'],
-                string: `${(selfcost.pricesAndCoefs['Раскрой стекла'] / 100).toFixed(2)}`,
-                formula: 'Раскрой стекла'
+                value: workFormula(S, 'Раскрой(Управление)'),
+                string: `pupa`,
+                formula: 'Раскрой(Управление)'
             });
             break;
 
-        case 'washing':
-            result.works.push({
-                name: 'Мойка',
-                value: selfcost.pricesAndCoefs['Мойка'],
-                string: `${(selfcost.pricesAndCoefs['Мойка'] / 100).toFixed(2)}`,
-                formula: 'Мойка'
+        case 'washing1':
+            works[work] && result.works.push({
+                name: 'Мойка 1',
+                value: workFormula(S, 'Мойка 1'),
+                string: `pupa`,
+                formula: 'Мойка 1'
             });
             break;
 
         case 'grinding':
-            result.works.push({
+            works[work] && result.works.push({
                 name: 'Шлифовка',
                 value: selfcost.pricesAndCoefs[`${stanok} Шлифовка`] * P,
-                string: `${(selfcost.pricesAndCoefs[`${stanok} Шлифовка`] / 100).toFixed(2)} * ${P.toFixed(2)}`,
+                string: `${selfcost.pricesAndCoefs[`${stanok} Шлифовка`].toFixed(2)} * ${P.toFixed(2)}`,
                 formula: 'Себестоимость работы * Периметр'
             });
             break;
 
         case 'triplexing':
-            result.works.push({
+            works[work] && result.works.push({
                 name: 'Триплексование',
                 value: selfcost.pricesAndCoefs[`Триплекс ${allThickness} мм`],
-                string: `${(selfcost.pricesAndCoefs[`Триплекс ${allThickness} мм`] / 100).toFixed(2)}`,
+                string: `${selfcost.pricesAndCoefs[`Триплекс ${allThickness} мм`].toFixed(2)}`,
                 formula: `Фиксированная себестоимость триплексования для общей толщины (${allThickness})`
             });
             break;
@@ -336,7 +339,7 @@ export const constructWorks = (work, context) => {
             works[work] && result.works.push({
                 name: 'Печать',
                 value: selfcost.pricesAndCoefs[`УФ печать`],
-                string: `${selfcost.pricesAndCoefs[`УФ печать`] / 100}`,
+                string: `${selfcost.pricesAndCoefs[`УФ печать`]}`,
                 formula: 'Себестоимость уф печати'
             });
             break;
@@ -345,25 +348,25 @@ export const constructWorks = (work, context) => {
         //     works[work] && result.works.push({
         //         name: 'Окрашивание',
         //         value: selfcost.colors[works[work]].salePrices[1].value,
-        //         string: `${selfcost.colors[works[work]].salePrices[1].value / 100}`,
+        //         string: `${selfcost.colors[works[work]].salePrices[1].value}`,
         //         formula: 'Себестоимость окрашивания (ТУТ ПОКА СЕБЕСТОИМОСТЬ КРАСКИ ИЗ СПРАВОЧНИКА В МОЕМ СКЛАДЕ, ПЕРЕСМОТРТЕ ФОРМУЛУ)'
         //     });
         //     break;
             
         case 'cuts':
-            result.works.push({
+            works[work] && result.works.push({
                 name: 'Вырезы',
                 value: selfcost.pricesAndCoefs['Вырезы СМД'] * works[work],
-                string: `${selfcost.pricesAndCoefs['Вырезы СМД'] / 100} * ${works[work]}`,
+                string: `${selfcost.pricesAndCoefs['Вырезы СМД']} * ${works[work]}`,
                 formula: 'Себестоимость вырезов * Кол-во вырезов'
             });
             break;
 
         case 'drillssmd':
-            result.works.push({
+            works[work] && result.works.push({
                 name: 'Сверление СМД',
                 value: selfcost.pricesAndCoefs['Сверление СМД'] * materials.length * works[work],
-                string: `${selfcost.pricesAndCoefs['Сверление СМД'] / 100} * ${materials.length} * ${works[work]}`,
+                string: `${selfcost.pricesAndCoefs['Сверление СМД']} * ${materials.length} * ${works[work]}`,
                 formula: 'Себестоимость работы * Кол-во материалов * Кол-во отверстий'
             });
             break;

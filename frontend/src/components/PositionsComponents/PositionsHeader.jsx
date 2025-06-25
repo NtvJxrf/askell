@@ -1,11 +1,28 @@
-import { Input, Button, Space, Typography, message } from 'antd';
+import { Input, Button, Space, Typography, message, Upload } from 'antd';
 import React, { useRef, useState } from 'react';
+import { UploadOutlined } from '@ant-design/icons';
 const { Text } = Typography;
 import axios from 'axios'
 import { useDispatch, useSelector } from 'react-redux'
-import { addOrderPositions, setOrder, setPositions, addNewPosition } from '../../slices/positionsSlice.js'
+import { addOrderPositions, setOrder, setPositions, addNewPosition, addNewPositions } from '../../slices/positionsSlice.js'
 import store from '../../store.js';
-import packaging from '../CalcComponents/calculators/packaging.js';
+import packaging from '../CalcComponents/calculators/packaging.js'
+import * as XLSX from 'xlsx';
+
+import triplexCalc from '../../components/CalcComponents/calculators/triplexCalc.js'
+import ceraglassCalc from '../../components/CalcComponents/calculators/ceraglassCalc.js'
+import glassCalc from '../../components/CalcComponents/calculators/glassCalc.js'
+import SMDCalc from '../../components/CalcComponents/calculators/SMDCalc.js'
+import glasspacketCalc from '../../components/CalcComponents/calculators/glasspacketCalc.js'
+
+const calcMap = {
+    'Триплекс': triplexCalc,
+    'Керагласс': ceraglassCalc,
+    'Стекло': glassCalc,
+    'СМД': SMDCalc,
+    'Стеклопакет': glasspacketCalc
+}
+
 const PositionsHeader = () => {
     const orderNumberRef = useRef(null);
     const [disabled, setDisabled] = useState(false)
@@ -94,6 +111,7 @@ const PositionsHeader = () => {
         }
         dispatch(addNewPosition(result))
     }
+
     console.log('render pos header')
     return (
         <>
@@ -123,8 +141,34 @@ const PositionsHeader = () => {
                     <Button type="default" shape="round" onClick={handleSaveOrder} disabled={disabled}>Сохранить</Button>
                     <Button type="default" shape="round" onClick={handleDeleteSelected} disabled={disabled} danger>Удалить выделенное</Button>
                     <Button type="default" shape="round" onClick={handlePackaging} disabled={disabled}>Упаковка</Button>
+                    <Upload
+                        accept=".xlsx, .xls"
+                        showUploadList={false}
+                        beforeUpload={(file) => {
+                            const reader = new FileReader();
+                            const selfcost = store.getState().selfcost.selfcost
+                            reader.onload = (evt) => {
+                                const data = evt.target.result;
+                                const workbook = XLSX.read(data, { type: 'binary' });
+                                const sheet = workbook.Sheets[workbook.SheetNames[0]];
+                                const array = XLSX.utils.sheet_to_json(sheet);
+                                if (!array.length) {
+                                    messageApi.error('Файл пустой или невалидный');
+                                    return;
+                                }
+                                array.shift()
+                                const positions = array.map( el => calcMap[el.calcType](el, selfcost))
+                                dispatch(addNewPositions(positions))
+                            };
+                            reader.readAsArrayBuffer(file);
+                            return false
+                        }}
+                        disabled={disabled}
+                    >
+                        <Button icon={<UploadOutlined />} shape="round">Загрузить из xlsx</Button>
+                    </Upload>
                 </Space>
-                </div>
+            </div>
 
         </>
     );

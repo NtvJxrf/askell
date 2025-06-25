@@ -1,4 +1,8 @@
 import { constructWorks } from './triplexCalc'
+import { randomUUID } from 'crypto';
+
+const key = randomUUID();
+
 const Calculate = (data, selfcost) => {
     console.log(selfcost)
     console.log(data)
@@ -28,21 +32,21 @@ const Calculate = (data, selfcost) => {
 
     result.materials.push({
         name: material,
-        value: selfcost.materials[material].salePrices[0].value * S,
-        string: `${selfcost.materials[material].salePrices[0].value / 100} * ${S.toFixed(2)}`,
+        value: selfcost.materials[material].value * S,
+        string: `${selfcost.materials[material].value} * ${S.toFixed(2)}`,
         formula: 'Цена за м² * Площадь'
     });
     color && result.materials.push({
         name: color,
-        value: selfcost.colors[color].salePrices[0].value * 0.3,
-        string: `${selfcost.colors[color].salePrices[0].value / 100} * 0.3`,
+        value: selfcost.colors[color].value * 0.3,
+        string: `${selfcost.colors[color].value} * 0.3`,
         formula: 'Цена за м² * 0.3'
     });
     const materials = [material]
     const context = { works, selfcost, result, P, stanok, materials, thickness, S };
     constructWorks('cutting', context);
-    constructWorks('washing', context);
-    constructWorks('grinding', context);
+    constructWorks('washing1', context);
+    // constructWorks('grinding', context);
     for(const work in works){
         if(!work) continue
         constructWorks(work, context)
@@ -62,28 +66,28 @@ const Calculate = (data, selfcost) => {
     result.expenses.push({
         name: 'Цеховые расходы',
         value: workshopExpenses,
-        string: `${(materialsandworks / 100).toFixed(2)} * 0.48`,
+        string: `${materialsandworks} * 0.48`,
         formula: 'Материалы + работы * 48%'
     });
 
     result.expenses.push({
         name: 'Коммерческие расходы',
         value: commercialExpenses,
-        string: `(${(materialsandworks / 100).toFixed(2)} + ${(workshopExpenses / 100).toFixed(2)}) * 0.064`,
+        string: `(${materialsandworks} + ${workshopExpenses}) * 0.064`,
         formula: '(Материалы + Работы + Цеховые) * 6.4%'
     });
 
     result.expenses.push({
         name: 'Общехозяйственные расходы',
         value: householdExpenses,
-        string: `(${(materialsandworks / 100).toFixed(2)} + ${(workshopExpenses / 100).toFixed(2)}) * 0.2525`,
+        string: `(${materialsandworks} + ${workshopExpenses}) * 0.2525`,
         formula: '(Материалы + Работы + Цеховые) * 25.25%'
     });
     const price = (materialsandworks + commercialExpenses + householdExpenses + workshopExpenses) * selfcost.pricesAndCoefs[`Стекло ${customertype}`]
 
     result.finalPrice = {
         name: 'Итоговая цена',
-        string: `(${(materialsandworks / 100).toFixed(2)} + ${((commercialExpenses + householdExpenses + workshopExpenses) / 100).toFixed(2)}) * ${selfcost.pricesAndCoefs[`Стекло ${customertype}`]}`,
+        string: `(${materialsandworks} + ${(commercialExpenses + householdExpenses + workshopExpenses)}) * ${selfcost.pricesAndCoefs[`Стекло ${customertype}`]}`,
         formula: `(Материалы + Работы + Расходы) * Наценка для типа клиента ${customertype}`,
         value: price
     }
@@ -98,7 +102,7 @@ const Calculate = (data, selfcost) => {
         viz: (color || print)
     }
     return {
-        key: Date.now(),
+        key: randomUUID(),
         name,
         price,
         added: false,

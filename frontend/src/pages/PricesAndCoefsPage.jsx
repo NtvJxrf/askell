@@ -19,14 +19,16 @@ import axios from 'axios';
 import { tabConfigs } from '../constants/tabConfig.js';
 import Init from '../init.js';
 import { useDispatch } from "react-redux";
-const { Title, Paragraph } = Typography
+
+const { Title, Paragraph } = Typography;
 
 const PricesAndCoefsPage = () => {
   const [messageApi, contextHolder] = message.useMessage();
   const [dataMap, setDataMap] = useState({});
   const [activeTab, setActiveTab] = useState(tabConfigs[0].key);
   const [form] = Form.useForm();
-  const dispatch = useDispatch()
+  const dispatch = useDispatch();
+
   const getTabConfig = (key) => tabConfigs.find(t => t.key === key);
 
   useEffect(() => {
@@ -40,15 +42,10 @@ const PricesAndCoefsPage = () => {
         const formatted = {};
         for (const tab of tabConfigs) {
           const list = response.data[tab.key] || [];
-          formatted[tab.key] = list.map(item => {
-            const mapped = { key: item.id || item.name, ...item };
-            for (const field of tab.fields) {
-              if (typeof mapped[field] === 'number') {
-                mapped[field] = tab.displayValue(mapped[field]);
-              }
-            }
-            return mapped;
-          });
+          formatted[tab.key] = list.map(item => ({
+            key: item.id || item.name,
+            ...item,
+          }));
         }
 
         setDataMap(formatted);
@@ -56,10 +53,12 @@ const PricesAndCoefsPage = () => {
         messageApi.error(err.response?.data?.message || 'Ошибка при загрузке данных');
       }
     };
+
     fetchData();
+
     return () => {
-      Init.getSelfcost(dispatch)
-    }
+      Init.getSelfcost(dispatch);
+    };
   }, [messageApi]);
 
   const handleInputChange = (rowKey, field, value) => {
@@ -71,84 +70,78 @@ const PricesAndCoefsPage = () => {
     }));
   };
 
-  const save = async record => {
+  const save = async (record) => {
     try {
-      const tab = getTabConfig(activeTab);
-      const transformedRecord = { ...record };
-
-      for (const field of tab.fields) {
-        if (typeof transformedRecord[field] === 'number') {
-          transformedRecord[field] = tab.transformValue(transformedRecord[field]);
-        }
-      }
-
       const payload = {
-        ...transformedRecord,
+        ...record,
         type: activeTab,
       };
 
-      await axios.post(`${import.meta.env.VITE_API_URL}/api/pricesAndCoefs/update`, payload, { withCredentials: true });
+      await axios.post(
+        `${import.meta.env.VITE_API_URL}/api/pricesAndCoefs/update`,
+        payload,
+        { withCredentials: true }
+      );
+
       messageApi.success('Сохранено');
     } catch (err) {
       messageApi.error(err.response?.data?.message || 'Ошибка при сохранении');
     }
   };
 
-  const remove = async record => {
+  const remove = async (record) => {
     try {
-        const payload = {
-            ...record,
-            type: activeTab,
-        };
+      const payload = {
+        ...record,
+        type: activeTab,
+      };
+
       await axios.post(
         `${import.meta.env.VITE_API_URL}/api/pricesAndCoefs/delete`,
         payload,
         { withCredentials: true }
       );
+
       setDataMap(prev => ({
         ...prev,
         [activeTab]: prev[activeTab].filter(i => i.key !== record.key),
       }));
+
       messageApi.success('Удалено');
     } catch (err) {
       messageApi.error(err.response?.data?.message || 'Ошибка при удалении');
     }
   };
 
-  const onAdd = async values => {
+  const onAdd = async (values) => {
     try {
-      const tab = getTabConfig(activeTab);
-      const transformedValues = { ...values };
-
-      for (const field of tab.fields) {
-        if (typeof transformedValues[field] === 'number') {
-          transformedValues[field] = tab.transformValue(transformedValues[field]);
-        }
-      }
-
       const payload = {
-        ...transformedValues,
+        ...values,
         type: activeTab,
       };
 
-      const res = await axios.post(`${import.meta.env.VITE_API_URL}/api/pricesAndCoefs/create`, payload, { withCredentials: true });
+      const res = await axios.post(
+        `${import.meta.env.VITE_API_URL}/api/pricesAndCoefs/create`,
+        payload,
+        { withCredentials: true }
+      );
 
       const newItem = {
         key: res.data.id || Date.now().toString(),
-        ...values, // тут остаётся значения в рублях для отображения
+        ...values,
       };
 
       setDataMap(prev => ({
         ...prev,
         [activeTab]: [...(prev[activeTab] || []), newItem],
       }));
+
       form.resetFields();
       messageApi.success('Добавлено');
     } catch (err) {
       messageApi.error(err.response?.data?.message || 'Ошибка при добавлении');
     }
   };
-
 
   const getColumnSearchProps = dataIndex => ({
     filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }) => (
@@ -176,14 +169,18 @@ const PricesAndCoefsPage = () => {
         </Space>
       </div>
     ),
-    filterIcon: filtered => <SearchOutlined style={{ color: filtered ? '#1890ff' : undefined }} />,
+    filterIcon: filtered => (
+      <SearchOutlined style={{ color: filtered ? '#1890ff' : undefined }} />
+    ),
     onFilter: (value, record) =>
       record[dataIndex]?.toString().toLowerCase().includes(value.toLowerCase()),
   });
 
   const getColumns = () => {
     const tab = getTabConfig(activeTab);
-    const searchProps = field => ['name', 'description'].includes(field) ? getColumnSearchProps(field) : {};
+    const searchProps = field => ['name', 'description'].includes(field)
+      ? getColumnSearchProps(field)
+      : {};
 
     return [
       ...tab.fields.map(field => ({
@@ -191,25 +188,26 @@ const PricesAndCoefsPage = () => {
         dataIndex: field,
         width: 150,
         render: (text, record) => {
-            if (field === 'name') 
-                return text;
-            if (typeof record[field] === 'number') {
-                return (
-                <InputNumber
-                    min={0}
-                    step={0.1}
-                    value={record[field]}
-                    style={{ width: 120 }}
-                    onChange={val => handleInputChange(record.key, field, val)}
-                />
-                );
-            }
+          if (field === 'name') return text;
+
+          if (typeof record[field] === 'number') {
             return (
-                <Input
+              <InputNumber
+                min={0}
+                step={0.1}
                 value={record[field]}
-                onChange={e => handleInputChange(record.key, field, e.target.value)}
-                />
+                style={{ width: 120 }}
+                onChange={val => handleInputChange(record.key, field, val)}
+              />
             );
+          }
+
+          return (
+            <Input
+              value={record[field]}
+              onChange={e => handleInputChange(record.key, field, e.target.value)}
+            />
+          );
         },
         ...searchProps(field),
       })),
@@ -238,16 +236,15 @@ const PricesAndCoefsPage = () => {
 
       <Card style={{ maxWidth: 1500, margin: '40px auto', minWidth: 1200 }}>
         <Tabs
-            activeKey={activeTab}
-            onChange={setActiveTab}
-            centered
-            style={{ marginBottom: 24 }}
-            items={tabConfigs.map(tab => ({
-                label: tab.title,
-                key: tab.key,
-            }))}
+          activeKey={activeTab}
+          onChange={setActiveTab}
+          centered
+          style={{ marginBottom: 24 }}
+          items={tabConfigs.map(tab => ({
+            label: tab.title,
+            key: tab.key,
+          }))}
         />
-
 
         <Form
           form={form}
@@ -281,11 +278,11 @@ const PricesAndCoefsPage = () => {
         </Form>
 
         <Table
-            bordered
-            pagination={{ pageSize: 10, showSizeChanger: false }}
-            dataSource={(dataMap[activeTab] || []).sort((a, b) => a.name.localeCompare(b.name))}
-            columns={getColumns()}
-            rowClassName="editable-row"
+          bordered
+          pagination={{ pageSize: 10, showSizeChanger: false }}
+          dataSource={(dataMap[activeTab] || []).sort((a, b) => a.name.localeCompare(b.name))}
+          columns={getColumns()}
+          rowClassName="editable-row"
         />
       </Card>
     </>

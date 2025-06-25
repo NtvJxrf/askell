@@ -110,6 +110,68 @@ const formConfigs = {
         }
       ]
     },
+    glasspacketForm: {
+      commonFields: [
+        { name: 'height', type: 'input', label: 'Длина, мм', rules: [{ required: true, message: 'Fill this field' }] },
+        { name: 'width', type: 'input', label: 'Высота, мм', rules: [{ required: true, message: 'Fill this field' }] },
+        {
+          name: 'gas',
+          label: 'Газ',
+          type: 'select',
+          options: [],
+          rules: [{ required: true, message: 'Fill this field' }]
+        }
+      ],
+      materialFields: [
+        [
+          {
+            name: 'material1',
+            label: 'Материал 1',
+            type: 'select',
+            options: [],
+            rules: [{ required: true, message: 'Fill this field' }]
+          },
+          { name: 'tempered', label: 'Закаленное', type: 'checkbox' }
+        ],
+        [
+          {
+            name: 'plane1',
+            label: 'Рамка 1',
+            type: 'select',
+            options: [],
+            rules: [{ required: true, message: 'Fill this field' }]
+          }
+        ],
+        [
+          {
+            name: 'material2',
+            label: 'Материал 2',
+            type: 'select',
+            options: [],
+            rules: [{ required: true, message: 'Fill this field' }]
+          },
+          { name: 'tempered', label: 'Закаленное', type: 'checkbox' }
+        ],
+        [
+          {
+            name: 'plane2',
+            label: 'Рамка 2',
+            type: 'select',
+            options: [],
+            rules: [{ required: true, message: 'Fill this field' }]
+          }
+        ],
+        [
+          {
+            name: 'material3',
+            label: 'Материал 3',
+            type: 'select',
+            options: [],
+          },
+          { name: 'tempered', label: 'Закаленное', type: 'checkbox' }
+        ]
+      ]
+    },
     ceraglassForm: {
       commonFields: [
         { name: 'height', type: 'input', label: 'Длина, мм', rules: [{ required: true, message: 'Fill this field' }] },

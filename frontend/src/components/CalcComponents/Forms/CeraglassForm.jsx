@@ -13,10 +13,10 @@ const CeraglassForm = () => {
     formConfigs.ceraglassForm.commonFields[6].options = undersArray
     return (
         <Row gutter={24} style={{ width: '100%' }}>
-            <Col span={10} style={{ paddingLeft: 30 }}>
+            <Col span={12} style={{ paddingLeft: 30 }}>
                 {formConfigs.ceraglassForm.commonFields.map((item) => renderField(item))}
             </Col>
-            <Col span={14}>
+            <Col span={12}>
                 {formConfigs.ceraglassForm.materialFields.map((item) => renderField(item))}
             </Col>
         </Row>

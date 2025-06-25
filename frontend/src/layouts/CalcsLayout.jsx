@@ -11,7 +11,7 @@ const typeMap = {
     glass: 'GlassForm',
     triplex: 'TriplexForm',
     ceraglass: 'CeraglassForm',
-    glasspacket: 'GlassPacket',
+    glasspacket: 'GlassPacketForm',
 };
 
 const CalcsLayout = () => {

@@ -6,9 +6,7 @@ const { Text, Title } = Typography;
 
 const renderItem = (item, index) => {
     const hasDetails = item.string || item.formula;
-
-    const formattedValue = (item.value / 100).toFixed(2)
-
+    const formattedValue = item.value.toFixed(2)
     return (
         <div key={index} style={{ marginBottom: 4 }}>
             <Text>
@@ -56,7 +54,7 @@ const renderDetails = (record) => {
                 <Title level={4}>Материалы</Title>
                 {materials.map(renderItem)}
                 <div style={{ marginTop: 8, fontWeight: 'bold' }}>
-                    Итого по материалам: {(totalMaterials / 100).toFixed(2)}
+                    Итого по материалам: {totalMaterials.toFixed(2)}
                 </div>
 
                 <Divider />
@@ -64,7 +62,7 @@ const renderDetails = (record) => {
                 <Title level={4}>Работы</Title>
                 {works.map(renderItem)}
                 <div style={{ marginTop: 8, fontWeight: 'bold' }}>
-                    Итого по работам: {(totalWorks / 100).toFixed(2)}
+                    Итого по работам: {totalWorks.toFixed(2)}
                 </div>
 
                 <Divider />
@@ -72,7 +70,7 @@ const renderDetails = (record) => {
                 <Title level={4}>Расходы</Title>
                 {expenses.map(renderItem)}
                 <div style={{ marginTop: 8, fontWeight: 'bold' }}>
-                    Итого по доп расходам: {(totalExpenses / 100).toFixed(2)}
+                    Итого по доп расходам: {totalExpenses.toFixed(2)}
                 </div>
 
                 <Divider />

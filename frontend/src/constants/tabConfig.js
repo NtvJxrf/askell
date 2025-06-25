@@ -7,9 +7,7 @@ export const tabConfigs = [
       { title: 'Название', dataIndex: 'name' },
       { title: 'Значение', dataIndex: 'value' },
       { title: 'Описание', dataIndex: 'description' },
-    ],
-    displayValue: val => val,
-    transformValue: val => Number(val),
+    ]
   },
   {
     key: 'prices',
@@ -19,9 +17,7 @@ export const tabConfigs = [
       { title: 'Название', dataIndex: 'name' },
       { title: 'Значение', dataIndex: 'value' },
       { title: 'Описание', dataIndex: 'description' },
-    ],
-    displayValue: val => val / 100,
-    transformValue: val => Math.round(val * 100),
+    ]
   },
   {
     key: 'work_prices',
@@ -32,8 +28,6 @@ export const tabConfigs = [
       { title: 'Норма в час', dataIndex: 'ratePerHour' },
       { title: 'Стоимость работы', dataIndex: 'costOfWork' },
       { title: 'Описание', dataIndex: 'description' },
-    ],
-    displayValue: val => val / 100,
-    transformValue: val => Math.round(val * 100),
+    ]
   }
 ];

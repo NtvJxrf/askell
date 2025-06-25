@@ -20,11 +20,12 @@ const positionsSlice = createSlice({
       state.positions = action.payload.concat(nonAddedPositions)
     },
     addNewPosition: (state, action) => { state.positions.push(action.payload)},
+    addNewPositions: (state, action) => { state.positions = state.positions.concat(action.payload)},
     setPositions: (state, action) => { state.positions = action.payload},
     setOrder: (state, action) => { state.order = action.payload},
     setSelectedRowKeys: (state, action) => { state.selectedPosition = action.payload},
   }
 })
 
-export const { addNewPosition, addOrderPositions, setPositions, setOrder, setSelectedRowKeys } = positionsSlice.actions;
+export const { addNewPosition, addOrderPositions, setPositions, setOrder, setSelectedRowKeys, addNewPositions } = positionsSlice.actions;
 export default positionsSlice.reducer;

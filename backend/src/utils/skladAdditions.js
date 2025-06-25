@@ -18,7 +18,7 @@ const getMaterials = async () => {
             materials[material.name] = {
                 meta: material.meta,
                 name: material.name,
-                salePrices: material.salePrices,
+                value: material.salePrices[0].value / 100
             }
         }
     }
@@ -30,7 +30,7 @@ const getPackagingMaterials = async () => {
     SkladService.selfcost.packagingMaterials = response.rows.reduce(( acc, curr ) => {
         acc[curr.name] = {
             meta: curr.meta,
-            salePrices: curr.salePrices
+            value: curr.salePrices[0].value / 100
         }
         return acc
     }, {})
@@ -73,7 +73,7 @@ const getColors = async () => {
     SkladService.selfcost.colors = response.rows.reduce(( acc, curr ) => {
         acc[curr.name] = {
             meta: curr.meta,
-            salePrices: curr.salePrices
+            value: curr.salePrices[0].value / 100
         }
         return acc
     }, {})

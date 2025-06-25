@@ -1,4 +1,7 @@
 import { constructWorks } from './triplexCalc'
+import { randomUUID } from 'crypto';
+
+const key = randomUUID();
 const Calculate = (data, selfcost) => {
     console.log(selfcost)
     console.log(data)
@@ -22,7 +25,7 @@ const Calculate = (data, selfcost) => {
         result.materials.push({
                 name: `Цена для типа клиента ${clientType}`,
                 value: selfcost.pricesAndCoefs[`${clientType} S >= 1.2`] * S,
-                string: `${(selfcost.pricesAndCoefs[`${clientType} S >= 1.2`] / 100).toFixed(2)} * ${S.toFixed(2)}`,
+                string: `${(selfcost.pricesAndCoefs[`${clientType} S >= 1.2`]).toFixed(2)} * ${S.toFixed(2)}`,
                 formula: `Цена для типа клиента ${clientType} при S >= 1.2 * S`
             });
             temp = selfcost.pricesAndCoefs[`${clientType} S >= 1.2`] * S
@@ -30,7 +33,7 @@ const Calculate = (data, selfcost) => {
         result.materials.push({
                 name: 'Цена для типа клиента',
                 value: selfcost.pricesAndCoefs[`${clientType} S < 1.2`] * S,
-                string: `${(selfcost.pricesAndCoefs[`${clientType} S < 1.2`] / 100).toFixed(2)} * ${S.toFixed(2)}`,
+                string: `${(selfcost.pricesAndCoefs[`${clientType} S < 1.2`]).toFixed(2)} * ${S.toFixed(2)}`,
                 formula: `Цена для типа клиента ${clientType} при S < 1.2 * S`
             });
             temp = selfcost.pricesAndCoefs[`${clientType} S < 1.2`] * S
@@ -40,7 +43,7 @@ const Calculate = (data, selfcost) => {
     smdType != 'Krystal' && print && (result.works.push({
                                         name: 'УФ печать',
                                         value: coef,
-                                        string: `${(temp / 100).toFixed(2)} * ${0.2}`,
+                                        string: `${(temp).toFixed(2)} * ${0.2}`,
                                         formula: `Если тип не Krystal и есть печать, то + 20% к цене`
                                     }))
     
@@ -55,7 +58,7 @@ const Calculate = (data, selfcost) => {
             result.materials.push({
                 name: material,
                 value: coef,
-                string: `${(temp / 100).toFixed(2)} * ${0.2}`,
+                string: `${(temp).toFixed(2)} * ${0.2}`,
                 formula: 'Если материал Matelux, то + 20% к цене'
             });
             break
@@ -63,7 +66,7 @@ const Calculate = (data, selfcost) => {
             result.materials.push({
                 name: material,
                 value: selfcost.pricesAndCoefs[`Optiwhite SMD`] * S,
-                string: `${(selfcost.pricesAndCoefs[`Optiwhite SMD`] / 100).toFixed(2)} * ${S.toFixed(2)}`,
+                string: `${(selfcost.pricesAndCoefs[`Optiwhite SMD`]).toFixed(2)} * ${S.toFixed(2)}`,
                 formula: 'Цена за Optiwhite * Площадь'
             });
             break
@@ -85,7 +88,7 @@ const Calculate = (data, selfcost) => {
     const price = materialsandworks
     result.finalPrice = {
         name: 'Итоговая цена',
-        string: `${(materialsandworks / 100).toFixed(2)}}`,
+        string: `${(materialsandworks).toFixed(2)}}`,
         formula: `Материалы и Работы`,
         value: price
     }
@@ -97,7 +100,7 @@ const Calculate = (data, selfcost) => {
         type: 'СМД'
     }
     return {
-            key: Date.now(),
+            key: randomUUID(),
             name,
             price,
             added: false,

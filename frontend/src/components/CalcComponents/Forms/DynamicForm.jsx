@@ -9,22 +9,26 @@ import SMDForm from './SMDForm.jsx'
 import GlassForm from './GlassForm.jsx'
 import TriplexForm from './TriplexForm.jsx'
 import CeraglassForm from "./CeraglassForm.jsx";
+import GlassPacketForm from './GlasspacketForm.jsx'
 import triplexCalc from '../calculators/triplexCalc.js'
 import ceraglassCalc from '../calculators/ceraglassCalc.js'
 import glassCalc from '../calculators/glassCalc.js'
 import SMDCalc from '../calculators/SMDCalc.js'
+import glasspacketCalc from '../calculators/glasspacketCalc.js'
 import { addNewPosition } from "../../../slices/positionsSlice.js";
 const calcMap = {
     TriplexForm: triplexCalc,
     CeraglassForm: ceraglassCalc,
     GlassForm: glassCalc,
     SMDForm: SMDCalc,
+    GlassPacketForm: glasspacketCalc
 }
 const formsMap = {
     SMDForm,
     GlassForm,
     TriplexForm,
-    CeraglassForm
+    CeraglassForm,
+    GlassPacketForm
 }
 const DynamicForm = ({type}) => {
     const [messageApi, contextHolder] = message.useMessage();
@@ -38,7 +42,6 @@ const DynamicForm = ({type}) => {
         dispatch(addNewPosition(position))
         messageApi.success('Позиция добавлена')
     }
-
 
     const handleValuesChange = (_, allValues) => {
         dispatch(setForm({ formType: type, values: allValues }));

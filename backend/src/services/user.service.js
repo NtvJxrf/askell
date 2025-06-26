@@ -5,11 +5,11 @@ import loginValidator from '../validators/login.validator.js';
 import createUserValidator from '../validators/createUser.validator.js';
 
 export default class userService {
-    static async createUser(username, password, role = 'user', creatorId) {
+    static async createUser(username, password, role = 'user',) {
         await createUserValidator.validateAsync({ username, password })
         if(await UserModel.findOne({ where: { username }, paranoid: false}))
             throw new ApiError(400, 'Username already exists, BAD_REQUEST')
-        const user = await UserModel.create({ username, password, role, creator:  creatorId })
+        const user = await UserModel.create({ username, password, role })
         delete user.dataValues.password
         return user
     }

@@ -5,7 +5,7 @@ const renderField = (field) => {
     case 'select':
         return (
             <Form.Item key={field.name} label={field.label} name={field.name} rules={field.rules}>
-                <Select showSearch mode="combobox" options={field.options.map(option => ({ label: option, value: option }))} allowClear={true} popupMatchSelectWidth={false} filterOption={(input, option) => {
+                <Select showSearch mode="combobox" options={field?.options?.map(option => ({ label: option, value: option }))} allowClear={true} popupMatchSelectWidth={false} filterOption={(input, option) => {
                     if (!option?.label) return false;
                     const inputParts = input.toLowerCase().split(/\s+/).filter(Boolean);
                     const label = option.label.toLowerCase();

@@ -1,7 +1,4 @@
-import { constructWorks } from './triplexCalc'
-import { randomUUID } from 'crypto';
-
-const key = randomUUID();
+import { constructWorks, constructExpenses } from './triplexCalc'
 
 const Calculate = (data, selfcost) => {
     console.log(selfcost)
@@ -48,46 +45,14 @@ const Calculate = (data, selfcost) => {
     constructWorks('washing1', context);
     // constructWorks('grinding', context);
     for(const work in works){
-        if(!work) continue
+        if(!works[work]) continue
         constructWorks(work, context)
     }
-
-    let materialsandworks = 0
-    for (const item of Object.values(result.materials)) {
-        materialsandworks += item.value
-    }
-    for (const item of Object.values(result.works)) {
-        materialsandworks += item.value
-    }
-    const workshopExpenses = materialsandworks * 0.48   // % цеховых расходов
-    const commercialExpenses = (materialsandworks + workshopExpenses) * 0.064 // % коммерческих расходов
-    const householdExpenses =  (materialsandworks + workshopExpenses) * 0.2525 //общехозяйственные расходы
-
-    result.expenses.push({
-        name: 'Цеховые расходы',
-        value: workshopExpenses,
-        string: `${materialsandworks} * 0.48`,
-        formula: 'Материалы + работы * 48%'
-    });
-
-    result.expenses.push({
-        name: 'Коммерческие расходы',
-        value: commercialExpenses,
-        string: `(${materialsandworks} + ${workshopExpenses}) * 0.064`,
-        formula: '(Материалы + Работы + Цеховые) * 6.4%'
-    });
-
-    result.expenses.push({
-        name: 'Общехозяйственные расходы',
-        value: householdExpenses,
-        string: `(${materialsandworks} + ${workshopExpenses}) * 0.2525`,
-        formula: '(Материалы + Работы + Цеховые) * 25.25%'
-    });
+    const [materialsandworks, commercialExpenses, householdExpenses, workshopExpenses] = constructExpenses(result, selfcost)
     const price = (materialsandworks + commercialExpenses + householdExpenses + workshopExpenses) * selfcost.pricesAndCoefs[`Стекло ${customertype}`]
-
     result.finalPrice = {
         name: 'Итоговая цена',
-        string: `(${materialsandworks} + ${(commercialExpenses + householdExpenses + workshopExpenses)}) * ${selfcost.pricesAndCoefs[`Стекло ${customertype}`]}`,
+        string: `(${(materialsandworks).toFixed(2)} + ${((commercialExpenses + householdExpenses + workshopExpenses)).toFixed(2)}) * ${selfcost.pricesAndCoefs[`Стекло ${customertype}`]}`,
         formula: `(Материалы + Работы + Расходы) * Наценка для типа клиента ${customertype}`,
         value: price
     }
@@ -99,10 +64,10 @@ const Calculate = (data, selfcost) => {
         weight,
         type: 'Стекло',
         productType: true,
-        viz: (color || print)
+        viz: (color || print) ? true : false
     }
     return {
-        key: randomUUID(),
+        key: crypto.randomUUID(),
         name,
         price,
         added: false,
@@ -113,10 +78,3 @@ const Calculate = (data, selfcost) => {
 }
 
 export default Calculate
-
-
-
-//площадь *( себес Стекло (зеркало) )* коэф.обрези+ стоимость Полуфабрикат краски выбранной (себес)*2 *0,3*площадь+ площадь*(стоимость краски печатной*0,048+RAL 9003 (Белый)себес *0,3)
-// 0.3 = это норматив краски на 1м2
-// уф печать делается на стороне, как ее включить в расчеты?
-

@@ -8,13 +8,20 @@ const formConfigs = {
           options: ['Иное', 'Krystal', 'Round', 'Lux', 'Premium', 'Standart', 'Hexagon'],
           rules: [{ required: true, message: 'Fill this field' }]
         },
-        { name: 'height', type: 'input', label: 'Высота, мм', rules: [{ required: true, message: 'Fill this field' }] },
-        { name: 'width', type: 'input', label: 'Ширина, мм:', rules: [{ required: true, message: 'Fill this field' }] },
         {
           name: 'material',
           label: 'Материал',
           type: 'select',
           options: ['Стекло Matelux, 4 мм', 'Стекло осветленное OptiWhite, 4 мм', 'Стекло М1, 4 мм'],
+          rules: [{ required: true, message: 'Fill this field' }]
+        },
+        { name: 'height', type: 'input', label: 'Высота, мм', rules: [{ required: true, message: 'Fill this field' }] },
+        { name: 'width', type: 'input', label: 'Ширина, мм:', rules: [{ required: true, message: 'Fill this field' }] },
+        {
+          name: 'clientType',
+          label: 'Тип клитента',
+          type: 'select',
+          options: ['VIP', 'Дилер', 'Опт', 'Розница'],
           rules: [{ required: true, message: 'Fill this field' }]
         },
         {
@@ -23,16 +30,9 @@ const formConfigs = {
           type: 'select',
           options: [],
         },
-        {
-          name: 'clientType',
-          label: 'Тип клитента',
-          type: 'select',
-          options: ['VIP', 'Дилер', 'Опт', 'Розница'],
-          rules: [{ required: true, message: 'Fill this field' }]
-        },
-        { name: 'drillssmd', type: 'input', label: 'Сверление, шт', rules: [{ required: true, message: 'Fill this field' }] },
-        { name: 'cuts', type: 'input', label: 'Вырезы, шт', rules: [{ required: true, message: 'Fill this field' }] },
-        { name: 'rounds', type: 'input', label: 'Скругления, шт', rules: [{ required: true, message: 'Fill this field' }] },
+        { name: 'drillssmd', type: 'input', label: 'Сверление, шт' },
+        { name: 'cuts', type: 'input', label: 'Вырезы, шт' },
+        { name: 'rounds', type: 'input', label: 'Скругления, шт' },
         { name: 'print', label: 'Печать', type: 'checkbox' },
       ]
     },
@@ -47,17 +47,12 @@ const formConfigs = {
         },
         { name: 'height', type: 'input', label: 'Длина, мм', rules: [{ required: true, message: 'Fill this field' }] },
         { name: 'width', type: 'input', label: 'Ширина, мм', rules: [{ required: true, message: 'Fill this field' }] },
-        { name: 'drills', type: 'input', label: 'Сверление, шт', rules: [{ required: true, message: 'Fill this field' }] },
-        { name: 'zenk', type: 'input', label: 'Зенкование, шт', rules: [{ required: true, message: 'Fill this field' }] },
-        { name: 'cutsv1', type: 'input', label: 'Вырезы 1 кат. шт', rules: [{ required: true, message: 'Fill this field' }] },
-        { name: 'cutsv2', type: 'input', label: 'Вырезы 2 кат. шт', rules: [{ required: true, message: 'Fill this field' }] },
-        { name: 'cutsv3', type: 'input', label: 'Вырезы 3 кат. шт', rules: [{ required: true, message: 'Fill this field' }] },
-        {
-          name: 'color',
-          label: 'Окрашивание',
-          type: 'select',
-          options: ['Красненький', 'Зелененький'],
-        },
+        { name: 'drills', type: 'input', label: 'Сверление, шт' },
+        { name: 'zenk', type: 'input', label: 'Зенкование, шт' },
+        { name: 'cutsv1', type: 'input', label: 'Вырезы 1 кат. шт' },
+        { name: 'cutsv2', type: 'input', label: 'Вырезы 2 кат. шт' },
+        { name: 'cutsv3', type: 'input', label: 'Вырезы 3 кат. шт' },
+        { name: 'color', label: 'Цвет', type: 'select' },
         { name: 'shape', label: 'Прямоугольная форма', type: 'checkbox' },
         { name: 'tempered', label: 'Закаленное', type: 'checkbox' },
         { name: 'polishing', label: 'Полировка', type: 'checkbox' },
@@ -68,11 +63,11 @@ const formConfigs = {
       commonFields: [
         { name: 'height', type: 'input', label: 'Длина, мм', rules: [{ required: true, message: 'Fill this field' }] },
         { name: 'width', type: 'input', label: 'Высота, мм', rules: [{ required: true, message: 'Fill this field' }] },
-        { name: 'drills', type: 'input', label: 'Сверление, шт', rules: [{ required: true, message: 'Fill this field' }] },
-        { name: 'zenk', type: 'input', label: 'Зенкование, шт', rules: [{ required: true, message: 'Fill this field' }] },
-        { name: 'cutsv1', type: 'input', label: 'Вырезы 1 кат. шт', rules: [{ required: true, message: 'Fill this field' }] },
-        { name: 'cutsv2', type: 'input', label: 'Вырезы 2 кат. шт', rules: [{ required: true, message: 'Fill this field' }] },
-        { name: 'cutsv3', type: 'input', label: 'Вырезы 3 кат. шт', rules: [{ required: true, message: 'Fill this field' }] },
+        { name: 'drills', type: 'input', label: 'Сверление, шт' },
+        { name: 'zenk', type: 'input', label: 'Зенкование, шт' },
+        { name: 'cutsv1', type: 'input', label: 'Вырезы 1 кат. шт' },
+        { name: 'cutsv2', type: 'input', label: 'Вырезы 2 кат. шт' },
+        { name: 'cutsv3', type: 'input', label: 'Вырезы 3 кат. шт' },
         { name: 'shape', label: 'Прямоугольная форма', type: 'checkbox' },
         { name: 'tempered', label: 'Закаленное', type: 'checkbox' },
         { name: 'polishing', label: 'Полировка', type: 'checkbox' },
@@ -158,7 +153,6 @@ const formConfigs = {
             label: 'Рамка 2',
             type: 'select',
             options: [],
-            rules: [{ required: true, message: 'Fill this field' }]
           }
         ],
         [
@@ -174,37 +168,29 @@ const formConfigs = {
     },
     ceraglassForm: {
       commonFields: [
-        { name: 'height', type: 'input', label: 'Длина, мм', rules: [{ required: true, message: 'Fill this field' }] },
-        { name: 'width', type: 'input', label: 'Ширина, мм', rules: [{ required: true, message: 'Fill this field' }] },
-        { name: 'detailsCount', type: 'input', label: 'Деталей в изделии, шт', rules: [{ required: true, message: 'Fill this field' }] },
-        { name: 'cutsv1', type: 'input', label: 'Вырезы 1 кат. шт', rules: [{ required: true, message: 'Fill this field' }] },
-        { name: 'cutsv2', type: 'input', label: 'Вырезы 2 кат. шт', rules: [{ required: true, message: 'Fill this field' }] },
-        { name: 'cutsv3', type: 'input', label: 'Вырезы 3 кат. шт', rules: [{ required: true, message: 'Fill this field' }] },
-        {
-          name: 'under',
-          label: 'Подстолье',
-          type: 'select',
-          options: [],
-          rules: [{ required: true, message: 'Fill this field' }]
-        },
-        { name: 'shape', label: 'Прямоугольная форма', type: 'checkbox' },
-      ],materialFields: [
-        {label: 'Материал 1', type: 'divider'},
         {
           name: 'material1',
-          label: 'Материал',
+          label: 'Материал 1',
           type: 'select',
-          options: [],
           rules: [{ required: true, message: 'Fill this field' }]
         },
-        {label: 'Материал 2', type: 'divider'},
         {
           name: 'material2',
-          label: 'Материал',
+          label: 'Материал 2',
           type: 'select',
-          options: [],
           rules: [{ required: true, message: 'Fill this field' }]
         },
+        { name: 'height', type: 'input', label: 'Длина, мм', rules: [{ required: true, message: 'Fill this field' }] },
+        { name: 'width', type: 'input', label: 'Ширина, мм', rules: [{ required: true, message: 'Fill this field' }] },
+        { name: 'cutsv1', type: 'input', label: 'Вырезы 1 кат. шт' },
+        { name: 'cutsv2', type: 'input', label: 'Вырезы 2 кат. шт' },
+        { name: 'cutsv3', type: 'input', label: 'Вырезы 3 кат. шт' },
+        { name: 'blank', type: 'input', label: 'Количество пятаков' },
+        { name: 'color', label: 'Цвет', type: 'select' },
+        { name: 'under', label: 'Подстолье', type: 'select' },
+        { name: 'shape', label: 'Прямоугольная форма', type: 'checkbox' },
+      ],materialFields: [
+
       ]
     },
     typeMap: { //['Зеркало', 'Стекло', 'Стеновая панель', 'Кухонный фартук']

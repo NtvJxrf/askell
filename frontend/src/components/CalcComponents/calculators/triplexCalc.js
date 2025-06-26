@@ -1,6 +1,3 @@
-import { randomUUID } from 'crypto';
-
-const key = randomUUID();
 const Calculate = (data, selfcost) => {
     console.log(selfcost)
     console.log(data)
@@ -165,41 +162,11 @@ const Calculate = (data, selfcost) => {
     constructWorks('grinding', context);
     constructWorks('triplexing', context);
     for (const work in works) {
-        if (!work) continue;
+        if(!works[work]) continue
         constructWorks(work, context);
     }
 
-    let materialsandworks = 0
-    for (const item of Object.values(result.materials)) {
-        materialsandworks += item.value
-    }
-    for (const item of Object.values(result.works)) {
-        materialsandworks += item.value
-    }
-    const workshopExpenses = materialsandworks * 0.48   // % цеховых расходов
-    const commercialExpenses = (materialsandworks + workshopExpenses) * 0.064 // % коммерческих расходов
-    const householdExpenses =  (materialsandworks + workshopExpenses) * 0.2525 //общехозяйственные расходы
-
-    result.expenses.push({
-        name: 'Цеховые расходы',
-        value: workshopExpenses,
-        string: `${(materialsandworks).toFixed(2)} * 0.48`,
-        formula: 'Материалы + работы * 48%'
-    });
-
-    result.expenses.push({
-        name: 'Коммерческие расходы',
-        value: commercialExpenses,
-        string: `(${(materialsandworks).toFixed(2)} + ${(workshopExpenses).toFixed(2)}) * 0.064`,
-        formula: '(Материалы + Работы + Цеховые) * 6.4%'
-    });
-
-    result.expenses.push({
-        name: 'Общехозяйственные расходы',
-        value: householdExpenses,
-        string: `(${(materialsandworks).toFixed(2)} + ${(workshopExpenses).toFixed(2)}) * 0.2525`,
-        formula: '(Материалы + Работы + Цеховые) * 25.25%'
-    });
+    const [materialsandworks, commercialExpenses, householdExpenses, workshopExpenses] = constructExpenses(result, selfcost)
     const price = (materialsandworks + commercialExpenses + householdExpenses + workshopExpenses) * selfcost.pricesAndCoefs[`Триплекс ${customertype}`]
     result.finalPrice = {
         name: 'Итоговая цена',
@@ -220,7 +187,7 @@ const Calculate = (data, selfcost) => {
     }
     console.log(result)
     return {
-            key: randomUUID(),
+            key: crypto.randomUUID(),
             name,
             price,
             added: false,
@@ -234,10 +201,10 @@ const Calculate = (data, selfcost) => {
 export const constructWorks = (work, context) => {
     const { works, selfcost, result, materials, P, stanok, thickness, S, allThickness } = context;
     const workFormula = (quantity, name) => (quantity * selfcost.pricesAndCoefs[name].costOfWork) + (selfcost.pricesAndCoefs['Средний оклад по селькоровской'] / selfcost.pricesAndCoefs['Среднее количество рабочих часов в месяц'] * quantity / selfcost.pricesAndCoefs[name].ratePerHour)
-    
+    console.log(work)
     switch (work) {
         case 'polishing':
-            works[work] && result.works.push({
+            result.works.push({
                     name: 'Полировка',
                     value: selfcost.pricesAndCoefs[`${stanok} Полировка`] * P,
                     string: `${selfcost.pricesAndCoefs[`${stanok} Полировка`]} * ${P.toFixed(2)}`,
@@ -246,7 +213,7 @@ export const constructWorks = (work, context) => {
             break;
 
         case 'drills':
-            works[work] && result.works.push({
+            result.works.push({
                 name: 'Сверление',
                 value: workFormula(works[work] * materials.length, 'Сверление'),
                 string: `pupa`,
@@ -255,7 +222,7 @@ export const constructWorks = (work, context) => {
             break;
 
         case 'zenk':
-            works[work] && result.works.push({
+            result.works.push({
                 name: 'Зенковка',
                 value: workFormula(works[work] * materials.length, 'Зенковка'),
                 string: `pupa`,
@@ -264,7 +231,7 @@ export const constructWorks = (work, context) => {
             break;
 
         case 'cutsv1':
-            works[work] && result.works.push({
+            result.works.push({
                 name: 'Вырез в стекле 1 кат',
                 value: workFormula(works[work] * materials.length, 'Вырез в стекле 1 кат'),
                 string: `${selfcost.pricesAndCoefs['Вырез в стекле 1 кат']} * ${materials.length} * ${works[work]}`,
@@ -273,7 +240,7 @@ export const constructWorks = (work, context) => {
             break;
 
         case 'cutsv2':
-            works[work] && result.works.push({
+            result.works.push({
                 name: 'Вырез в стекле 2 кат',
                 value: workFormula(works[work] * materials.length, 'Вырез в стекле 2 кат'),
                 string: `${selfcost.pricesAndCoefs['Вырез в стекле 2 кат']} * ${materials.length} * ${works[work]}`,
@@ -282,7 +249,7 @@ export const constructWorks = (work, context) => {
             break;
 
         case 'cutsv3':
-            works[work] && result.works.push({
+            result.works.push({
                 name: 'Вырез в стекле 3 кат',
                 value: workFormula(works[work] * materials.length, 'Вырез в стекле 3 кат'),
                 string: `${selfcost.pricesAndCoefs['Вырез в стекле 3 кат']} * ${materials.length} * ${works[work]}`,
@@ -291,7 +258,7 @@ export const constructWorks = (work, context) => {
             break;
 
         case 'tempered':
-            works[work] && result.works.push({
+            result.works.push({
                 name: `Закалка ${thickness} мм`,
                 value: selfcost.pricesAndCoefs[`Закалка ${thickness}`] * S,
                 string: `${selfcost.pricesAndCoefs[`Закалка ${thickness}`]}мм * ${S}`,
@@ -300,7 +267,7 @@ export const constructWorks = (work, context) => {
             break;
 
         case 'cutting':
-            works[work] && result.works.push({
+            result.works.push({
                 name: 'Раскрой',
                 value: workFormula(S, 'Раскрой(Управление)'),
                 string: `pupa`,
@@ -309,7 +276,7 @@ export const constructWorks = (work, context) => {
             break;
 
         case 'washing1':
-            works[work] && result.works.push({
+            result.works.push({
                 name: 'Мойка 1',
                 value: workFormula(S, 'Мойка 1'),
                 string: `pupa`,
@@ -318,7 +285,7 @@ export const constructWorks = (work, context) => {
             break;
 
         case 'grinding':
-            works[work] && result.works.push({
+            result.works.push({
                 name: 'Шлифовка',
                 value: selfcost.pricesAndCoefs[`${stanok} Шлифовка`] * P,
                 string: `${selfcost.pricesAndCoefs[`${stanok} Шлифовка`].toFixed(2)} * ${P.toFixed(2)}`,
@@ -327,7 +294,7 @@ export const constructWorks = (work, context) => {
             break;
 
         case 'triplexing':
-            works[work] && result.works.push({
+            result.works.push({
                 name: 'Триплексование',
                 value: selfcost.pricesAndCoefs[`Триплекс ${allThickness} мм`],
                 string: `${selfcost.pricesAndCoefs[`Триплекс ${allThickness} мм`].toFixed(2)}`,
@@ -336,7 +303,7 @@ export const constructWorks = (work, context) => {
             break;
 
         case 'print':
-            works[work] && result.works.push({
+            result.works.push({
                 name: 'Печать',
                 value: selfcost.pricesAndCoefs[`УФ печать`],
                 string: `${selfcost.pricesAndCoefs[`УФ печать`]}`,
@@ -354,7 +321,7 @@ export const constructWorks = (work, context) => {
         //     break;
             
         case 'cuts':
-            works[work] && result.works.push({
+            result.works.push({
                 name: 'Вырезы',
                 value: selfcost.pricesAndCoefs['Вырезы СМД'] * works[work],
                 string: `${selfcost.pricesAndCoefs['Вырезы СМД']} * ${works[work]}`,
@@ -363,7 +330,7 @@ export const constructWorks = (work, context) => {
             break;
 
         case 'drillssmd':
-            works[work] && result.works.push({
+            result.works.push({
                 name: 'Сверление СМД',
                 value: selfcost.pricesAndCoefs['Сверление СМД'] * materials.length * works[work],
                 string: `${selfcost.pricesAndCoefs['Сверление СМД']} * ${materials.length} * ${works[work]}`,
@@ -372,5 +339,33 @@ export const constructWorks = (work, context) => {
             break;
     }
 };
-
+export const constructExpenses = (result, selfcost) => {
+    let materialsandworks = 0
+    for (const item of Object.values(result.materials)) 
+        materialsandworks += item.value
+    for (const item of Object.values(result.works)) 
+        materialsandworks += item.value
+    const workshopExpenses = materialsandworks * selfcost.pricesAndCoefs[`% цеховых расходов`]   // % цеховых расходов
+    const commercialExpenses = (materialsandworks + workshopExpenses) * selfcost.pricesAndCoefs[`% коммерческих расходов`] // % коммерческих расходов
+    const householdExpenses =  (materialsandworks + workshopExpenses) * selfcost.pricesAndCoefs[`% общехозяйственных расходов`] // % общехозяйственных расходов
+    result.expenses.push({
+        name: 'Цеховые расходы',
+        value: workshopExpenses,
+        string: `${(materialsandworks ).toFixed(2)} * ${selfcost.pricesAndCoefs[`% цеховых расходов`]}`,
+        formula: `(Материалы + работы) * % цеховых расходов`
+    })
+    result.expenses.push({
+        name: 'Коммерческие расходы',
+        value: commercialExpenses,
+        string: `(${(materialsandworks ).toFixed(2)} + ${(workshopExpenses ).toFixed(2)}) * ${selfcost.pricesAndCoefs[`% коммерческих расходов`]}`,
+        formula: `(Материалы + Работы + Цеховые) * % коммерческих расходов}`
+    })
+    result.expenses.push({
+        name: 'Общехозяйственные расходы',
+        value: householdExpenses,
+        string: `(${(materialsandworks ).toFixed(2)} + ${(workshopExpenses ).toFixed(2)}) * ${selfcost.pricesAndCoefs[`% общехозяйственных расходов`]}`,
+        formula: `(Материалы + Работы + Цеховые) * % общехозяйственных расходов`
+    })
+    return [materialsandworks, commercialExpenses, householdExpenses, workshopExpenses]
+}
 export default Calculate

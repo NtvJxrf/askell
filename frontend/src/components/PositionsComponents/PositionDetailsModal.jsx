@@ -6,7 +6,7 @@ const { Text, Title } = Typography;
 
 const renderItem = (item, index) => {
     const hasDetails = item.string || item.formula;
-    const formattedValue = item.value.toFixed(2)
+    const formattedValue = item?.value?.toFixed(2)
     return (
         <div key={index} style={{ marginBottom: 4 }}>
             <Text>

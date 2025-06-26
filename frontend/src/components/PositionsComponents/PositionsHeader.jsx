@@ -142,7 +142,7 @@ const PositionsHeader = () => {
                     <Button type="default" shape="round" onClick={handleDeleteSelected} disabled={disabled} danger>Удалить выделенное</Button>
                     <Button type="default" shape="round" onClick={handlePackaging} disabled={disabled}>Упаковка</Button>
                     <Upload
-                        accept=".xlsx, .xls"
+                        accept=".xlsx, .xls, .xlsm"
                         showUploadList={false}
                         beforeUpload={(file) => {
                             const reader = new FileReader();

@@ -3,10 +3,10 @@ import TokenService from '../services/token.service.js';
 import ApiError from '../utils/apiError.js';
 export default class UserController{
     static async createUser(req, res){
-        const { username, password, role = 'user', creatorId } = req.body;
+        const { username, password, role = 'user' } = req.body;
         if (!username || !password)
             throw new ApiError()(400, 'Username and password are required, BAD_REQUEST')
-        const user = await userService.createUser(username, password, role, creatorId)
+        const user = await userService.createUser(username, password, role)
         res.status(201).json(user)
     }
 

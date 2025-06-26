@@ -1,7 +1,4 @@
 import { constructWorks } from './triplexCalc'
-import { randomUUID } from 'crypto';
-
-const key = randomUUID();
 const Calculate = (data, selfcost) => {
     console.log(selfcost)
     console.log(data)
@@ -100,7 +97,7 @@ const Calculate = (data, selfcost) => {
         type: 'СМД'
     }
     return {
-            key: randomUUID(),
+            key: crypto.randomUUID(),
             name,
             price,
             added: false,

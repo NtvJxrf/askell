@@ -21,15 +21,6 @@ const User = sequelize.define('User', {
         type: DataTypes.ENUM('admin', 'user'),
         defaultValue: 'user',
     },
-    creator: {
-        type: DataTypes.UUID,
-        allowNull: true,
-        references: {
-            model: 'users',
-            key: 'id',
-        },
-        onDelete: 'CASCADE',
-    },
 },{
     tableName: 'users',
     paranoid: true,

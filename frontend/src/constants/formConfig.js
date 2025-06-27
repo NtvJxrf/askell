@@ -57,6 +57,20 @@ const formConfigs = {
         { name: 'tempered', label: 'Закаленное', type: 'checkbox' },
         { name: 'polishing', label: 'Полировка', type: 'checkbox' },
         { name: 'print', label: 'Печать', type: 'checkbox' },
+        {
+          name: 'rounding',
+          label: 'Округление',
+          type: 'select',
+          options: ['Округление до 0.5', 'Умножить на 2'],
+          rules: [{ required: true, message: 'Fill this field' }]
+        },
+        {
+          name: 'customertype',
+          label: 'Тип клиента',
+          type: 'select',
+          options: ['Менее 200 тыс.', 'Более 200 тыс.', 'Более 400 тыс.', 'Более 800 тыс.'],
+          rules: [{ required: true, message: 'Fill this field' }]
+        },
       ]
     },
     triplexForm: {
@@ -77,6 +91,20 @@ const formConfigs = {
           label: 'Доп пленка',
           type: 'select',
           options: ['Пленка EVA Прозрачная 0,38мм', 'Пленка EVA Прозрачная 0,76мм'],
+        },
+        {
+          name: 'rounding',
+          label: 'Округление',
+          type: 'select',
+          options: ['Округление до 0.5', 'Умножить на 2'],
+          rules: [{ required: true, message: 'Fill this field' }]
+        },
+        {
+          name: 'customertype',
+          label: 'Тип клиента',
+          type: 'select',
+          options: ['Менее 200 тыс.', 'Более 200 тыс.', 'Более 400 тыс.', 'Более 800 тыс.'],
+          rules: [{ required: true, message: 'Fill this field' }]
         },
       ],
       materialFields: [
@@ -192,12 +220,6 @@ const formConfigs = {
       ],materialFields: [
 
       ]
-    },
-    typeMap: { //['Зеркало', 'Стекло', 'Стеновая панель', 'Кухонный фартук']
-      'Зеркало': ['Mirox Bronze', 'Mirox Grey', 'Mirox', 'Morena'],
-      'Стекло': ['Arctic Blue', 'Matelux Bronze', 'Matelux Crystalvision', 'Matelux Grey', 'Matelux', 'Зеркальное Stopsol Bronze', 'Зеркальное Stopsol Grey', 'Зеркальное Stopsol', 'M1', 'Осветленное Crystalvision', 'Осветленное OptiWhite', 'Тонированное Bronze', 'Тонированное Grey', 'Узорчатое Moru'], 
-      'Стеновая панель': ['Arctic Blue', 'Matelux Bronze', 'Matelux Crystalvision', 'Matelux Grey', 'Matelux', 'Зеркальное Stopsol Bronze', 'Зеркальное Stopsol Grey', 'Зеркальное Stopsol', 'M1', 'Осветленное Crystalvision', 'Осветленное OptiWhite', 'Тонированное Bronze', 'Тонированное Grey', 'Узорчатое Moru'],
-      'Кухонный фартук': ['Arctic Blue', 'Matelux Bronze', 'Matelux Crystalvision', 'Matelux Grey', 'Matelux', 'Зеркальное Stopsol Bronze',  'Зеркальное Stopsol Grey', 'Зеркальное Stopsol', 'M1', 'Осветленное Crystalvision', 'Осветленное OptiWhite', 'Тонированное Bronze', 'Тонированное Grey', 'Узорчатое Moru'],
     }
   };
 export default formConfigs

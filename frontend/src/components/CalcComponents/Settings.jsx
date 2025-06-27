@@ -9,6 +9,7 @@ const { Text, Title } = Typography;
 
 const Settings = () => {
     const selfcost = useSelector((state) => state.selfcost.selfcost);
+    console.log(selfcost)
     const [messageApi, contextHolder] = message.useMessage();
     const dispatch = useDispatch();
     if (!selfcost) return <div>Загрузка...</div>;
@@ -18,9 +19,9 @@ const Settings = () => {
         const date = isValidTimestamp ? new Date(timestamp).toLocaleString() : null;
 
         return {
-        key,
-        label: key,
-        updated: date,
+          key,
+          label: key,
+          updated: date,
         };
     });
 

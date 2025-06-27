@@ -10,9 +10,7 @@ const router = express.Router()
 
 // API routes
 router.use(express.static(path.join(__dirname, "../../public")))
-router.post('/api/login', UserController.login)
-router.get('/api/user/logout', UserController.logout)
-router.use("/api", authMiddleware, apiRoutes)
+router.use("/api", apiRoutes)
 router.use('/', (req, res) => {
   res.sendFile(path.join(__dirname, "../../public/index.html"));
 });

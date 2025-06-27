@@ -3,7 +3,6 @@ import { Row, Col } from 'antd';
 import CalcMenu from '../components/CalcComponents/CalcMenu';
 import DynamicForm from '../components/CalcComponents/Forms/DynamicForm';
 import Positions from '../components/PositionsComponents/Positions.jsx';
-import AdditionalForm from '../components/CalcComponents/AdditionalForm.jsx';
 import PositionsHeader from '../components/PositionsComponents/PositionsHeader.jsx';
 
 const typeMap = {
@@ -24,7 +23,6 @@ const CalcsLayout = () => {
                 <Col span={12}>
                     <CalcMenu />
                     <DynamicForm type={selectedKey} />
-                    <AdditionalForm />
                 </Col>
                 <Col span={12}>
                     <PositionsHeader />

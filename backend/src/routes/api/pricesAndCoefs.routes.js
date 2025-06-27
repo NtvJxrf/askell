@@ -1,5 +1,6 @@
 import express from "express"
 import pricesAndCoefsController from "../../controllers/pricesAndCoefs.controller.js"
+import authorizeRoles from "../../middlewares/authorizeRoles.js"
 const router = express.Router()
 //api/pricesAndCoefs
 router
@@ -7,11 +8,11 @@ router
     .get(pricesAndCoefsController.getAll)
 router
     .route('/update')
-    .post(pricesAndCoefsController.update)
+    .post(authorizeRoles(['accountant']), pricesAndCoefsController.update)
 router
     .route('/create')
-    .post(pricesAndCoefsController.create)
+    .post(authorizeRoles(['accountant']), pricesAndCoefsController.create)
 router
     .route('/delete')
-    .post(pricesAndCoefsController.delete)
+    .post(authorizeRoles(['none']), pricesAndCoefsController.delete)
 export default router

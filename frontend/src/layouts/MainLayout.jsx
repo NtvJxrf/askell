@@ -9,6 +9,10 @@ import PricesAndCoefsPage from "../pages/PricesAndCoefsPage.jsx";
 import Init from "../init.js";
 import Aovam from "../pages/Aovam.jsx"
 import Settings from '../components/CalcComponents/Settings.jsx';
+import ProtectedRoute from "../components/ProtectedRoute.jsx";
+import AdminPage from "../pages/AdminPage.jsx";
+import NotFoundPage from "../pages/NotFoundPage.jsx";
+import ActivatePage from "../pages/ActivatePage.jsx";
 const MainLayout = () => {
     const dispatch = useDispatch();
 
@@ -24,12 +28,17 @@ const MainLayout = () => {
                     <Route index element={<Navigate to="/calculators/smd" replace />} />
                     <Route path=":type" element={<CalcsLayout />} />
                 </Route>
-
+                <Route path="/admin" element={
+                    <ProtectedRoute requiredRoles={['none']}>
+                        <AdminPage />
+                    </ProtectedRoute>
+                }/>
                 <Route path="/pricesandcoefs" element={<PricesAndCoefsPage />} />
                 <Route path="/aovam" element={<Aovam />} />
                 <Route path="/settings" element={<Settings />} />
+                <Route path="/activate" element={<ActivatePage />} />
                 {/* fallback */}
-                <Route path="*" element={<div>Empty</div>} />
+                <Route path="*" element={<NotFoundPage />} />
             </Routes>
         </Layout>
     );

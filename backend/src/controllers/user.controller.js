@@ -3,11 +3,12 @@ import TokenService from '../services/token.service.js';
 import ApiError from '../utils/apiError.js';
 export default class UserController{
     static async createUser(req, res){
-        const { username, password, role = 'user' } = req.body;
-        if (!username || !password)
+        const { username, roles = ['user'] } = req.body;
+        if (!username)
             throw new ApiError()(400, 'Username and password are required, BAD_REQUEST')
-        const user = await userService.createUser(username, password, role)
-        res.status(201).json(user)
+        const token = await userService.createUser(username, roles)
+        const url = `https://calc.askell.ru/activate?token=${token}`
+        res.status(201).json(url)
     }
 
     static async login(req, res) {

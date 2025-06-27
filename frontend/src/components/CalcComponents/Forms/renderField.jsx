@@ -29,7 +29,7 @@ const renderField = (field) => {
     case 'input':
         return (
             <Form.Item key={field.name} label={field.label} name={field.name} rules={field.rules}>
-                <InputNumber style={{ width: '100%' }}/>
+                <InputNumber min={0} step={1} style={{ width: '100%' }}/>
             </Form.Item>
         );
     case 'divider': 

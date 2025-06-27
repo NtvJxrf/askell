@@ -1,19 +1,22 @@
 import express from "express"
 import UserController from '../../controllers/user.controller.js'
-import adminRouteMiddleware from '../../middlewares/adminRoute.middleware.js'
+import authorizeRoles from '../../middlewares/authorizeRoles.js'
 const router = express.Router()
-//api/calc
+//api/user
 router
     .route('/createUser')
-    .post(adminRouteMiddleware, UserController.createUser)
+    .post(authorizeRoles(['none']), UserController.createUser)
 router
     .route('/getUsers')
-    .get(adminRouteMiddleware, UserController.getUsers)
+    .get(UserController.getUsers)
+router
+    .route('/logout')
+    .get(UserController.logout)
 router
     .route('/deleteUser')
-    .delete(adminRouteMiddleware, UserController.deleteUser)
+    .delete(authorizeRoles(['none']), UserController.deleteUser)
 router
     .route('/restoreUser')
-    .delete(adminRouteMiddleware, UserController.restoreUser)
+    .delete(UserController.restoreUser)
 
 export default router

@@ -45,14 +45,23 @@ const initModels = async () => {
     if(process.env.NODE_ENV === 'development') {
       await sequelize.sync({alter: true})
       await valkey.flushall()
+      // await models.User.destroy({ where: { username: 'user'}, force: true})
       const admin = await models.User.findOne({where: {username: 'admin'}})
-      if(!admin)
+      const user = await models.User.findOne({where: {username: 'user'}})
+      if(!admin){
         await models.User.create({
           username: 'admin',
           password: 'admin1234',
-          creator: null,
-          role: 'admin'
+          roles: ['admin']
         })
+      }
+      if(!user){
+        await models.User.create({
+          username: 'user',
+          password: 'user1234',
+          roles: ['manager']
+        })
+      }
     }else{
       await sequelize.sync({alter: true})
     }

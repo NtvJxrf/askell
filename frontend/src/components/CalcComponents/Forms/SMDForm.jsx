@@ -13,7 +13,7 @@ const SMDForm = () => {
 
   const smdFormFields = useMemo(() => {
     return formConfigs.SMDForm.commonFields.map((field, index) => {
-      if (field.name === 'color' || index === 4) {
+      if (field.name === 'color') {
         return { ...field, options: colorsArray };
       }
       return field;

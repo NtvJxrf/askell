@@ -34,10 +34,7 @@ const PricesAndCoefsPage = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await axios.get(
-          `${import.meta.env.VITE_API_URL}/api/pricesAndCoefs/getAll`,
-          { withCredentials: true }
-        );
+        const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/pricesAndCoefs/getAll`, { withCredentials: true });
 
         const formatted = {};
         for (const tab of tabConfigs) {
@@ -47,7 +44,6 @@ const PricesAndCoefsPage = () => {
             ...item,
           }));
         }
-
         setDataMap(formatted);
       } catch (err) {
         messageApi.error(err.response?.data?.message || 'Ошибка при загрузке данных');
@@ -75,14 +71,8 @@ const PricesAndCoefsPage = () => {
       const payload = {
         ...record,
         type: activeTab,
-      };
-
-      await axios.post(
-        `${import.meta.env.VITE_API_URL}/api/pricesAndCoefs/update`,
-        payload,
-        { withCredentials: true }
-      );
-
+      }
+      await axios.post(`${import.meta.env.VITE_API_URL}/api/pricesAndCoefs/update`, payload, { withCredentials: true })
       messageApi.success('Сохранено');
     } catch (err) {
       messageApi.error(err.response?.data?.message || 'Ошибка при сохранении');
@@ -96,20 +86,14 @@ const PricesAndCoefsPage = () => {
         type: activeTab,
       };
 
-      await axios.post(
-        `${import.meta.env.VITE_API_URL}/api/pricesAndCoefs/delete`,
-        payload,
-        { withCredentials: true }
-      );
-
+      await axios.post(`${import.meta.env.VITE_API_URL}/api/pricesAndCoefs/delete`, payload, { withCredentials: true })
       setDataMap(prev => ({
         ...prev,
         [activeTab]: prev[activeTab].filter(i => i.key !== record.key),
-      }));
-
-      messageApi.success('Удалено');
+      }))
+      messageApi.success('Удалено')
     } catch (err) {
-      messageApi.error(err.response?.data?.message || 'Ошибка при удалении');
+      messageApi.error(err.response?.data?.message || 'Ошибка при удалении')
     }
   };
 
@@ -119,17 +103,11 @@ const PricesAndCoefsPage = () => {
         ...values,
         type: activeTab,
       };
-
-      const res = await axios.post(
-        `${import.meta.env.VITE_API_URL}/api/pricesAndCoefs/create`,
-        payload,
-        { withCredentials: true }
-      );
-
+      const res = await axios.post(`${import.meta.env.VITE_API_URL}/api/pricesAndCoefs/create`, payload, { withCredentials: true })
       const newItem = {
         key: res.data.id || Date.now().toString(),
         ...values,
-      };
+      }
 
       setDataMap(prev => ({
         ...prev,
@@ -178,9 +156,7 @@ const PricesAndCoefsPage = () => {
 
   const getColumns = () => {
     const tab = getTabConfig(activeTab);
-    const searchProps = field => ['name', 'description'].includes(field)
-      ? getColumnSearchProps(field)
-      : {};
+    const searchProps = field => ['name', 'description'].includes(field) ? getColumnSearchProps(field) : {};
 
     return [
       ...tab.fields.map(field => ({
@@ -190,24 +166,11 @@ const PricesAndCoefsPage = () => {
         render: (text, record) => {
           if (field === 'name') return text;
 
-          if (typeof record[field] === 'number') {
-            return (
-              <InputNumber
-                min={0}
-                step={0.1}
-                value={record[field]}
-                style={{ width: 120 }}
-                onChange={val => handleInputChange(record.key, field, val)}
-              />
-            );
-          }
+          if (typeof record[field] === 'number')
+            return (<InputNumber min={0} step={0.1}value={record[field]} style={{ width: 120 }} onChange={val => handleInputChange(record.key, field, val)} />)
 
-          return (
-            <Input
-              value={record[field]}
-              onChange={e => handleInputChange(record.key, field, e.target.value)}
-            />
-          );
+          return <Input value={record[field]} onChange={e => handleInputChange(record.key, field, e.target.value)} />
+         
         },
         ...searchProps(field),
       })),
@@ -260,16 +223,8 @@ const PricesAndCoefsPage = () => {
           }}
         >
           {getTabConfig(activeTab).fields.map(field => (
-            <Form.Item
-              key={field}
-              name={field}
-              rules={field === 'name' ? [{ required: true, message: 'Введите название' }] : []}
-            >
-              {field === 'value' || field.includes('rate') || field.includes('cost') ? (
-                <InputNumber placeholder={field} min={0} step={0.1} />
-              ) : (
-                <Input placeholder={field} />
-              )}
+            <Form.Item key={field} name={field} rules={field === 'name' ? [{ required: true, message: 'Введите название' }] : []} >
+              {field === 'value' || field.includes('rate') || field.includes('cost') ? <InputNumber placeholder={field} min={0} step={0.1} /> : <Input placeholder={field} />}
             </Form.Item>
           ))}
           <Form.Item>

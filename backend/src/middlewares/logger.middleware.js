@@ -14,7 +14,7 @@ export default function loggerMiddleware(req, res, next) {
     const logMessage = `${req.method} ${req.originalUrl} ${res.statusCode} ${duration}ms`;
 
     if (res.statusCode < 400)
-      logger.info(`✅ Successful response: ${logMessage}`, { route: req.originalUrl, user: req.user || undefined });
+      logger.info(`✅ Successful response: ${logMessage}`, { route: req.originalUrl, user: req.user || undefined, duration });
     
     originalEnd.apply(this, args);
   };

@@ -36,7 +36,6 @@ const Calculate = (data, selfcost) => {
     let S_tape = null
     if(larger <= 2100) S_tape = (2100 * lesser) / 1000000
     else S_tape = (2100 * larger) / 1000000    // Считаем площадь используемой пленки | 2100 это ширина рулона
-    console.log(tapes)
     for (const tape of tapes) {
         switch (tape) {
             case undefined:
@@ -197,34 +196,35 @@ const Calculate = (data, selfcost) => {
     }
 }
 
-
 export const constructWorks = (work, context) => {
     const { works, selfcost, result, materials, P, stanok, thickness, S, allThickness } = context;
-    const workFormula = (quantity, name) => (quantity * selfcost.pricesAndCoefs[name].costOfWork) + (selfcost.pricesAndCoefs['Средний оклад по селькоровской'] / selfcost.pricesAndCoefs['Среднее количество рабочих часов в месяц'] * quantity / selfcost.pricesAndCoefs[name].ratePerHour)
-    console.log(work)
+    const res = (quantity, name) => {
+        result.works.push({
+            name,
+            value: (quantity * selfcost.pricesAndCoefs[name].costOfWork) + (selfcost.pricesAndCoefs['Средний оклад по селькоровской'] / selfcost.pricesAndCoefs['Среднее количество рабочих часов в месяц'] * quantity / selfcost.pricesAndCoefs[name].ratePerHour),
+            string: `(${quantity} * ${selfcost.pricesAndCoefs[name].costOfWork}) + (${selfcost.pricesAndCoefs['Средний оклад по селькоровской']} / ${selfcost.pricesAndCoefs['Среднее количество рабочих часов в месяц']} * ${quantity} / ${selfcost.pricesAndCoefs[name].ratePerHour})`,
+            formula: `(Количество * стоимость работы) + (Средний оклад по селькоровской / Среднее количество рабочих часов в месяц * Количество / Норма времени для работы в час)`
+
+        })
+    }
     switch (work) {
         case 'polishing':
             result.works.push({
-                    name: 'Полировка',
-                    value: selfcost.pricesAndCoefs[`${stanok} Полировка`] * P,
-                    string: `${selfcost.pricesAndCoefs[`${stanok} Полировка`]} * ${P.toFixed(2)}`,
-                    formula: 'Себестоимость работы * Периметр'
-                });
+                name: 'Полировка',
+                value: selfcost.pricesAndCoefs[`${stanok} Полировка`] * P,
+                string: `${selfcost.pricesAndCoefs[`${stanok} Полировка`]} * ${P.toFixed(2)}`,
+                formula: 'Себестоимость работы * Периметр'
+            });
             break;
 
         case 'drills':
-            result.works.push({
-                name: 'Сверление',
-                value: workFormula(works[work] * materials.length, 'Сверление'),
-                string: `pupa`,
-                formula: 'pupa'
-            });
+            res(works[work] * materials.length, 'Сверление')
             break;
 
         case 'zenk':
             result.works.push({
                 name: 'Зенковка',
-                value: workFormula(works[work] * materials.length, 'Зенковка'),
+                value: workValue(works[work] * materials.length, 'Зенковка'),
                 string: `pupa`,
                 formula: 'pupa'
             });
@@ -233,7 +233,7 @@ export const constructWorks = (work, context) => {
         case 'cutsv1':
             result.works.push({
                 name: 'Вырез в стекле 1 кат',
-                value: workFormula(works[work] * materials.length, 'Вырез в стекле 1 кат'),
+                value: workValue(works[work] * materials.length, 'Вырез в стекле 1 кат'),
                 string: `${selfcost.pricesAndCoefs['Вырез в стекле 1 кат']} * ${materials.length} * ${works[work]}`,
                 formula: 'Себестоимость выреза 1 кат * Кол-во материалов * Кол-во вырезов'
             });
@@ -242,7 +242,7 @@ export const constructWorks = (work, context) => {
         case 'cutsv2':
             result.works.push({
                 name: 'Вырез в стекле 2 кат',
-                value: workFormula(works[work] * materials.length, 'Вырез в стекле 2 кат'),
+                value: workValue(works[work] * materials.length, 'Вырез в стекле 2 кат'),
                 string: `${selfcost.pricesAndCoefs['Вырез в стекле 2 кат']} * ${materials.length} * ${works[work]}`,
                 formula: 'Себестоимость выреза 2 кат * Кол-во материалов * Кол-во вырезов'
             });
@@ -251,7 +251,7 @@ export const constructWorks = (work, context) => {
         case 'cutsv3':
             result.works.push({
                 name: 'Вырез в стекле 3 кат',
-                value: workFormula(works[work] * materials.length, 'Вырез в стекле 3 кат'),
+                value: workValue(works[work] * materials.length, 'Вырез в стекле 3 кат'),
                 string: `${selfcost.pricesAndCoefs['Вырез в стекле 3 кат']} * ${materials.length} * ${works[work]}`,
                 formula: 'Себестоимость выреза 3 кат * Кол-во материалов * Кол-во вырезов'
             });
@@ -266,22 +266,14 @@ export const constructWorks = (work, context) => {
             });
             break;
 
-        case 'cutting':
-            result.works.push({
-                name: 'Раскрой',
-                value: workFormula(S, 'Раскрой(Управление)'),
-                string: `pupa`,
-                formula: 'Раскрой(Управление)'
-            });
+        case 'cutting1':
+            res(S, 'Раскрой(Управление)')
             break;
-
+        case 'cutting2':
+            res(S, 'Раскрой(Помощь)')
+            break;
         case 'washing1':
-            result.works.push({
-                name: 'Мойка 1',
-                value: workFormula(S, 'Мойка 1'),
-                string: `pupa`,
-                formula: 'Мойка 1'
-            });
+            res(S, 'Мойка 1')
             break;
 
         case 'grinding':

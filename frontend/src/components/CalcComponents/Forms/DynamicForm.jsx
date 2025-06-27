@@ -35,10 +35,9 @@ const DynamicForm = ({type}) => {
     const [form] = Form.useForm();
     const dispatch = useDispatch();
     const formData = store.getState().forms[type]
-    const additionalFormData = useSelector(state => state.additionalForm.additionalForm)
     const selfcost = useSelector(state => state.selfcost.selfcost)
     const onFinish = async (value) => {
-        const position = calcMap[type]({...value, ...additionalFormData}, selfcost)
+        const position = calcMap[type]({...value}, selfcost)
         dispatch(addNewPosition(position))
         messageApi.success('Позиция добавлена')
     }
@@ -69,6 +68,10 @@ const DynamicForm = ({type}) => {
                 onFinish={onFinish}
                 onValuesChange={handleValuesChange}
                 style={{ margin: '0 auto', marginTop: 30 }}
+                initialValues={{
+                    rounding: 'Округление до 0.5',
+                    customertype: 'Менее 200 тыс.'
+                }}
             >
                 {FormComponent ? <FormComponent /> : <div>Форма не найдена</div>}
                 <Form.Item style={{ display: 'flex', justifyContent: 'center'}}>

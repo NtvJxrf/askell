@@ -44,7 +44,7 @@ export default class TokenService {
         const tokens = await this.generateTokens({
             id: payload.id,
             username: payload.username,
-            role: payload.role
+            roles: payload.roles
         });
         await this.destroyRefreshToken(refreshToken, payload.id)
         return tokens

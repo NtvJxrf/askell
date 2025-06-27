@@ -43,11 +43,10 @@ export default class pricesAndCoefsService {
         createdBy: data.user.id,
     };
     if (type === 'work_prices') {
-        createData.ratePerHour = ratePerHour;
-        createData.costOfWork = costOfWork;
-    } else {
-        createData.value = value;
-    }
+        createData.ratePerHour = ratePerHour
+        createData.costOfWork = costOfWork
+    } else
+        createData.value = value
 
     const record = await model.create(createData, { userId: data.user.id });
 
@@ -66,22 +65,14 @@ export default class pricesAndCoefsService {
     let updateData = {
         name,
         description,
-        createdBy: data.user.id,
     };
     if (type === 'work_prices') {
         updateData.ratePerHour = ratePerHour;
         updateData.costOfWork = costOfWork;
-    } else {
-        updateData.value = value;
-    }
+    } else
+        updateData.value = value
 
-    await model.update(updateData,
-        {
-            where: { name },
-            individualHooks: true,
-            userId: data.user.id 
-        },
-    );
+    await model.update(updateData, { where: { name }, individualHooks: true, userId: data.user.id });
 
     await getPicesAndCoefs();
     return record.toJSON();

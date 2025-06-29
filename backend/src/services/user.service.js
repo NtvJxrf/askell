@@ -3,29 +3,42 @@ import ApiError from '../utils/apiError.js';
 import tokenService from './token.service.js'
 import crypto from 'crypto'
 import valkey from '../utils/valkey.js';
-import { json } from 'sequelize';
+import bcrypt from 'bcrypt'
 export default class UserService {
     static async createUser(username, roles,) {
         if(await UserModel.findOne({ where: { username }, paranoid: false}))
             throw new ApiError(400, 'Username already exists, BAD_REQUEST')
-        console.log(roles)
-        const user = await UserModel.create({ username, password: crypto.randomBytes(32).toString('hex'), roles })
+        const user = await UserModel.create({ username, roles })
         delete user.dataValues.password
         const token = crypto.randomBytes(32).toString('hex');
-        await valkey.set(token, JSON.stringify(user), 'EX', 3600)
+        await valkey.set(`activation:${token}`, user.id, 'EX', 3600)
         return token
     }
-    static async resetPassword(username, password){
-        const user = await UserModel.findOne({ where: { username }, paranoid: false})
+    static async activate(password, token){
+        const id = await valkey.get(`activation:${token}`)
+        if(!id) throw new ApiError(400, 'The token is not valid')
+        const user = await this.resetPassword(id, password)
+        await generateAndSetTokens(user);
+        valkey.del(`activation:${token}`)
+        return user
+    }
+    static async resetPassword(id, password){
+        const user = await UserModel.findByPk(id)
         if(!user)
-            throw new ApiError(400, 'User not fount, BAD_REQUEST')
+            throw new ApiError(400, 'User not found, BAD_REQUEST')
+        const salt = await bcrypt.genSalt(10)
+        const hashedPassword = await bcrypt.hash(password, salt)
+        user.password = hashedPassword
+        user.isActive = true
+        await user.save()
+        return user
     }
     static async deleteUser(data, requester){
-        const { userToDelete, force } = data
+        const { userToDelete, force = false } = data
         if(userToDelete === requester.id)
             throw new ApiError(400, 'suicide?')
         await tokenService.deleteUserTokens(userToDelete)
-        return await UserModel.destroy({ where: { id: userToDelete }, force: true })
+        return await UserModel.destroy({ where: { id: userToDelete }, force })
     }
     static async restoreUser(data){
         const { userToRestore } = data
@@ -33,9 +46,8 @@ export default class UserService {
     }
     static async login(username, password) {
         const user = await UserModel.findOne({ where: { username } })
-        if (!user || !await user.comparePassword(password)) {
-            throw new ApiError(400, 'Invalid username or password');
-        }
+        if (!user || !user.isActive || !await user.comparePassword(password))
+            throw new ApiError(400, 'Invalid username or password')
         delete user.dataValues.password
         await generateAndSetTokens(user);
         return user;

@@ -4,6 +4,7 @@ import SkladRouter from './api/sklad.routes.js'
 import PricesAndCoefsRouter from './api/pricesAndCoefs.routes.js'
 import authMiddleware from "../middlewares/auth.middleware.js"
 import UserController from "../controllers/user.controller.js"
+import authorizeRoles from '../middlewares/authorizeRoles.js'
 const router = express.Router()
 
 //api routes
@@ -15,7 +16,13 @@ router
 router
     .route('/login')
     .post(UserController.login)
-router.use('/user', authMiddleware, UserRouter)
+router
+    .route('/logout')
+    .get(UserController.logout)
+router
+    .route('/activate')
+    .post(UserController.activate)
+router.use('/user', authMiddleware, authorizeRoles(['none']), UserRouter)
 router.use('/sklad', authMiddleware, SkladRouter)
 router.use('/pricesAndCoefs', authMiddleware, PricesAndCoefsRouter)
 router.use((req, res) => {

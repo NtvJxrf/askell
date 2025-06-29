@@ -5,7 +5,9 @@ export default class UserController{
     static async createUser(req, res){
         const { username, roles = ['user'] } = req.body;
         if (!username)
-            throw new ApiError()(400, 'Username and password are required, BAD_REQUEST')
+            throw new ApiError(400, 'Username and password are required, BAD_REQUEST')
+        if (roles.length < 1)
+            throw new ApiError(400, 'User must have at least one role')
         const token = await userService.createUser(username, roles)
         const url = `https://calc.askell.ru/activate?token=${token}`
         res.status(201).json(url)
@@ -14,8 +16,16 @@ export default class UserController{
     static async login(req, res) {
         const { username, password } = req.body;
         if (!username || !password) 
-            throw new ApiError()(400, 'Username and password are required, BAD_REQUEST')
+            throw new ApiError(400, 'Username and password are required, BAD_REQUEST')
         const user = await userService.login(username, password)
+        setTokens(res, user)
+        res.status(200).json({ user, message: 'Login successful' })
+    }
+    static async activate(req, res){
+        const { password, token } = req.body
+        if (!password || !token) 
+            throw new ApiError(400, 'Password and token are required, BAD_REQUEST')
+        const user = await userService.activate(password, token)
         setTokens(res, user)
         res.status(200).json({ user, message: 'Login successful' })
     }
@@ -51,5 +61,4 @@ export default class UserController{
 const setTokens = (res, user) => {
     res.cookie('refreshToken', user.refreshToken, { maxAge: process.env.JWT_REFRESH_EXPIRATION_DAYS * 24 * 60 * 60 * 1000, httpOnly: true, secure: process.env.NODE_ENV === 'production' });
     res.cookie('accessToken', user.accessToken, { maxAge: process.env.JWT_ACCESS_EXPIRATION_MINUTES * 60 * 1000, httpOnly: true, secure: process.env.NODE_ENV === 'production' });
-    res.cookie('id', user.id, { maxAge: process.env.JWT_REFRESH_EXPIRATION_DAYS * 24 * 60 * 60 * 1000})
 }

@@ -15,20 +15,25 @@ const User = sequelize.define('User', {
     },
     password: {
         type: DataTypes.STRING,
-        allowNull: false,
+        defaultValue: null
     },
     roles: {
         type: DataTypes.ARRAY(DataTypes.STRING),
-        defaultValue: ['user'],
+        defaultValue: ['manager'],
     },
+    isActive: {
+        type: DataTypes.BOOLEAN,
+        defaultValue: false
+    }
 },{
     tableName: 'users',
     paranoid: true,
 });
 
-User.beforeCreate((user) => {
-    const salt = bcrypt.genSaltSync(10)
-    user.password = bcrypt.hashSync(user.password, salt);
+User.beforeCreate(async (user) => {
+    if(!user.password) return
+    const salt = await bcrypt.genSalt(10)
+    user.password = await bcrypt.hash(user.password, salt);
 })
 
 User.prototype.comparePassword = async function(password) {

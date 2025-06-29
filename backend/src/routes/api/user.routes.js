@@ -5,18 +5,14 @@ const router = express.Router()
 //api/user
 router
     .route('/createUser')
-    .post(authorizeRoles(['none']), UserController.createUser)
+    .post(UserController.createUser)
 router
     .route('/getUsers')
     .get(UserController.getUsers)
 router
-    .route('/logout')
-    .get(UserController.logout)
-router
     .route('/deleteUser')
-    .delete(authorizeRoles(['none']), UserController.deleteUser)
+    .delete(UserController.deleteUser)
 router
     .route('/restoreUser')
     .delete(UserController.restoreUser)
-
 export default router

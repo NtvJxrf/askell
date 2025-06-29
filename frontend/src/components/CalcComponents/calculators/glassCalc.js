@@ -41,9 +41,9 @@ const Calculate = (data, selfcost) => {
     });
     const materials = [material]
     const context = { works, selfcost, result, P, stanok, materials, thickness, S };
-    constructWorks('cutting1', context);
-    constructWorks('cutting2', context);
-    constructWorks('washing1', context);
+    // constructWorks('cutting1', context);
+    // constructWorks('cutting2', context);
+    // constructWorks('washing1', context);
     // constructWorks('grinding', context);
     for(const work in works){
         if(!works[work]) continue

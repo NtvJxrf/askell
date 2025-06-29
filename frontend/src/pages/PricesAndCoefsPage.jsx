@@ -28,7 +28,6 @@ const PricesAndCoefsPage = () => {
   const [activeTab, setActiveTab] = useState(tabConfigs[0].key);
   const [form] = Form.useForm();
   const dispatch = useDispatch();
-
   const getTabConfig = (key) => tabConfigs.find(t => t.key === key);
 
   useEffect(() => {
@@ -55,7 +54,7 @@ const PricesAndCoefsPage = () => {
     return () => {
       Init.getSelfcost(dispatch);
     };
-  }, [messageApi]);
+  }, [messageApi, dispatch]);
 
   const handleInputChange = (rowKey, field, value) => {
     setDataMap(prev => ({

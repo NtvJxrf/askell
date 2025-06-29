@@ -15,8 +15,8 @@ const CeraglassForm = () => {
 
     formConfigs.ceraglassForm.commonFields[0].options = ceraArray
     formConfigs.ceraglassForm.commonFields[1].options = materialsArray
-    formConfigs.ceraglassForm.commonFields[7].options = colorsArray
-    formConfigs.ceraglassForm.commonFields[8].options = undersArray
+    formConfigs.ceraglassForm.commonFields[8].options = colorsArray
+    formConfigs.ceraglassForm.commonFields[9].options = undersArray
     return (
         <Row gutter={24} style={{ width: '100%' }}>
             <Col span={12} style={{ paddingLeft: 30 }}>

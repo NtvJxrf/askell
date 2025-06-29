@@ -100,7 +100,7 @@ const Positions = () => {
             title: 'Цена',
             dataIndex: 'price',
             key: 'price',
-            render: value => value.toFixed(2),
+            render: value => value.toFixed(2) / 100,
         },
         {
             title: 'Создано',
@@ -170,7 +170,7 @@ const Positions = () => {
                                 <Table.Summary.Row>
                                     <Table.Summary.Cell>Итого</Table.Summary.Cell>
                                         <Table.Summary.Cell>
-                                            <b>{totalAmount.toFixed(2)}</b>
+                                            <b>{totalAmount.toFixed(2) / 100}</b>
                                         </Table.Summary.Cell>
                                 </Table.Summary.Row>
                             );

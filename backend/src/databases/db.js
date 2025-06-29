@@ -43,23 +43,26 @@ const initModels = async () => {
     console.log('Database connection has been established successfully.')
     await loadModels(__dirname)
     if(process.env.NODE_ENV === 'development') {
-      await sequelize.sync({alter: true})
+      await sequelize.sync({force: true})
       await valkey.flushall()
-      // await models.User.destroy({ where: { username: 'user'}, force: true})
+      await models.User.destroy({ where: { username: 'user'}, force: true})
+      await models.User.destroy({ where: { username: 'admin'}, force: true})
       const admin = await models.User.findOne({where: {username: 'admin'}})
       const user = await models.User.findOne({where: {username: 'user'}})
       if(!admin){
         await models.User.create({
           username: 'admin',
           password: 'admin1234',
-          roles: ['admin']
+          roles: ['admin'],
+          isActive: true
         })
       }
       if(!user){
         await models.User.create({
           username: 'user',
           password: 'user1234',
-          roles: ['manager']
+          roles: ['manager'],
+          isActive: true
         })
       }
     }else{

@@ -2,11 +2,9 @@ import { useState, useEffect } from "react";
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
 import ActivatePage from "../pages/ActivatePage.jsx";
-import axios from "axios";
-
 import MainLayout from "../layouts/MainLayout.jsx";
 import LoginPage from "../pages/LoginPage.jsx";
-import { setIsAuth, setUser } from "../slices/userSlice.js";
+import Init from "../init.js";
 
 function App() {
     const [loading, setLoading] = useState(true);
@@ -14,22 +12,8 @@ function App() {
     const dispatch = useDispatch();
 
     useEffect(() => {
-        const checkAuth = async () => {
-            try {
-                const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/isAuthenticated`, { withCredentials: true })
-                dispatch(setIsAuth(response.data.auth === true))
-                dispatch(setUser(response.data.user))
-            } catch (error) {
-                console.error("Ошибка при проверке авторизации:", error);
-                dispatch(setIsAuth(false));
-            } finally {
-             setLoading(false);
-            }
-        };
-
-        checkAuth();
-        const intervalId = setInterval(checkAuth, 5 * 60 * 1000); // каждые 5 минут
-
+        Init.checkAuth(dispatch, setLoading);
+        const intervalId = setInterval(Init.checkAuth, 5 * 60 * 1000); // каждые 5 минут
         return () => {
             clearInterval(intervalId);
         };

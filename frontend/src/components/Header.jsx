@@ -16,7 +16,7 @@ const HeaderComponent = () => {
     const location = useLocation();
     const dispatch = useDispatch();
     const handleLogout = async () => {
-        await axios.get(`${import.meta.env.VITE_API_URL}/api/user/logout`, { withCredentials: true })
+        await axios.get(`${import.meta.env.VITE_API_URL}/api/logout`, { withCredentials: true })
         dispatch(setIsAuth(false));
     }
 

@@ -1,33 +1,39 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Form, Input, Button, Typography, message } from 'antd';
 import { useSearchParams, useNavigate } from 'react-router-dom';
+import Init from '../init';
 import axios from 'axios';
+import { useDispatch } from 'react-redux';
 const { Title } = Typography;
 
 const ActivatePage = () => {
-  const [searchParams] = useSearchParams();
-  const token = searchParams.get('token');
-  const navigate = useNavigate();
-  const [messageApi, contextHolder] = message.useMessage();
+    const [searchParams] = useSearchParams();
+    const token = searchParams.get('token');
+    const navigate = useNavigate();
+    const [messageApi, contextHolder] = message.useMessage();
+    const dispatch = useDispatch()
+    const [loading, setLoading] = useState(false);
 
-  const [loading, setLoading] = useState(false);
-
-  const onFinish = async ({ password }) => {
-    setLoading(true)
-    try {
-        const res = { ok: true}
-        const response = await axios.post(`${import.meta.env.VITE_API_URL}/api/user/activate?token=${token}`, { password }, { withCredentials: true })
-    } catch (e) {
-        console.error(e)
-        messageApi.error(e?.data?.response?.message || 'Ошибка при установке пароля')
-    } finally {
-      setLoading(false);
-    }
-  };
+    const onFinish = async ({ password }) => {
+        setLoading(true)
+        try {
+            await axios.post(`${import.meta.env.VITE_API_URL}/api/activate`, { password, token }, { withCredentials: true })
+            messageApi.success('Пользователь активирован')
+            await Init.checkAuth(dispatch, setLoading)
+            setTimeout(() => {
+                navigate('/')
+            }, 1000);
+        } catch (e) {
+            console.error(e)
+            messageApi.error(e?.response?.data?.message || 'Ошибка при установке пароля')
+        } finally {
+        setLoading(false);
+        }
+    };
 
     useEffect(() => {
         if (!token) {
-            navigate('/');
+            navigate('/calculators');
         }
     }, [token, navigate]);
     if(!token) return 

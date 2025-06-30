@@ -161,6 +161,8 @@ const initialDataLabels = {
     type: 'Тип',
     clientType: 'Тип клиента(Для СМД)',
     rounds: 'Скругления',
+    drillssmd: 'Сверление СМД',
+    smdType: 'Тип СМД'
 };
 
 const otherLabels = {

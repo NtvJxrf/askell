@@ -65,7 +65,7 @@ export default class SkladService {
             return {
                 name: product.name,
                 salePrices: [{
-                    value: Number(product.price),
+                    value: product.price * 100,
                     priceType: {
                         meta: {
                             href: "https://api.moysklad.ru/api/remap/1.2/context/companysettings/pricetype/61e764a9-2ad0-11ee-0a80-0476000bb1a7",
@@ -125,7 +125,7 @@ export default class SkladService {
                     assortment: {
                         meta: pos.position.assortment.meta
                     },
-                    price: (pos.price || 0),
+                    price: (pos.price * 100|| 0),
                     quantity: pos.quantity || 1,
                     vat: data.order.organization.name === 'ООО "А2"' ? 20 : 0
                 }

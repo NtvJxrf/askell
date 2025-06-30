@@ -20,7 +20,7 @@ const Calculate = (data, selfcost) => {
     const thickness = Number(material.match(/(\d+(?:[.,]\d+)?)\s*мм/i)[1])
     let weight = S * 2.5 * thickness
     let name = `${material} (${height}х${width}${polishing ? ', Полировка' : ''}${tempered ? ', Закаленное' : ''}${cutsv1 ? `, Вырезы 1 кат.: ${cutsv1}` : ''}${cutsv2 ? `, Вырезы 2 кат.: ${cutsv2}` : ''}${cutsv3 ? `, Вырезы 3 кат.: ${cutsv3}` : ''}${drills ? `, Сверление: ${drills}` : ''}${zenk ? `, Зенкование: ${zenk}` : ''}${print ? ', Печать' : ''}${color ? `, ${color}` : ''})`
-    const stanok = (shape && cutsv1 == 0 && cutsv2 == 0 && cutsv3 == 0 && weight < 50) ? 'Прямолинейка' : 'Криволинейка'
+    const stanok = (shape && !cutsv1 && !cutsv2 && !cutsv3 && weight < 50) ? 'Прямолинейка' : 'Криволинейка'
     const result = {
         materials: [],
         works: [],
@@ -29,9 +29,9 @@ const Calculate = (data, selfcost) => {
 
     result.materials.push({
         name: material,
-        value: selfcost.materials[material].value * S,
-        string: `${selfcost.materials[material].value} * ${S.toFixed(2)}`,
-        formula: 'Цена за м² * Площадь'
+        value: (selfcost.materials[material].value * S) * selfcost.pricesAndCoefs['Коэффициент обрези стекло'],
+        string: `(${selfcost.materials[material].value} * ${S.toFixed(2)}) * ${selfcost.pricesAndCoefs['Коэффициент обрези стекло']}`,
+        formula: '(Цена за м² * Площадь) * Коэффициент обрези стекло'
     });
     color && result.materials.push({
         name: color,
@@ -39,12 +39,18 @@ const Calculate = (data, selfcost) => {
         string: `${selfcost.colors[color].value} * 0.3`,
         formula: 'Цена за м² * 0.3'
     });
+    print && result.works.push({
+                name: 'Печать',
+                value: selfcost.pricesAndCoefs[`УФ печать`],
+                string: `${selfcost.pricesAndCoefs[`УФ печать`]}`,
+                formula: 'Себестоимость уф печати'
+            });
     const materials = [material]
     const context = { works, selfcost, result, P, stanok, materials, thickness, S };
     constructWorks('cutting1', context);
     constructWorks('cutting2', context);
     constructWorks('washing1', context);
-    // constructWorks('grinding', context);
+    constructWorks('grinding', context);
     for(const work in works){
         if(!works[work]) continue
         constructWorks(work, context)

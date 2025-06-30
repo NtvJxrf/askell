@@ -1,4 +1,3 @@
-import { constructWorks } from './triplexCalc'
 const Calculate = (data, selfcost) => {
     console.log(selfcost)
     console.log(data)
@@ -9,7 +8,6 @@ const Calculate = (data, selfcost) => {
         expenses: [],
         other: {}
     }
-    const works = { cuts, drillssmd }
     const S = (height * width) / 1000000
     const thickness = Number(material.match(/\d+/)[0])
     let weight = S * 2.5 * thickness
@@ -50,6 +48,18 @@ const Calculate = (data, selfcost) => {
         string: `${temp} * ${0.2}`,
         formula: 'Если есть скругления, то + 20% к цене'
     }))
+    cuts && result.works.push({
+        name: 'Вырезы СМД',
+        value: selfcost.pricesAndCoefs['Вырезы СМД'] * cuts,
+        string: `${selfcost.pricesAndCoefs['Вырезы СМД']} * ${cuts}`,
+        formula: 'Себестоимость * Количество'
+    })
+    drillssmd && result.works.push({
+        name: 'Сверление СМД',
+        value: selfcost.pricesAndCoefs['Сверление СМД'] * drillssmd,
+        string: `${selfcost.pricesAndCoefs['Сверление СМД']} * ${drillssmd}`,
+        formula: 'Себестоимость * Количество'
+    })
     switch (material) {
         case 'Стекло Matelux, 4 мм':
             result.materials.push({
@@ -67,12 +77,6 @@ const Calculate = (data, selfcost) => {
                 formula: 'Цена за Optiwhite * Площадь'
             });
             break
-    }
-    const materials = [material]
-    const context = { works, selfcost, result, materials, stanok, S };
-    for (const work in works) {
-        if (!work) continue;
-        constructWorks(work, context);
     }
 
     let materialsandworks = 0

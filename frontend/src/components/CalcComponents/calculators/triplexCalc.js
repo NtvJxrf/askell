@@ -198,24 +198,15 @@ const Calculate = (data, selfcost) => {
 
 export const constructWorks = (work, context) => {
     const { works, selfcost, result, materials, P, stanok, thickness, S, allThickness } = context;
-    const res = (quantity, name) => {
+    const res = (quantity, name, tableName) => {
         result.works.push({
             name,
-            value: (quantity * selfcost.pricesAndCoefs[name].costOfWork) + (selfcost.pricesAndCoefs['Средний оклад по селькоровской'] / selfcost.pricesAndCoefs['Среднее количество рабочих часов в месяц'] * quantity / selfcost.pricesAndCoefs[name].ratePerHour),
-            string: `(${quantity} * ${selfcost.pricesAndCoefs[name].costOfWork}) + (${selfcost.pricesAndCoefs['Средний оклад по селькоровской']} / ${selfcost.pricesAndCoefs['Среднее количество рабочих часов в месяц']} * ${quantity} / ${selfcost.pricesAndCoefs[name].ratePerHour})`,
-            formula: `(Количество * стоимость работы) + (Средний оклад по селькоровской / Среднее количество рабочих часов в месяц * Количество / Норма времени для работы в час)`
-
+            value: (quantity * selfcost.pricesAndCoefs[tableName || name].costOfWork) + (selfcost.pricesAndCoefs['Средний оклад по селькоровской'] / selfcost.pricesAndCoefs['Среднее количество рабочих часов в месяц'] * quantity / selfcost.pricesAndCoefs[tableName || name].ratePerHour),
+            string: `(${quantity} * ${selfcost.pricesAndCoefs[tableName || name].costOfWork}) + (${selfcost.pricesAndCoefs['Средний оклад по селькоровской']} / ${selfcost.pricesAndCoefs['Среднее количество рабочих часов в месяц']} * ${quantity} / ${selfcost.pricesAndCoefs[tableName ||name].ratePerHour})`,
+            formula: `(Количество * стоимость работы) + (Средний оклад по селькоровской / Среднее количество рабочих часов в месяц * Количество / Норма в час)`
         })
     }
     switch (work) {
-        case 'polishing':
-            result.works.push({
-                name: 'Полировка',
-                value: selfcost.pricesAndCoefs[`${stanok} Полировка`] * P,
-                string: `${selfcost.pricesAndCoefs[`${stanok} Полировка`]} * ${P.toFixed(2)}`,
-                formula: 'Себестоимость работы * Периметр'
-            });
-            break;
         case 'drills':
             res(works[work] * materials.length, 'Сверление')
             break;
@@ -244,44 +235,19 @@ export const constructWorks = (work, context) => {
             res(S, 'Мойка 1')
             break;
         case 'grinding':
-            result.works.push({
-                name: 'Шлифовка',
-                value: selfcost.pricesAndCoefs[`${stanok} Шлифовка`] * P,
-                string: `${selfcost.pricesAndCoefs[`${stanok} Шлифовка`].toFixed(2)} * ${P.toFixed(2)}`,
-                formula: 'Себестоимость работы * Периметр'
-            });
+            res(P, 'Шлифовка', stanok === 'Прямолинейка' ? 'Прямолинейная обработка' : 'Криволинейная обработка')
             break;
+        case 'polishing':
+            res(stanok === 'Прямолинейка' ? 0 : P, 'Полировка', stanok === 'Прямолинейка' ? 'Прямолинейная обработка' : 'Криволинейная обработка')
+            break
         case 'triplexing':
             result.works.push({
                 name: 'Триплексование',
                 value: selfcost.pricesAndCoefs[`Триплекс ${allThickness} мм`],
                 string: `${selfcost.pricesAndCoefs[`Триплекс ${allThickness} мм`].toFixed(2)}`,
                 formula: `Фиксированная себестоимость триплексования для общей толщины (${allThickness})`
-            });
-            break;
-        case 'print':
-            result.works.push({
-                name: 'Печать',
-                value: selfcost.pricesAndCoefs[`УФ печать`],
-                string: `${selfcost.pricesAndCoefs[`УФ печать`]}`,
-                formula: 'Себестоимость уф печати'
-            });
-            break;
-        // case 'color':
-        //     works[work] && result.works.push({
-        //         name: 'Окрашивание',
-        //         value: selfcost.colors[works[work]].salePrices[1].value,
-        //         string: `${selfcost.colors[works[work]].salePrices[1].value}`,
-        //         formula: 'Себестоимость окрашивания (ТУТ ПОКА СЕБЕСТОИМОСТЬ КРАСКИ ИЗ СПРАВОЧНИКА В МОЕМ СКЛАДЕ, ПЕРЕСМОТРТЕ ФОРМУЛУ)'
-        //     });
-        //     break;
-            
-        case 'cuts':
-            res(works[work], 'Вырезы СМД')
-            break;
-        case 'drillssmd':
-            res(works[work], 'Сверление СМД')
-            break;
+            })
+            break
     }
 };
 export const constructExpenses = (result, selfcost) => {

@@ -71,12 +71,12 @@ const PositionsHeader = () => {
         dispatch(addOrderPositions([]))
     }
     const handleSaveOrder = async () => {
+        setDisabled(true)
         const data = store.getState().positions
         if(!data.order){
             messageApi.error('Загрузите заказ')
             return
         }
-        setDisabled(true)
         try{
             await axios.post(`${import.meta.env.VITE_API_URL}/api/sklad/addPositionsToOrder`, data, { withCredentials: true})
             dispatch(setPositions([]))

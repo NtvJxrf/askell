@@ -17,18 +17,19 @@ export default function AdminPage() {
     const [form] = Form.useForm();
     const [users, setUsers] = useState([])
     const [messageApi, contextHolder] = message.useMessage();
-    const [response, setResponse] = useState(null)
+    const [responseForm, setResponseForm] = useState(null)
+    const [responseTable, setResponseTable] = useState(null)
     const [loading, setLoading] = useState(false)
     const onFinish = async (values) => {
         try{
             setLoading(true)
             const res = await axios.post(`${import.meta.env.VITE_API_URL}/api/user/createUser`, {...values, roles: values.roles.map(el => rolesMap[el])}, { withCredentials: true })
-            setResponse(res.data)
+            setResponseForm(res.data)
             messageApi.success("Пользователь добавлен");
             getUsers()
         }catch(error){
             console.error(error)
-            messageApi.error('Ошибка при добавлении пользователя')
+            messageApi.error(error?.response?.data?.message || 'Ошибка при добавлении пользователя')
         }finally{
             setLoading(false)
         }
@@ -37,22 +38,44 @@ export default function AdminPage() {
     }
 
     const handleResetPassword = async (record) => {
-
+        try{
+            const response = await axios.post(`${import.meta.env.VITE_API_URL}/api/user/resetUserPassword`, {id: record.id}, { withCredentials: true })
+            messageApi.success('Пароль пользователя сброшен')
+            setResponseTable(response.data)
+        }catch(error){
+            console.error(error)
+            getUsers()
+            messageApi.error(error?.response?.data?.message || 'Ошибка при обновлении данных пользователя')
+        }
     }
 
     const handleDelete = async (record) => {
-
+        try{
+            const response = await axios.delete(`${import.meta.env.VITE_API_URL}/api/user/delete`, {data: {id: record.id, force: true}, withCredentials: true})
+            messageApi.success('Пользователь удален')
+        }catch(error){
+            console.error(error)
+            messageApi.error(error?.response?.data?.message || 'Ошибка при обновлении данных пользователя')
+        }finally{
+            getUsers()
+        }
     }
 
     const handleSave = async (record) => {
-        console.log(record)
+        try{
+            const response = await axios.post(`${import.meta.env.VITE_API_URL}/api/user/update`, {id: record.id, data: {roles: record.roles.map(el => rolesMap[el])}}, { withCredentials: true })
+            messageApi.success('Пользователь обновлен')
+        }catch(error){
+            console.error(error)
+            getUsers()
+            messageApi.error(error?.response?.data?.message || 'Ошибка при обновлении данных пользователя')
+        }
     }
 
     const getUsers = useCallback(async () => {
             try{
                 const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/user/getUsers`, { withCredentials: true })
                 setUsers(response.data.map(user => {
-                    console.log(user)
                     return {
                         ...user,
                         roles: user.roles.map(el => rolesMapReverse[el]),
@@ -60,7 +83,7 @@ export default function AdminPage() {
                 }))
             }catch(error){
                 console.error(error)
-                messageApi.error('Ошибка при получении пользователей')
+                messageApi.error(error.response?.data?.message || 'Ошибка при получении пользователей')
             }
         }, [messageApi])
 
@@ -73,7 +96,7 @@ export default function AdminPage() {
         { title: "Роли", dataIndex: "roles", key: "roles",
             render: (data, record) => {
                 return (
-                    <Select mode="multiple" popupMatchSelectWidth={false} maxTagCount={2} placeholder="Выбери роли" style={{minWidth: 100}}value={data} onChange={(newData) => {
+                    <Select mode="multiple" popupMatchSelectWidth={false} maxTagCount={2} placeholder="Выбери роли" value={data} onChange={(newData) => {
                         setUsers(prevUsers =>
                             prevUsers.map(user =>
                                 user.id === record.id
@@ -127,14 +150,14 @@ export default function AdminPage() {
                             </Button>
                         </Form.Item>
                     </Form>
-                    {response && (
+                    {responseForm && (
                         <div style={{ marginTop: 16 }}>
                             <Alert
                                 type="success"
                                 message="Ссылка для установки пароля"
                                 description={
                                     <Paragraph copyable style={{ marginBottom: 0, wordBreak: 'break-all' }}>
-                                        {response}
+                                        {responseForm}
                                     </Paragraph>
                                 }
                                 showIcon
@@ -146,6 +169,20 @@ export default function AdminPage() {
             <Col span={16}>
                 <Card title="Список пользователей" style={{ borderRadius: 0, height: '100%' }}>
                     <Table dataSource={users} columns={columns} rowKey="id" pagination={{ pageSize: 5 }} scroll={{ x: 'max-content' }} />
+                    {responseTable && (
+                        <div style={{ marginTop: 16 }}>
+                            <Alert
+                                type="success"
+                                message="Ссылка для установки пароля"
+                                description={
+                                    <Paragraph copyable style={{ marginBottom: 0, wordBreak: 'break-all' }}>
+                                        {responseTable}
+                                    </Paragraph>
+                                }
+                                showIcon
+                            />
+                        </div>
+                    )}
                 </Card>
             </Col>
         </Row>

@@ -216,66 +216,33 @@ export const constructWorks = (work, context) => {
                 formula: 'Себестоимость работы * Периметр'
             });
             break;
-
         case 'drills':
             res(works[work] * materials.length, 'Сверление')
             break;
-
         case 'zenk':
-            result.works.push({
-                name: 'Зенковка',
-                value: workValue(works[work] * materials.length, 'Зенковка'),
-                string: `pupa`,
-                formula: 'pupa'
-            });
+            res(works[work] * materials.length, 'Зенковка')
             break;
-
         case 'cutsv1':
-            result.works.push({
-                name: 'Вырез в стекле 1 кат',
-                value: workValue(works[work] * materials.length, 'Вырез в стекле 1 кат'),
-                string: `${selfcost.pricesAndCoefs['Вырез в стекле 1 кат']} * ${materials.length} * ${works[work]}`,
-                formula: 'Себестоимость выреза 1 кат * Кол-во материалов * Кол-во вырезов'
-            });
+            res(works[work] * materials.length, 'Вырез в стекле 1 кат')
             break;
-
         case 'cutsv2':
-            result.works.push({
-                name: 'Вырез в стекле 2 кат',
-                value: workValue(works[work] * materials.length, 'Вырез в стекле 2 кат'),
-                string: `${selfcost.pricesAndCoefs['Вырез в стекле 2 кат']} * ${materials.length} * ${works[work]}`,
-                formula: 'Себестоимость выреза 2 кат * Кол-во материалов * Кол-во вырезов'
-            });
+            res(works[work] * materials.length, 'Вырез в стекле 2 кат')
             break;
-
         case 'cutsv3':
-            result.works.push({
-                name: 'Вырез в стекле 3 кат',
-                value: workValue(works[work] * materials.length, 'Вырез в стекле 3 кат'),
-                string: `${selfcost.pricesAndCoefs['Вырез в стекле 3 кат']} * ${materials.length} * ${works[work]}`,
-                formula: 'Себестоимость выреза 3 кат * Кол-во материалов * Кол-во вырезов'
-            });
+            res(works[work] * materials.length, 'Вырез в стекле 3 кат')
             break;
-
         case 'tempered':
-            result.works.push({
-                name: `Закалка ${thickness} мм`,
-                value: selfcost.pricesAndCoefs[`Закалка ${thickness}`] * S,
-                string: `${selfcost.pricesAndCoefs[`Закалка ${thickness}`]}мм * ${S}`,
-                formula: `Себестоимость закалки * площадь`
-            });
+            res(S, 'Закалка')
             break;
-
         case 'cutting1':
-            res(S, 'Раскрой(Управление)')
+            res(S, 'Резка (Управление)')
             break;
         case 'cutting2':
-            res(S, 'Раскрой(Помощь)')
+            res(S, 'Резка (Помощь)')
             break;
         case 'washing1':
             res(S, 'Мойка 1')
             break;
-
         case 'grinding':
             result.works.push({
                 name: 'Шлифовка',
@@ -284,7 +251,6 @@ export const constructWorks = (work, context) => {
                 formula: 'Себестоимость работы * Периметр'
             });
             break;
-
         case 'triplexing':
             result.works.push({
                 name: 'Триплексование',
@@ -293,7 +259,6 @@ export const constructWorks = (work, context) => {
                 formula: `Фиксированная себестоимость триплексования для общей толщины (${allThickness})`
             });
             break;
-
         case 'print':
             result.works.push({
                 name: 'Печать',
@@ -302,7 +267,6 @@ export const constructWorks = (work, context) => {
                 formula: 'Себестоимость уф печати'
             });
             break;
-
         // case 'color':
         //     works[work] && result.works.push({
         //         name: 'Окрашивание',
@@ -313,21 +277,10 @@ export const constructWorks = (work, context) => {
         //     break;
             
         case 'cuts':
-            result.works.push({
-                name: 'Вырезы',
-                value: selfcost.pricesAndCoefs['Вырезы СМД'] * works[work],
-                string: `${selfcost.pricesAndCoefs['Вырезы СМД']} * ${works[work]}`,
-                formula: 'Себестоимость вырезов * Кол-во вырезов'
-            });
+            res(works[work], 'Вырезы СМД')
             break;
-
         case 'drillssmd':
-            result.works.push({
-                name: 'Сверление СМД',
-                value: selfcost.pricesAndCoefs['Сверление СМД'] * materials.length * works[work],
-                string: `${selfcost.pricesAndCoefs['Сверление СМД']} * ${materials.length} * ${works[work]}`,
-                formula: 'Себестоимость работы * Кол-во материалов * Кол-во отверстий'
-            });
+            res(works[work], 'Сверление СМД')
             break;
     }
 };

@@ -10,9 +10,15 @@ router
     .route('/getUsers')
     .get(UserController.getUsers)
 router
-    .route('/deleteUser')
-    .delete(UserController.deleteUser)
+    .route('/delete')
+    .delete(UserController.delete)
 router
     .route('/restoreUser')
     .delete(UserController.restoreUser)
+router
+    .route('/update')
+    .post(UserController.update)
+router
+    .route('/resetUserPassword')
+    .post(UserController.resetUserPassword)
 export default router

@@ -25,8 +25,8 @@ export const tabConfigs = [
     fields: ['name', 'ratePerHour', 'costOfWork', 'description'],
     columns: [
       { title: 'Название', dataIndex: 'name' },
-      { title: 'Норма в час', dataIndex: 'ratePerHour' },
       { title: 'Стоимость работы', dataIndex: 'costOfWork' },
+      { title: 'Норма в час', dataIndex: 'ratePerHour' },
       { title: 'Описание', dataIndex: 'description' },
     ]
   }

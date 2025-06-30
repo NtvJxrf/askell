@@ -43,7 +43,7 @@ const initModels = async () => {
     console.log('Database connection has been established successfully.')
     await loadModels(__dirname)
     if(process.env.NODE_ENV === 'development') {
-      await sequelize.sync({force: true})
+      await sequelize.sync({alter: true})
       await valkey.flushall()
       await models.User.destroy({ where: { username: 'user'}, force: true})
       await models.User.destroy({ where: { username: 'admin'}, force: true})

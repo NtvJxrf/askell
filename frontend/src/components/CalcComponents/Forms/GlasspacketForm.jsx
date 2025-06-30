@@ -18,13 +18,11 @@ const GlasspacketForm = () => {
 
   const glassFormFields = useMemo(() => {
     return formConfigs.glasspacketForm.commonFields.map((field) => {
-      if (field.name === "material")
-        return { ...field, options: materialsArray }
-      if (field.name === "gas")
-        return { ...field, options: gasArray }
+      if (field.name === "material") return { ...field, options: materialsArray }
+      if (field.name === "gas") return { ...field, options: gasArray }
       return field;
     });
-  }, [materialsArray]);
+  }, [materialsArray, gasArray]);
 
   const materialColumns = useMemo(() => {
     return formConfigs.glasspacketForm.materialFields.map((group) =>

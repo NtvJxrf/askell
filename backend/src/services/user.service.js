@@ -22,6 +22,17 @@ export default class UserService {
         valkey.del(`activation:${token}`)
         return user
     }
+    static async resetUserPassword(id){
+        const user = await UserModel.findByPk(id)
+        if(!user) throw new ApiError(400, 'User not found, BAD_REQUEST')
+        user.isActive = false
+        user.password = null
+        user.save()
+        await tokenService.deleteUserTokens(id)
+        const token = crypto.randomBytes(32).toString('hex');
+        await valkey.set(`activation:${token}`, id, 'EX', 3600)
+        return token
+    }
     static async resetPassword(id, password){
         const user = await UserModel.findByPk(id)
         if(!user)
@@ -33,12 +44,30 @@ export default class UserService {
         await user.save()
         return user
     }
-    static async deleteUser(data, requester){
-        const { userToDelete, force = false } = data
-        if(userToDelete === requester.id)
-            throw new ApiError(400, 'suicide?')
-        await tokenService.deleteUserTokens(userToDelete)
-        return await UserModel.destroy({ where: { id: userToDelete }, force })
+    static async update(id, data) {
+        const user = await UserModel.findByPk(id);
+        if (!user) throw new ApiError(404, 'User not found')
+
+        const allowedFields = ['username', 'roles'];
+        const updateData = {};
+
+        for (const field of allowedFields) {
+            if (data[field] !== undefined){
+                if(field === 'roles' && data[field].length < 1) throw new ApiError(400, 'User must have at least one role')
+                updateData[field] = data[field]
+            }
+        }
+        await user.update(updateData);
+        await tokenService.deleteUserTokens(id)
+        delete user.dataValues.password;
+        return user;
+    }
+
+    static async delete(data, requester){
+        const { id, force = false } = data
+        if(id === requester.id) throw new ApiError(400, 'suicide?')
+        await tokenService.deleteUserTokens(id)
+        return await UserModel.destroy({ where: { id }, force })
     }
     static async restoreUser(data){
         const { userToRestore } = data

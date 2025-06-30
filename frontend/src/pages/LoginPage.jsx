@@ -22,7 +22,7 @@ const Login = () => {
                 return navigate('/')
             }
         }catch(error){
-            messageApi.error(error.response.data.message)
+            messageApi.error(error?.response?.data?.message || 'Ошибка при авторизации')
         }finally{
             setDisabled(false)
         }

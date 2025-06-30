@@ -21,6 +21,14 @@ export default class UserController{
         setTokens(res, user)
         res.status(200).json({ user, message: 'Login successful' })
     }
+    static async resetUserPassword(req, res) {
+        const { id } = req.body;
+        if (!id) 
+            throw new ApiError(400, 'Id are required, BAD_REQUEST')
+        const token = await userService.resetUserPassword(id)
+        const url = `https://calc.askell.ru/activate?token=${token}`
+        res.status(200).json(url)
+    }
     static async activate(req, res){
         const { password, token } = req.body
         if (!password || !token) 
@@ -28,6 +36,12 @@ export default class UserController{
         const user = await userService.activate(password, token)
         setTokens(res, user)
         res.status(200).json({ user, message: 'Login successful' })
+    }
+    static async update(req, res){
+        const { id, data } = req.body
+        console.log(req.body)
+        const user = await userService.update(id, data)
+        res.sendStatus(200)
     }
     static async logout(req, res) {
         const { refreshToken } = req.cookies;
@@ -44,8 +58,8 @@ export default class UserController{
         const users = await userService.getUsers()
         res.status(200).json(users)
     }
-    static async deleteUser(req, res) {
-        const result = await userService.deleteUser(req.body, req.user)
+    static async delete(req, res) {
+        const result = await userService.delete(req.body, req.user)
         if(result != 0)
             return res.sendStatus(200)
         return res.sendStatus(404)

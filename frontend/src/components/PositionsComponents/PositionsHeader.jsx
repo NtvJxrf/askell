@@ -50,7 +50,7 @@ const PositionsHeader = () => {
                 return {
                     key: position.assortment.id,
                     name: position.assortment.name,
-                    price: position.price,
+                    price: position.price / 100,
                     added: true,
                     quantity: position.quantity,
                     result: position.result,

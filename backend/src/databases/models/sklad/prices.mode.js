@@ -15,7 +15,7 @@ const Prices = sequelize.define('prices', {
     allowNull: false,
   },
   value: {
-    type: DataTypes.INTEGER,
+    type: DataTypes.FLOAT,
     allowNull: false,
   },
   description: {

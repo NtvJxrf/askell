@@ -15,4 +15,7 @@ router
 router
     .route('/delete')
     .post(authorizeRoles(['none']), pricesAndCoefsController.delete)
+router
+    .route('/bulk')
+    .post(authorizeRoles(['accountant']), pricesAndCoefsController.bulk)    
 export default router

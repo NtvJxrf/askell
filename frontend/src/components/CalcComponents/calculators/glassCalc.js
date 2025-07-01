@@ -46,7 +46,7 @@ const Calculate = (data, selfcost) => {
                 formula: 'Себестоимость уф печати'
             });
     const materials = [material]
-    const context = { works, selfcost, result, P, stanok, materials, thickness, S };
+    const context = { works, selfcost, result, P, stanok, materials, thickness, S};
     constructWorks('cutting1', context);
     constructWorks('cutting2', context);
     constructWorks('washing1', context);

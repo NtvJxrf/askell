@@ -9,7 +9,10 @@ export default class pricesAndCoefsController {
         const result = await pricesAndCoefsService.update(req);
         return res.sendStatus(200);
     }
-
+    static async bulk(req, res) {
+        const result = await pricesAndCoefsService.bulk(req);
+        return res.sendStatus(200);
+    }
     static async create(req, res) {
         const result = await pricesAndCoefsService.create(req);
         return res.sendStatus(200);

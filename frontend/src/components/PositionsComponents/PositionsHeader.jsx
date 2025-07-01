@@ -165,7 +165,7 @@ const PositionsHeader = () => {
                         }}
                         disabled={disabled}
                     >
-                        <Button icon={<UploadOutlined />} shape="round">Загрузить из xlsx</Button>
+                        <Button icon={<UploadOutlined />} shape="round">Загрузить из xlsm</Button>
                     </Upload>
                 </Space>
             </div>

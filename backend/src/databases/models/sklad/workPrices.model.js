@@ -15,11 +15,11 @@ const WorkPrices = sequelize.define('work_prices', {
     allowNull: false,
   },
   ratePerHour: {
-    type: DataTypes.INTEGER,
+    type: DataTypes.FLOAT,
     allowNull: false,
   },
   costOfWork: {
-    type: DataTypes.INTEGER,
+    type: DataTypes.FLOAT,
     allowNull: false,
   },
   description: {

@@ -13,21 +13,23 @@ import {
   Typography,
   message,
   Tabs,
+  Upload,
 } from 'antd';
-import { SearchOutlined } from '@ant-design/icons';
+import { SearchOutlined, UploadOutlined } from '@ant-design/icons';
 import axios from 'axios';
 import { tabConfigs } from '../constants/tabConfig.js';
 import Init from '../init.js';
 import { useDispatch } from "react-redux";
+import * as XLSX from 'xlsx';
 
 const { Title, Paragraph } = Typography;
-
 const PricesAndCoefsPage = () => {
   const [messageApi, contextHolder] = message.useMessage();
   const [dataMap, setDataMap] = useState({});
   const [activeTab, setActiveTab] = useState(tabConfigs[0].key);
   const [form] = Form.useForm();
   const dispatch = useDispatch();
+  const [disabled, setDisabled] = useState(false)
   const getTabConfig = (key) => tabConfigs.find(t => t.key === key);
 
   useEffect(() => {
@@ -187,7 +189,17 @@ const PricesAndCoefsPage = () => {
       },
     ];
   };
-
+  const handleLoadXlsm = async (data) => {
+    setDisabled(true)
+    try{
+      const res = await axios.post(`${import.meta.env.VITE_API_URL}/api/pricesAndCoefs/bulk`, data, { withCredentials: true })
+      messageApi.success('Добавлено')
+    }catch(err){
+      messageApi.error(err.response?.data?.message || 'Ошибка при добавлении');
+    }finally{
+      setDisabled(false)
+    }
+  }
   return (
     <>
       {contextHolder}
@@ -195,6 +207,34 @@ const PricesAndCoefsPage = () => {
         <Title level={4} style={{ textAlign: 'center' }}>Цены и коэффициенты</Title>
         <Paragraph>На этой странице вы можете управлять значениями для расчётов.</Paragraph>
       </Typography>
+      <div style={{ display: 'flex', justifyContent: 'center', marginTop: 20 }}>
+        <Upload
+          accept=".xlsx, .xls, .xlsm"
+          showUploadList={false}
+          beforeUpload={(file) => {
+              setDisabled(true)
+              const reader = new FileReader();
+              reader.onload = (evt) => {
+                  const data = evt.target.result;
+                  const workbook = XLSX.read(data, { type: 'binary' });
+                  const sheet = workbook.Sheets[workbook.SheetNames[0]];
+                  const array = XLSX.utils.sheet_to_json(sheet);
+                  if (!array.length) {
+                      messageApi.error('Файл пустой или невалидный');
+                      return;
+                  }
+                  array.shift()
+                  handleLoadXlsm(array)
+              };
+              reader.readAsArrayBuffer(file);
+              setDisabled(false)
+              return false
+          }}
+          disabled={disabled}
+      >
+        <Button icon={<UploadOutlined />} shape="round">Загрузить из xlsm</Button>
+      </Upload>
+      </div>
 
       <Card style={{ maxWidth: 1500, margin: '40px auto', minWidth: 1200 }}>
         <Tabs

@@ -36,7 +36,17 @@ const Calculate = (data, selfcost) => {
     let S_tape = null
     if(larger <= 2100) S_tape = (2100 * lesser) / 1000000
     else S_tape = (2100 * larger) / 1000000    // Считаем площадь используемой пленки | 2100 это ширина рулона
-    for (const tape of tapes) {
+    const constructTape = (quantity, name) => {
+        result.materials.push({
+            name,
+            value: selfcost.materials[name].value * quantity,
+            count: quantity,
+            string: `${selfcost.materials[name].value} * ${quantity.toFixed(2)}`,
+            formula: 'Цена за м² * Площадь плёнки'
+        });
+    }
+    for (let tape of tapes) {
+        tape === '-' && (tape = undefined)
         switch (tape) {
             case undefined:
                     let useThinMaterial = false
@@ -45,108 +55,45 @@ const Calculate = (data, selfcost) => {
                         if(thickness < 4) useThinMaterial = true
                     }
                     if(useThinMaterial || lesser < 1050){
-                        result.materials.push({
-                            name: 'Пленка EVA Прозрачная 0,38мм',
-                            value: selfcost.materials['Пленка EVA Прозрачная 0,38мм'].value * S_tape,
-                            count: S_tape,
-                            string: `${selfcost.materials['Пленка EVA Прозрачная 0,38мм'].value} * ${S_tape.toFixed(2)}`,
-                            formula: 'Цена за м² * Площадь плёнки'
-                        });
+                        constructTape(S_tape, 'Пленка EVA Прозрачная 0,38мм')
                         break
                     }
-                    result.materials.push({
-                        name: 'Пленка EVA Прозрачная 0,76мм',
-                        value: selfcost.materials['Пленка EVA Прозрачная 0,76мм'].value * S_tape,
-                        count: S_tape,
-                        string: `${selfcost.materials['Пленка EVA Прозрачная 0,76мм'].value} * ${S_tape.toFixed(2)}`,
-                        formula: 'Цена за м² * Площадь плёнки'
-                    });
+                    constructTape(S_tape, 'Пленка EVA Прозрачная 0,76мм')
                 break;
 
             case 'Смарт пленка Magic Glass':
-                result.materials.push({
-                    name: tape,
-                    value: selfcost.materials[tape].value * S_tape,
-                    count: S_tape,
-                    string: `${selfcost.materials[tape].value} * ${S_tape.toFixed(2)}`,
-                    formula: 'Цена за м² * Площадь плёнки'
-                });
-                result.materials.push({
-                    name: 'Пленка EVA Прозрачная 0,76мм',
-                    value: selfcost.materials['Пленка EVA Прозрачная 0,76мм'].value * S_tape * 2,
-                    count: S_tape * 2,
-                    string: `${selfcost.materials['Пленка EVA Прозрачная 0,76мм'].value} * ${S_tape.toFixed(2)} * 2`,
-                    formula: 'Цена за м² * Площадь плёнки * 2 слоя'
-                });
+                constructTape(S_tape, 'Смарт пленка Magic Glass')
+                constructTape(S_tape * 2, 'Пленка EVA Прозрачная 0,76мм')
                 break;
 
             case 'Пленка EVA №25 Хамелеон Гладкий 1.4':
-                result.materials.push({
-                    name: tape,
-                    value: selfcost.materials[tape].value * S_tape,
-                    count: S_tape,
-                    string: `${selfcost.materials[tape].value} * ${S_tape.toFixed(2)}`,
-                    formula: 'Цена за м² * Площадь плёнки'
-                });
-                result.materials.push({
-                    name: 'Пленка EVA Прозрачная 0,38мм',
-                    value: selfcost.materials['Пленка EVA Прозрачная 0,38мм'].value * S_tape * 2,
-                    count: S_tape * 2,
-                    string: `${selfcost.materials['Пленка EVA Прозрачная 0,38мм'].value} * ${S_tape.toFixed(2)} * 2`,
-                    formula: 'Цена за м² * Площадь плёнки * 2 слоя'
-                });
+                constructTape(S_tape, 'Пленка EVA №25 Хамелеон Гладкий 1.4')
+                constructTape(S_tape * 2, 'Пленка EVA Прозрачная 0,38мм')
                 break;
             
             case 'Пленка EVA Прозрачная 0,38мм':
-                result.materials.push({
-                    name: tape,
-                    value: selfcost.materials[tape].value * S_tape,
-                    count: S_tape,
-                    string: `${selfcost.materials[tape].value} * ${S_tape.toFixed(2)}`,
-                    formula: 'Цена за м² * Площадь плёнки'
-                });
+                constructTape(S_tape, 'Пленка EVA Прозрачная 0,38мм')
                 break;
 
             case 'Пленка EVA Прозрачная 0,76мм':
-                result.materials.push({
-                    name: tape,
-                    value: selfcost.materials[tape].value * S_tape,
-                    count: S_tape,
-                    string: `${selfcost.materials[tape].value} * ${S_tape.toFixed(2)}`,
-                    formula: 'Цена за м² * Площадь плёнки'
-                });
+                constructTape(S_tape, 'Пленка EVA Прозрачная 0,76мм')
                 break;
 
             default:
-                result.materials.push({
-                    name: tape,
-                    value: selfcost.materials[tape].value * S_tape,
-                    count: S_tape,
-                    string: `${selfcost.materials[tape].value} * ${S_tape.toFixed(2)}`,
-                    formula: 'Цена за м² * Площадь плёнки'
-                });
-                result.materials.push({
-                    name: 'Пленка EVA Прозрачная 0,38мм',
-                    value: selfcost.materials['Пленка EVA Прозрачная 0,38мм'].value * S_tape,
-                    count: S_tape,
-                    string: `${selfcost.materials['Пленка EVA Прозрачная 0,38мм'].value} * ${S_tape.toFixed(2)}`,
-                    formula: 'Цена за м² * Площадь плёнки'
-                });
+                console.log(tape)
+                constructTape(S_tape, tape)
+                constructTape(S_tape, 'Пленка EVA Прозрачная 0,38мм')
                 break;
         }
 
     }
+    const stanok = (shape && !cutsv1 && !cutsv2 && !cutsv3 && weight < 50) ? 'Прямолинейка' : 'Криволинейка'
     for(const material of materials){
         const thickness = Number(material.match(/(\d+(?:[.,]\d+)?)\s*мм/i)[1])
         allThickness += thickness
         weight += 2.5 * S * thickness
         
-        tempered && result.works.push({
-                name: `Закалка ${thickness} мм`,
-                value: selfcost.pricesAndCoefs[`Закалка ${thickness}`] * S,
-                string: `${selfcost.pricesAndCoefs[`Закалка ${thickness}`]}мм * ${S}`,
-                formula: `Себестоимость закалки * площадь`
-            });
+        tempered && constructWorks('tempered', {S, thickness, result, selfcost})
         result.materials.push({
             name: material,
             value: selfcost.materials[material].value * S,
@@ -154,10 +101,10 @@ const Calculate = (data, selfcost) => {
             formula: 'Цена за м² * Площадь'
         });
     }
-    const stanok = (shape && cutsv1 == 0 && cutsv2 == 0 && cutsv3 == 0 && weight < 50) ? 'Прямолинейка' : 'Криволинейка'
     const context = { works, selfcost, result, materials, P, stanok, S, allThickness };
-    constructWorks('cutting', context);
-    constructWorks('washing', context);
+    constructWorks('cutting1', context);
+    constructWorks('cutting2', context);
+    constructWorks('washing1', context);
     constructWorks('grinding', context);
     constructWorks('triplexing', context);
     for (const work in works) {
@@ -223,30 +170,25 @@ export const constructWorks = (work, context) => {
             res(works[work] * materials.length, 'Вырез в стекле 3 кат')
             break;
         case 'tempered':
-            res(S, 'Закалка')
+            res(S, `Закалка ${thickness} мм`)
             break;
         case 'cutting1':
-            res(S, 'Резка (Управление)')
+            res(S * materials.length, 'Резка (Управление)')
             break;
         case 'cutting2':
-            res(S, 'Резка (Помощь)')
+            res(S * materials.length, 'Резка (Помощь)')
             break;
         case 'washing1':
-            res(S, 'Мойка 1')
+            res(S * materials.length, 'Мойка 1')
             break;
         case 'grinding':
-            res(P, 'Шлифовка', stanok === 'Прямолинейка' ? 'Прямолинейная обработка' : 'Криволинейная обработка')
+            res(P * materials.length, 'Шлифовка', stanok === 'Прямолинейка' ? 'Прямолинейная обработка' : 'Криволинейная обработка')
             break;
         case 'polishing':
-            res(stanok === 'Прямолинейка' ? 0 : P, 'Полировка', stanok === 'Прямолинейка' ? 'Прямолинейная обработка' : 'Криволинейная обработка')
+            res(stanok === 'Прямолинейка' ? 0 : P  * materials.length, 'Полировка', stanok === 'Прямолинейка' ? 'Прямолинейная обработка' : 'Криволинейная обработка')
             break
         case 'triplexing':
-            result.works.push({
-                name: 'Триплексование',
-                value: selfcost.pricesAndCoefs[`Триплекс ${allThickness} мм`],
-                string: `${selfcost.pricesAndCoefs[`Триплекс ${allThickness} мм`].toFixed(2)}`,
-                formula: `Фиксированная себестоимость триплексования для общей толщины (${allThickness})`
-            })
+            res(S, `Триплекс ${allThickness} мм`)
             break
     }
 };

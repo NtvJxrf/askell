@@ -9,7 +9,11 @@ const modelMap = {
   prices: Prices,
   work_prices: WorkPrices,
 };
-
+const typeMap = {
+  'Коэффициент': 'coefs',
+  'Цена': 'prices',
+  'Работа': 'work_prices'
+}
 export default class pricesAndCoefsService {
   static async getAll() {
     const [coefs, prices, workPrices] = await Promise.all([
@@ -89,5 +93,24 @@ export default class pricesAndCoefsService {
 
     await getPicesAndCoefs();
     return true;
+  }
+  static async bulk(req) {
+    const data = req.body
+    for(const el of data){
+      const { type, name, value, description, ratePerHour, costOfWork } = el;
+      const model = this.getModelByType(typeMap[type])
+      let updateData = {
+        name,
+        description,
+      };
+      if (el.type === 'Работа') {
+        updateData.ratePerHour = ratePerHour;
+        updateData.costOfWork = costOfWork;
+      } else
+        updateData.value = value
+
+      await model.upsert(updateData)
+    }
+    await getPicesAndCoefs();
   }
 }

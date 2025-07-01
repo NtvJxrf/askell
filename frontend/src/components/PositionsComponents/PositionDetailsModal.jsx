@@ -106,20 +106,18 @@ const PositionDetailsModal = ({ open, onClose, record }) => {
 };
 
 const renderLabeledDataBlock = (title, data, dictionary = {}) => {
-    if (!data || typeof data !== 'object') return null;
-
+    if (!data || typeof data !== 'object') return null
     return (
         <>
             <Title level={5}>{title}</Title>
             {Object.entries(data).map(([key, value]) => {
+                if(ignorLabels.includes(key)) return
                 let label = dictionary[key] || key;
-
                 if (/^material\d+$/.test(key)) {
                     label = `Материал ${key.replace('material', '')}`;
                 } else if (/^tape\d+$/.test(key)) {
                     label = `Плёнка ${key.replace('tape', '')}`;
                 }
-
                 const displayValue =
                     typeof value === 'boolean'
                         ? value ? 'Да' : 'Нет'
@@ -138,7 +136,7 @@ const renderLabeledDataBlock = (title, data, dictionary = {}) => {
     );
 };
 
-
+const ignorLabels = ['ignor', 'calcType', 'productType']
 const initialDataLabels = {
     height: 'Высота',
     width: 'Ширина',

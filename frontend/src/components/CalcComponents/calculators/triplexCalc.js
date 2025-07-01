@@ -117,7 +117,7 @@ const Calculate = (data, selfcost) => {
     result.finalPrice = {
         name: 'Итоговая цена',
         string: `(${(materialsandworks).toFixed(2)} + ${((commercialExpenses + householdExpenses + workshopExpenses)).toFixed(2)}) * ${selfcost.pricesAndCoefs[`Триплекс ${customertype}`]}`,
-        formula: `(Материалы + Работы + Расходы) * Наценка для типа клиента ${customertype}`,
+        formula: `(Материалы и Работы + Расходы) * Наценка для типа клиента ${customertype}`,
         value: price
     }
     result.other = {
@@ -205,19 +205,19 @@ export const constructExpenses = (result, selfcost) => {
         name: 'Цеховые расходы',
         value: workshopExpenses,
         string: `${(materialsandworks ).toFixed(2)} * ${selfcost.pricesAndCoefs[`% цеховых расходов`]}`,
-        formula: `(Материалы + работы) * % цеховых расходов`
+        formula: `(Материалы и работы) * % цеховых расходов`
     })
     result.expenses.push({
         name: 'Коммерческие расходы',
         value: commercialExpenses,
         string: `(${(materialsandworks ).toFixed(2)} + ${(workshopExpenses ).toFixed(2)}) * ${selfcost.pricesAndCoefs[`% коммерческих расходов`]}`,
-        formula: `(Материалы + Работы + Цеховые) * % коммерческих расходов}`
+        formula: `(Материалы и Работы + Цеховые) * % коммерческих расходов}`
     })
     result.expenses.push({
         name: 'Общехозяйственные расходы',
         value: householdExpenses,
         string: `(${(materialsandworks ).toFixed(2)} + ${(workshopExpenses ).toFixed(2)}) * ${selfcost.pricesAndCoefs[`% общехозяйственных расходов`]}`,
-        formula: `(Материалы + Работы + Цеховые) * % общехозяйственных расходов`
+        formula: `(Материалы и Работы + Цеховые) * % общехозяйственных расходов`
     })
     return [materialsandworks, commercialExpenses, householdExpenses, workshopExpenses]
 }

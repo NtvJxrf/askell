@@ -60,7 +60,7 @@ const Calculate = (data, selfcost) => {
     result.finalPrice = {
         name: 'Итоговая цена',
         string: `(${(materialsandworks).toFixed(2)} + ${((commercialExpenses + householdExpenses + workshopExpenses)).toFixed(2)}) * ${selfcost.pricesAndCoefs[`Стекло ${customertype}`]}`,
-        formula: `(Материалы + Работы + Расходы) * Наценка для типа клиента ${customertype}`,
+        formula: `(Материалы и Работы + Расходы) * Наценка для типа клиента ${customertype}`,
         value: price
     }
 

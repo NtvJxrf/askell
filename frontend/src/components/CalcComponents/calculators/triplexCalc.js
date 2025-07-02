@@ -54,16 +54,18 @@ const Calculate = (data, selfcost) => {
                         const thickness = Number(material.match(/(\d+(?:[.,]\d+)?)\s*мм/i)[1])
                         if(thickness < 4) useThinMaterial = true
                     }
+                    console.log(useThinMaterial)
+                    console.log(lesser)
                     if(useThinMaterial || lesser < 1050){
                         constructTape(S_tape, 'Пленка EVA Прозрачная 0,38мм')
                         break
                     }
-                    constructTape(S_tape, 'Пленка EVA Прозрачная 0,76мм')
+                    constructTape(S_tape, 'Пленка EVA Прозрачная 0,76 мм')
                 break;
 
             case 'Смарт пленка Magic Glass':
                 constructTape(S_tape, 'Смарт пленка Magic Glass')
-                constructTape(S_tape * 2, 'Пленка EVA Прозрачная 0,76мм')
+                constructTape(S_tape * 2, 'Пленка EVA Прозрачная 0,76 мм')
                 break;
 
             case 'Пленка EVA №25 Хамелеон Гладкий 1.4':
@@ -76,7 +78,7 @@ const Calculate = (data, selfcost) => {
                 break;
 
             case 'Пленка EVA Прозрачная 0,76мм':
-                constructTape(S_tape, 'Пленка EVA Прозрачная 0,76мм')
+                constructTape(S_tape, 'Пленка EVA Прозрачная 0,76 мм')
                 break;
 
             default:

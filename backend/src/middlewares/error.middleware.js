@@ -31,8 +31,8 @@ export const errorHandler = (err, req, res, next) => {
     message,
     ...(process.env.NODE_ENV === 'development' && { stack: err.stack }),
   }
-
-  logger.error(`⛔Request failed: ${req.method} ${req.originalUrl}`, { stack: err.stack, route: req.originalUrl, user: req.user || undefined })
+  if(req.originalUrl != '/api/isAuthenticated')
+  logger.error(`⛔Request failed: ${req.method} ${req.originalUrl}`, { stack: err.stack, route: req.originalUrl, user: { username: req.user.username, id: req.user.id } || undefined,  })
 
   res.status(statusCode).send(response)
 }

@@ -41,7 +41,7 @@ services:
     volumes:
       - /askell/backend/src/logs:/var/log/askell
     ports:
-      - "127.0.0.1:3100"
+      - "127.0.0.1:3100:3100"
 
   promtail:
     image: grafana/promtail:2.8.2
@@ -56,7 +56,7 @@ services:
     image: grafana/grafana:9.4.0
     container_name: grafana
     ports:
-      - "127.0.0.1:3000"
+      - "127.0.0.1:3000:3000"
     environment:
       - GF_SECURITY_ADMIN_PASSWORD=admin
     volumes:

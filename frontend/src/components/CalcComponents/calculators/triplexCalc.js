@@ -96,9 +96,9 @@ const Calculate = (data, selfcost) => {
         tempered && constructWorks('tempered', {S, thickness, result, selfcost})
         result.materials.push({
             name: material,
-            value: selfcost.materials[material].value * S,
-            string: `${selfcost.materials[material].value} * ${S.toFixed(2)}`,
-            formula: 'Цена за м² * Площадь'
+            value: selfcost.materials[material].value * S * selfcost.pricesAndCoefs['Коэффициент обрези стекло'],
+            string: `${selfcost.materials[material].value} * ${S.toFixed(2)} * ${selfcost.pricesAndCoefs['Коэффициент обрези стекло']}`,
+            formula: 'Цена за м² * Площадь * Коэффициент обрези стекло'
         });
     }
     const context = { works, selfcost, result, materials, P, stanok, S, allThickness };

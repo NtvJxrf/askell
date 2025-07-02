@@ -27,7 +27,8 @@ services:
     image: rabbitmq:3-management
     container_name: rabbitmq
     ports:
-      - "127.0.0.1:15672:15672"       # AMQP
+      - "127.0.0.1:5672:5672"       # AMQP
+      - "15672:15672"     # Web UI
     environment:
       RABBITMQ_DEFAULT_USER: guest
       RABBITMQ_DEFAULT_PASS: guest

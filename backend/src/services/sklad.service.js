@@ -153,7 +153,7 @@ export default class SkladService {
     }
 }
 
-const triplex = async (data, order, position) => {
+const triplex = async (data, order, position, createdEntitys) => {
     const result = {
         viz: [],
         selk: []
@@ -174,11 +174,11 @@ const triplex = async (data, order, position) => {
     for(const material of materials){
         const promises = []
         promises.push(makeprocessingprocess(stagesSelk))
-        promises.push(makeProduct(data, material, true))
+        promises.push(makeProduct(data, material, true, createdEntitys))
         const responses = await Promise.all(promises)
         const processingprocess = responses[0]
         const product = responses[1]
-        const plan = await makeProcessingPlanGlass(data, position.assortment.name, order, processingprocess, product, true, material)
+        const plan = await makeProcessingPlanGlass(data, position.assortment.name, order, processingprocess, product, true, material, createdEntitys)
         plan.quantity = position.quantity
         result.selk.push(plan)
         pfs.push(product)
@@ -206,7 +206,7 @@ const triplex = async (data, order, position) => {
             quantity: tape.count
         })
     }
-    const planViz = await makeProcessingPlanViz(data, position.assortment.name, order, processingprocessViz, position.assortment, false, materialsViz)
+    const planViz = await makeProcessingPlanViz(data, position.assortment.name, order, processingprocessViz, position.assortment, false, materialsViz, createdEntitys)
     planViz.quantity = position.quantity
     result.viz.push(planViz)
     return result
@@ -214,7 +214,7 @@ const triplex = async (data, order, position) => {
 const ceraglass = async () => {
 
 }
-const glass = async (data, order, position) => {
+const glass = async (data, order, position, createdEntitys) => {
     const result = {
         viz: [],
         selk: []
@@ -230,11 +230,11 @@ const glass = async (data, order, position) => {
     const isPF = data.result.other.viz
     const promises = []
     promises.push(makeprocessingprocess(stagesSelk))
-    promises.push(makeProduct(data, position.assortment.name, isPF))
+    promises.push(makeProduct(data, position.assortment.name, isPF, createdEntitys))
     const responses = await Promise.all(promises)
     const processingprocess = responses[0]
     const product = responses[1]
-    const plan = await makeProcessingPlanGlass(data, position.assortment.name, order, processingprocess, product, isPF, data.initialData.material)
+    const plan = await makeProcessingPlanGlass(data, position.assortment.name, order, processingprocess, product, isPF, data.initialData.material, createdEntitys)
     plan.quantity = position.quantity
     result.selk.push(plan)
     if(isPF){
@@ -247,13 +247,13 @@ const glass = async (data, order, position) => {
             assortment: { meta: product.meta},
             quantity: 1
         }]
-        const planViz = await makeProcessingPlanViz(data, position.assortment.name, order, processingprocessViz, position.assortment, false, materials)
+        const planViz = await makeProcessingPlanViz(data, position.assortment.name, order, processingprocessViz, position.assortment, false, materials, createdEntitys)
         planViz.quantity = position.quantity
         result.viz.push(planViz)
     }
     return result
 }
-const smd = async (data, order, position) => {
+const smd = async (data, order, position, createdEntitys) => {
     if(!data){
         const productionRows = [{
                     processingPlan: {
@@ -266,57 +266,84 @@ const smd = async (data, order, position) => {
     }
     
 }
-export const createProductionTask = async (id, steps) =>{
-        console.time('creatindProudctionTask')
+export const createProductionTask = async (id) =>{
+        console.time('creatingProudctionTask')
         const order = await Client.sklad(`https://api.moysklad.ru/api/remap/1.2/entity/customerorder/${id}?expand=positions.assortment,invoicesOut&limit=100`)
         if(!order)
             throw new ApiError(`Заказ покупателя с ${id} не найден`)
-        steps.push(`Получен заказ покупателя ${order.name}`)
         const map = {
             'Триплекс': triplex,
             'Керагласс': ceraglass,
             'Стекло': glass,
             'СМД': smd,
         }
+        const createdEntitys = { task: [], plan: [], product: [] }
         let selkResult = []
         let vizResult = []
         const results = []
-        for(const position of order.positions.rows){
-            if(position.assortment.pathName.toLowerCase().includes('смд')){
-                await map['СМД'](null, order, position)
-                continue
+        try{
+            for(const position of order.positions.rows){
+                if(position.assortment.pathName.toLowerCase().includes('смд')){
+                    await map['СМД'](null, order, position, createdEntitys)
+                    continue
+                }
+                const data = await Details.findOne({where: {productId: position.assortment.id}})
+                if(data) results.push(await map[data.result.other.type](data, order, position, createdEntitys))
             }
-            const data = await Details.findOne({where: {productId: position.assortment.id}})
-            if(data) results.push(await map[data.result.other.type](data, order, position))
-        }
-        steps.push(`Созданы планы обработки для позиций`)
-        if(results.length < 1) return
-        results.forEach( el => {
-            el.selk && (selkResult = selkResult.concat(el.selk))
-            el.viz && (vizResult = vizResult.concat(el.viz))
-        })
-        const productionRows = selkResult.reduce((acc, curr) => {
-                acc.push({  processingPlan: { meta: curr.meta },
-                            productionVolume: curr.quantity
-                })
-                return acc
-            }, [])
-        const pzSelk = await makeProductionTask(`Склад Селькоровская материалы/прочее`, `Склад Селькоровская ПФ`, productionRows, order, false)
-        steps.push(`Создано производственное задание для Селькоровской`)
-        if(vizResult.length > 0){
-            const productionRows = vizResult.reduce((acc, curr) => {
-                acc.push({  processingPlan: { meta: curr.meta },
-                            productionVolume: curr.quantity
+            if(results.length < 1) return
+            results.forEach( el => {
+                el.selk && (selkResult = selkResult.concat(el.selk))
+                el.viz && (vizResult = vizResult.concat(el.viz))
+            })
+            const productionRows = selkResult.reduce((acc, curr) => {
+                    acc.push({  processingPlan: { meta: curr.meta },
+                                productionVolume: curr.quantity
                     })
                     return acc
                 }, [])
-            const pzViz = await makeProductionTask(`Склад ВИЗ ПФ`, `Екатеринбург ВИЗ СГИ`, productionRows, order, true)
-            steps.push(`Создан производственное задание для ВИЗ`)
+            const pzSelk = await makeProductionTask(`Склад Селькоровская материалы/прочее`, `Склад Селькоровская ПФ`, productionRows, order, false, createdEntitys)
+            if(vizResult.length > 0){
+                const productionRows = vizResult.reduce((acc, curr) => {
+                    acc.push({  processingPlan: { meta: curr.meta },
+                                productionVolume: curr.quantity
+                        })
+                        return acc
+                    }, [])
+                const pzViz = await makeProductionTask(`Склад ВИЗ ПФ`, `Екатеринбург ВИЗ СГИ`, productionRows, order, true, createdEntitys)
+            }
+            console.timeEnd('creatingProudctionTask')
+        }catch(error){
+            logger.error('Ошибка во время создания произодственного задания', {stack: error.stack})
+            for(const entity in createdEntitys){
+                switch(entity){
+                    case 'task':
+                        if(createdEntitys[entity].length > 0)
+                        await Client.sklad('https://api.moysklad.ru/api/remap/1.2/entity/productiontask/delete', 'post', createdEntitys[entity].map(el => {return {meta: el.meta}}))
+                        break
+                    case 'plan':
+                        if(createdEntitys[entity].length > 0)
+                        await Client.sklad('https://api.moysklad.ru/api/remap/1.2/entity/processingplan/delete', 'post', createdEntitys[entity].map(el => {return {meta: el.meta}}))
+                        break
+                    case 'product':
+                        if(createdEntitys[entity].length > 0)
+                        await Client.sklad('https://api.moysklad.ru/api/remap/1.2/entity/product/delete', 'post', createdEntitys[entity].map(el => {return {meta: el.meta}}))
+                        break
+                }
+            }
+            const task = await Client.sklad('https://api.moysklad.ru/api/remap/1.2/entity/task', 'post', {
+                assignee: {
+                    meta: order.owner.meta,
+                },
+                operation: {
+                    meta: order.meta
+                },
+                description: `Ошибка во время создания производственного задания ${order.name}`
+            })
         }
-        console.timeEnd('creatindProudctionTask')
+        
     }
-const makeProductionTask = async (materialsStore, productsStore, productionRows, order, viz) => {
-    return await Client.sklad(`https://api.moysklad.ru/api/remap/1.2/entity/productiontask`, 'post', {
+const makeProductionTask = async (materialsStore, productsStore, productionRows, order, viz, createdEntitys) => {
+    const task = await Client.sklad(`https://api.moysklad.ru/api/remap/1.2/entity/productiontask`, 'post', {
                 materialsStore: { meta: dictionary.stores[materialsStore]},
                 productsStore: { meta: dictionary.stores[productsStore]},
                 organization: { meta: order.organization.meta},
@@ -325,8 +352,10 @@ const makeProductionTask = async (materialsStore, productsStore, productionRows,
                 attributes: generateProductionTaskAttributes(order, viz),
                 productionRows
             })
-}
-const makeProcessingPlanViz = async (data, name, order, processingprocess, product, isPF, materials) => {
+    createdEntitys.task.push(task)
+    return task
+}   
+const makeProcessingPlanViz = async (data, name, order, processingprocess, product, isPF, materials, createdEntitys) => {
     const response = await Client.sklad('https://api.moysklad.ru/api/remap/1.2/entity/processingplan', 'post', {
         name: `${order.name}, ${isPF ? 'ПФ, ' : ''}${name}`,
         processingProcess: { meta: processingprocess },
@@ -338,9 +367,10 @@ const makeProcessingPlanViz = async (data, name, order, processingprocess, produ
             quantity: 1
         }]
     })
+    createdEntitys.plan.push(response)
     return response
 }
-const makeProcessingPlanGlass = async (data, name, order, processingprocess, product, isPF, material) => {
+const makeProcessingPlanGlass = async (data, name, order, processingprocess, product, isPF, material, createdEntitys) => {
     const response = await Client.sklad('https://api.moysklad.ru/api/remap/1.2/entity/processingplan', 'post', {
         name: `${order.name}, ${isPF ? 'ПФ, ' : ''}${name}`,
         processingProcess: { meta: processingprocess },
@@ -357,13 +387,16 @@ const makeProcessingPlanGlass = async (data, name, order, processingprocess, pro
             quantity: 1
         }]
     })
+    createdEntitys.plan.push(response)
     return response
 }
-const makeProduct = async (data, name, isPF) => {
-    return await Client.sklad('https://api.moysklad.ru/api/remap/1.2/entity/product', 'post', {
+const makeProduct = async (data, name, isPF, createdEntitys) => {
+    const product = await Client.sklad('https://api.moysklad.ru/api/remap/1.2/entity/product', 'post', {
         name: `${isPF ? 'ПФ' : ''} ${name}`,
         attributes: generateProductAttributes(data.initialData)
     })
+    createdEntitys.product.push(product)
+    return product
 }
 const makeprocessingprocess = async stages => {
     const normalizedStages = stages.map(s => s.trim().toLowerCase()).sort();
@@ -442,12 +475,11 @@ async function startWorker() {
     channel.consume(QUEUE_NAME, async (msg) => {
         if (msg !== null) {
             const id = msg.content.toString()
-            const steps = []
             try {
-                await createProductionTask(id,steps)
+                await createProductionTask(id)
                 channel.ack(msg);
             } catch (error) {
-                logger.error(`Ошибка при создании производственного задания с id ${id}`, {error: error?.message || error, complitedSteps: steps});
+                logger.error(`Ошибка при создании производственного задания с id ${id}`, {error: error?.message || error});
                 console.error(error)
                 channel.reject(msg, false)
             }

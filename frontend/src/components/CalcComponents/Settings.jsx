@@ -4,13 +4,13 @@ import { useDispatch, useSelector } from "react-redux";
 
 import axios from "axios";
 import Init from "../../init";
-import { use } from "react";
+import { useState } from "react";
 const { Text, Title } = Typography;
 
 const Settings = () => {
     const selfcost = useSelector((state) => state.selfcost.selfcost);
-    console.log(selfcost)
     const [messageApi, contextHolder] = message.useMessage();
+    const [loading, setLoading] = useState(false)
     const dispatch = useDispatch();
     if (!selfcost) return <div>Загрузка...</div>;
 
@@ -26,13 +26,16 @@ const Settings = () => {
     });
 
     const handleUpdateAll = async () => {
-        try{
-            const result = await axios.post(`${import.meta.env.VITE_API_URL}/api/sklad/updateSelfcosts`, {}, { withCredentials: true });
-            await Init.getSelfcost(dispatch)
-            messageApi.success("Обновлено");
-        }catch(e){
-        messageApi.error("Ошибка при обновлении: " + e.message);
-        }
+      setLoading(true)
+      try{
+          const result = await axios.post(`${import.meta.env.VITE_API_URL}/api/sklad/updateSelfcosts`, {}, { withCredentials: true });
+          await Init.getSelfcost(dispatch)
+          messageApi.success("Обновлено");
+      }catch(e){
+      messageApi.error("Ошибка при обновлении: " + e.message);
+      }finally{
+        setLoading(false)
+      }
     };
 
   return (
@@ -63,7 +66,7 @@ const Settings = () => {
 
       <Divider />
 
-      <Button type="primary" shape="round" icon={<ReloadOutlined />} onClick={handleUpdateAll}>
+      <Button type="primary" shape="round" icon={<ReloadOutlined />} onClick={handleUpdateAll} disabled={loading}>
         Обновить всё
       </Button>
     </div>

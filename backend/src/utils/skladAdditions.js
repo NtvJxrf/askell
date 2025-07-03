@@ -125,7 +125,10 @@ export const getProcessingPlansSmd = async () => {
     dictionary.smdPlans = plans
     updates['Техкарты для смд'] = Date.now()
 }
+let lastUpdate = 0
 export const initSkladAdditions = async () => {
+    if(lastUpdate - Date.now() < 300_000) throw new ApiError(404, 'Only one update per 5 minutes')
+    lastUpdate = Date.now()
     const promises = []
     promises.push(getMaterials())
     promises.push(getProcessingStages())
@@ -138,6 +141,7 @@ export const initSkladAdditions = async () => {
     promises.push(getProcessingPlansSmd())
     await Promise.allSettled(promises)
     SkladService.selfcost.updates = updates
+    console.log('all dependencies loaded')
 }
 
 async function fetchAllRows(urlBase) {

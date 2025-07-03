@@ -52,14 +52,6 @@ const getStores = async () => {
     }, {})
     updates['Склады'] = Date.now()
 }
-const getProcuctAttributes = async () => {
-    const response = await Client.sklad('https://api.moysklad.ru/api/remap/1.2/entity/product/metadata/attributes')
-    dictionary.productAttributes = response.rows.reduce(( acc, curr ) => {
-        acc[curr.name] = curr.meta
-        return acc
-    }, {})
-    updates['Атрибуты товаров'] = Date.now()
-}
 const getUnders = async () => {
     const response = await Client.sklad("https://api.moysklad.ru/api/remap/1.2/entity/product?filter=pathName=Керагласс%20товары%20и%20полуфабрикаты/Подстолья")
     SkladService.selfcost.unders = response.rows.reduce(( acc, curr ) => {
@@ -98,20 +90,84 @@ export const getPicesAndCoefs = async () => {
     SkladService.selfcost.pricesAndCoefs = pricesAndCoefs
     updates['Цены и коэффиценты'] = Date.now()
 }
-
+const getAttributes = async () => {
+    const promises = []
+    promises.push(Client.sklad('https://api.moysklad.ru/api/remap/1.2/entity/product/metadata/attributes'))
+    promises.push(Client.sklad('https://api.moysklad.ru/api/remap/1.2/entity/productiontask/metadata/attributes'))
+    const result = await Promise.all(promises)
+    const productAttributes = {}
+    const productiontaskAttributes = {}
+    result[0].rows.forEach( el => productAttributes[el.name] = el.meta)
+    result[1].rows.forEach( el => productiontaskAttributes[el.name] = el.meta)
+    dictionary.productAttributes = productAttributes
+    dictionary.productiontaskAttributes = productiontaskAttributes
+    updates['Атрибуты'] = Date.now()
+}
+export const getProcessingPlansSmd = async () => {
+    const promises = []
+    promises.push(fetchAllRows(`https://api.moysklad.ru/api/remap/1.2/entity/processingplan?filter=name~askell standart&expand=products.assortment`))
+    promises.push(fetchAllRows(`https://api.moysklad.ru/api/remap/1.2/entity/processingplan?filter=name~askell lux&expand=products.assortment`))
+    promises.push(fetchAllRows(`https://api.moysklad.ru/api/remap/1.2/entity/processingplan?filter=name~askell krystal&expand=products.assortment`))
+    promises.push(fetchAllRows(`https://api.moysklad.ru/api/remap/1.2/entity/processingplan?filter=name~askell krystall&expand=products.assortment`))
+    promises.push(fetchAllRows(`https://api.moysklad.ru/api/remap/1.2/entity/processingplan?filter=name~askell premium&expand=products.assortment`))
+    promises.push(fetchAllRows(`https://api.moysklad.ru/api/remap/1.2/entity/processingplan?filter=name~askell acoustic&expand=products.assortment`))
+    promises.push(fetchAllRows(`https://api.moysklad.ru/api/remap/1.2/entity/processingplan?filter=name~askell Mobile&expand=products.assortment`))
+    promises.push(fetchAllRows(`https://api.moysklad.ru/api/remap/1.2/entity/processingplan?filter=name~askell Flipchart&expand=products.assortment`))
+    promises.push(fetchAllRows(`https://api.moysklad.ru/api/remap/1.2/entity/processingplan?filter=name~askell Multiwall&expand=products.assortment`))
+    promises.push(fetchAllRows(`https://api.moysklad.ru/api/remap/1.2/entity/processingplan?filter=name~askell wave&expand=products.assortment`))
+    promises.push(fetchAllRows(`https://api.moysklad.ru/api/remap/1.2/entity/processingplan?filter=name~askell hexagon&expand=products.assortment`))
+    promises.push(fetchAllRows(`https://api.moysklad.ru/api/remap/1.2/entity/processingplan?filter=name~askell triangle&expand=products.assortment`))
+    promises.push(fetchAllRows(`https://api.moysklad.ru/api/remap/1.2/entity/processingplan?filter=name~askell long&expand=products.assortment`))
+    const result = await Promise.all(promises)
+    const plans = {}
+    for(const group of result)
+        group.forEach( el => plans[el.products.rows[0].assortment.name] = {meta: el.meta})
+    dictionary.smdPlans = plans
+    updates['Техкарты для смд'] = Date.now()
+}
 export const initSkladAdditions = async () => {
     const promises = []
     promises.push(getMaterials())
     promises.push(getProcessingStages())
     promises.push(getStores())
-    promises.push(getProcuctAttributes())
+    promises.push(getAttributes())
     promises.push(getUnders())
     promises.push(getColors())
     promises.push(getPicesAndCoefs())
     promises.push(getPackagingMaterials())
-    await Promise.all(promises)
+    promises.push(getProcessingPlansSmd())
+    await Promise.allSettled(promises)
     SkladService.selfcost.updates = updates
 }
+
+async function fetchAllRows(urlBase) {
+  const limit = 100;
+  const firstUrl = `${urlBase}&limit=${limit}&offset=0`;
+  const firstResponse = await Client.sklad(firstUrl);
+
+  if (!firstResponse.rows || firstResponse.rows.length === 0) {
+    return [];
+  }
+
+  const allRows = [...firstResponse.rows];
+  const totalSize = firstResponse.meta?.size || allRows.length;
+
+  const requests = [];
+  for (let offset = limit; offset < totalSize; offset += limit) {
+    const url = `${urlBase}&limit=${limit}&offset=${offset}`;
+    requests.push(Client.sklad(url));
+  }
+
+  const responses = await Promise.all(requests);
+  for (const res of responses) {
+    if (res.rows) {
+      allRows.push(...res.rows);
+    }
+  }
+
+  return allRows;
+}
+
 
 setInterval(() => {
     initSkladAdditions()

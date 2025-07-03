@@ -18,6 +18,7 @@ export default class Client {
     static async request(url, type, args, service) {
         moyskladParralelRequestCount++;
         try {
+            console.log(moyskladRequestCount)
             const response = await gotClient[type](url, args);
 
             if (response.statusCode >= 200 && response.statusCode < 300) 
@@ -25,7 +26,6 @@ export default class Client {
             else 
                 throw new ApiError(response.statusCode, `Ошибка во время запроса к ${service}, ${response.body}`)
         } finally {
-            console.log(moyskladRequestCount)
             moyskladParralelRequestCount--;
         }
     }

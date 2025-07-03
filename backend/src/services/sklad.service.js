@@ -52,7 +52,6 @@ export default class SkladService {
     }
 
     static async addPositionsToOrder(data) {
-        console.time('addPos');
         const indexes = []
         const positionsToCreate = data.positions.filter((el, index) => {
             if(!el.added){
@@ -92,9 +91,7 @@ export default class SkladService {
                 attributes: generateProductAttributes({...product.initialData, ...product.result.other}),
         }});
         if (productsToCreate.length > 0) {
-            console.time('create')
-            const createdProducts = await Client.sklad("https://api.moysklad.ru/api/remap/1.2/entity/product", "post", productsToCreate);
-            console.timeEnd('create')
+            const createdProducts = await Client.sklad("https://api.moysklad.ru/api/remap/1.2/entity/product", "post", productsToCreate)
             const promises = []
             createdProducts.forEach((el, index) => {
                 data.positions[indexes[index]] = {...data.positions[indexes[index]], position: { assortment: el}}
@@ -130,12 +127,8 @@ export default class SkladService {
                     vat: data.order.organization.name === 'ООО "А2"' ? 20 : 0
                 }
             }),
-        };
-        console.time('update order')
+        }
         const updateCustomerorderRequest = await Client.sklad(`https://api.moysklad.ru/api/remap/1.2/entity/customerorder/${data.order.id}`, "put", params);
-        console.timeEnd('update order')
-
-        console.timeEnd("addPos");
     }
 
     static async getOrder(name){
@@ -170,10 +163,10 @@ const triplex = async (data, order, position) => {
 
     const stagesSelk = ['1. РСК (раскрой)']
         data.result.other.stanok == 'Прямолинейка' ? stagesSelk.push('4. ПРЛ (прямолинейная обработка)') : stagesSelk.push('3. КРЛ (криволинейная обработка)')
-        data.initialData.cutsv1 != 0 && stagesSelk.push('8. ВРЗ (вырезы в стекле 1 кат.)')
-        data.initialData.cutsv2 != 0 && stagesSelk.push('9. ВРЗ (вырезы в стекле 2 кат.)')
-        data.initialData.drills != 0 && stagesSelk.push('7. ОТВ (сверление в стекле отверстий)')
-        data.initialData.zenk != 0 && stagesSelk.push('10. Зенковка')
+        data.initialData.cutsv1 && stagesSelk.push('8. ВРЗ (вырезы в стекле 1 кат.)')
+        data.initialData.cutsv2 && stagesSelk.push('9. ВРЗ (вырезы в стекле 2 кат.)')
+        data.initialData.drills && stagesSelk.push('7. ОТВ (сверление в стекле отверстий)')
+        data.initialData.zenk && stagesSelk.push('10. Зенковка')
         data.initialData.tempered && stagesSelk.push('Закалка')
         stagesSelk.push('ОТК')
 
@@ -228,10 +221,10 @@ const glass = async (data, order, position) => {
     }
     const stagesSelk = ['1. РСК (раскрой)']
     data.result.other.stanok == 'Прямолинейка' ? stagesSelk.push('4. ПРЛ (прямолинейная обработка)') : stagesSelk.push('3. КРЛ (криволинейная обработка)')
-    data.initialData.cutsv1 != 0 && stagesSelk.push('8. ВРЗ (вырезы в стекле 1 кат.)')
-    data.initialData.cutsv2 != 0 && stagesSelk.push('9. ВРЗ (вырезы в стекле 2 кат.)')
-    data.initialData.drills != 0 && stagesSelk.push('7. ОТВ (сверление в стекле отверстий)')
-    data.initialData.zenk != 0 && stagesSelk.push('10. Зенковка')
+    data.initialData.cutsv1 && stagesSelk.push('8. ВРЗ (вырезы в стекле 1 кат.)')
+    data.initialData.cutsv2 && stagesSelk.push('9. ВРЗ (вырезы в стекле 2 кат.)')
+    data.initialData.drills && stagesSelk.push('7. ОТВ (сверление в стекле отверстий)')
+    data.initialData.zenk && stagesSelk.push('10. Зенковка')
     data.initialData.tempered && stagesSelk.push('Закалка')
     stagesSelk.push('ОТК')
     const isPF = data.result.other.viz
@@ -260,12 +253,22 @@ const glass = async (data, order, position) => {
     }
     return result
 }
-const smd = async () => {
-
+const smd = async (data, order, position) => {
+    if(!data){
+        const productionRows = [{
+                    processingPlan: {
+                        meta: dictionary.smdPlans[position.assortment.name].meta
+                    },
+                    productionVolume: position.quantity
+                }]
+        const pzViz = await makeProductionTask(`Склад ВИЗ ПФ`, `Екатеринбург ВИЗ СГИ`, productionRows, order, true)
+        return
+    }
+    
 }
-const createProductionTask = async (id, steps) =>{
+export const createProductionTask = async (id, steps) =>{
         console.time('creatindProudctionTask')
-        const order = await Client.sklad(`https://api.moysklad.ru/api/remap/1.2/entity/customerorder/${id}?expand=positions.assortment&limit=100`)
+        const order = await Client.sklad(`https://api.moysklad.ru/api/remap/1.2/entity/customerorder/${id}?expand=positions.assortment,invoicesOut&limit=100`)
         if(!order)
             throw new ApiError(`Заказ покупателя с ${id} не найден`)
         steps.push(`Получен заказ покупателя ${order.name}`)
@@ -277,64 +280,52 @@ const createProductionTask = async (id, steps) =>{
         }
         let selkResult = []
         let vizResult = []
-        const promises = []
+        const results = []
         for(const position of order.positions.rows){
+            if(position.assortment.pathName.toLowerCase().includes('смд')){
+                await map['СМД'](null, order, position)
+                continue
+            }
             const data = await Details.findOne({where: {productId: position.assortment.id}})
-            promises.push(map[data.result.other.type](data, order, position))
+            if(data) results.push(await map[data.result.other.type](data, order, position))
         }
         steps.push(`Созданы планы обработки для позиций`)
-        const results = await Promise.all(promises)
+        if(results.length < 1) return
         results.forEach( el => {
             el.selk && (selkResult = selkResult.concat(el.selk))
             el.viz && (vizResult = vizResult.concat(el.viz))
         })
-        const pzSelk = await Client.sklad(`https://api.moysklad.ru/api/remap/1.2/entity/productiontask`, 'post', {
-            materialsStore: { meta: dictionary.stores[`Склад Селькоровская материалы/прочее`]},
-            productsStore: { meta: dictionary.stores[`Склад Селькоровская ПФ`]},
-            organization: { meta: order.organization.meta},
-            deliveryPlannedMoment: order.deliveryPlannedMoment,
-            owner: { meta: order.owner.meta},
-            attributes: [{meta: {
-                            "href" : "https://api.moysklad.ru/api/remap/1.2/entity/productiontask/metadata/attributes/d9371a8e-3a81-11ee-0a80-04f7002df766",
-                            "type" : "attributemetadata",
-                            "mediaType" : "application/json"
-                        },value: order.name}],
-            productionRows: selkResult.reduce((acc, curr) => {
+        const productionRows = selkResult.reduce((acc, curr) => {
                 acc.push({  processingPlan: { meta: curr.meta },
                             productionVolume: curr.quantity
                 })
                 return acc
             }, [])
-        })
-        steps.push(`Создан производственное задание для Селькоровской`)
+        const pzSelk = await makeProductionTask(`Склад Селькоровская материалы/прочее`, `Склад Селькоровская ПФ`, productionRows, order, false)
+        steps.push(`Создано производственное задание для Селькоровской`)
         if(vizResult.length > 0){
-            const pzViz = await Client.sklad(`https://api.moysklad.ru/api/remap/1.2/entity/productiontask`, 'post', {
-                materialsStore: { meta: dictionary.stores[`Склад ВИЗ ПФ`]},
-                productsStore: { meta: dictionary.stores[`Екатеринбург ВИЗ СГИ`]},
-                organization: { meta: order.organization.meta},
-                deliveryPlannedMoment: order.deliveryPlannedMoment,
-                owner: { meta: order.owner.meta},
-                attributes: [{meta: {
-                            "href" : "https://api.moysklad.ru/api/remap/1.2/entity/productiontask/metadata/attributes/d9371a8e-3a81-11ee-0a80-04f7002df766",
-                            "type" : "attributemetadata",
-                            "mediaType" : "application/json"
-                        },value: order.name
-                    },{meta: {
-                            "href" : "https://api.moysklad.ru/api/remap/1.2/entity/productiontask/metadata/attributes/a389bba7-410a-11f0-0a80-0098000450d3",
-                            "type" : "attributemetadata",
-                            "mediaType" : "application/json"
-                        },value: true}],
-                productionRows: vizResult.reduce((acc, curr) => {
+            const productionRows = vizResult.reduce((acc, curr) => {
                 acc.push({  processingPlan: { meta: curr.meta },
                             productionVolume: curr.quantity
-                })
-                return acc
-            }, [])
-            })
+                    })
+                    return acc
+                }, [])
+            const pzViz = await makeProductionTask(`Склад ВИЗ ПФ`, `Екатеринбург ВИЗ СГИ`, productionRows, order, true)
             steps.push(`Создан производственное задание для ВИЗ`)
         }
         console.timeEnd('creatindProudctionTask')
     }
+const makeProductionTask = async (materialsStore, productsStore, productionRows, order, viz) => {
+    return await Client.sklad(`https://api.moysklad.ru/api/remap/1.2/entity/productiontask`, 'post', {
+                materialsStore: { meta: dictionary.stores[materialsStore]},
+                productsStore: { meta: dictionary.stores[productsStore]},
+                organization: { meta: order.organization.meta},
+                deliveryPlannedMoment: order.deliveryPlannedMoment,
+                owner: { meta: order.owner.meta},
+                attributes: generateProductionTaskAttributes(order, viz),
+                productionRows
+            })
+}
 const makeProcessingPlanViz = async (data, name, order, processingprocess, product, isPF, materials) => {
     const response = await Client.sklad('https://api.moysklad.ru/api/remap/1.2/entity/processingplan', 'post', {
         name: `${order.name}, ${isPF ? 'ПФ, ' : ''}${name}`,
@@ -431,7 +422,14 @@ const generateProductAttributes = (data) => {
     }
     return result
 }
-
+const generateProductionTaskAttributes = (order, viz) => {
+    const result = []
+        order.invoicesOut && result.push({ meta: dictionary.productiontaskAttributes["№ Счета"], value: order.invoicesOut.map(el => el.name).join(';') })
+        result.push({ meta: dictionary.productiontaskAttributes["№ заказа покупателя"], value: order.name })
+        viz && result.push({ meta: dictionary.productiontaskAttributes["Задание для ВИЗа"], value: viz }) 
+        
+    return result
+}
 async function startWorker() {
     const conn = await amqp.connect('amqp://admin:%5EjZG1L%2Fi@localhost');
     const channel = await conn.createChannel();

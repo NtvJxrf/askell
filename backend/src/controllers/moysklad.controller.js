@@ -1,4 +1,3 @@
-import { date } from 'joi';
 import SkladService from '../services/sklad.service.js'
 import { getQueueChannel } from '../utils/rabbitmq.js';
 import { initSkladAdditions } from '../utils/skladAdditions.js';

@@ -157,7 +157,17 @@ const PositionsHeader = () => {
                                     return;
                                 }
                                 array.shift()
-                                const positions = array.map( el => calcMap[el.calcType](el, selfcost))
+                                const positions = array.reduce((acc, el, index) => {
+                                    try {
+                                        const result = calcMap[el.calcType](el, selfcost);
+                                        if (result) acc.push(result);
+                                    } catch (error) {
+                                        console.error(error);
+                                        messageApi.error(`Позиция с номером ${index + 1} не добавлена`)
+                                    }
+                                    return acc;
+                                }, []);
+                                console.log(positions)
                                 dispatch(addNewPositions(positions))
                             };
                             reader.readAsArrayBuffer(file);

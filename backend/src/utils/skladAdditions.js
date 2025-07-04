@@ -4,6 +4,7 @@ import Coefs from '../databases/models/sklad/coefs.model.js'
 import Prices from '../databases/models/sklad/prices.mode.js'
 import WorkPrices from '../databases/models/sklad/workPrices.model.js'
 import { dictionary } from '../services/sklad.service.js'
+import ApiError from './apiError.js'
 const updates = {}
 const getMaterials = async () => {
     let materials = {}
@@ -127,7 +128,7 @@ export const getProcessingPlansSmd = async () => {
 }
 let lastUpdate = 0
 export const initSkladAdditions = async () => {
-    if(lastUpdate - Date.now() < 300_000) throw new ApiError(404, 'Only one update per 5 minutes')
+    if(lastUpdate !=- 0 && lastUpdate - Date.now() < 300_000) throw new ApiError(404, 'Only one update per 5 minutes')
     lastUpdate = Date.now()
     const promises = []
     promises.push(getMaterials())
@@ -138,7 +139,7 @@ export const initSkladAdditions = async () => {
     promises.push(getColors())
     promises.push(getPicesAndCoefs())
     promises.push(getPackagingMaterials())
-    promises.push(getProcessingPlansSmd())
+    // promises.push(getProcessingPlansSmd())
     await Promise.allSettled(promises)
     SkladService.selfcost.updates = updates
     console.log('all dependencies loaded')

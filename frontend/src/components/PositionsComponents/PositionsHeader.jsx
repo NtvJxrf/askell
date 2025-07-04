@@ -4,7 +4,7 @@ import { UploadOutlined } from '@ant-design/icons';
 const { Text } = Typography;
 import axios from 'axios'
 import { useDispatch, useSelector } from 'react-redux'
-import { addOrderPositions, setOrder, setPositions, addNewPosition, addNewPositions } from '../../slices/positionsSlice.js'
+import { addOrderPositions, setOrder, setPositions, addNewPosition, addNewPositions, setSelectedRowKeys } from '../../slices/positionsSlice.js'
 import store from '../../store.js';
 import packaging from '../CalcComponents/calculators/packaging.js'
 import * as XLSX from 'xlsx';
@@ -75,6 +75,7 @@ const PositionsHeader = () => {
         const data = store.getState().positions
         if(!data.order){
             messageApi.error('Загрузите заказ')
+            setDisabled(false)
             return
         }
         try{
@@ -91,13 +92,16 @@ const PositionsHeader = () => {
     }
     const handleDeleteSelected = () => {
         const selected = store.getState().positions.selectedPosition
-        if(!selected) return 
+        if(!selected){
+            messageApi.error('Нечего удалять')
+            return
+        }
         const positions = store.getState().positions.positions.filter( (position) => {
             return !selected.includes(position.key)
         })
         dispatch(setPositions(positions))
+        dispatch(setSelectedRowKeys(null))
     }
-
     const handlePackaging = () => {
         const positions = store.getState().positions.positions
         if(!positions.length) {
@@ -111,7 +115,6 @@ const PositionsHeader = () => {
         }
         dispatch(addNewPosition(result))
     }
-
     console.log('render pos header')
     return (
         <>
@@ -167,7 +170,6 @@ const PositionsHeader = () => {
                                     }
                                     return acc;
                                 }, []);
-                                console.log(positions)
                                 dispatch(addNewPositions(positions))
                             };
                             reader.readAsArrayBuffer(file);

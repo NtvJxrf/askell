@@ -32,7 +32,8 @@ const Settings = () => {
           await Init.getSelfcost(dispatch)
           messageApi.success("Обновлено");
       }catch(e){
-      messageApi.error("Ошибка при обновлении: " + e.message);
+        console.error(e)
+        messageApi.error(e?.response?.data?.message || 'Ошибка при обновлении');
       }finally{
         setLoading(false)
       }

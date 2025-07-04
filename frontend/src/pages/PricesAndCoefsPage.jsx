@@ -232,7 +232,7 @@ const PricesAndCoefsPage = () => {
           }}
           disabled={disabled}
       >
-        <Button icon={<UploadOutlined />} shape="round">Загрузить из xlsm</Button>
+        <Button icon={<UploadOutlined />} shape="round">Загрузить из xlsx</Button>
       </Upload>
       </div>
 

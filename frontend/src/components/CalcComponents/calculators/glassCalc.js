@@ -51,6 +51,7 @@ const Calculate = (data, selfcost) => {
     constructWorks('cutting2', context);
     constructWorks('washing1', context);
     constructWorks('grinding', context);
+    constructWorks('otk', context);
     for(const work in works){
         if(!works[work]) continue
         constructWorks(work, context)

@@ -60,8 +60,7 @@ const Row = props => {
 const Positions = () => {
     const dispatch = useDispatch();
     const positions = useSelector(state => state.positions.positions);
-    const selectedRowKeys = useSelector(state => state.positions.selectedRowKeys);
-    // const [selectedRowKeys, setSelectedRowKeys] = useState([]);
+    const selectedRowKeys = useSelector(state => state.positions.selectedPosition);
     const [isModalVisible, setIsModalVisible] = useState(false);
     const [selectedRecord, setSelectedRecord] = useState(null);
     const [pagination, setPagination] = useState({ current: 1, pageSize: 10 });

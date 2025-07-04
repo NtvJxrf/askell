@@ -7,13 +7,6 @@ const positionsSlice = createSlice({
     order: null,
     selectedPosition: null
   },
-  //                {
-  //                   name: position.assortment.name,
-  //                   price: position.price,
-  //                   added: true,
-  //                   quantity: position.quantity,
-  //                    details: object
-  //               }
   reducers: {
     addOrderPositions: (state, action) => {
       const nonAddedPositions = state.positions.filter( el => !el.added)

@@ -9,6 +9,7 @@ const Calculate = (data, selfcost) => {
         other: {}
     }
     const S = (height * width) / 1000000
+    const P = ((height + width) * 2) / 1000
     const thickness = Number(material.match(/\d+/)[0])
     let weight = S * 2.5 * thickness
     let name = `Доска стеклянная магнитно-маркерная ASKELL ${smdType === 'Иное' ? 'Size' : smdType} (${height}х${width}), ${material}${color ? `, ${color}` : ''}${print ? `, УФ печать` : ''}${cuts ? `, Вырезы: ${cuts}` : ''}`
@@ -95,6 +96,7 @@ const Calculate = (data, selfcost) => {
     }
     result.other = {
         S,
+        P,
         stanok,
         weight,
         productType: true,

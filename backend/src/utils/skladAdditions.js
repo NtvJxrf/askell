@@ -131,7 +131,7 @@ export const initSkladAdditions = async () => {
     if (lastUpdate !== 0 && Date.now() - lastUpdate < 300_000) throw new ApiError(404, 'Only one update per 5 minutes')
     lastUpdate = Date.now()
     const promises = []
-    promises.push(getProcessingPlansSmd())
+    // promises.push(getProcessingPlansSmd())
     promises.push(getMaterials())
     promises.push(getProcessingStages())
     promises.push(getStores())

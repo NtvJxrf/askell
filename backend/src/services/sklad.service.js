@@ -6,6 +6,7 @@ import logger from "../utils/logger.js"
 import Processingprocess from "../databases/models/sklad/processingprocesses.model.js"
 import amqp from 'amqplib';
 import crypto from 'crypto'
+import {generateSmdMaterials} from '../utils/generateSmdMaterials.js'
 export const dictionary = {
     productFolders: {
         glassGuard: {
@@ -300,10 +301,45 @@ const smd = async (data, order, position, createdEntitys) => {
                     },
                     productionVolume: position.quantity
                 }]
-        const pzViz = await makeProductionTask(`Склад ВИЗ ПФ`, `Екатеринбург ВИЗ СГИ`, productionRows, order, true, createdEntitys)
+        const pzViz = await makeProductionTask(`Склад ВИЗ ПФ`, `Екатеринбург ВИЗ СГИ`, productionRows, order, true, true, createdEntitys)
         return
     }
-    
+    const result = {
+        viz: [],
+        selk: []
+    }
+    const stagesSelk = ['1. РСК (раскрой)']
+        data.result.other.stanok == 'Прямолинейка' ? stagesSelk.push('4. ПРЛ (прямолинейная обработка)') : stagesSelk.push('3. КРЛ (криволинейная обработка)')
+        data.initialData.cuts && stagesSelk.push('8. ВРЗ (вырезы в стекле 1 кат.)')
+        data.initialData.drillssmd && stagesSelk.push('8. ВРЗ (вырезы в стекле 1 кат.)')
+    const promises = []
+    promises.push(makeprocessingprocess(stagesSelk))
+    promises.push(makeProduct(data, position.assortment.name, true, createdEntitys))
+    const responses = await Promise.all(promises)
+    const processingprocess = responses[0]
+    const product = responses[1]
+    const plan = await makeProcessingPlanGlass(data, 'Доска стеклянная магнитно-маркерная ASKELL Size', order, processingprocess, product, true, data.initialData.material, createdEntitys)
+    plan.quantity = position.quantity
+    result.selk.push(plan)
+
+
+    let processingprocessViz = {
+        "href" : "https://api.moysklad.ru/api/remap/1.2/entity/processingprocess/43072ea8-17cf-11ef-0a80-178100023cbc",
+        "metadataHref" : "https://api.moysklad.ru/api/remap/1.2/entity/processingprocess/metadata",
+        "type" : "processingprocess",
+        "mediaType" : "application/json",
+        "uuidHref" : "https://online.moysklad.ru/app/#processingprocess/edit?id=43072ea8-17cf-11ef-0a80-178100023cbc"
+    }
+    const color = data.initialData.color
+    const planViz = await makeProcessingPlanVizSmd(data, 'Доска стеклянная магнитно-маркерная ASKELL Size', order, processingprocessViz, position.assortment, color, product.meta, createdEntitys)
+    const productionRows = [{
+                    processingPlan: {
+                        meta: planViz.meta
+                    },
+                    productionVolume: position.quantity
+                }]
+    const pzViz = await makeProductionTask(`Склад ВИЗ ПФ`, `Екатеринбург ВИЗ СГИ`, productionRows, order, true, true, createdEntitys)
+    return result
 }
 export const createProductionTask = async (id) =>{
         console.time('creatingProudctionTask')
@@ -340,7 +376,7 @@ export const createProductionTask = async (id) =>{
                     })
                     return acc
                 }, [])
-            const pzSelk = await makeProductionTask(`Склад Селькоровская материалы/прочее`, `Склад Селькоровская ПФ`, productionRows, order, false, createdEntitys)
+            const pzSelk = await makeProductionTask(`Склад Селькоровская материалы/прочее`, `Склад Селькоровская ПФ`, productionRows, order, false, false, createdEntitys)
             if(vizResult.length > 0){
                 const productionRows = vizResult.reduce((acc, curr) => {
                     acc.push({  processingPlan: { meta: curr.meta },
@@ -348,7 +384,7 @@ export const createProductionTask = async (id) =>{
                         })
                         return acc
                     }, [])
-                const pzViz = await makeProductionTask(`Склад ВИЗ ПФ`, `Екатеринбург ВИЗ СГИ`, productionRows, order, true, createdEntitys)
+                const pzViz = await makeProductionTask(`Склад ВИЗ ПФ`, `Екатеринбург ВИЗ СГИ`, productionRows, order, true, false, createdEntitys)
             }
             console.timeEnd('creatingProudctionTask')
         }catch(error){
@@ -389,14 +425,14 @@ export const createProductionTask = async (id) =>{
         }
         
     }
-const makeProductionTask = async (materialsStore, productsStore, productionRows, order, viz, createdEntitys) => {
+const makeProductionTask = async (materialsStore, productsStore, productionRows, order, viz, smd, createdEntitys) => {
     const task = await Client.sklad(`https://api.moysklad.ru/api/remap/1.2/entity/productiontask`, 'post', {
                 materialsStore: { meta: dictionary.stores[materialsStore]},
                 productsStore: { meta: dictionary.stores[productsStore]},
                 organization: { meta: order.organization.meta},
                 deliveryPlannedMoment: order.deliveryPlannedMoment,
                 owner: { meta: order.owner.meta},
-                attributes: generateProductionTaskAttributes(order, viz),
+                attributes: generateProductionTaskAttributes(order, viz, smd),
                 productionRows
             })
     createdEntitys.task.push(task)
@@ -425,7 +461,7 @@ const makeProcessingPlanGlass = async (data, name, order, processingprocess, pro
             assortment: {
                 meta: SkladService.selfcost.materials[material].meta
             },
-            quantity: (data.initialData.width * data.initialData.height) / 1000000
+            quantity: (data.initialData.width * data.initialData.height) / 1000000 * SkladService.selfcost.pricesAndCoefs['Коэффициент обрези стекло']
         }],
         products: [{
             assortment: {
@@ -502,13 +538,30 @@ const generateProductAttributes = (data) => {
     }
     return result
 }
-const generateProductionTaskAttributes = (order, viz) => {
+const generateProductionTaskAttributes = (order, viz, smd) => {
     const result = []
         order.invoicesOut && result.push({ meta: dictionary.productiontaskAttributes["№ Счета"], value: order.invoicesOut.map(el => el.name).join(';') })
         result.push({ meta: dictionary.productiontaskAttributes["№ заказа покупателя"], value: order.name })
         viz && result.push({ meta: dictionary.productiontaskAttributes["Задание для ВИЗа"], value: viz }) 
+        smd && result.push({ meta: dictionary.productiontaskAttributes["СМД"], value: true }) 
         
     return result
+}
+
+const makeProcessingPlanVizSmd = async (data, name, order, processingprocess, product, color, material, createdEntitys) => {
+    const response = await Client.sklad('https://api.moysklad.ru/api/remap/1.2/entity/processingplan', 'post', {
+        name: `${order.name}, ${name}`,
+        processingProcess: { meta: processingprocess },
+        materials: generateSmdMaterials(data, color, material),
+        products: [{
+            assortment: {
+                meta: product.meta,
+            },
+            quantity: 1
+        }]
+    })
+    createdEntitys.plan.push(response)
+    return response
 }
 async function startWorker() {
     const conn = await amqp.connect('amqp://admin:%5EjZG1L%2Fi@localhost');

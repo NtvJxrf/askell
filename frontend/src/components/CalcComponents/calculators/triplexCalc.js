@@ -54,8 +54,6 @@ const Calculate = (data, selfcost) => {
                         const thickness = Number(material.match(/(\d+(?:[.,]\d+)?)\s*мм/i)[1])
                         if(thickness < 4) useThinMaterial = true
                     }
-                    console.log(useThinMaterial)
-                    console.log(lesser)
                     if(useThinMaterial || lesser < 1050){
                         constructTape(S_tape, 'Пленка EVA Прозрачная 0,38 мм')
                         break

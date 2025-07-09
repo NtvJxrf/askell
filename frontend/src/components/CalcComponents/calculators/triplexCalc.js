@@ -57,7 +57,7 @@ const Calculate = (data, selfcost) => {
                     console.log(useThinMaterial)
                     console.log(lesser)
                     if(useThinMaterial || lesser < 1050){
-                        constructTape(S_tape, 'Пленка EVA Прозрачная 0,38мм')
+                        constructTape(S_tape, 'Пленка EVA Прозрачная 0,38 мм')
                         break
                     }
                     constructTape(S_tape, 'Пленка EVA Прозрачная 0,76 мм')
@@ -70,21 +70,21 @@ const Calculate = (data, selfcost) => {
 
             case 'Пленка EVA №25 Хамелеон Гладкий 1.4':
                 constructTape(S_tape, 'Пленка EVA №25 Хамелеон Гладкий 1.4')
-                constructTape(S_tape * 2, 'Пленка EVA Прозрачная 0,38мм')
+                constructTape(S_tape * 2, 'Пленка EVA Прозрачная 0,38 мм')
                 break;
             
-            case 'Пленка EVA Прозрачная 0,38мм':
-                constructTape(S_tape, 'Пленка EVA Прозрачная 0,38мм')
+            case 'Пленка EVA Прозрачная 0,38 мм':
+                constructTape(S_tape, 'Пленка EVA Прозрачная 0,38 мм')
                 break;
 
-            case 'Пленка EVA Прозрачная 0,76мм':
+            case 'Пленка EVA Прозрачная 0,76 мм':
                 constructTape(S_tape, 'Пленка EVA Прозрачная 0,76 мм')
                 break;
 
             default:
                 console.log(tape)
                 constructTape(S_tape, tape)
-                constructTape(S_tape, 'Пленка EVA Прозрачная 0,38мм')
+                constructTape(S_tape, 'Пленка EVA Прозрачная 0,38 мм')
                 break;
         }
 

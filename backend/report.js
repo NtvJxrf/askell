@@ -181,21 +181,28 @@ function extractMonthKey(isoDateString) {
 }
 
 async function fetchAllRows(urlBase) {
-  const allRows = [];
-  let offset = 0;
   const limit = 100;
+  const firstUrl = `${urlBase}&limit=${limit}&offset=0`;
+  const firstResponse = await Client.sklad(firstUrl);
 
-  while (true) {
+  if (!firstResponse.rows || firstResponse.rows.length === 0) {
+    return [];
+  }
+
+  const allRows = [...firstResponse.rows];
+  const totalSize = firstResponse.meta?.size || allRows.length;
+
+  const requests = [];
+  for (let offset = limit; offset < totalSize; offset += limit) {
     const url = `${urlBase}&limit=${limit}&offset=${offset}`;
-    const response = await Client.sklad(url);
+    requests.push(Client.sklad(url));
+  }
 
-    if (!response.rows || response.rows.length === 0) break;
-
-    allRows.push(...response.rows);
-
-    if (response.rows.length < limit) break;
-
-    offset += limit;
+  const responses = await Promise.all(requests);
+  for (const res of responses) {
+    if (res.rows) {
+      allRows.push(...res.rows);
+    }
   }
 
   return allRows;

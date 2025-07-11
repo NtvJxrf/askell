@@ -14,18 +14,16 @@ const TriplexForm = () => {
         .filter(el => filterWrods.some(word => el.toLowerCase().includes(word)))
         .sort();
     }, [materials]);
+  
 
   const triplexFormFields = useMemo(() => {
-    const updatedFields = [...formConfigs.triplexForm.materialFields];
-    updatedFields[1] = { ...updatedFields[1], options: materialsArray };
-    updatedFields[5] = { ...updatedFields[5], options: materialsArray };
-    return updatedFields;
+    return formConfigs.triplexForm.materialFields.map((field) => {
+      if (field?.name?.startsWith("material")) return { ...field, options: materialsArray }
+      return field;
+    });
   }, [materialsArray]);
 
-  const triplexCommonFields = useMemo(() => {
-    const updatedFields = [...formConfigs.triplexForm.commonFields];
-    return updatedFields;
-  }, []);
+  const triplexCommonFields = formConfigs.triplexForm.commonFields
 
   const [additionalMaterials, setAdditionalMaterials] = useState([]);
   const materialCount = useRef(3);

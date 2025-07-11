@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from "react";
-import { Form, InputNumber, Select, Checkbox, Space, message, Divider, Row, Col } from "antd";
+import { Form, Space, message } from "antd";
 import { useDispatch, useSelector } from "react-redux";
 import SubmitButton from "../buttons/SubmitButton.jsx";
 import ResetButton from "../buttons/ResetButton.jsx";
@@ -56,10 +56,10 @@ const DynamicForm = ({type}) => {
         form.resetFields()
         form.setFieldsValue(formData)
     }, [formData, form])
+    console.log('render dynamic form')
     return (
         <>
             {contextHolder}
-            {console.log('render dynamic form')}
             <Form
                 name={type}
                 form={form}

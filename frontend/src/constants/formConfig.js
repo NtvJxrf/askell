@@ -142,8 +142,21 @@ const formConfigs = {
           label: 'Газ',
           type: 'select',
           options: [],
+        },
+        {
+          name: 'rounding',
+          label: 'Округление',
+          type: 'select',
+          options: ['Округление до 0.5', 'Умножить на 2'],
           rules: [{ required: true, message: 'Fill this field' }]
-        }
+        },
+        {
+          name: 'customertype',
+          label: 'Тип клиента',
+          type: 'select',
+          options: ['Менее 200 тыс.', 'Более 200 тыс.', 'Более 400 тыс.', 'Более 800 тыс.'],
+          rules: [{ required: true, message: 'Fill this field' }]
+        },
       ],
       materialFields: [
         [
@@ -154,7 +167,7 @@ const formConfigs = {
             options: [],
             rules: [{ required: true, message: 'Fill this field' }]
           },
-          { name: 'tempered', label: 'Закаленное', type: 'checkbox' }
+          { name: 'tempered1', label: 'Закаленное', type: 'checkbox' }
         ],
         [
           {
@@ -173,7 +186,7 @@ const formConfigs = {
             options: [],
             rules: [{ required: true, message: 'Fill this field' }]
           },
-          { name: 'tempered', label: 'Закаленное', type: 'checkbox' }
+          { name: 'tempered2', label: 'Закаленное', type: 'checkbox' }
         ],
         [
           {
@@ -190,7 +203,7 @@ const formConfigs = {
             type: 'select',
             options: [],
           },
-          { name: 'tempered', label: 'Закаленное', type: 'checkbox' }
+          { name: 'tempered3', label: 'Закаленное', type: 'checkbox' }
         ]
       ]
     },

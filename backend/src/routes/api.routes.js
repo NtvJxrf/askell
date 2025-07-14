@@ -5,6 +5,7 @@ import PricesAndCoefsRouter from './api/pricesAndCoefs.routes.js'
 import authMiddleware from "../middlewares/auth.middleware.js"
 import UserController from "../controllers/user.controller.js"
 import authorizeRoles from '../middlewares/authorizeRoles.js'
+import ReportsRouter from './api/reports.routes.js'
 const router = express.Router()
 
 //api routes
@@ -25,6 +26,7 @@ router
 router.use('/user', authMiddleware, authorizeRoles(['none']), UserRouter)
 router.use('/sklad', authMiddleware, SkladRouter)
 router.use('/pricesAndCoefs', authMiddleware, PricesAndCoefsRouter)
+router.use('/reports', authMiddleware, ReportsRouter)
 router.use((req, res) => {
     res.status(404).json({ message: "Not Found" })
 })

@@ -13,6 +13,8 @@ import ProtectedRoute from "../components/ProtectedRoute.jsx";
 import AdminPage from "../pages/AdminPage.jsx";
 import NotFoundPage from "../pages/NotFoundPage.jsx";
 import ActivatePage from "../pages/ActivatePage.jsx";
+import ReportsPage from '../pages/ReportsPage.jsx'
+
 const MainLayout = () => {
     const dispatch = useDispatch();
 
@@ -37,6 +39,7 @@ const MainLayout = () => {
                 <Route path="/aovam" element={<Aovam />} />
                 <Route path="/settings" element={<Settings />} />
                 <Route path="/activate" element={<ActivatePage />} />
+                <Route path="/reports" element={<ReportsPage />} />
                 {/* fallback */}
                 <Route path="*" element={<NotFoundPage />} />
             </Routes>

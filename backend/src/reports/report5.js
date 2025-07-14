@@ -1,18 +1,22 @@
-import Client from "../backend/src/utils/got.js";
+import Client from "../utils/got.js";
 import dotenv from 'dotenv';
 dotenv.config();
 
 import * as XLSX from 'xlsx';
 
 export default async function createReport(filters) {
-  const string='флипчарт'
-  const urlBase = `https://api.moysklad.ru/api/remap/1.2/entity/processing?filter=moment>2025-07-01 00:00:00&moment<2025-07-31 00:00:00&expand=products.assortment`
+    const { startDate, endDate, string } = filters
+    const urlBase = `https://api.moysklad.ru/api/remap/1.2/entity/processing?filter=moment>${startDate} 00:00:00&moment<${endDate} 00:00:00&expand=products.assortment`
 
-  const rows = await fetchAllRows(urlBase);
-  const reportData = extractBasicInfo(rows, string);
-  exportToExcel(reportData);
+    const rows = await fetchAllRows(urlBase);
+    const reportData = extractBasicInfo(rows, string);
+    const result = exportToExcel(reportData);
+    const buffer = XLSX.write(result, {
+        bookType: 'xlsx',
+        type: 'buffer',
+        });
+    return buffer
 }
-createReport()
 function extractBasicInfo(rows, string) {
   const data = [];
 
@@ -35,7 +39,7 @@ function exportToExcel(data, filename = 'отчет.xlsx') {
   ];
 
   const worksheet = XLSX.utils.aoa_to_sheet(worksheetData);
-  worksheet['!autofilter'] = { ref: `A1:E1` };
+  worksheet['!autofilter'] = { ref: `A1:D1` };
   worksheet['!cols'] = [
     { wch: 20 },
     { wch: 100 },
@@ -45,7 +49,7 @@ function exportToExcel(data, filename = 'отчет.xlsx') {
   const workbook = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(workbook, worksheet, 'Отчет');
 
-  XLSX.writeFile(workbook, filename);
+  return workbook
 }
 
 async function fetchAllRows(urlBase) {

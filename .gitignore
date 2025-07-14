@@ -10,7 +10,6 @@ todo
 # Build
 frontend/build/
 backend/dist/
-reports
 # Docker
 *.pid
 *.sock

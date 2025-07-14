@@ -19,7 +19,7 @@ const Calculate = (data, selfcost, triplexArray) => {
     const S = (height * width) / 1000000
     const P = 2 * (height + width) / 1000
     let weight = 0
-    let name = `Стеклопакетик`
+    let name = `Справедливый по цене стеклопакет`
     let allThickness = 0
     let allPlaneThickness = 0
     const result = {

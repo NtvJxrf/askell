@@ -454,7 +454,7 @@ const makeProcessingPlanGlass = async (data, name, order, processingprocess, pro
     return response
 }
 const makeProduct = async (data, name, isPF, createdEntitys) => {
-    const { height, width, polishing, drills, zenk, cutsv1, cutsv2, cutsv3, tempered, color, print } = data
+    const { height, width, polishing, drills, zenk, cutsv1, cutsv2, cutsv3, tempered, color, print } = data.initialData
     const product = await Client.sklad('https://api.moysklad.ru/api/remap/1.2/entity/product', 'post', {
         name: `${isPF ? 'ПФ' : ''} ${name} (${height}х${width}${polishing ? ', Полировка' : ''}${tempered ? ', Закаленное' : ''}${cutsv1 ? `, Вырезы 1 кат.: ${cutsv1}` : ''}${cutsv2 ? `, Вырезы 2 кат.: ${cutsv2}` : ''}${cutsv3 ? `, Вырезы 3 кат.: ${cutsv3}` : ''}${drills ? `, Сверление: ${drills}` : ''}${zenk ? `, Зенкование: ${zenk}` : ''}${print ? ', Печать' : ''}${color ? `, ${color}` : ''})`,
         attributes: generateProductAttributes(data.initialData)

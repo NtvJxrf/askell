@@ -6,7 +6,7 @@ import renderField from "./renderField.jsx";
 import { addTriplexForGlasspacket, removeTriplexForGlasspacket } from '../../../slices/positionsSlice.js';
 import TriplexFormModal from "../TriplexFormModal.jsx";
 
-const filterWords = ["стекло", "зеркало"];
+const filterWords = ["стекло"];
 const gasArray = ["Аргон", "Криптон", "Воздух"];
 const planeArray = ["Рамка 1", "Рамка 2", "Рамка 3"];
 

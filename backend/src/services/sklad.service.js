@@ -148,26 +148,9 @@ export default class SkladService {
             const updateCustomerorderRequest = await Client.sklad(`https://api.moysklad.ru/api/remap/1.2/entity/customerorder/${data.order.id}`, "put", params);
         }catch(error){
             logger.error(error, `Ошибка во время добавления позиций в заказ ${data.order.name}`)
-            createdProducts && await Client.sklad(`https://api.moysklad.ru/api/remap/1.2/entity/product/delete`, "post", createdProducts.map(el => {return {meta: el.meta}}));
+            createdProducts && Client.sklad(`https://api.moysklad.ru/api/remap/1.2/entity/product/delete`, "post", createdProducts.map(el => {return {meta: el.meta}}));
         }finally{
-            if(deletedPositions.length > 0){
-                const records = await Details.findAll({
-                    where: {
-                        productId: {
-                            [Op.in]: deletedPositions.map(el => el.id)
-                        }
-                    }
-                })
-                const recordsToDelete = deletedPositions.filter(el => records.find(rec => rec.productId == el.id))
-                await Details.destroy({
-                    where: {
-                        productId: {
-                            [Op.in]: recordsToDelete.map(el => el.id)
-                        }
-                    }
-                });
-                await Client.sklad(`https://api.moysklad.ru/api/remap/1.2/entity/product/delete`, "post", recordsToDelete.map(el => {return {meta: el.meta}}));
-            }
+            deleteEntitys(deletedPositions)
         }
     }
 
@@ -224,13 +207,10 @@ const triplex = async (data, order, position, createdEntitys) => {
         pfs.push(product)
     }
 
-    
-
     const stagesViz = []
         data.initialData.color && stagesSelk.push('УФ (УФ печать)')
         stagesViz.push('5. ТРПЛ')
         stagesViz.push('ОТК')
-
 
     const processingprocessViz = await makeprocessingprocess(stagesViz)
     const materialsViz = pfs.map(pf => {
@@ -475,7 +455,7 @@ const makeProcessingPlanGlass = async (data, name, order, processingprocess, pro
 }
 const makeProduct = async (data, name, isPF, createdEntitys) => {
     const product = await Client.sklad('https://api.moysklad.ru/api/remap/1.2/entity/product', 'post', {
-        name: `${isPF ? 'ПФ' : ''} ${name}`,
+        name: `${isPF ? 'ПФ' : ''} ${name} (${data.initialData.height} * ${data.initialData.width})`,
         attributes: generateProductAttributes(data.initialData)
     })
     createdEntitys.product.push(product)
@@ -547,7 +527,6 @@ const generateProductionTaskAttributes = (order, viz, smd) => {
         
     return result
 }
-
 const makeProcessingPlanVizSmd = async (data, name, order, processingprocess, product, color, material, createdEntitys) => {
     const response = await Client.sklad('https://api.moysklad.ru/api/remap/1.2/entity/processingplan', 'post', {
         name: `${order.name}, ${name}`,
@@ -562,6 +541,26 @@ const makeProcessingPlanVizSmd = async (data, name, order, processingprocess, pr
     })
     createdEntitys.plan.push(response)
     return response
+}
+const deleteEntitys = async (deletedPositions) => {
+    if(deletedPositions.length > 0){
+        const records = await Details.findAll({
+            where: {
+                productId: {
+                    [Op.in]: deletedPositions.map(el => el.id)
+                }
+            }
+        })
+        const recordsToDelete = deletedPositions.filter(el => records.find(rec => rec.productId == el.id))
+        await Details.destroy({
+            where: {
+                productId: {
+                    [Op.in]: recordsToDelete.map(el => el.id)
+                }
+            }
+        });
+        await Client.sklad(`https://api.moysklad.ru/api/remap/1.2/entity/product/delete`, "post", recordsToDelete.map(el => {return {meta: el.meta}}));
+    }
 }
 async function startWorker() {
     const conn = await amqp.connect('amqp://admin:%5EjZG1L%2Fi@localhost');
@@ -586,5 +585,4 @@ async function startWorker() {
         }
     }, { noAck: false });
 }
-
 startWorker()

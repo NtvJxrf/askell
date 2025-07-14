@@ -3,12 +3,12 @@ import { constructWorks } from './triplexCalc.js'
 const Calculate = (data, selfcost, triplexArray) => {
     console.log(data)
     console.log(triplexArray)
-    const { height, width, gas, 
+    const {
         material1, material2, material3, 
         tempered1, tempered2, tempered3,
         polishing1, polishing2, polishing3,
         blunting1, blunting2, blunting3,
-        plane1, plane2, customertype, rounding } = data
+        height, width, gas, plane1, plane2, customertype, rounding } = data
     const materials = [
                     [material1, tempered1, polishing1, blunting1],
                     [material2, tempered2, polishing2, blunting2],
@@ -93,12 +93,12 @@ const Calculate = (data, selfcost, triplexArray) => {
     }
     console.log(result)
     return {
-        key: Date.now(),
+        key: crypto.randomUUID(),
         name,
         price,
         added: false,
         quantity: 1,
-        details: { initialData: data, selfcost },
+        initialData: data,
         result
     }
 }

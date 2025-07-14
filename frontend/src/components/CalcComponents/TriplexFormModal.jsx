@@ -1,8 +1,6 @@
-import React, { useRef } from 'react';
+import React from 'react';
 import { Modal, Button, Typography, Form } from 'antd';
 import TriplexForm from './Forms/TriplexForm.jsx'
-
-const { Title } = Typography;
 
 const TriplexFormModal = ({ open, onCancel, onSubmit }) => {
   const [form] = Form.useForm();
@@ -12,7 +10,6 @@ const TriplexFormModal = ({ open, onCancel, onSubmit }) => {
     const materials = Object.entries(values).filter(([key, value]) => key.startsWith('material') && value !== undefined).map(([_, value]) => value);
     let name = `Триплекс, ${materials.join(' + ')}, (${height}х${width}${polishing ? ', Полировка' : ''}${tempered ? ', Закаленное' : ''}${cutsv1 ? `, Вырезы 1 кат.: ${cutsv1}` : ''}${cutsv2 ? `, Вырезы 2 кат.: ${cutsv2}` : ''}${cutsv3 ? `, Вырезы 3 кат.: ${cutsv3}` : ''}${drills ? `, Сверление: ${drills}` : ''}${zenk ? `, Зенкование: ${zenk}` : ''})`
     const result = {name, values}
-    console.log(result)
     onSubmit(result);
     form.resetFields();
   };

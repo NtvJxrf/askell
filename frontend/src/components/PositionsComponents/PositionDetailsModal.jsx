@@ -113,10 +113,12 @@ const renderLabeledDataBlock = (title, data, dictionary = {}) => {
             {Object.entries(data).map(([key, value]) => {
                 if(ignorLabels.includes(key)) return
                 let label = dictionary[key] || key;
-                if (/^material\d+$/.test(key)) {
-                    label = `Материал ${key.replace('material', '')}`;
-                } else if (/^tape\d+$/.test(key)) {
-                    label = `Плёнка ${key.replace('tape', '')}`;
+                for (const { regex, label: prefix } of labelPrefixes) {
+                    const match = key.match(regex);
+                    if (match) {
+                        label = `${prefix} ${match[1]}`;
+                        break;
+                    }
                 }
                 const displayValue =
                     typeof value === 'boolean'
@@ -160,8 +162,17 @@ const initialDataLabels = {
     clientType: 'Тип клиента(Для СМД)',
     rounds: 'Скругления',
     drillssmd: 'Сверление СМД',
-    smdType: 'Тип СМД'
+    gas: 'Газ',
 };
+
+const labelPrefixes = [
+  { regex: /^material(\d+)$/, label: 'Материал' },
+  { regex: /^tape(\d+)$/, label: 'Плёнка' },
+  { regex: /^plane(\d+)$/, label: 'Рамка' },
+  { regex: /^tempered(\d+)$/, label: 'Закаленное' },
+  { regex: /^polishing(\d+)$/, label: 'Полировка' },
+  { regex: /^blunting(\d+)$/, label: 'Притупка' }
+];
 
 const otherLabels = {
     P: 'Периметр',

@@ -37,7 +37,8 @@ const DynamicForm = ({type}) => {
     const formData = store.getState().forms[type]
     const selfcost = useSelector(state => state.selfcost.selfcost)
     const onFinish = async (value) => {
-        const position = calcMap[type]({...value}, selfcost)
+        const triplex = store.getState().positions.triplexForGlasspacket
+        const position = calcMap[type]({...value}, selfcost, triplex)
         dispatch(addNewPosition(position))
         messageApi.success('Позиция добавлена')
     }

@@ -167,7 +167,9 @@ const formConfigs = {
             options: [],
             rules: [{ required: true, message: 'Fill this field' }]
           },
-          { name: 'tempered1', label: 'Закаленное', type: 'checkbox' }
+          { name: 'tempered1', label: 'Закаленное', type: 'checkbox' },
+          { name: 'polishing1', label: 'Полировка', type: 'checkbox' },
+          { name: 'blunting1', label: 'Притупка', type: 'checkbox' }
         ],
         [
           {
@@ -186,7 +188,9 @@ const formConfigs = {
             options: [],
             rules: [{ required: true, message: 'Fill this field' }]
           },
-          { name: 'tempered2', label: 'Закаленное', type: 'checkbox' }
+          { name: 'tempered2', label: 'Закаленное', type: 'checkbox' },
+          { name: 'polishing2', label: 'Полировка', type: 'checkbox' },
+          { name: 'blunting2', label: 'Притупка', type: 'checkbox' }
         ],
         [
           {
@@ -203,7 +207,9 @@ const formConfigs = {
             type: 'select',
             options: [],
           },
-          { name: 'tempered3', label: 'Закаленное', type: 'checkbox' }
+          { name: 'tempered3', label: 'Закаленное', type: 'checkbox' },
+          { name: 'polishing3', label: 'Полировка', type: 'checkbox' },
+          { name: 'blunting3', label: 'Притупка', type: 'checkbox' }
         ]
       ]
     },

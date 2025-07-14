@@ -9,7 +9,7 @@ import {
     verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { Button, Table, Space, InputNumber, Modal } from 'antd';
+import { Button, Table, Space, InputNumber } from 'antd';
 import { useDispatch, useSelector } from 'react-redux';
 import { setPositions, setSelectedRowKeys } from '../../slices/positionsSlice';
 import PositionDetailsModal from './PositionDetailsModal.jsx';

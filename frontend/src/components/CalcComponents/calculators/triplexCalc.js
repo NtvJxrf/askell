@@ -130,9 +130,9 @@ const Calculate = (data, selfcost) => {
         weight,
         type: 'Триплекс',
         productType: true,
-        viz: true
+        viz: true,
+        materialsandworks
     }
-    console.log(result)
     return {
             key: crypto.randomUUID(),
             name,
@@ -190,6 +190,9 @@ export const constructWorks = (work, context) => {
             break
         case 'triplexing':
             res(S, `Триплекс ${allThickness} мм`)
+            break
+        case 'blunting':
+            res(P, `Притупка`)
             break
         case 'otk':
             res(S, `ОТК`)

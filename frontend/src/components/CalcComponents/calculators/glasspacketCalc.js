@@ -1,6 +1,19 @@
-const Calculate = (data, selfcost) => {
-    const { height, width, gas, material1, material2, material3, tempered1, tempered2, tempered3, plane1, plane2, customertype, rounding } = data
-    const materials = [[material1, tempered1], [material2, tempered2], [material3, tempered3]]
+import triplexcalulator from './triplexCalc.js'
+import { constructWorks } from './triplexCalc.js'
+const Calculate = (data, selfcost, triplexArray) => {
+    console.log(data)
+    console.log(triplexArray)
+    const { height, width, gas, 
+        material1, material2, material3, 
+        tempered1, tempered2, tempered3,
+        polishing1, polishing2, polishing3,
+        blunting1, blunting2, blunting3,
+        plane1, plane2, customertype, rounding } = data
+    const materials = [
+                    [material1, tempered1, polishing1, blunting1],
+                    [material2, tempered2, polishing2, blunting2],
+                    [material3, tempered3, polishing3, blunting3]
+    ]
     const planes = [plane1, plane2]
 
     const S = (height * width) / 1000000
@@ -15,8 +28,23 @@ const Calculate = (data, selfcost) => {
         expenses: [],
         other: {}
     }
+    const context = { selfcost, result, planes, materials, P, S, allThickness };
     for(const material of materials){
         if(!material[0]) continue
+        if(material[0].toLowerCase().includes('триплекс')){
+            const triplexObject = triplexArray.find(el => el.name == material[0])
+            const triplexcalc = triplexcalulator(triplexObject.values, selfcost)
+            console.log(triplexcalc)
+            result.materials.push({
+                name: triplexcalc.name,
+                value: triplexcalc.result.other.materialsandworks,
+                string: `Себестоимость материалов и работ триплекса`,
+                formula: 'Себестоимость материалов и работ триплекса'
+            });
+            allThickness += triplexcalc.result.other.allThickness
+            weight +=triplexcalc.result.other.weight
+            continue
+        }
         const thickness = Number(material[0].match(/(\d+(?:[.,]\d+)?)\s*мм/i)[1])
         allThickness += thickness
         weight += 2.5 * S * thickness
@@ -27,18 +55,27 @@ const Calculate = (data, selfcost) => {
             string: `${selfcost.materials[material[0]].value} * ${S.toFixed(2)} * ${selfcost.pricesAndCoefs['Коэффициент обрези стекло']}`,
             formula: 'Цена за м² * Площадь * Коэффициент обрези стекло'
         });
+        const context = { selfcost, result, materials, P, S, thickness, allThickness };
+        constructWorks('cutting1', context);
+        constructWorks('cutting2', context);
+        if(material[1]){
+            constructWorks('tempered', context);
+            constructWorks('blunting', context);
+        }
+        !material[1] && material[3] && constructWorks('blunting', context);
+        material[2] && constructWorks('polishing', context);
     }
 
     for(const plane of planes){
         // const thickness = Number(plane.match(/(\d+(?:[.,]\d+)?)\s*мм/i)[1]) // Добавить толщина рамки
         // allThickness += thickness
 
-        result.materials.push({
-            name: plane,
-            value: selfcost.materials[plane].value * P * selfcost.pricesAndCoefs['Коэффициент обрези рамка'],
-            string: `${selfcost.materials[plane].value} * ${P.toFixed(2)} * ${selfcost.pricesAndCoefs['Коэффициент обрези рамка']}`,
-            formula: 'Цена за м² * Периметр * Коэффициент обрези рамка'
-        });
+        // result.materials.push({
+        //     name: plane,
+        //     value: selfcost.materials[plane].value * P * selfcost.pricesAndCoefs['Коэффициент обрези рамка'],
+        //     string: `${selfcost.materials[plane].value} * ${P.toFixed(2)} * ${selfcost.pricesAndCoefs['Коэффициент обрези рамка']}`,
+        //     formula: 'Цена за м² * Периметр * Коэффициент обрези рамка'
+        // });
     }
     gas && result.materials.push({
             name: gas,
@@ -46,18 +83,15 @@ const Calculate = (data, selfcost) => {
             string: `${selfcost.materials[gas].value} * ${S} * ${allPlaneThickness}`,
             formula: 'Цена за м² * Площадь * Толщина всех рамок'
         });
-    const context = { selfcost, result, planes, materials, P, S, allThickness };
-    constructMaterials(context)
+    // constructMaterials(context)
     let price = 12345
     result.other = {
         S,
-        S_tape,
-        trim,
-        stanok,
         productType: true,
         type: 'Стеклопакет',
         viz: false
     }
+    console.log(result)
     return {
         key: Date.now(),
         name,
@@ -69,7 +103,7 @@ const Calculate = (data, selfcost) => {
     }
 }
 
-function constructMaterials(){
+function constructMaterials(context){
     const { selfcost, result, planes, materials, P, S, allThickness} = context;
     result.materials.push({
         name: 'Монтажный уголок',
@@ -97,9 +131,9 @@ function constructMaterials(){
     });
     result.materials.push({
         name: 'Термоэтикетка',
-        value: selfcost.materials['Термоэтикетка'].value,
-        string: `${selfcost.materials['Термоэтикетка'].value}`,
-        formula: 'Цена термоэтикетки'
+        value: selfcost.materials['Термоэтикетка'].value * 2,
+        string: `${selfcost.materials['Термоэтикетка'].value} * 2`,
+        formula: 'Цена термоэтикетки 2шт'
     });
 }
 export default Calculate

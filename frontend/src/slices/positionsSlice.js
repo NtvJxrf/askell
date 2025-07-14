@@ -1,5 +1,4 @@
 import { createSlice } from '@reduxjs/toolkit';
-import { act } from 'react';
 
 const positionsSlice = createSlice({
   name: 'positions',
@@ -7,7 +6,7 @@ const positionsSlice = createSlice({
     positions: [],
     order: null,
     selectedPosition: null,
-    triplexForGlasspacket: [{ name: 'asd', }]
+    triplexForGlasspacket: []
   },
   reducers: {
     addOrderPositions: (state, action) => {
@@ -21,10 +20,10 @@ const positionsSlice = createSlice({
     setSelectedRowKeys: (state, action) => { state.selectedPosition = action.payload},
     addTriplexForGlasspacket: (state, action) => { state.triplexForGlasspacket.push(action.payload)},
     removeTriplexForGlasspacket: (state, action) => {
-
+      state.triplexForGlasspacket = state.triplexForGlasspacket.filter(el => el.name != action.payload.name)
     },
   }
 })
 
-export const { addNewPosition, addOrderPositions, setPositions, setOrder, setSelectedRowKeys, addNewPositions, setTriplexForGlasspacket } = positionsSlice.actions;
+export const { addNewPosition, addOrderPositions, setPositions, setOrder, setSelectedRowKeys, addNewPositions, addTriplexForGlasspacket, removeTriplexForGlasspacket } = positionsSlice.actions;
 export default positionsSlice.reducer;

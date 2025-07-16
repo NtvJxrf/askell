@@ -11,17 +11,16 @@ const updates = {}
 const getMaterials = async () => {
     let materials = {}
     const promises = []
-    promises.push(Client.sklad("https://api.moysklad.ru/api/remap/1.2/entity/product?filter=pathName=0 Закупки/0.02.03 Стекло/Материал от поставщиков, Стекло/Матированное стекло (Matelux);pathName=0 Закупки/0.02.03 Стекло/Материал от поставщиков, Стекло/Осветленное стекло;pathName=0 Закупки/0.02.03 Стекло/Материал от поставщиков, Стекло/Простое стекло;pathName=0 Закупки/0.02.03 Стекло/Материал от поставщиков, Стекло/Рифленое стекло;pathName=0 Закупки/0.02.03 Стекло/Материал от поставщиков, Стекло/Стекло Stopsol и Зеркало;pathName=0 Закупки/0.02.03 Стекло/Материал от поставщиков, Стекло/Цветное стекло"))
-    promises.push(Client.sklad("https://api.moysklad.ru/api/remap/1.2/entity/product?filter=pathName=0 Закупки/0.02.04 Пленка EVA/Пленка EVA прозрачная;pathName=0 Закупки/0.02.04 Пленка EVA/Плёнки декоративные и цветные"))
-    promises.push(Client.sklad("https://api.moysklad.ru/api/remap/1.2/entity/product?filter=pathName=0 Закупки/0.02.02 Керамика/LAMINAM;pathName=0 Закупки/0.02.02 Керамика/ДЕГОН Стандарт"))
-    promises.push(Client.sklad("https://api.moysklad.ru/api/remap/1.2/entity/product?filter=pathName=0 Закупки/Материалы для стеклопакетов"))
+    promises.push(fetchAllRows("https://api.moysklad.ru/api/remap/1.2/entity/product?filter=pathName=0 Закупки/0.02.03 Стекло/Материал от поставщиков, Стекло/Матированное стекло (Matelux);pathName=0 Закупки/0.02.03 Стекло/Материал от поставщиков, Стекло/Осветленное стекло;pathName=0 Закупки/0.02.03 Стекло/Материал от поставщиков, Стекло/Простое стекло;pathName=0 Закупки/0.02.03 Стекло/Материал от поставщиков, Стекло/Рифленое стекло;pathName=0 Закупки/0.02.03 Стекло/Материал от поставщиков, Стекло/Стекло Stopsol и Зеркало;pathName=0 Закупки/0.02.03 Стекло/Материал от поставщиков, Стекло/Цветное стекло&expand=salePrices.currency"))
+    promises.push(fetchAllRows("https://api.moysklad.ru/api/remap/1.2/entity/product?filter=pathName=0 Закупки/0.02.04 Пленка EVA/Пленка EVA прозрачная;pathName=0 Закупки/0.02.04 Пленка EVA/Плёнки декоративные и цветные&expand=salePrices.currency"))
+    promises.push(fetchAllRows("https://api.moysklad.ru/api/remap/1.2/entity/product?filter=pathName=0 Закупки/0.02.02 Керамика/LAMINAM;pathName=0 Закупки/0.02.02 Керамика/ДЕГОН Стандарт&expand=salePrices.currency"))
+    promises.push(fetchAllRows("https://api.moysklad.ru/api/remap/1.2/entity/product?filter=pathName=0 Закупки/Материалы для стеклопакетов&expand=salePrices.currency"))
     const results = await Promise.all(promises)
-
     for(const result of results){
-        for(const material of result.rows){
+        for(const material of result){
             materials[material.name] = {
                 meta: material.meta,
-                value: material.salePrices[0].value / 100
+                value: convertPrice(material.salePrices[0])
             }
         }
     }
@@ -29,11 +28,11 @@ const getMaterials = async () => {
     updates['Материалы'] = Date.now()
 }
 const getPackagingMaterials = async () => {
-    const response = await Client.sklad("https://api.moysklad.ru/api/remap/1.2/entity/product?filter=pathName=0 Закупки/0.02.09 Упаковка")
-    SkladService.selfcost.packagingMaterials = response.rows.reduce(( acc, curr ) => {
+    const response = await fetchAllRows("https://api.moysklad.ru/api/remap/1.2/entity/product?filter=pathName=0 Закупки/0.02.09 Упаковка&expand=salePrices.currency")
+    SkladService.selfcost.packagingMaterials = response.reduce(( acc, curr ) => {
         acc[curr.name] = {
             meta: curr.meta,
-            value: curr.salePrices[0].value / 100
+            value: convertPrice(curr.salePrices[0])
         }
         return acc
     }, {})
@@ -64,11 +63,11 @@ const getUnders = async () => {
     updates['Подстолья'] = Date.now()
 }
 const getColors = async () => {
-    const response = await Client.sklad("https://api.moysklad.ru/api/remap/1.2/entity/product?filter=pathName=ТЕСТ/Цвета RAL (Только для продажи)")
-    SkladService.selfcost.colors = response.rows.reduce(( acc, curr ) => {
+    const response = await fetchAllRows("https://api.moysklad.ru/api/remap/1.2/entity/product?filter=pathName=ТЕСТ/Цвета RAL (Только для продажи)&expand=salePrices.currency")
+    SkladService.selfcost.colors = response.reduce(( acc, curr ) => {
         acc[curr.name] = {
             meta: curr.meta,
-            value: curr.salePrices[0].value / 100
+            value: convertPrice(curr.salePrices[0])
         }
         return acc
     }, {})
@@ -128,22 +127,6 @@ export const getProcessingPlansSmd = async () => {
     dictionary.smdPlans = plans
     updates['Техкарты для смд'] = Date.now()
 }
-const getCurrency = async () => {
-    const response = await axios.get('https://www.cbr.ru/scripts/XML_daily.asp');
-    const xml = response.data;
-    const data = await parseStringPromise(xml, { explicitArray: false });
-    const valutes = Object.values(data.ValCurs.Valute);
-    const USD = valutes.find(v => v.CharCode === 'USD');
-    const EUR = valutes.find(v => v.CharCode === 'EUR');
-    const USDrate = parseFloat(USD.Value.replace(',', '.'));
-    const EURrate = parseFloat(EUR.Value.replace(',', '.'));
-    const currency = {
-        usd: USDrate,
-        eur: EURrate
-    }
-    SkladService.selfcost.currency = currency
-    updates['Валюта'] = Date.now()
-};
 let lastUpdate = 0
 export const initSkladAdditions = async () => {
     if (lastUpdate !== 0 && Date.now() - lastUpdate < 300_000) throw new ApiError(404, 'Only one update per 5 minutes')
@@ -158,12 +141,13 @@ export const initSkladAdditions = async () => {
     promises.push(getColors())
     promises.push(getPicesAndCoefs())
     promises.push(getPackagingMaterials())
-    promises.push(getCurrency())
     await Promise.allSettled(promises)
     SkladService.selfcost.updates = updates
     console.log('all dependencies loaded')
 }
-
+const convertPrice = (price) => {
+    return +(price.value / 100 * price.currency.rate).toFixed(2)
+}
 async function fetchAllRows(urlBase) {
   const limit = 100;
   const firstUrl = `${urlBase}&limit=${limit}&offset=0`;

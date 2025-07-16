@@ -35,7 +35,7 @@ export default class pricesAndCoefsService {
   }
 
   static async create(data) {
-    const { type, name, value, description, ratePerHour, costOfWork } = data.body;
+    const { type, name, value, salary, description, ratePerHour, costOfWork } = data.body;
     const model = this.getModelByType(type);
 
     const exists = await model.findOne({ where: { name } });
@@ -49,6 +49,7 @@ export default class pricesAndCoefsService {
     if (type === 'work_prices') {
         createData.ratePerHour = ratePerHour
         createData.costOfWork = costOfWork
+        createData.salary = salary
     } else
         createData.value = value
 
@@ -60,7 +61,7 @@ export default class pricesAndCoefsService {
 
 
   static async update(data) {
-    const { type, name, value, description, ratePerHour, costOfWork } = data.body;
+    const { type, name, value, description, ratePerHour, costOfWork, salary } = data.body;
     const model = this.getModelByType(type);
 
     const record = await model.findOne({ where: { name } });
@@ -71,8 +72,9 @@ export default class pricesAndCoefsService {
         description,
     };
     if (type === 'work_prices') {
-        updateData.ratePerHour = ratePerHour;
-        updateData.costOfWork = costOfWork;
+        updateData.ratePerHour = ratePerHour
+        updateData.costOfWork = costOfWork
+        updateData.salary = salary
     } else
         updateData.value = value
 
@@ -97,15 +99,16 @@ export default class pricesAndCoefsService {
   static async bulk(req) {
     const data = req.body
     for(const el of data){
-      const { type, name, value, description, ratePerHour, costOfWork } = el;
+      const { type, name, value, description, ratePerHour, costOfWork, salary } = el;
       const model = this.getModelByType(typeMap[type])
       let updateData = {
         name,
         description,
       };
       if (el.type === 'Работа') {
-        updateData.ratePerHour = ratePerHour;
-        updateData.costOfWork = costOfWork;
+        updateData.ratePerHour = ratePerHour
+        updateData.costOfWork = costOfWork
+        updateData.salary = salary
       } else
         updateData.value = value
 

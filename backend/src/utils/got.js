@@ -24,7 +24,7 @@ export default class Client {
             if (response.statusCode >= 200 && response.statusCode < 300) 
                 return JSON.parse(response.body)
             else 
-                throw new ApiError(response.statusCode, `Ошибка во время запроса к ${service}, ${response.body}`)
+                throw new ApiError(response.statusCode, `Ошибка во время запроса к ${url}, ${response.body}`)
         } finally {
             moyskladParralelRequestCount--;
         }

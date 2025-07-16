@@ -6,9 +6,9 @@ import renderField from "./renderField.jsx";
 import { addTriplexForGlasspacket, removeTriplexForGlasspacket } from '../../../slices/positionsSlice.js';
 import TriplexFormModal from "../TriplexFormModal.jsx";
 
+const filterWordsGlass = ["стекло"];
 const filterWords = ["стекло"];
 const gasArray = ["Аргон", "Криптон", "Воздух"];
-const planeArray = ["Рамка 1", "Рамка 2", "Рамка 3"];
 
 const GlasspacketForm = () => {
   const materials = useSelector(state => state.selfcost.selfcost?.materials) || {}
@@ -18,7 +18,14 @@ const GlasspacketForm = () => {
 
   const materialsArray = useMemo(() => {
     return Object.keys(materials)
-      .filter(el => filterWords.some(word => el.toLowerCase().includes(word)))
+      .filter(el => el.toLowerCase().includes('стекло'))
+      .concat(triplexForGlasspacket.map(el => el.name))
+      .sort();
+  }, [materials, triplexForGlasspacket]);
+
+  const planeArray = useMemo(() => {
+    return Object.keys(materials)
+      .filter(el => el.toLowerCase().includes('рамка'))
       .concat(triplexForGlasspacket.map(el => el.name))
       .sort();
   }, [materials, triplexForGlasspacket]);

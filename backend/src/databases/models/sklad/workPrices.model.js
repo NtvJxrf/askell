@@ -22,6 +22,10 @@ const WorkPrices = sequelize.define('work_prices', {
     type: DataTypes.FLOAT,
     allowNull: false,
   },
+  salary: {
+    type: DataTypes.FLOAT,
+    allowNull: false,
+  },
   description: {
     type: DataTypes.STRING,
     allowNull: true,

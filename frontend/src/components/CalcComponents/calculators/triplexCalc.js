@@ -6,7 +6,7 @@ const Calculate = (data, selfcost) => {
     const materials = Object.entries(data).filter(([key, value]) => key.startsWith('material') && value !== undefined).map(([_, value]) => value);
     addTape && tapes.push(addTape)
     const works = { polishing, drills, zenk, cutsv1, cutsv2, print }
-    let name = `Триплекс, ${materials.join(' + ')}, (${height}х${width}${polishing ? ', Полировка' : ''}${tempered ? ', Закаленное' : ''}${cutsv1 ? `, Вырезы 1 кат.: ${cutsv1}` : ''}${cutsv2 ? `, Вырезы 2 кат.: ${cutsv2}` : ''}${cutsv3 ? `, Вырезы 3 кат.: ${cutsv3}` : ''}${drills ? `, Сверление: ${drills}` : ''}${zenk ? `, Зенкование: ${zenk}` : ''})`
+    let name = `Триплекс, ${materials.join(' + ')}, (${height}х${width}${polishing ? ', Полировка' : ''}${tempered ? ', Закаленное' : ''}${cutsv1 ? `, Вырезы 1 кат.: ${cutsv1}` : ''}${cutsv2 ? `, Вырезы 2 кат.: ${cutsv2}` : ''}${cutsv3 ? `, Вырезы 3 кат.: ${cutsv3}` : ''}${drills ? `, Сверление: ${drills}` : ''}${zenk ? `, Зенкование: ${zenk}` : ''}${print ? ', Печать' : ''})`
     let S = (height * width) / 1000000
     if(S < 0.5){
         switch (rounding){
@@ -145,13 +145,14 @@ const Calculate = (data, selfcost) => {
 }
 
 export const constructWorks = (work, context) => {
-    const { works, selfcost, result, materials, P, stanok, thickness, S, allThickness } = context;
+    const { works, selfcost, result, materials, P, stanok, thickness, S, allThickness, planes } = context;
     const res = (quantity, name, tableName) => {
+        console.log(name)
         result.works.push({
             name,
-            value: (quantity * selfcost.pricesAndCoefs[tableName || name].costOfWork) + (selfcost.pricesAndCoefs['Средний оклад по селькоровской'] / selfcost.pricesAndCoefs['Среднее количество рабочих часов в месяц'] * quantity / selfcost.pricesAndCoefs[tableName || name].ratePerHour),
-            string: `(${quantity} * ${selfcost.pricesAndCoefs[tableName || name].costOfWork}) + (${selfcost.pricesAndCoefs['Средний оклад по селькоровской']} / ${selfcost.pricesAndCoefs['Среднее количество рабочих часов в месяц']} * ${quantity} / ${selfcost.pricesAndCoefs[tableName ||name].ratePerHour})`,
-            formula: `(Количество * стоимость работы) + (Средний оклад по селькоровской / Среднее количество рабочих часов в месяц * Количество / Норма в час)`
+            value: (quantity * selfcost.pricesAndCoefs[tableName || name].costOfWork) + (selfcost.pricesAndCoefs[tableName || name].salary / selfcost.pricesAndCoefs['Среднее количество рабочих часов в месяц'] * quantity / selfcost.pricesAndCoefs[tableName || name].ratePerHour),
+            string: `(${quantity} * ${selfcost.pricesAndCoefs[tableName || name].costOfWork}) + (${selfcost.pricesAndCoefs[tableName || name].salary} / ${selfcost.pricesAndCoefs['Среднее количество рабочих часов в месяц']} * ${quantity} / ${selfcost.pricesAndCoefs[tableName ||name].ratePerHour})`,
+            formula: `(Количество * Сделка + (Оклад / Среднее количество рабочих часов в месяцe * Количество / Норма в час)`
         })
     }
     switch (work) {
@@ -196,6 +197,15 @@ export const constructWorks = (work, context) => {
             break
         case 'otk':
             res(S, `ОТК`)
+            break
+        case 'sealing':
+            res(planes.length, `Герметизация`)
+            break
+        case 'assembleGlasspacket':
+            res(planes.length, `Сборка стеклопакета`)
+            break
+        case 'assemblePlane':
+            res(planes.length, `Изготовление рамки`)
             break
     }
 };

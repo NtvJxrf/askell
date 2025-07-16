@@ -22,11 +22,12 @@ export const tabConfigs = [
   {
     key: 'work_prices',
     title: 'Работы',
-    fields: ['name', 'ratePerHour', 'costOfWork', 'description'],
+    fields: ['name', 'ratePerHour', 'costOfWork', 'salary', 'description'],
     columns: [
       { title: 'Название', dataIndex: 'name' },
-      { title: 'Стоимость работы', dataIndex: 'costOfWork' },
       { title: 'Норма в час', dataIndex: 'ratePerHour' },
+      { title: 'Сделка', dataIndex: 'costOfWork' },
+      { title: 'Оклад', dataIndex: 'salary' },
       { title: 'Описание', dataIndex: 'description' },
     ]
   }

@@ -34,6 +34,7 @@ const formConfigs = {
         { name: 'cuts', type: 'input', label: 'Вырезы, шт' },
         { name: 'rounds', type: 'input', label: 'Скругления, шт' },
         { name: 'print', label: 'Печать', type: 'checkbox' },
+        { name: 'notax', label: 'Optiwhite без наценки', type: 'checkbox' },
       ]
     },
     glassForm: {

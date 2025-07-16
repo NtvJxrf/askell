@@ -1,7 +1,7 @@
 const Calculate = (data, selfcost) => {
     console.log(selfcost)
     console.log(data)
-    const { material, height, width, cuts, smdType, color, rounds, drillssmd, clientType, print, rounding } = data
+    const { material, height, width, cuts, smdType, color, rounds, drillssmd, clientType, print, notax } = data
     const result = {
         materials: [],
         works: [],
@@ -71,7 +71,7 @@ const Calculate = (data, selfcost) => {
             });
             break
         case 'Стекло осветленное OptiWhite, 4 мм':
-            result.materials.push({
+            !notax && result.materials.push({
                 name: material,
                 value: selfcost.pricesAndCoefs[`Optiwhite SMD`] * S,
                 string: `${(selfcost.pricesAndCoefs[`Optiwhite SMD`]).toFixed(2)} * ${S.toFixed(2)}`,

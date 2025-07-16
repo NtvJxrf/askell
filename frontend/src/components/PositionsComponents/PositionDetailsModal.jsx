@@ -75,7 +75,7 @@ const renderDetails = (record) => {
 
                 <Divider />
 
-                <Title level={4}>Общая себестоимость</Title>
+                <Title level={4}>Цена</Title>
                 {renderItem(finalPrice)}
             </div>
 

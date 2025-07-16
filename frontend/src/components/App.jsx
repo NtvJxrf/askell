@@ -13,7 +13,7 @@ function App() {
 
     useEffect(() => {
         Init.checkAuth(dispatch, setLoading);
-        const intervalId = setInterval(Init.checkAuth, 5 * 60 * 1000); // каждые 5 минут
+        const intervalId = setInterval(Init.checkAuth(dispatch, setLoading), 5 * 60 * 1000); // каждые 5 минут
         return () => {
             clearInterval(intervalId);
         };

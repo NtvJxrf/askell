@@ -5,6 +5,8 @@ import Prices from '../databases/models/sklad/prices.mode.js'
 import WorkPrices from '../databases/models/sklad/workPrices.model.js'
 import { dictionary } from '../services/sklad.service.js'
 import ApiError from './apiError.js'
+import { parseStringPromise } from 'xml2js';
+import axios from 'axios'
 const updates = {}
 const getMaterials = async () => {
     let materials = {}
@@ -126,6 +128,22 @@ export const getProcessingPlansSmd = async () => {
     dictionary.smdPlans = plans
     updates['Техкарты для смд'] = Date.now()
 }
+const getCurrency = async () => {
+    const response = await axios.get('https://www.cbr.ru/scripts/XML_daily.asp');
+    const xml = response.data;
+    const data = await parseStringPromise(xml, { explicitArray: false });
+    const valutes = Object.values(data.ValCurs.Valute);
+    const USD = valutes.find(v => v.CharCode === 'USD');
+    const EUR = valutes.find(v => v.CharCode === 'EUR');
+    const USDrate = parseFloat(USD.Value.replace(',', '.'));
+    const EURrate = parseFloat(EUR.Value.replace(',', '.'));
+    const currency = {
+        usd: USDrate,
+        eur: EURrate
+    }
+    SkladService.selfcost.currency = currency
+    updates['Валюта'] = Date.now()
+};
 let lastUpdate = 0
 export const initSkladAdditions = async () => {
     if (lastUpdate !== 0 && Date.now() - lastUpdate < 300_000) throw new ApiError(404, 'Only one update per 5 minutes')
@@ -140,6 +158,7 @@ export const initSkladAdditions = async () => {
     promises.push(getColors())
     promises.push(getPicesAndCoefs())
     promises.push(getPackagingMaterials())
+    promises.push(getCurrency())
     await Promise.allSettled(promises)
     SkladService.selfcost.updates = updates
     console.log('all dependencies loaded')

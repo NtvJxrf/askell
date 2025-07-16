@@ -11,7 +11,7 @@ import { initSkladAdditions } from "./utils/skladAdditions.js"
 
 await initQueue();
 await initModels()
-initSkladAdditions()
+await initSkladAdditions()
 
 const app = express()
 

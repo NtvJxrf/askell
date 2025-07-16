@@ -190,7 +190,7 @@ export const constructWorks = (work, context) => {
             res(stanok === 'Прямолинейка' ? 0 : P  * materials.length, 'Полировка', stanok === 'Прямолинейка' ? 'Прямолинейная обработка' : 'Криволинейная обработка')
             break
         case 'triplexing':
-            res(S, `Триплекс ${allThickness} мм`)
+            res(S * materials.length - 1, `Триплекс ${allThickness} мм`)
             break
         case 'blunting':
             res(P, `Притупка`)

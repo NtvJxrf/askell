@@ -64,12 +64,23 @@ const Calculate = (data, selfcost, triplexArray) => {
     for(const plane of planes){
         const thickness = Number(plane.match(/(\d+(?:[.,]\d+)?)\s*мм/i)[1]) // Добавить толщина рамки
         allThickness += thickness
-
         result.materials.push({
             name: plane,
             value: selfcost.materials[plane].value * P * selfcost.pricesAndCoefs['Коэффициент обрези рамка'],
             string: `${selfcost.materials[plane].value} * ${P.toFixed(2)} * ${selfcost.pricesAndCoefs['Коэффициент обрези рамка']}`,
             formula: 'Цена за м² * Периметр * Коэффициент обрези рамка'
+        });
+        result.materials.push({
+            name: `Уголок для газа без отверстия ${thickness} мм.`,
+            value: selfcost.materials[`Уголок для газа без отверстия ${thickness} мм.`].value * planes.length,
+            string: `${selfcost.materials[`Уголок для газа без отверстия ${thickness} мм.`].value} * ${planes.length.toFixed(2)}`,
+            formula: 'Цена за монтажный уголок * Количество дистанционных рамок'
+        });
+        result.materials.push({
+            name: `Молекулярное сито (${thickness < 10 ? '0,5-0,9' : '1-2'})`,
+            value: selfcost.materials['Влагопоглатитель (сито)'].value * S * 15 * allThickness,
+            string: `${selfcost.materials['Влагопоглатитель (сито)'].value} * S * 15 *${allThickness.toFixed(2)}`,
+            formula: 'Цена за влагопоглатитель (сито) * Площадь * 15 * Толщина всех рамок'
         });
     }
     gas && result.materials.push({
@@ -82,7 +93,7 @@ const Calculate = (data, selfcost, triplexArray) => {
     constructWorks('sealing', context);
     constructWorks('assembleGlasspacket', context);
     constructWorks('assemblePlane', context);
-    // constructMaterials(context)
+    constructMaterials(context)
     let price = 12345
     result.other = {
         S,
@@ -108,28 +119,16 @@ const Calculate = (data, selfcost, triplexArray) => {
 function constructMaterials(context){
     const { selfcost, result, planes, materials, P, S, allThickness} = context;
     result.materials.push({
-        name: 'Монтажный уголок',
-        value: selfcost.materials['Монтажный уголок'].value * planes.length,
-        string: `${selfcost.materials['Монтажный уголок'].value} * ${planes.length.toFixed(2)}`,
-        formula: 'Цена за монтажный уголок * Количество дистанционных рамок'
-    });
-    result.materials.push({
         name: 'Бутил первичный',
         value: selfcost.materials['Бутил первичный'].value * P * 8 * planes.length,
         string: `${selfcost.materials['Бутил первичный'].value} * ${P.toFixed(2)} * 8 * ${planes.length.toFixed(2)}`,
         formula: 'Цена за бутил первичный * Периметр * 8 * Количество дистанционных рамок'
     });
     result.materials.push({
-        name: 'Бутил вторичный',
-        value: selfcost.materials['Бутил вторичный'].value * (P * 12 / 1000 * allThickness),
-        string: `${selfcost.materials['Бутил вторичный'].value} * (${P.toFixed(2)} * 12 / 1000 * ${allThickness.toFixed(2)})`,
+        name: 'Вторичный герметик',
+        value: selfcost.materials['Вторичный герметик'].value * (P * 12 / 1000 * allThickness),
+        string: `${selfcost.materials['Вторичный герметик'].value} * (${P.toFixed(2)} * 12 / 1000 * ${allThickness.toFixed(2)})`,
         formula: 'Цена за бутил вторичный * (Периметр * 12 / 1000 * Толщина стеклопакета)'
-    });
-    result.materials.push({
-        name: 'Влагопоглатитель (сито)',
-        value: selfcost.materials['Влагопоглатитель (сито)'].value * S * 15 * allThickness,
-        string: `${selfcost.materials['Влагопоглатитель (сито)'].value} * S * 15 *${allThickness.toFixed(2)}`,
-        formula: 'Цена за влагопоглатитель (сито) * Площадь * 15 * Толщина всех рамок'
     });
     result.materials.push({
         name: 'Термоэтикетка',

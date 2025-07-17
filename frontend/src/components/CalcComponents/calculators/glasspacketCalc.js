@@ -50,9 +50,9 @@ const Calculate = (data, selfcost, triplexArray) => {
         weight += 2.5 * S * thickness
         result.materials.push({
             name: material[0],
-            value: selfcost.materials[material[0]].value * S * selfcost.pricesAndCoefs['Коэффициент обрези стекло'],
-            string: `${selfcost.materials[material[0]].value} * ${S.toFixed(2)} * ${selfcost.pricesAndCoefs['Коэффициент обрези стекло']}`,
-            formula: 'Цена за м² * Площадь * Коэффициент обрези стекло'
+            value: selfcost.materials[material[0]].value * S * selfcost.pricesAndCoefs['Коэффициент обрези стекло стеклопакет'],
+            string: `${selfcost.materials[material[0]].value} * ${S.toFixed(2)} * ${selfcost.pricesAndCoefs['Коэффициент обрези стекло стеклопакет']}`,
+            formula: 'Цена за м² * Площадь * Коэффициент обрези стекло стеклопакет'
         });
         const materials = [material[0]]
         const context = { selfcost, result, materials, P, S, thickness, allThickness };
@@ -98,7 +98,31 @@ const Calculate = (data, selfcost, triplexArray) => {
     constructWorks('assembleGlasspacket', context);
     constructWorks('assemblePlane', context);
     constructMaterials(context)
-    let price = 12345
+
+    let materialsandworks = 0
+    for (const item of Object.values(result.materials)) 
+        materialsandworks += item.value
+    for (const item of Object.values(result.works)) 
+        materialsandworks += item.value
+    const expenses = materialsandworks * 0.45
+    result.expenses = [{
+        name: 'Расходы',
+        value: expenses,
+        string: `${(materialsandworks).toFixed(2)} * 0.45`,
+        formula: `(Материалы и работы) * 0.45`
+    }]
+    const price = (materialsandworks + expenses) * selfcost.pricesAndCoefs[`Стеклопакет ${customertype}`]
+    result.finalPrice = [{
+        name: 'Прямые затраты',
+        value: materialsandworks + expenses,
+        string: `${(materialsandworks).toFixed(2)} + ${(expenses).toFixed(2)}`,
+        formula: `(Материалы и работы) + Расходы`
+    },{
+        name: 'Наценка',
+        value: selfcost.pricesAndCoefs[`Стеклопакет ${customertype}`],
+        string: selfcost.pricesAndCoefs[`Стеклопакет ${customertype}`],
+        formula: `Наценка для типа клиента ${selfcost.pricesAndCoefs[`Стеклопакет ${customertype}`]}`
+    }]
     result.other = {
         S,
         allThickness,

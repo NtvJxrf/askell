@@ -5,8 +5,6 @@ import Prices from '../databases/models/sklad/prices.mode.js'
 import WorkPrices from '../databases/models/sklad/workPrices.model.js'
 import { dictionary } from '../services/sklad.service.js'
 import ApiError from './apiError.js'
-import { parseStringPromise } from 'xml2js';
-import axios from 'axios'
 const updates = {}
 const getMaterials = async () => {
     let materials = {}

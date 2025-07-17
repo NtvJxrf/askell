@@ -42,7 +42,7 @@ const renderItem = (item, index) => {
 const renderDetails = (record) => {
     const { result } = record || {};
     if (!result) return null;
-    const { materials = [], works = [], expenses = {}, finalPrice = {}} = result;
+    const { materials = [], works = [], expenses = [], finalPrice = []} = result;
 
     const totalMaterials = materials.reduce((sum, item) => sum + (item.value || 0), 0)
     const totalWorks = works.reduce((sum, item) => sum + (item.value || 0), 0)
@@ -76,7 +76,10 @@ const renderDetails = (record) => {
                 <Divider />
 
                 <Title level={4}>Цена</Title>
-                {renderItem(finalPrice)}
+                {finalPrice.map(renderItem)}
+                <div style={{ marginTop: 8, fontWeight: 'bold' }}>
+                    Итого цена: {record.price.toFixed(2)}
+                </div>
             </div>
 
             {/* Правая колонка — исходные данные */}

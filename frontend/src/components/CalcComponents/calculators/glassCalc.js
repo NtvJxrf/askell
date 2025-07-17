@@ -58,12 +58,17 @@ const Calculate = (data, selfcost) => {
     }
     const [materialsandworks, commercialExpenses, householdExpenses, workshopExpenses] = constructExpenses(result, selfcost)
     const price = (materialsandworks + commercialExpenses + householdExpenses + workshopExpenses) * selfcost.pricesAndCoefs[`Стекло ${customertype}`]
-    result.finalPrice = {
-        name: 'Итоговая цена',
-        string: `(${(materialsandworks).toFixed(2)} + ${((commercialExpenses + householdExpenses + workshopExpenses)).toFixed(2)}) * ${selfcost.pricesAndCoefs[`Стекло ${customertype}`]}`,
-        formula: `(Материалы и Работы + Расходы) * Наценка для типа клиента ${customertype}`,
-        value: price
-    }
+    result.finalPrice = [{
+        name: 'Себестоимость',
+        value: materialsandworks + commercialExpenses + householdExpenses + workshopExpenses,
+        string: `${(materialsandworks).toFixed(2)} + ${(commercialExpenses + householdExpenses + workshopExpenses).toFixed(2)}`,
+        formula: `(Материалы и работы) + Расходы`
+    },{
+        name: 'Наценка',
+        value: selfcost.pricesAndCoefs[`Стекло ${customertype}`],
+        string: selfcost.pricesAndCoefs[`Стекло ${customertype}`],
+        formula: `Наценка для типа клиента ${selfcost.pricesAndCoefs[`Стекло ${customertype}`]}`
+    }]
 
     result.other = {
         S,

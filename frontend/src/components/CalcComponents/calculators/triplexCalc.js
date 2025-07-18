@@ -100,6 +100,12 @@ const Calculate = (data, selfcost) => {
             formula: 'Цена за м² * Площадь * Коэффициент обрези стекло'
         });
     }
+    print && result.works.push({
+        name: 'Печать',
+        value: selfcost.pricesAndCoefs[`УФ печать`],
+        string: `${selfcost.pricesAndCoefs[`УФ печать`]}`,
+        formula: 'Себестоимость уф печати'
+    });
     const context = { selfcost, result, stanok, allThickness };
     constructWorks('cutting1', S * materials.length, context);
     constructWorks('cutting2', S * materials.length, context);

@@ -49,16 +49,16 @@ const Calculate = (data, selfcost) => {
     constructWorks('cutting1', S, context);
     constructWorks('cutting2', S, context);
     constructWorks('washing1', S, context);
+    constructWorks('grinding', P, context);
+    constructWorks('otk', S, context);
+    polishing && constructWorks('polishing', P, context);
     drills && constructWorks('drills', drills, context);
     zenk && constructWorks('zenk', zenk, context);
     tempered && constructWorks('tempered', S, context);
     cutsv1 && constructWorks('cutsv1', cutsv1, context);
     cutsv2 && constructWorks('cutsv2', cutsv2, context);
     cutsv3 && constructWorks('cutsv3', cutsv3, context);
-    print && constructWorks('print', S, context);
-    constructWorks('grinding', P, context);
-    polishing && constructWorks('polishing', P, context);
-    constructWorks('otk', S, context);
+    color && constructWorks('color', S, context);
 
     const [materialsandworks, commercialExpenses, householdExpenses, workshopExpenses] = constructExpenses(result, selfcost)
     const price = (materialsandworks + commercialExpenses + householdExpenses + workshopExpenses) * selfcost.pricesAndCoefs[`Стекло ${customertype}`]

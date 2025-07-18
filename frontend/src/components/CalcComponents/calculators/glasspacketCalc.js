@@ -54,16 +54,15 @@ const Calculate = (data, selfcost, triplexArray) => {
             string: `${selfcost.materials[material[0]].value} * ${S.toFixed(2)} * ${selfcost.pricesAndCoefs['Коэффициент обрези стекло стеклопакет']}`,
             formula: 'Цена за м² * Площадь * Коэффициент обрези стекло стеклопакет'
         });
-        const materials = [material[0]]
-        const context = { selfcost, result, materials, P, S, thickness, allThickness };
-        constructWorks('cutting1', context);
-        constructWorks('cutting2', context);
+        const context = { selfcost, result, thickness };
+        constructWorks('cutting1', S, context);
+        constructWorks('cutting2', S, context);
         if(material[1]){
-            constructWorks('tempered', context);
-            constructWorks('blunting', context);
+            constructWorks('tempered', S, context);
+            constructWorks('blunting', P, context);
         }
-        !material[1] && material[3] && constructWorks('blunting', context);
-        material[2] && constructWorks('polishing', context);
+        !material[1] && material[3] && constructWorks('blunting', P, context);
+        material[2] && constructWorks('polishing', P, context);
     }
     for(const plane of planes){
         const thickness = Number(plane.match(/(\d+(?:[.,]\d+)?)\s*мм/i)[1]) // Добавить толщина рамки
@@ -93,10 +92,10 @@ const Calculate = (data, selfcost, triplexArray) => {
             string: `${selfcost.materials[gas].value} * ${S} * ${allPlaneThickness}`,
             formula: 'Цена за м² * Площадь * Толщина всех рамок'
         });
-    const context = { selfcost, result, materials, P, S, planes, allThickness };
-    constructWorks('sealing', context);
-    constructWorks('assembleGlasspacket', context);
-    constructWorks('assemblePlane', context);
+    const context = { selfcost, result, allThickness, planes, P};
+    constructWorks('sealing', planes.length, context);
+    constructWorks('assembleGlasspacket', planes.length, context);
+    constructWorks('assemblePlane', planes.length, context);
     constructMaterials(context)
 
     let materialsandworks = 0
@@ -145,7 +144,7 @@ const Calculate = (data, selfcost, triplexArray) => {
 }
 
 function constructMaterials(context){
-    const { selfcost, result, planes, materials, P, S, allThickness} = context;
+    const { selfcost, result, planes, P, allThickness} = context;
     result.materials.push({
         name: 'Первичный герметик (бутил)',
         value: selfcost.materials['Первичный герметик (бутил)'].value * P * 8 * planes.length / 1000,

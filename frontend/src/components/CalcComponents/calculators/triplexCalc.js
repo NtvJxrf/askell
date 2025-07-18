@@ -1,11 +1,10 @@
 const Calculate = (data, selfcost) => {
     console.log(selfcost)
     console.log(data)
-    const { height, width, polishing, drills, zenk, cutsv1, cutsv2, cutsv3, tempered, shape, addTape, print, customertype, rounding } = data
+    const { height, width, polishing, drills, zenk, cutsv1, cutsv2, cutsv3, tempered, shape, addTape, print, customertype, rounding, color } = data
     const tapes = Object.entries(data).filter(([key]) => key.startsWith('tape')).map(([_, value]) => value);
     const materials = Object.entries(data).filter(([key, value]) => key.startsWith('material') && value !== undefined).map(([_, value]) => value);
     addTape && tapes.push(addTape)
-    const works = { polishing, drills, zenk, cutsv1, cutsv2, print }
     let name = `Триплекс, ${materials.join(' + ')}, (${height}х${width}${polishing ? ', Полировка' : ''}${tempered ? ', Закаленное' : ''}${cutsv1 ? `, Вырезы 1 кат.: ${cutsv1}` : ''}${cutsv2 ? `, Вырезы 2 кат.: ${cutsv2}` : ''}${cutsv3 ? `, Вырезы 3 кат.: ${cutsv3}` : ''}${drills ? `, Сверление: ${drills}` : ''}${zenk ? `, Зенкование: ${zenk}` : ''}${print ? ', Печать' : ''})`
     let S = (height * width) / 1000000
     if(S < 0.5){
@@ -93,7 +92,7 @@ const Calculate = (data, selfcost) => {
         allThickness += thickness
         weight += 2.5 * S * thickness
         
-        tempered && constructWorks('tempered', {S, thickness, result, selfcost})
+        tempered && constructWorks('tempered', S, { thickness, result, selfcost})
         result.materials.push({
             name: material,
             value: selfcost.materials[material].value * S * selfcost.pricesAndCoefs['Коэффициент обрези стекло'],
@@ -101,26 +100,34 @@ const Calculate = (data, selfcost) => {
             formula: 'Цена за м² * Площадь * Коэффициент обрези стекло'
         });
     }
-    const context = { works, selfcost, result, materials, P, stanok, S, allThickness };
-    constructWorks('cutting1', context);
-    constructWorks('cutting2', context);
-    constructWorks('washing1', context);
-    constructWorks('grinding', context);
-    constructWorks('otk', context);
-    constructWorks('triplexing', context);
-    for (const work in works) {
-        if(!works[work]) continue
-        constructWorks(work, context);
-    }
+    const context = { selfcost, result, stanok, allThickness };
+    constructWorks('cutting1', S * materials.length, context);
+    constructWorks('cutting2', S * materials.length, context);
+    constructWorks('washing1', S * materials.length, context);
+    constructWorks('grinding', P * materials.length, context);
+    constructWorks('otk', S * materials.length, context);
+    constructWorks('triplexing', S * materials.length - 1, context);
+    polishing && constructWorks('polishing', P * materials.length, context);
+    drills && constructWorks('drills', drills * materials.length, context);
+    zenk && constructWorks('zenk', zenk * materials.length, context);
+    cutsv1 && constructWorks('cutsv1', cutsv1 * materials.length, context);
+    cutsv2 && constructWorks('cutsv2', cutsv2 * materials.length, context);
+    cutsv3 && constructWorks('cutsv3', cutsv3 * materials.length, context);
+    color && constructWorks('color', S, context);
 
     const [materialsandworks, commercialExpenses, householdExpenses, workshopExpenses] = constructExpenses(result, selfcost)
     const price = (materialsandworks + commercialExpenses + householdExpenses + workshopExpenses) * selfcost.pricesAndCoefs[`Триплекс ${customertype}`]
-    result.finalPrice = {
-        name: 'Итоговая цена',
-        string: `(${(materialsandworks).toFixed(2)} + ${((commercialExpenses + householdExpenses + workshopExpenses)).toFixed(2)}) * ${selfcost.pricesAndCoefs[`Триплекс ${customertype}`]}`,
-        formula: `(Материалы и Работы + Расходы) * Наценка для типа клиента ${customertype}`,
-        value: price
-    }
+    result.finalPrice = [{
+        name: 'Себестоимость',
+        value: materialsandworks + commercialExpenses + householdExpenses + workshopExpenses,
+        string: `${(materialsandworks).toFixed(2)} + ${(commercialExpenses + householdExpenses + workshopExpenses).toFixed(2)}`,
+        formula: `(Материалы и работы) + Расходы`
+    },{
+        name: 'Наценка',
+        value: selfcost.pricesAndCoefs[`Триплекс ${customertype}`],
+        string: selfcost.pricesAndCoefs[`Триплекс ${customertype}`],
+        formula: `Наценка для типа клиента ${selfcost.pricesAndCoefs[`Триплекс ${customertype}`]}`
+    }]
     result.other = {
         S,
         S_tape,
@@ -144,10 +151,10 @@ const Calculate = (data, selfcost) => {
     }
 }
 
-export const constructWorks = (work, context) => {
-    const { works, selfcost, result, materials, P, stanok, thickness, S, allThickness, planes } = context;
-    const res = (quantity, name, tableName) => {
-        console.log(name)
+export const constructWorks = (work, quantity, context) => {
+    const { selfcost, result, stanok, thickness, allThickness } = context;
+    console.log(work, quantity)
+    const res = (name, tableName) => {
         result.works.push({
             name,
             value: (quantity * selfcost.pricesAndCoefs[tableName || name].costOfWork) + (selfcost.pricesAndCoefs[tableName || name].salary / selfcost.pricesAndCoefs['Среднее количество рабочих часов в месяц'] * quantity / selfcost.pricesAndCoefs[tableName || name].ratePerHour),
@@ -156,57 +163,26 @@ export const constructWorks = (work, context) => {
         })
     }
     switch (work) {
-        case 'drills':
-            res(works[work] * materials.length, 'Сверление')
-            break;
-        case 'zenk':
-            res(works[work] * materials.length, 'Зенковка')
-            break;
-        case 'cutsv1':
-            res(works[work] * materials.length, 'Вырез в стекле 1 кат')
-            break;
-        case 'cutsv2':
-            res(works[work] * materials.length, 'Вырез в стекле 2 кат')
-            break;
-        case 'cutsv3':
-            res(works[work] * materials.length, 'Вырез в стекле 3 кат')
-            break;
-        case 'tempered':
-            res(S, `Закалка ${thickness} мм`)
-            break;
-        case 'cutting1':
-            res(S * materials.length, 'Резка (Управление)')
-            break;
-        case 'cutting2':
-            res(S * materials.length, 'Резка (Помощь)')
-            break;
-        case 'washing1':
-            res(S * materials.length, 'Мойка 1')
-            break;
-        case 'grinding':
-            res(P * materials.length, 'Шлифовка', stanok === 'Прямолинейка' ? 'Прямолинейная обработка' : 'Криволинейная обработка')
-            break;
-        case 'polishing':
-            res(stanok === 'Прямолинейка' ? 0 : P  * materials.length, 'Полировка', stanok === 'Прямолинейка' ? 'Прямолинейная обработка' : 'Криволинейная обработка')
-            break
-        case 'triplexing':
-            res(S * materials.length - 1, `Триплекс ${allThickness} мм`)
-            break
-        case 'blunting':
-            res(P, `Притупка`)
-            break
-        case 'otk':
-            res(S, `ОТК`)
-            break
-        case 'sealing':
-            res(planes.length, `Герметизация`)
-            break
-        case 'assembleGlasspacket':
-            res(planes.length, `Сборка стеклопакета`)
-            break
-        case 'assemblePlane':
-            res(planes.length, `Изготовление рамки`)
-            break
+        case 'drills': res('Сверление'); break
+        case 'zenk': res('Зенковка'); break
+        case 'cutsv1': res('Вырез в стекле 1 кат'); break
+        case 'cutsv2': res('Вырез в стекле 2 кат'); break
+        case 'cutsv3': res('Вырез в стекле 3 кат'); break
+        case 'tempered': res(`Закалка ${thickness} мм`); break
+        case 'cutting1': res('Резка (Управление)'); break
+        case 'cutting2': res('Резка (Помощь)'); break
+        case 'washing1': res('Мойка 1'); break
+        case 'grinding': res('Шлифовка', stanok === 'Прямолинейка' ? 'Прямолинейная обработка' : 'Криволинейная обработка'); break
+        case 'polishing': res('Полировка', stanok === 'Прямолинейка' ? 'Прямолинейная обработка' : 'Криволинейная обработка'); break
+        case 'triplexing': res(`Триплекс ${allThickness} мм`); break
+        case 'blunting': res(`Притупка`); break
+        case 'otk': res(`ОТК`); break
+        case 'sealing': res(`Герметизация`); break
+        case 'assembleGlasspacket': res(`Сборка стеклопакета`); break
+        case 'assemblePlane': res(`Изготовление рамки`); break
+        case 'lamination': res(`Ламинирование`); break
+        case 'cuttingCera': res(`Резка керамики`); break
+        case 'color': res(`Окрашивание`); break
     }
 };
 export const constructExpenses = (result, selfcost) => {

@@ -141,7 +141,7 @@ const renderLabeledDataBlock = (title, data, dictionary = {}) => {
     );
 };
 
-const ignorLabels = ['ignor', 'calcType', 'productType']
+const ignorLabels = ['ignor', 'calcType', 'productType', 'materialsandworks']
 const initialDataLabels = {
     height: 'Высота',
     width: 'Ширина',
@@ -166,6 +166,8 @@ const initialDataLabels = {
     rounds: 'Скругления',
     drillssmd: 'Сверление СМД',
     gas: 'Газ',
+    blank: 'Пятак',
+    under: 'Подстолье'
 };
 
 const labelPrefixes = [
@@ -174,7 +176,9 @@ const labelPrefixes = [
   { regex: /^plane(\d+)$/, label: 'Рамка' },
   { regex: /^tempered(\d+)$/, label: 'Закаленное' },
   { regex: /^polishing(\d+)$/, label: 'Полировка' },
-  { regex: /^blunting(\d+)$/, label: 'Притупка' }
+  { regex: /^blunting(\d+)$/, label: 'Притупка' },
+  { regex: /^height(\d+)$/, label: 'Высота' },
+  { regex: /^width(\d+)$/, label: 'Ширина' }
 ];
 
 const otherLabels = {

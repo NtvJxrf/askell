@@ -11,7 +11,7 @@ const filterWords = ["стекло"];
 const gasArray = ["Аргон", "Криптон", "Воздух"];
 
 const GlasspacketForm = () => {
-  const materials = useSelector(state => state.selfcost.selfcost?.materials) || {}
+  const materials = useSelector(state => state.selfcost.selfcost?.materials) || []
   const dispatch = useDispatch();
   const triplexForGlasspacket = useSelector(state => state.positions.triplexForGlasspacket);
   const [isModalOpen, setIsModalOpen] = useState(false);

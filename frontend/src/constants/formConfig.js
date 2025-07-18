@@ -76,13 +76,14 @@ const formConfigs = {
     },
     triplexForm: {
       commonFields: [
-        { name: 'height', type: 'input', label: 'Длина, мм', rules: [{ required: true, message: 'Fill this field' }] },
-        { name: 'width', type: 'input', label: 'Высота, мм', rules: [{ required: true, message: 'Fill this field' }] },
+        { name: 'height', type: 'input', label: 'Высота, мм', rules: [{ required: true, message: 'Fill this field' }] },
+        { name: 'width', type: 'input', label: 'Ширина, мм', rules: [{ required: true, message: 'Fill this field' }] },
         { name: 'drills', type: 'input', label: 'Сверление, шт' },
         { name: 'zenk', type: 'input', label: 'Зенкование, шт' },
         { name: 'cutsv1', type: 'input', label: 'Вырезы 1 кат. шт' },
         { name: 'cutsv2', type: 'input', label: 'Вырезы 2 кат. шт' },
         { name: 'cutsv3', type: 'input', label: 'Вырезы 3 кат. шт' },
+        { name: 'color', label: 'Цвет', type: 'select' },
         { name: 'shape', label: 'Прямоугольная форма', type: 'checkbox' },
         { name: 'tempered', label: 'Закаленное', type: 'checkbox' },
         { name: 'polishing', label: 'Полировка', type: 'checkbox' },
@@ -228,7 +229,7 @@ const formConfigs = {
           type: 'select',
           rules: [{ required: true, message: 'Fill this field' }]
         },
-        { name: 'height', type: 'input', label: 'Длина, мм', rules: [{ required: true, message: 'Fill this field' }] },
+        { name: 'height', type: 'input', label: 'Высота, мм', rules: [{ required: true, message: 'Fill this field' }] },
         { name: 'width', type: 'input', label: 'Ширина, мм', rules: [{ required: true, message: 'Fill this field' }] },
         { name: 'cutsv1', type: 'input', label: 'Вырезы 1 кат. шт' },
         { name: 'cutsv2', type: 'input', label: 'Вырезы 2 кат. шт' },
@@ -236,10 +237,14 @@ const formConfigs = {
         { name: 'blank', type: 'input', label: 'Количество пятаков' },
         { name: 'color', label: 'Цвет', type: 'select' },
         { name: 'under', label: 'Подстолье', type: 'select' },
-        { name: 'shape', label: 'Прямоугольная форма', type: 'checkbox' },
-      ],materialFields: [
-
-      ]
+        {
+          name: 'customertype',
+          label: 'Тип клиента',
+          type: 'select',
+          options: ['Менее 200 тыс.', 'Более 200 тыс.', 'Более 400 тыс.', 'Более 800 тыс.'],
+          rules: [{ required: true, message: 'Fill this field' }]
+        },
+      ],materialFields: []
     }
   };
 export default formConfigs

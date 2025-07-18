@@ -4,7 +4,7 @@ import formConfigs from "../../../constants/formConfig.js";
 import renderField from './renderField.jsx';
 
 const SMDForm = () => {
-  const colors = useSelector(state => state.selfcost.selfcost?.colors);
+  const colors = useSelector(state => state.selfcost.selfcost?.colors) || []
 
   const colorsArray = useMemo(() => {
     if (!colors) return [];

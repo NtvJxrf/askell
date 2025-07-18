@@ -4,7 +4,7 @@ const Calculate = (data, selfcost) => {
     console.log(selfcost)
     console.log(data)
     const { material, height, width, polishing, drills, zenk, cutsv1, cutsv2, cutsv3, tempered, shape, color, print, customertype, rounding } = data
-    const works = { tempered, polishing, drills, zenk, cutsv1, cutsv2, print }
+    const works = { tempered, polishing, drills, zenk, cutsv1, cutsv2, cutsv3, print }
     let S = (height * width) / 1000000
     if(S < 0.5){
         switch (rounding){
@@ -45,17 +45,21 @@ const Calculate = (data, selfcost) => {
                 string: `${selfcost.pricesAndCoefs[`УФ печать`]}`,
                 formula: 'Себестоимость уф печати'
             });
-    const materials = [material]
-    const context = { works, selfcost, result, P, stanok, materials, thickness, S};
-    constructWorks('cutting1', context);
-    constructWorks('cutting2', context);
-    constructWorks('washing1', context);
-    constructWorks('grinding', context);
-    constructWorks('otk', context);
-    for(const work in works){
-        if(!works[work]) continue
-        constructWorks(work, context)
-    }
+    const context = { works, selfcost, result, thickness};
+    constructWorks('cutting1', S, context);
+    constructWorks('cutting2', S, context);
+    constructWorks('washing1', S, context);
+    drills && constructWorks('drills', drills, context);
+    zenk && constructWorks('zenk', zenk, context);
+    tempered && constructWorks('tempered', S, context);
+    cutsv1 && constructWorks('cutsv1', cutsv1, context);
+    cutsv2 && constructWorks('cutsv2', cutsv2, context);
+    cutsv3 && constructWorks('cutsv3', cutsv3, context);
+    print && constructWorks('print', S, context);
+    constructWorks('grinding', P, context);
+    polishing && constructWorks('polishing', P, context);
+    constructWorks('otk', S, context);
+
     const [materialsandworks, commercialExpenses, householdExpenses, workshopExpenses] = constructExpenses(result, selfcost)
     const price = (materialsandworks + commercialExpenses + householdExpenses + workshopExpenses) * selfcost.pricesAndCoefs[`Стекло ${customertype}`]
     result.finalPrice = [{

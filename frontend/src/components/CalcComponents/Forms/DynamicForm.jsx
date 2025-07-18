@@ -6,7 +6,7 @@ import ResetButton from "../buttons/ResetButton.jsx";
 import { setForm, clearForm } from '../../../slices/formSlice.js'
 import store from '../../../store.js'
 import SMDForm from './SMDForm.jsx'
-import GlassForm from './GlassForm.jsx'
+import GlassForm from './glassForm.jsx'
 import TriplexForm from './TriplexForm.jsx'
 import CeraglassForm from "./CeraglassForm.jsx";
 import GlassPacketForm from './GlasspacketForm.jsx'

@@ -9,16 +9,17 @@ const updates = {}
 const getMaterials = async () => {
     let materials = {}
     const promises = []
-    promises.push(fetchAllRows("https://api.moysklad.ru/api/remap/1.2/entity/product?filter=pathName=0 Закупки/0.02.03 Стекло/Материал от поставщиков, Стекло/Матированное стекло (Matelux);pathName=0 Закупки/0.02.03 Стекло/Материал от поставщиков, Стекло/Осветленное стекло;pathName=0 Закупки/0.02.03 Стекло/Материал от поставщиков, Стекло/Простое стекло;pathName=0 Закупки/0.02.03 Стекло/Материал от поставщиков, Стекло/Рифленое стекло;pathName=0 Закупки/0.02.03 Стекло/Материал от поставщиков, Стекло/Стекло Stopsol и Зеркало;pathName=0 Закупки/0.02.03 Стекло/Материал от поставщиков, Стекло/Цветное стекло&expand=salePrices.currency"))
-    promises.push(fetchAllRows("https://api.moysklad.ru/api/remap/1.2/entity/product?filter=pathName=0 Закупки/0.02.04 Пленка EVA/Пленка EVA прозрачная;pathName=0 Закупки/0.02.04 Пленка EVA/Плёнки декоративные и цветные&expand=salePrices.currency"))
-    promises.push(fetchAllRows("https://api.moysklad.ru/api/remap/1.2/entity/product?filter=pathName=0 Закупки/0.02.02 Керамика/LAMINAM;pathName=0 Закупки/0.02.02 Керамика/ДЕГОН Стандарт&expand=salePrices.currency"))
-    promises.push(fetchAllRows("https://api.moysklad.ru/api/remap/1.2/entity/product?filter=pathName=0 Закупки/Материалы для стеклопакетов&expand=salePrices.currency"))
+    promises.push(fetchAllRows("https://api.moysklad.ru/api/remap/1.2/entity/product?filter=pathName=0 Закупки/0.02.03 Стекло/Материал от поставщиков, Стекло/Матированное стекло (Matelux);pathName=0 Закупки/0.02.03 Стекло/Материал от поставщиков, Стекло/Осветленное стекло;pathName=0 Закупки/0.02.03 Стекло/Материал от поставщиков, Стекло/Простое стекло;pathName=0 Закупки/0.02.03 Стекло/Материал от поставщиков, Стекло/Рифленое стекло;pathName=0 Закупки/0.02.03 Стекло/Материал от поставщиков, Стекло/Стекло Stopsol и Зеркало;pathName=0 Закупки/0.02.03 Стекло/Материал от поставщиков, Стекло/Цветное стекло&expand=buyPrice.currency"))
+    promises.push(fetchAllRows("https://api.moysklad.ru/api/remap/1.2/entity/product?filter=pathName=0 Закупки/0.02.04 Пленка EVA/Пленка EVA прозрачная;pathName=0 Закупки/0.02.04 Пленка EVA/Плёнки декоративные и цветные&expand=buyPrice.currency"))
+    promises.push(fetchAllRows("https://api.moysklad.ru/api/remap/1.2/entity/product?filter=pathName=0 Закупки/0.02.02 Керамика/LAMINAM;pathName=0 Закупки/0.02.02 Керамика/ДЕГОН Стандарт&expand=buyPrice.currency"))
+    promises.push(fetchAllRows("https://api.moysklad.ru/api/remap/1.2/entity/product?filter=pathName=0 Закупки/Материалы для стеклопакетов&expand=buyPrice.currency"))
+    promises.push(fetchAllRows("https://api.moysklad.ru/api/remap/1.2/entity/product?filter=code=1060964;code=887970156141&expand=buyPrice.currency"))//Пятак, смола
     const results = await Promise.all(promises)
     for(const result of results){
         for(const material of result){
             materials[material.name] = {
                 meta: material.meta,
-                value: convertPrice(material.salePrices[0])
+                value: convertPrice(material.buyPrice)
             }
         }
     }
@@ -26,11 +27,11 @@ const getMaterials = async () => {
     updates['Материалы'] = Date.now()
 }
 const getPackagingMaterials = async () => {
-    const response = await fetchAllRows("https://api.moysklad.ru/api/remap/1.2/entity/product?filter=pathName=0 Закупки/0.02.09 Упаковка&expand=salePrices.currency")
+    const response = await fetchAllRows("https://api.moysklad.ru/api/remap/1.2/entity/product?filter=pathName=0 Закупки/0.02.09 Упаковка&expand=buyPrice.currency")
     SkladService.selfcost.packagingMaterials = response.reduce(( acc, curr ) => {
         acc[curr.name] = {
             meta: curr.meta,
-            value: convertPrice(curr.salePrices[0])
+            value: convertPrice(curr.buyPrice)
         }
         return acc
     }, {})
@@ -61,11 +62,11 @@ const getUnders = async () => {
     updates['Подстолья'] = Date.now()
 }
 const getColors = async () => {
-    const response = await fetchAllRows("https://api.moysklad.ru/api/remap/1.2/entity/product?filter=pathName=ТЕСТ/Цвета RAL (Только для продажи)&expand=salePrices.currency")
+    const response = await fetchAllRows("https://api.moysklad.ru/api/remap/1.2/entity/product?filter=pathName=ТЕСТ/Цвета RAL (Только для продажи)&expand=buyPrice.currency")
     SkladService.selfcost.colors = response.reduce(( acc, curr ) => {
         acc[curr.name] = {
             meta: curr.meta,
-            value: convertPrice(curr.salePrices[0])
+            value: convertPrice(curr.buyPrice)
         }
         return acc
     }, {})

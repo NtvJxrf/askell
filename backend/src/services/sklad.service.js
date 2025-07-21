@@ -39,17 +39,25 @@ export default class SkladService {
     }
     static ordersInWork = null
     static async getOrdersInWork(){
-        const orders = await Client.sklad('https://api.moysklad.ru/api/remap/1.2/entity/customerorder?filter=state=https://api.moysklad.ru/api/remap/1.2/entity/customerorder/metadata/states/86ef9098-927f-11ee-0a80-145a003ab7bf&expand=agent&limit=100')
-        
-        const result = []
-        orders.rows.forEach( order => {
-                const temp = {
-                    name: order.name,
-                    agent: order.agent.name,
-                    date: order.created,
-                    deliveryPlannedMoment: order.deliveryPlannedMoment
-                }
-        })
+        let load = {}
+        const orders = await Client.sklad('https://api.moysklad.ru/api/remap/1.2/entity/customerorder?filter=id=15308807-6077-11f0-0a80-165f0025199e&expand=positions.assortment&limit=100')
+        for(const order of orders.rows){
+            for(const position of order.positions.rows){
+                const attributes = position.assortment.attributes.reduce((acc, curr) => {
+                    acc[curr.name] = curr.value
+                    return acc
+                }, {})
+                const height = Number(attributes['Длина в мм'])
+                const width = Number(attributes['Ширина в мм'])
+                const pfs = Number(attributes['Кол- во полуфабрикатов'])
+                const cutsv1 = Number(attributes['Кол во вырезов 1 категорий/ шт'])
+                const cutsv2 = Number(attributes['Кол во вырезов 2 категорий/ шт'])
+                // const cutsv3 = Number(attributes['Кол во вырезов 3 категорий/ шт'])
+                const P = 2 * (height + width) / 1000
+                const time = attributes['тип станка обрабатывающий'] == 'Криволинейка' ? ((P * pfs * position.quantity / 0.22 + 10) + (cutsv1 * pfs * position.quantity * 20) + (cutsv2 * pfs * position.quantity * 40)) / 60 : 0
+                console.log(`Order: ${order.name}, Position: ${position.assortment.name}, time: ${time}`)
+            }
+        }
     }
 
     static async addPositionsToOrder(data) {
@@ -326,6 +334,9 @@ const smd = async (data, order, position, createdEntitys) => {
     const pzViz = await makeProductionTask(`Склад ВИЗ ПФ`, `Екатеринбург ВИЗ СГИ`, productionRows, order, true, true, print, createdEntitys)
     return result
 }
+const glassPacket = async (data, order, position, createdEntitys) => {
+
+}
 export const createProductionTask = async (id) =>{
         console.time('creatingProudctionTask')
         const order = await Client.sklad(`https://api.moysklad.ru/api/remap/1.2/entity/customerorder/${id}?expand=positions.assortment,invoicesOut&limit=100`)
@@ -336,6 +347,7 @@ export const createProductionTask = async (id) =>{
             'Керагласс': ceraglass,
             'Стекло': glass,
             'СМД': smd,
+            'Стеклопакет': glassPacket
         }
         const createdEntitys = { task: [], plan: [], product: [] }
         let selkResult = []
@@ -464,7 +476,7 @@ const makeProduct = async (data, name, isPF, createdEntitys) => {
     const { height, width, polishing, drills, zenk, cutsv1, cutsv2, cutsv3, tempered, color, print } = data.initialData
     const product = await Client.sklad('https://api.moysklad.ru/api/remap/1.2/entity/product', 'post', {
         name: `${isPF ? 'ПФ' : ''} ${name} (${height}х${width}${polishing ? ', Полировка' : ''}${tempered ? ', Закаленное' : ''}${cutsv1 ? `, Вырезы 1 кат.: ${cutsv1}` : ''}${cutsv2 ? `, Вырезы 2 кат.: ${cutsv2}` : ''}${cutsv3 ? `, Вырезы 3 кат.: ${cutsv3}` : ''}${drills ? `, Сверление: ${drills}` : ''}${zenk ? `, Зенкование: ${zenk}` : ''}${print ? ', Печать' : ''}${color ? `, ${color}` : ''})`,
-        attributes: generateProductAttributes(data.initialData)
+        attributes: generateProductAttributes(data.initialData, data.result.other)
     })
     createdEntitys.product.push(product)
     return product
@@ -511,9 +523,11 @@ const generateProductAttributes = (data) => {
             case 'drills': result.push({ meta: dictionary.productAttributes["Кол во сверлении/шт"], value: String(data.drills) }); break;
             case 'zenk': result.push({ meta: dictionary.productAttributes["Кол во зенковании/ шт"], value: String(data.zenk) }); break;
             case 'material': result.push({ meta: dictionary.productAttributes["Материал 1"], value: data.material }); break;
+            case 'materials': result.push({ meta: dictionary.productAttributes["Кол- во полуфабрикатов"], value: data.materials.length }); break;
             case 'material1': result.push({ meta: dictionary.productAttributes["Материал 1"], value: data.material1 }); break;
             case 'material2': result.push({ meta: dictionary.productAttributes["Материал 2"], value: data.material2 }); break;
             case 'material3': result.push({ meta: dictionary.productAttributes["Материал 3"], value: data.material3 }); break;
+            case 'material4': result.push({ meta: dictionary.productAttributes["Материал 4"], value: data.material4 }); break;
             case 'color': result.push({ meta: dictionary.productAttributes["Окрашивание"], value: data.color || '' }); break;
             case 'print': result.push({ meta: dictionary.productAttributes["Печать"], value: data.print ? 'Да' : '' }); break;
             case 'polishing': result.push({ meta: dictionary.productAttributes["Полировка"], value: data.polishing ? 'Да' : '' }); break;

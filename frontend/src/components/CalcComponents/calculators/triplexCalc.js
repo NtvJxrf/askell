@@ -26,7 +26,9 @@ const Calculate = (data, selfcost) => {
         materials: [],
         works: [],
         expenses: [],
-        other: {}
+        other: {shortThickness: []},
+        errors: [],
+        warnings: []
     }
     //Если цветная пленка (Все остальные кроме смарт и хамелеон), то считать выбранную + 'Пленка EVA Прозрачная 0,38мм'
     //Если смарт, то считать выбранную + 2 шт 'Пленка EVA Прозрачная 0,76мм'
@@ -89,6 +91,7 @@ const Calculate = (data, selfcost) => {
     const stanok = (shape && !cutsv1 && !cutsv2 && !cutsv3 && weight < 50) ? 'Прямолинейка' : 'Криволинейка'
     for(const material of materials){
         const thickness = Number(material.match(/(\d+(?:[.,]\d+)?)\s*мм/i)[1])
+        result.other.shortThickness.push(thickness)
         allThickness += thickness
         weight += 2.5 * S * thickness
         
@@ -144,8 +147,10 @@ const Calculate = (data, selfcost) => {
         type: 'Триплекс',
         productType: true,
         viz: true,
-        materialsandworks
+        materialsandworks,
+        materials
     }
+    console.log(result)
     return {
             key: crypto.randomUUID(),
             name,
@@ -159,7 +164,6 @@ const Calculate = (data, selfcost) => {
 
 export const constructWorks = (work, quantity, context) => {
     const { selfcost, result, stanok, thickness, allThickness } = context;
-    console.log(work, quantity)
     const res = (name, tableName) => {
         result.works.push({
             name,

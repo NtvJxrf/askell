@@ -95,7 +95,8 @@ const Calculate = (data, selfcost) => {
         productType: true,
         type: 'Керагласс',
         stanok,
-        viz: true
+        viz: true,
+        materials
     }
     console.log(result)
     return {

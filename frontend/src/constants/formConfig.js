@@ -46,7 +46,7 @@ const formConfigs = {
           options: [],
           rules: [{ required: true, message: 'Fill this field' }]
         },
-        { name: 'height', type: 'input', label: 'Длина, мм', rules: [{ required: true, message: 'Fill this field' }] },
+        { name: 'height', type: 'input', label: 'Высота, мм', rules: [{ required: true, message: 'Fill this field' }] },
         { name: 'width', type: 'input', label: 'Ширина, мм', rules: [{ required: true, message: 'Fill this field' }] },
         { name: 'drills', type: 'input', label: 'Сверление, шт' },
         { name: 'zenk', type: 'input', label: 'Зенкование, шт' },
@@ -137,8 +137,8 @@ const formConfigs = {
     },
     glasspacketForm: {
       commonFields: [
-        { name: 'height', type: 'input', label: 'Длина, мм', rules: [{ required: true, message: 'Fill this field' }] },
-        { name: 'width', type: 'input', label: 'Высота, мм', rules: [{ required: true, message: 'Fill this field' }] },
+        { name: 'height', type: 'input', label: 'Высота, мм', rules: [{ required: true, message: 'Fill this field' }] },
+        { name: 'width', type: 'input', label: 'Ширина, мм', rules: [{ required: true, message: 'Fill this field' }] },
         {
           name: 'gas',
           label: 'Газ',

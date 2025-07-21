@@ -47,6 +47,7 @@ const renderDetails = (record) => {
     const totalMaterials = materials.reduce((sum, item) => sum + (item.value || 0), 0)
     const totalWorks = works.reduce((sum, item) => sum + (item.value || 0), 0)
     const totalExpenses = expenses.reduce((sum, item) => sum + (item.value || 0), 0)
+
     return (
         <div style={{ display: 'flex', gap: 32 }}>
             {/* Левая колонка — расчеты */}
@@ -86,13 +87,29 @@ const renderDetails = (record) => {
             <div style={{ flex: 1 }}>
                 {renderLabeledDataBlock('Исходные данные', record.initialData, initialDataLabels)}
                 {renderLabeledDataBlock('Доп информация', result.other, otherLabels)}
+                {result.warnings.length > 0 && renderErrorsAndWarnings('Предупреждения', result.warnings)}
+                {result.errors.length > 0 && renderErrorsAndWarnings('Ошибки', result.errors)}
             </div>
         </div>
     );
 
 };
 
-
+const renderErrorsAndWarnings = (title, data) => {
+    return (
+        <>
+            <Title level={5}>{title}</Title>
+            {data.map((el, key) => {
+                return (
+                    <div key={key}>
+                        <Text >{el}</Text>
+                    </div>
+                );
+            })}
+            <Divider />
+        </>
+    );
+}
 
 const PositionDetailsModal = ({ open, onClose, record }) => {
     return (
@@ -141,7 +158,7 @@ const renderLabeledDataBlock = (title, data, dictionary = {}) => {
     );
 };
 
-const ignorLabels = ['ignor', 'calcType', 'productType', 'materialsandworks']
+const ignorLabels = ['ignor', 'calcType', 'productType', 'materialsandworks', 'materials']
 const initialDataLabels = {
     height: 'Высота',
     width: 'Ширина',

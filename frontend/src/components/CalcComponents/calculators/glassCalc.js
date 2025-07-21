@@ -81,7 +81,8 @@ const Calculate = (data, selfcost) => {
         weight,
         type: 'Стекло',
         productType: true,
-        viz: (color || print) ? true : false
+        viz: (color || print) ? true : false,
+        materials: [material]
     }
     return {
         key: crypto.randomUUID(),

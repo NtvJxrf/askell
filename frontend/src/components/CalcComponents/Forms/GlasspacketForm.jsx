@@ -104,7 +104,7 @@ const GlasspacketForm = () => {
         {materialColumns.map((column, colIndex) => (
           <div key={colIndex} style={{ flex: 1 }}>
             {column.map(field => (
-              <div key={field.name || field.label} style={{ marginBottom: 16, maxWidth: 200 }}>
+              <div key={field.name || field.label} style={{ marginBottom: 16, maxWidth: 150 }}>
                 {renderField(field)}
               </div>
             ))}

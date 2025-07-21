@@ -1,5 +1,6 @@
 import triplexcalulator from './triplexCalc.js'
 import { constructWorks } from './triplexCalc.js'
+import sailEffectLimits from '../../../constants/sailEffectLimits.js'
 const Calculate = (data, selfcost, triplexArray) => {
     console.log(data)
     console.log(selfcost)
@@ -8,7 +9,7 @@ const Calculate = (data, selfcost, triplexArray) => {
         tempered1, tempered2, tempered3,
         polishing1, polishing2, polishing3,
         blunting1, blunting2, blunting3,
-        height, width, gas, plane1, plane2, customertype, rounding } = data
+        height, width, gas = 'Воздух', plane1, plane2, customertype, rounding } = data
     const materials = [
                     [material1, tempered1, polishing1, blunting1],
                     [material2, tempered2, polishing2, blunting2],
@@ -19,18 +20,34 @@ const Calculate = (data, selfcost, triplexArray) => {
     const S = (height * width) / 1000000
     const P = 2 * (height + width) / 1000
     let weight = 0
-    let name = `Справедливый по цене стеклопакет`
     let allThickness = 0
     let allPlaneThickness = 0
     const result = {
         materials: [],
         works: [],
         expenses: [],
-        other: {}
+        other: {},
+        errors: [],
+        warnings: []
     }
     let viz = false
+    const sailEffectIsOk = (glassThickness, area) => {
+        let planeThickness = Number(planes[0].match(/(\d+(?:[.,]\d+)?)\s*мм/i)[1])
+        planeThickness > 18 && (planeThickness = 18)
+        const key = `${planeThickness}|${glassThickness}|${materials[0][1]}`;
+        if (!(key in sailEffectLimits)) {
+            result.warnings.push(`Нет данных для парусности ${key}`)
+            return
+        }
+        const maxArea =  sailEffectLimits[key];
+        const res = area <= maxArea
+        if(!res){
+            result.other.sailEffect = false
+            result.warnings.push(`Парусность выше нормы, площадь стекла: ${area}, максимально допустимая: ${maxArea}`)
+        }
+    }
+    let sailEffect = false
     for(const material of materials){
-        if(!material[0]) continue
         if(material[0].toLowerCase().includes('триплекс')){
             viz = true
             const triplexObject = triplexArray.find(el => el.name == material[0])
@@ -41,11 +58,19 @@ const Calculate = (data, selfcost, triplexArray) => {
                 string: `Себестоимость материалов и работ триплекса`,
                 formula: 'Себестоимость материалов и работ триплекса'
             });
+            if(!sailEffect){
+                sailEffectIsOk(triplexcalc.result.other.shortThickness.join('+'), S)
+                sailEffect = true
+            }
             allThickness += triplexcalc.result.other.allThickness
             weight +=triplexcalc.result.other.weight
             continue
         }
         const thickness = Number(material[0].match(/(\d+(?:[.,]\d+)?)\s*мм/i)[1])
+        if(!sailEffect){
+            sailEffectIsOk(thickness, S)
+            sailEffect = true
+        }
         allThickness += thickness
         weight += 2.5 * S * thickness
         result.materials.push({
@@ -86,12 +111,14 @@ const Calculate = (data, selfcost, triplexArray) => {
             formula: 'Цена за влагопоглатитель (сито) * Площадь * 15 * Толщина всех рамок / Перевод в кг'
         });
     }
-    gas && result.materials.push({
-            name: gas,
-            value: selfcost.materials[gas].value * S * allPlaneThickness,
-            string: `${selfcost.materials[gas].value} * ${S} * ${allPlaneThickness}`,
-            formula: 'Цена за м² * Площадь * Толщина всех рамок'
-        });
+    weight += P * 12 * allThickness / 1000 //Вес вторичного герметика
+    const name = `СПО, ${allThickness}, ${shortenGlassName(materials[0][0])}, ${Number(plane1.match(/(\d+(?:[.,]\d+)?)\s*мм/i)[1])}(${gas}), ${shortenGlassName(materials[1][0])}${materials[2] ? `, ${Number(plane2.match(/(\d+(?:[.,]\d+)?)\s*мм/i)[1])}(${gas}), ${shortenGlassName(materials[2][0])}` : ''}, (${height}*${width})`
+    // gas && result.materials.push({
+    //     name: gas,
+    //     value: selfcost.materials[gas].value * S * allPlaneThickness,
+    //     string: `${selfcost.materials[gas].value} * ${S} * ${allPlaneThickness}`,
+    //     formula: 'Цена за м² * Площадь * Толщина всех рамок'
+    // });
     const context = { selfcost, result, allThickness, planes, P};
     constructWorks('sealing', planes.length, context);
     constructWorks('assembleGlasspacket', planes.length, context);
@@ -129,7 +156,8 @@ const Calculate = (data, selfcost, triplexArray) => {
         weight,
         productType: true,
         type: 'Стеклопакет',
-        viz
+        viz,
+        materials
     }
     console.log(result)
     return {
@@ -163,5 +191,23 @@ function constructMaterials(context){
     //     string: `${selfcost.materials['Термоэтикетка'].value} * 2`,
     //     formula: 'Цена термоэтикетки 2шт'
     // });
+}
+export function shortenGlassName(fullName) {
+  const adjectives = ['зеркальное', 'осветленное', 'тонированное', 'узорчатое'];
+
+  const match = fullName.match(/^(?:Стекло|Зеркало)\s(.+?),\s*(\d+)\s*мм$/i);
+  if (!match) return fullName;
+
+  let [, name, thickness] = match;
+
+  const nameWords = name.split(/\s+/);
+  const cleanedWords = nameWords.filter(word => {
+    const lower = word.toLowerCase();
+    return !adjectives.includes(lower);
+  });
+
+  const cleanedName = cleanedWords.join(' ').trim();
+
+  return `${cleanedName} ${thickness}`;
 }
 export default Calculate

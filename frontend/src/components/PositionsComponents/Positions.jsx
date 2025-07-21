@@ -39,10 +39,12 @@ const Row = props => {
         transform,
         transition,
         isDragging,
-    } = useSortable({ id: props['data-row-key'] });
+        rowStyles = {}, // получаем проп с инлайн стилями
+    } = props;
 
     const style = {
         ...props.style,
+        ...rowStyles[props['data-row-key']],  // добавляем фон строки
         transform: CSS.Translate.toString(transform),
         transition,
         ...(isDragging ? { position: 'relative', zIndex: 1000 } : {}),
@@ -65,6 +67,23 @@ const Positions = () => {
     const [selectedRecord, setSelectedRecord] = useState(null);
     const [pagination, setPagination] = useState({ current: 1, pageSize: 10 });
 
+    // Создаём объект с инлайн стилями для каждой строки по ключу
+    const rowKeyToStyle = useMemo(() => {
+        const styles = {};
+        positions.forEach(record => {
+            const hasErrors = record.result?.errors?.length > 0;
+            const hasWarnings = record.result?.warnings?.length > 0;
+            if (hasErrors) {
+                styles[record.key] = { backgroundColor: '#ffe6e6' }; // светло-красный
+            } else if (hasWarnings) {
+                styles[record.key] = { backgroundColor: '#fff4e5' }; // светло-оранжевый
+            } else {
+                styles[record.key] = {}; // прозрачный
+            }
+        });
+        return styles;
+    }, [positions]);
+
     const onDragEnd = ({ active, over }) => {
         if (active.id !== over?.id) {
             const oldIndex = positions.findIndex(item => item.key === active.id);
@@ -81,6 +100,7 @@ const Positions = () => {
     const handleSelectionChange = (newSelectedKeys) => {
         dispatch(setSelectedRowKeys(newSelectedKeys));
     };
+
     const handleDelete = record => {
         const updated = positions.filter(item => item.key !== record.key);
         dispatch(setPositions(updated));
@@ -130,14 +150,20 @@ const Positions = () => {
             ),
         },
     ];
-    console.log('render positions')
+
+    console.log('render positions');
+
     return (
         <>
             <DndContext modifiers={[restrictToVerticalAxis]} onDragEnd={onDragEnd}>
                 <SortableContext items={positions.map(i => i.key)} strategy={verticalListSortingStrategy}>
                     <Table
                         rowKey="key"
-                        components={{ body: { row: Row } }}
+                        components={{
+                            body: {
+                                row: (props) => <Row {...props} rowStyles={rowKeyToStyle} />
+                            }
+                        }}
                         columns={columns}
                         dataSource={positions}
                         pagination={{
@@ -148,7 +174,7 @@ const Positions = () => {
                             position: ['topRight'],
                             onChange: (page, pageSize) => setPagination({ current: page, pageSize }),
                         }}
-                        rowSelection={{ selectedRowKeys, onChange: handleSelectionChange}}
+                        rowSelection={{ selectedRowKeys, onChange: handleSelectionChange }}
                         expandable={{
                             expandedRowRender: record => (
                                 <Space size="middle">
@@ -168,9 +194,9 @@ const Positions = () => {
                             return (
                                 <Table.Summary.Row>
                                     <Table.Summary.Cell>Итого</Table.Summary.Cell>
-                                        <Table.Summary.Cell>
-                                            <b>{totalAmount.toFixed(2)}</b>
-                                        </Table.Summary.Cell>
+                                    <Table.Summary.Cell>
+                                        <b>{totalAmount.toFixed(2)}</b>
+                                    </Table.Summary.Cell>
                                 </Table.Summary.Row>
                             );
                         }}
@@ -182,4 +208,5 @@ const Positions = () => {
         </>
     );
 };
+
 export default React.memo(Positions);

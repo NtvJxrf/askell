@@ -15,7 +15,9 @@ const Calculate = (data, selfcost) => {
         materials: [],
         works: [],
         expenses: [],
-        other: {}
+        other: {},
+        errors: [],
+        warnings: []
     }
     let weight = 0
     let name = `Керагласс, ${materials.join(' + ')}, (${height}х${width}${cutsv1 ? `, Вырезы 1 кат.: ${cutsv1}` : ''}${cutsv2 ? `, Вырезы 2 кат.: ${cutsv2}` : ''}${cutsv3 ? `, Вырезы 3 кат.: ${cutsv3}` : ''})`

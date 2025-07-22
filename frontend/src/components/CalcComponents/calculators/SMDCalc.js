@@ -6,7 +6,9 @@ const Calculate = (data, selfcost) => {
         materials: [],
         works: [],
         expenses: [],
-        other: {}
+        other: {},
+        errors: [],
+        warnings: []
     }
     const S = (height * width) / 1000000
     const P = ((height + width) * 2) / 1000

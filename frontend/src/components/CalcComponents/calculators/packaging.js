@@ -27,6 +27,8 @@ const packaging = (positions) => {
         materials: [],
         works: [],
         expenses: [],
+        errors: [],
+        warnings: []
     }
     let name = ''
     const larger = Math.max(temp.maxHeight, temp.maxWidth)

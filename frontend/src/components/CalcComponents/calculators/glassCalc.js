@@ -25,6 +25,8 @@ const Calculate = (data, selfcost) => {
         materials: [],
         works: [],
         expenses: [],
+        errors: [],
+        warnings: []
     }
 
     result.materials.push({

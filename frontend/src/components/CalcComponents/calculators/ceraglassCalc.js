@@ -26,7 +26,7 @@ const Calculate = (data, selfcost) => {
         value: selfcost.colors[color].value * 0.3,
         string: `${selfcost.colors[color].value} * 0.3`,
         formula: 'Цена * 0.3'
-    });//ДОБАВИТЬ РАБОТУ ОКРАШИВАНИЕ
+    });
     result.materials.push({
         name: 'Эпоксидная смола',
         value: selfcost.materials[`Эпоксидная смола`].value * Math.max(0.17 * S_all, 0.5),
@@ -63,6 +63,15 @@ const Calculate = (data, selfcost) => {
             constructWorks('polishing', P, context);
             continue
         }
+        const sheetW = 1000;
+        const sheetH = 3000;
+        const parts = [
+            { w: 800, h: 1000 },
+            { w: 300, h: 1000 },
+            { w: 1001, h: 1001 },
+        ];
+        // const sheetsNeeded = countSheets(sheetW, sheetH, parts, true); // с поворотом
+        // console.log("Листов нужно:", sheetsNeeded);
         result.materials.push({
             name: material,
             value: selfcost.materials[material].value * S * selfcost.pricesAndCoefs['Коэффициент обрези керамика'],
@@ -111,5 +120,71 @@ const Calculate = (data, selfcost) => {
         result
     }
 }
+
+function countSheets(sheetW, sheetH, parts, allowRotation = false) {
+  const cloneParts = parts.map(p => ({ ...p }));
+  let remaining = [...cloneParts];
+  let sheets = 0;
+
+  while (remaining.length > 0) {
+    sheets++;
+    const result = fitInSheet(sheetW, sheetH, remaining, allowRotation);
+    remaining = result.remaining;
+  }
+
+  return sheets;
+}
+
+function fitInSheet(sheetW, sheetH, parts, allowRotation) {
+  let spaces = [{ x: 0, y: 0, w: sheetW, h: sheetH }];
+  const fitted = [];
+  const unfitted = [];
+
+  for (const part of parts) {
+    let placed = false;
+
+    for (let i = 0; i < spaces.length; i++) {
+      const space = spaces[i];
+      const variants = allowRotation
+        ? [
+            { w: part.w, h: part.h },
+            { w: part.h, h: part.w }
+          ]
+        : [{ w: part.w, h: part.h }];
+
+      for (const v of variants) {
+        if (v.w <= space.w && v.h <= space.h) {
+          // Размещаем
+          part.x = space.x;
+          part.y = space.y;
+          part.w = v.w;
+          part.h = v.h;
+          fitted.push(part);
+
+          // Разбиваем свободное пространство
+          const newSpaces = [
+            { x: space.x + v.w, y: space.y, w: space.w - v.w, h: v.h },
+            { x: space.x, y: space.y + v.h, w: space.w, h: space.h - v.h }
+          ];
+
+          // Заменяем использованное пространство
+          spaces.splice(i, 1);
+          spaces.push(...newSpaces.filter(s => s.w > 0 && s.h > 0));
+          placed = true;
+          break;
+        }
+      }
+
+      if (placed) break;
+    }
+
+    if (!placed) {
+      unfitted.push(part);
+    }
+  }
+
+  return { fitted, remaining: unfitted };
+}
+
 
 export default Calculate

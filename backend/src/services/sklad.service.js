@@ -39,14 +39,21 @@ export default class SkladService {
     }
     static ordersInWork = null
     static async getOrdersInWork(){
+        console.time('finish')
         let load = {}
-        const orders = await Client.sklad('https://api.moysklad.ru/api/remap/1.2/entity/customerorder?filter=id=15308807-6077-11f0-0a80-165f0025199e&expand=positions.assortment&limit=100')
+        let pryamo = 0
+        let krivo = 0
+        const orders = await Client.sklad('https://api.moysklad.ru/api/remap/1.2/entity/customerorder?filter=id=07e708e2-46ad-11f0-0a80-0b8b000b1dfc&expand=positions.assortment&limit=100')
         for(const order of orders.rows){
             for(const position of order.positions.rows){
-                const attributes = position.assortment.attributes.reduce((acc, curr) => {
+                const attributes = position.assortment?.attributes?.reduce((acc, curr) => {
                     acc[curr.name] = curr.value
                     return acc
                 }, {})
+                if(!attributes){
+                    console.log(`Пропустили позицию ${position.assortment.name} в заказе ${order.name}`)
+                    continue
+                }
                 const height = Number(attributes['Длина в мм'])
                 const width = Number(attributes['Ширина в мм'])
                 const pfs = Number(attributes['Кол- во полуфабрикатов'])
@@ -54,10 +61,16 @@ export default class SkladService {
                 const cutsv2 = Number(attributes['Кол во вырезов 2 категорий/ шт'])
                 // const cutsv3 = Number(attributes['Кол во вырезов 3 категорий/ шт'])
                 const P = 2 * (height + width) / 1000
-                const time = attributes['тип станка обрабатывающий'] == 'Криволинейка' ? ((P * pfs * position.quantity / 0.22 + 10) + (cutsv1 * pfs * position.quantity * 20) + (cutsv2 * pfs * position.quantity * 40)) / 60 : 0
-                console.log(`Order: ${order.name}, Position: ${position.assortment.name}, time: ${time}`)
+                const time = attributes['тип станка обрабатывающий'] == 'Криволинейка' 
+                ? (((P * pfs * position.quantity / 0.22) + 10) + (cutsv1 * pfs * position.quantity * 20) + (cutsv2 * pfs * position.quantity * 40)) / 60 || 0
+                : (((P * pfs * position.quantity / 0.8) + 1) + (cutsv1 * pfs * position.quantity * 20) + (cutsv2 * pfs * position.quantity * 40)) / 60 * 2.5|| 0
+                console.log(`Order: ${order.name}, Position: ${position.assortment.name},Stanok: ${attributes['тип станка обрабатывающий']}, time: ${time}`)
+                attributes['тип станка обрабатывающий'] == 'Криволинейка' ? krivo += time : pryamo += time
             }
         }
+        console.log(pryamo)
+        console.log(krivo)
+        console.timeEnd('finish')
     }
 
     static async addPositionsToOrder(data) {

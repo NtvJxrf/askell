@@ -63,20 +63,22 @@ const Calculate = (data, selfcost) => {
             constructWorks('polishing', P, context);
             continue
         }
-        const sheetW = 1000;
-        const sheetH = 3000;
-        const parts = [
-            { w: 800, h: 1000 },
-            { w: 300, h: 1000 },
-            { w: 1001, h: 1001 },
-        ];
-        // const sheetsNeeded = countSheets(sheetW, sheetH, parts, true); // с поворотом
-        // console.log("Листов нужно:", sheetsNeeded);
+        const sheetWidth = selfcost.materials[material].w, sheetHeight = selfcost.materials[material].l
+        const S_cera = sheetHeight * sheetWidth / 1000000
+        const parts = widths.map((w, i) => ({
+          w,
+          h: heights[i]
+        }));
+        let count = countSheets(sheetWidth, sheetHeight, parts)
+        if(typeof count === 'string'){
+          result.errors.push(count)
+          count = 999
+        }
         result.materials.push({
             name: material,
-            value: selfcost.materials[material].value * S * selfcost.pricesAndCoefs['Коэффициент обрези керамика'],
-            string: `${selfcost.materials[material].value} * ${S} * ${selfcost.pricesAndCoefs['Коэффициент обрези керамика']}`,
-            formula: 'Цена * S * Коэффициент обрези керамика'
+            value: selfcost.materials[material].value * S *  (1 + (1 - S_all / (count * S_cera)) + selfcost.pricesAndCoefs[`Коэффициент брака керамика`]),
+            string: `${selfcost.materials[material].value} * ${S} * ${(1 + (1 - S_all / (count * S_cera)) + selfcost.pricesAndCoefs[`Коэффициент брака керамика`])}`,
+            formula: 'Цена * S * (Коэффициент обрези керамика + Коэффициент брака керамика)'
         });
         constructWorks('cuttingCera', S, context);
     }
@@ -121,70 +123,46 @@ const Calculate = (data, selfcost) => {
     }
 }
 
-function countSheets(sheetW, sheetH, parts, allowRotation = false) {
-  const cloneParts = parts.map(p => ({ ...p }));
-  let remaining = [...cloneParts];
-  let sheets = 0;
+function countSheets(sheetWidth, sheetHeight, parts) {
+  console.log(sheetWidth, sheetHeight, parts)
+  // сортируем по убыванию высоты
+  const items = parts.slice().sort((a, b) => b.h - a.h);
+  const sheets = [];
+  let error = null
+  items.forEach(({ w, h }, idx) => {
+    if (w > sheetWidth || h > sheetHeight) {
+      error =  `Деталь с размерами ${w}×${h} не помещается на лист ${sheetWidth}×${sheetHeight}`
+    }
 
-  while (remaining.length > 0) {
-    sheets++;
-    const result = fitInSheet(sheetW, sheetH, remaining, allowRotation);
-    remaining = result.remaining;
-  }
-
-  return sheets;
-}
-
-function fitInSheet(sheetW, sheetH, parts, allowRotation) {
-  let spaces = [{ x: 0, y: 0, w: sheetW, h: sheetH }];
-  const fitted = [];
-  const unfitted = [];
-
-  for (const part of parts) {
     let placed = false;
+    for (const sheet of sheets) {
+      const usedHeight = sheet.shelves.reduce((sum, sh) => sum + sh.height, 0);
 
-    for (let i = 0; i < spaces.length; i++) {
-      const space = spaces[i];
-      const variants = allowRotation
-        ? [
-            { w: part.w, h: part.h },
-            { w: part.h, h: part.w }
-          ]
-        : [{ w: part.w, h: part.h }];
-
-      for (const v of variants) {
-        if (v.w <= space.w && v.h <= space.h) {
-          // Размещаем
-          part.x = space.x;
-          part.y = space.y;
-          part.w = v.w;
-          part.h = v.h;
-          fitted.push(part);
-
-          // Разбиваем свободное пространство
-          const newSpaces = [
-            { x: space.x + v.w, y: space.y, w: space.w - v.w, h: v.h },
-            { x: space.x, y: space.y + v.h, w: space.w, h: space.h - v.h }
-          ];
-
-          // Заменяем использованное пространство
-          spaces.splice(i, 1);
-          spaces.push(...newSpaces.filter(s => s.w > 0 && s.h > 0));
+      // пытаемся положить на существующие полки
+      for (const shelf of sheet.shelves) {
+        if (w <= sheetWidth - shelf.x && h <= shelf.height) {
+          shelf.x += w;
           placed = true;
           break;
         }
       }
-
       if (placed) break;
+
+      // создаём новую полку, если по высоте помещается
+      if (usedHeight + h <= sheetHeight) {
+        sheet.shelves.push({ x: w, height: h });
+        placed = true;
+        break;
+      }
     }
 
+    // если нигде не влезло — новый лист
     if (!placed) {
-      unfitted.push(part);
+      sheets.push({ shelves: [{ x: w, height: h }] });
     }
-  }
-
-  return { fitted, remaining: unfitted };
+  });
+  if(error) return error
+  return sheets.length;
 }
-
 
 export default Calculate

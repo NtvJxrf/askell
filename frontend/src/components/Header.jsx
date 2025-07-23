@@ -6,7 +6,7 @@ import axios from 'axios';
 const { Header } = Layout;
 const items = [
     { label: <Link to="/calculators">Калькуляторы</Link>, key: '/calculators' },
-    { label: <Link to="/proccessing">Производство</Link>, key: '/proccessing' },
+    { label: <Link to="/production">Производство</Link>, key: '/production' },
     { label: <Link to="/materials">Материалы</Link>, key: '/materials' },
     { label: <Link to="/settings">Настройки</Link>, key: '/settings' },
     { label: <Link to="/pricesandcoefs">Цены и коэфиценты</Link>, key: '/pricesandcoefs' },

@@ -17,9 +17,13 @@ const getMaterials = async () => {
     const results = await Promise.all(promises)
     for(const result of results){
         for(const material of result){
+            const l = material?.attributes?.find(el => el.name === 'Длина в мм')?.value
+            const w = material?.attributes?.find(el => el.name === 'Ширина в мм')?.value
             materials[material.name] = {
                 meta: material.meta,
-                value: convertPrice(material.buyPrice)
+                value: convertPrice(material.buyPrice),
+                l: material.name.toLowerCase().includes('плита') ? +l : 0,
+                w: material.name.toLowerCase().includes('плита') ? +w : 0
             }
         }
     }
@@ -175,6 +179,13 @@ async function fetchAllRows(urlBase) {
   return allRows;
 }
 
+setInterval(async () => {
+    try {
+        await SkladService.getOrdersInWork()
+    } catch (err) {
+        console.error('getOrdersInWork error:', err)
+    }
+}, 300_000)
 
 setInterval(async () => {
     try {

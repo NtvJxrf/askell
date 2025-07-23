@@ -7,6 +7,7 @@ import Processingprocess from "../databases/models/sklad/processingprocesses.mod
 import amqp from 'amqplib';
 import crypto from 'crypto'
 import {generateSmdMaterials} from '../utils/generateSmdMaterials.js'
+import { create } from "domain"
 export const dictionary = {
     productFolders: {
         glassGuard: {
@@ -37,37 +38,60 @@ export default class SkladService {
     static selfcost = {
         pricesAndCoefs: {}
     }
-    static ordersInWork = null
+    static ordersInWork = {}
     static async getOrdersInWork(){
         console.time('finish')
-        let load = {}
+        let load = []
         let pryamo = 0
         let krivo = 0
-        const orders = await Client.sklad('https://api.moysklad.ru/api/remap/1.2/entity/customerorder?filter=id=07e708e2-46ad-11f0-0a80-0b8b000b1dfc&expand=positions.assortment&limit=100')
-        for(const order of orders.rows){
+        const orders = await fetchAllRows('https://api.moysklad.ru/api/remap/1.2/entity/customerorder?filter=state.name=Подготовить (переделать) чертежи;state.name=В работе;state.name=Чертежи подготовлены, прикреплены;state.name=Поставлено в производство&expand=positions.assortment')
+        for(const order of orders){
             for(const position of order.positions.rows){
                 const attributes = position.assortment?.attributes?.reduce((acc, curr) => {
                     acc[curr.name] = curr.value
                     return acc
                 }, {})
-                if(!attributes){
-                    console.log(`Пропустили позицию ${position.assortment.name} в заказе ${order.name}`)
-                    continue
-                }
+                if(!attributes) continue
                 const height = Number(attributes['Длина в мм'])
                 const width = Number(attributes['Ширина в мм'])
-                const pfs = Number(attributes['Кол- во полуфабрикатов'])
-                const cutsv1 = Number(attributes['Кол во вырезов 1 категорий/ шт'])
-                const cutsv2 = Number(attributes['Кол во вырезов 2 категорий/ шт'])
+                const pfs = Number(attributes['Кол- во полуфабрикатов']) || 1
+                const cutsv1 = Number(attributes['Кол во вырезов 1 категорий/ шт']) || 0
+                const cutsv2 = Number(attributes['Кол во вырезов 2 категорий/ шт']) || 0
                 // const cutsv3 = Number(attributes['Кол во вырезов 3 категорий/ шт'])
                 const P = 2 * (height + width) / 1000
-                const time = attributes['тип станка обрабатывающий'] == 'Криволинейка' 
+                const stanok = attributes['тип станка обрабатывающий']
+                const time = stanok == 'Криволинейка' 
                 ? (((P * pfs * position.quantity / 0.22) + 10) + (cutsv1 * pfs * position.quantity * 20) + (cutsv2 * pfs * position.quantity * 40)) / 60 || 0
                 : (((P * pfs * position.quantity / 0.8) + 1) + (cutsv1 * pfs * position.quantity * 20) + (cutsv2 * pfs * position.quantity * 40)) / 60 * 2.5|| 0
-                console.log(`Order: ${order.name}, Position: ${position.assortment.name},Stanok: ${attributes['тип станка обрабатывающий']}, time: ${time}`)
-                attributes['тип станка обрабатывающий'] == 'Криволинейка' ? krivo += time : pryamo += time
+                load.push({
+                    created: order.created,
+                    position: position.assortment.name,
+                    stanok,
+                    productionTime: time,
+                    name: order.name
+                })
+                stanok == 'Криволинейка' ? krivo += time : pryamo += time
             }
         }
+        const res = load.filter(el => el.productionTime).sort((a, b) => new Date(a.created) - new Date(b.created))
+        const [krivArr, pryamArr, otherArr] = res.reduce(
+            ([kriv, pryam, other], el) => {
+                if (el.stanok === 'Криволинейка') kriv.push(el);
+                else if(el.stanok === 'Прямолинейка') pryam.push(el)
+                else other.push(el)
+                return [kriv, pryam, other];
+            },
+            [[], [], []]
+        );
+        SkladService.ordersInWork.kriv = krivArr
+        SkladService.ordersInWork.pryam = pryamArr
+        SkladService.ordersInWork.other = otherArr
+
+        SkladService.ordersInWork.pryamo = pryamo
+        SkladService.ordersInWork.krivo = krivo
+        console.log(krivArr.length)
+        console.log(pryamArr.length)
+        console.log(otherArr.length)
         console.log(pryamo)
         console.log(krivo)
         console.timeEnd('finish')
@@ -597,6 +621,33 @@ const deleteEntitys = async (deletedPositions) => {
         });
         Client.sklad(`https://api.moysklad.ru/api/remap/1.2/entity/product/delete`, "post", recordsToDelete.map(el => {return {meta: el.meta}}));
     }
+}
+async function fetchAllRows(urlBase) {
+  const limit = 100;
+  const firstUrl = `${urlBase}&limit=${limit}&offset=0`;
+  const firstResponse = await Client.sklad(firstUrl);
+
+  if (!firstResponse.rows || firstResponse.rows.length === 0) {
+    return [];
+  }
+
+  const allRows = [...firstResponse.rows];
+  const totalSize = firstResponse.meta?.size || allRows.length;
+
+  const requests = [];
+  for (let offset = limit; offset < totalSize; offset += limit) {
+    const url = `${urlBase}&limit=${limit}&offset=${offset}`;
+    requests.push(Client.sklad(url));
+  }
+
+  const responses = await Promise.all(requests);
+  for (const res of responses) {
+    if (res.rows) {
+      allRows.push(...res.rows);
+    }
+  }
+
+  return allRows;
 }
 async function startWorker() {
     const conn = await amqp.connect('amqp://admin:%5EjZG1L%2Fi@localhost');

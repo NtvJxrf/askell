@@ -27,4 +27,7 @@ export default class MoySkladController{
         const result = await initSkladAdditions()
         res.sendStatus(200)
     }
+    static async ordersInWork(req, res){
+        res.send(SkladService.ordersInWork)
+    }
 }

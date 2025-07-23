@@ -17,5 +17,7 @@ router
 router
     .route('/updateSelfcosts')
     .post(MoySkladController.updateSelfcosts)
-    
+router
+    .route('/ordersInWork')
+    .get(MoySkladController.ordersInWork)
 export default router

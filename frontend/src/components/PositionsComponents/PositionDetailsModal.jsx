@@ -158,7 +158,7 @@ const renderLabeledDataBlock = (title, data, dictionary = {}) => {
     );
 };
 
-const ignorLabels = ['ignor', 'calcType', 'productType', 'materialsandworks', 'materials']
+const ignorLabels = ['ignor', 'calcType', 'productType', 'materialsandworks', 'materials', 'shortThickness']
 const initialDataLabels = {
     height: 'Высота',
     width: 'Ширина',

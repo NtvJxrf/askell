@@ -146,13 +146,6 @@ const formConfigs = {
           options: [],
         },
         {
-          name: 'rounding',
-          label: 'Округление',
-          type: 'select',
-          options: ['Округление до 0.5', 'Умножить на 2'],
-          rules: [{ required: true, message: 'Fill this field' }]
-        },
-        {
           name: 'customertype',
           label: 'Тип клиента',
           type: 'select',

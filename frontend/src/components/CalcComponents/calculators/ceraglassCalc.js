@@ -59,8 +59,7 @@ const Calculate = (data, selfcost) => {
             constructWorks('cutting1', S, context);
             constructWorks('cutting2', S, context);
             constructWorks('tempered', S, context);
-            constructWorks('grinding', P, context);
-            constructWorks('polishing', P, context);
+            constructWorks('curvedProcessing', P, context);
             continue
         }
         const sheetWidth = selfcost.materials[material].w, sheetHeight = selfcost.materials[material].l
@@ -82,8 +81,7 @@ const Calculate = (data, selfcost) => {
         });
         constructWorks('cuttingCera', S, context);
     }
-    constructWorks('grinding', P_all, context);
-    constructWorks('polishing', P_all, context);
+    constructWorks('curvedProcessing', P_all, context);
     constructWorks('lamination', S_all, context);
     constructWorks('washing1', S_all * heights.length, context);
     cutsv1 && constructWorks('cutsv1', cutsv1 * materials.length, context);
@@ -91,18 +89,24 @@ const Calculate = (data, selfcost) => {
     cutsv3 && constructWorks('cutsv3', cutsv3 * materials.length, context);
     color && constructWorks('color', S_all, context);
     const [materialsandworks, commercialExpenses, householdExpenses, workshopExpenses] = constructExpenses(result, selfcost)
-    const price = (materialsandworks + commercialExpenses + householdExpenses + workshopExpenses) * selfcost.pricesAndCoefs[`Керагласс ${customertype}`]
+    const price = (materialsandworks + commercialExpenses + householdExpenses + workshopExpenses) * selfcost.pricesAndCoefs[`Керагласс ${customertype}`] + (under && selfcost.unders[under].value || 0)
     result.finalPrice = [{
         name: 'Себестоимость',
         value: materialsandworks + commercialExpenses + householdExpenses + workshopExpenses,
         string: `${(materialsandworks).toFixed(2)} + ${(commercialExpenses + householdExpenses + workshopExpenses).toFixed(2)}`,
-        formula: `(Материалы и работы) + Расходы`
+        formula: `(Материалы и работы) + Расходы + Подстолье`
     },{
         name: 'Наценка',
         value: selfcost.pricesAndCoefs[`Керагласс ${customertype}`],
         string: selfcost.pricesAndCoefs[`Керагласс ${customertype}`],
         formula: `Наценка для типа клиента ${selfcost.pricesAndCoefs[`Керагласс ${customertype}`]}`
     }]
+    under && result.finalPrice.push({
+        name: 'Подстолье',
+        value: selfcost.unders[under].value,
+        string: selfcost.unders[under].value,
+        formula: `Цена подстолья`
+    })
     result.other = {
         S: S_all,
         productType: true,
@@ -131,7 +135,7 @@ function countSheets(sheetWidth, sheetHeight, parts) {
   let error = null
   items.forEach(({ w, h }, idx) => {
     if (w > sheetWidth || h > sheetHeight) {
-      error =  `Деталь с размерами ${w}×${h} не помещается на лист ${sheetWidth}×${sheetHeight}`
+      error = `Деталь с размерами ${w}×${h} не помещается на лист ${sheetWidth}×${sheetHeight}`
     }
 
     let placed = false;

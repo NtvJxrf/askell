@@ -1,3 +1,4 @@
+import { shortenGlassName } from "./glasspacketCalc.js"
 const Calculate = (data, selfcost) => {
     console.log(selfcost)
     console.log(data)
@@ -7,16 +8,11 @@ const Calculate = (data, selfcost) => {
     addTape && tapes.push(addTape)
     let name = `Триплекс, ${materials.join(' + ')}, (${height}х${width}${polishing ? ', Полировка' : ''}${tempered ? ', Закаленное' : ''}${cutsv1 ? `, Вырезы 1 кат.: ${cutsv1}` : ''}${cutsv2 ? `, Вырезы 2 кат.: ${cutsv2}` : ''}${cutsv3 ? `, Вырезы 3 кат.: ${cutsv3}` : ''}${drills ? `, Сверление: ${drills}` : ''}${zenk ? `, Зенкование: ${zenk}` : ''}${print ? ', Печать' : ''})`
     let S = (height * width) / 1000000
-    if(S < 0.5){
+    if(S < 0.5)
         switch (rounding){
-            case 'Округление до 0.5':
-                S = 0.5
-            break
-            case 'Умножить на 2':
-                S = S * 2
-            break
+            case 'Округление до 0.5': S = 0.5; break
+            case 'Умножить на 2': S = S * 2; break
         }
-    }
     const P = 2 * (height + width) / 1000
     let allThickness = 0
     let weight = 0
@@ -26,10 +22,11 @@ const Calculate = (data, selfcost) => {
         materials: [],
         works: [],
         expenses: [],
-        other: {shortThickness: []},
+        other: {},
         errors: [],
         warnings: []
     }
+    const shortThickness = []
     //Если цветная пленка (Все остальные кроме смарт и хамелеон), то считать выбранную + 'Пленка EVA Прозрачная 0,38мм'
     //Если смарт, то считать выбранную + 2 шт 'Пленка EVA Прозрачная 0,76мм'
     //Если хамелеон, то считать выбранную + 2 шт 'Пленка EVA Прозрачная 0,38мм'
@@ -91,7 +88,7 @@ const Calculate = (data, selfcost) => {
     const stanok = (shape && !cutsv1 && !cutsv2 && !cutsv3 && weight < 50) ? 'Прямолинейка' : 'Криволинейка'
     for(const material of materials){
         const thickness = Number(material.match(/(\d+(?:[.,]\d+)?)\s*мм/i)[1])
-        result.other.shortThickness.push(thickness)
+        shortThickness.push(thickness)
         allThickness += thickness
         weight += 2.5 * S * thickness
         
@@ -113,10 +110,9 @@ const Calculate = (data, selfcost) => {
     constructWorks('cutting1', S * materials.length, context);
     constructWorks('cutting2', S * materials.length, context);
     constructWorks('washing1', S * materials.length, context);
-    constructWorks('grinding', P * materials.length, context);
+    stanok == 'Криволинейка' ? constructWorks('curvedProcessing', P * materials.length, context) : constructWorks('straightProcessing', P * materials.length, context)
     constructWorks('otk', S * materials.length, context);
     constructWorks('triplexing', S * materials.length - 1, context);
-    polishing && constructWorks('polishing', P * materials.length, context);
     drills && constructWorks('drills', drills * materials.length, context);
     zenk && constructWorks('zenk', zenk * materials.length, context);
     cutsv1 && constructWorks('cutsv1', cutsv1 * materials.length, context);
@@ -148,7 +144,12 @@ const Calculate = (data, selfcost) => {
         productType: true,
         viz: true,
         materialsandworks,
-        materials
+        materials,
+        shortThickness,
+        spName: materials.reduce((acc, curr) => {
+            acc.push(shortenGlassName(curr))
+            return acc
+        }, []).join('.') + '.1'
     }
     console.log(result)
     return {
@@ -171,7 +172,7 @@ export const constructWorks = (work, quantity, context) => {
             string: `(${quantity} * ${selfcost.pricesAndCoefs[tableName || name].costOfWork}) + (${selfcost.pricesAndCoefs[tableName || name].salary} / ${selfcost.pricesAndCoefs['Среднее количество рабочих часов в месяц']} * ${quantity} / ${selfcost.pricesAndCoefs[tableName ||name].ratePerHour})`,
             formula: `(Количество * Сделка + (Оклад / Среднее количество рабочих часов в месяцe * Количество / Норма в час)`
         })
-    }
+    } 
     switch (work) {
         case 'drills': res('Сверление'); break
         case 'zenk': res('Зенковка'); break
@@ -182,8 +183,8 @@ export const constructWorks = (work, quantity, context) => {
         case 'cutting1': res('Резка (Управление)'); break
         case 'cutting2': res('Резка (Помощь)'); break
         case 'washing1': res('Мойка 1'); break
-        case 'grinding': res('Шлифовка', stanok === 'Прямолинейка' ? 'Прямолинейная обработка' : 'Криволинейная обработка'); break
-        case 'polishing': res('Полировка', stanok === 'Прямолинейка' ? 'Прямолинейная обработка' : 'Криволинейная обработка'); break
+        case 'straightProcessing': res('Прямолинейная обработка'); break
+        case 'curvedProcessing': res('Криволинейная обработка'); break
         case 'triplexing': res(`Триплекс ${allThickness} мм`); break
         case 'blunting': res(`Притупка`); break
         case 'otk': res(`ОТК`); break

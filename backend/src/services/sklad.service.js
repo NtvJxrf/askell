@@ -7,7 +7,6 @@ import Processingprocess from "../databases/models/sklad/processingprocesses.mod
 import amqp from 'amqplib';
 import crypto from 'crypto'
 import {generateSmdMaterials} from '../utils/generateSmdMaterials.js'
-import { create } from "domain"
 export const dictionary = {
     productFolders: {
         glassGuard: {
@@ -89,11 +88,6 @@ export default class SkladService {
 
         SkladService.ordersInWork.pryamo = pryamo
         SkladService.ordersInWork.krivo = krivo
-        console.log(krivArr.length)
-        console.log(pryamArr.length)
-        console.log(otherArr.length)
-        console.log(pryamo)
-        console.log(krivo)
         console.timeEnd('finish')
     }
 
@@ -277,7 +271,7 @@ const triplex = async (data, order, position, createdEntitys) => {
     result.viz.push(planViz)
     return result
 }
-const ceraglass = async () => {
+const ceraglass = async (data, order, position, createdEntitys) => {
 
 }
 const glass = async (data, order, position, createdEntitys) => {

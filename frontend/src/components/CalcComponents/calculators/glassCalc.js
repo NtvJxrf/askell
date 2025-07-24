@@ -51,9 +51,8 @@ const Calculate = (data, selfcost) => {
     constructWorks('cutting1', S, context);
     constructWorks('cutting2', S, context);
     constructWorks('washing1', S, context);
-    constructWorks('grinding', P, context);
     constructWorks('otk', S, context);
-    polishing && constructWorks('polishing', P, context);
+    stanok == 'Криволинейка' ? constructWorks('curvedProcessing', P, context) : constructWorks('straightProcessing', P, context)
     drills && constructWorks('drills', drills, context);
     zenk && constructWorks('zenk', zenk, context);
     tempered && constructWorks('tempered', S, context);

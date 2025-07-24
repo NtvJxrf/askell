@@ -8,7 +8,7 @@ import TriplexFormModal from "../TriplexFormModal.jsx";
 
 const filterWordsGlass = ["стекло"];
 const filterWords = ["стекло"];
-const gasArray = ["Аргон", "Криптон", "Воздух"];
+const gasArray = ["Аргон"];
 
 const GlasspacketForm = () => {
   const materials = useSelector(state => state.selfcost.selfcost?.materials) || []
@@ -100,16 +100,39 @@ const GlasspacketForm = () => {
         </Col>
       </Row>
 
-      <div style={{ display: 'flex', gap: 24, margin: '0 10px 0 10px' }}>
-        {materialColumns.map((column, colIndex) => (
-          <div key={colIndex} style={{ flex: 1 }}>
-            {column.map(field => (
-              <div key={field.name || field.label} style={{ marginBottom: 16, maxWidth: 150 }}>
-                {renderField(field)}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 24, margin: '0 10px' }}>
+        {(() => {
+          const groups = [];
+
+          for (let i = 0; i < materialColumns.length; i += 2) {
+            const materialGroup = materialColumns[i] || [];
+            const planeGroup = materialColumns[i + 1] || [];
+
+            groups.push(
+              <div key={i} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                {/* Первая строка: Материал + чекбоксы */}
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12, alignItems: 'center' }}>
+                  {materialGroup.map(field => (
+                    <div key={field.name} style={{maxWidth: 600}}>
+                      {renderField(field)}
+                    </div>
+                  ))}
+                </div>
+
+                {/* Вторая строка: Рамка */}
+                <div style={{ display: 'flex', gap: 12 }}>
+                  {planeGroup.map(field => (
+                    <div key={field.name} >
+                      {renderField(field)}
+                    </div>
+                  ))}
+                </div>
               </div>
-            ))}
-          </div>
-        ))}
+            );
+          }
+
+          return groups;
+        })()}
       </div>
 
       <TriplexFormModal

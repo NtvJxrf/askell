@@ -9,7 +9,7 @@ const Calculate = (data, selfcost, triplexArray) => {
         tempered1, tempered2, tempered3,
         polishing1, polishing2, polishing3,
         blunting1, blunting2, blunting3,
-        height, width, gas = 'Воздух', plane1, plane2, customertype, rounding } = data
+        height, width, gas, plane1, plane2, customertype } = data
     const materials = [
                     [material1, tempered1, polishing1, blunting1],
                     [material2, tempered2, polishing2, blunting2],
@@ -30,11 +30,13 @@ const Calculate = (data, selfcost, triplexArray) => {
         errors: [],
         warnings: []
     }
+    const triplexShornNames = {}
     let viz = false
-    const sailEffectIsOk = (glassThickness, area) => {
+    const sailEffectIsOk = (glassThickness, area, triplex = false) => {
         let planeThickness = Number(planes[0].match(/(\d+(?:[.,]\d+)?)\s*мм/i)[1])
         planeThickness > 18 && (planeThickness = 18)
-        const key = `${planeThickness}|${glassThickness}|${materials[0][1]}`;
+        if(glassThickness > 6) return
+        const key = `${planeThickness}|${glassThickness}|${ triplex ? 'false' : materials[0][1]}`;
         if (!(key in sailEffectLimits)) {
             result.warnings.push(`Нет данных для парусности ${key}`)
             return
@@ -52,6 +54,8 @@ const Calculate = (data, selfcost, triplexArray) => {
             viz = true
             const triplexObject = triplexArray.find(el => el.name == material[0])
             const triplexcalc = triplexcalulator(triplexObject.values, selfcost)
+            triplexShornNames[material[0]] = triplexcalc.result.other.spName
+            console.log(triplexShornNames)
             result.materials.push({
                 name: triplexcalc.name,
                 value: triplexcalc.result.other.materialsandworks,
@@ -59,7 +63,7 @@ const Calculate = (data, selfcost, triplexArray) => {
                 formula: 'Себестоимость материалов и работ триплекса'
             });
             if(!sailEffect){
-                sailEffectIsOk(triplexcalc.result.other.shortThickness.join('+'), S)
+                sailEffectIsOk(triplexcalc.result.other.shortThickness.join('+'), S, true)
                 sailEffect = true
             }
             allThickness += triplexcalc.result.other.allThickness
@@ -87,7 +91,7 @@ const Calculate = (data, selfcost, triplexArray) => {
             constructWorks('blunting', P, context);
         }
         !material[1] && material[3] && constructWorks('blunting', P, context);
-        material[2] && constructWorks('polishing', P, context);
+        material[2] && constructWorks('curvedProcessing', P, context);
     }
     for(const plane of planes){
         const thickness = Number(plane.match(/(\d+(?:[.,]\d+)?)\s*мм/i)[1]) // Добавить толщина рамки
@@ -112,7 +116,7 @@ const Calculate = (data, selfcost, triplexArray) => {
         });
     }
     weight += P * 12 * allThickness / 1000 //Вес вторичного герметика
-    const name = `СПО, ${allThickness}, ${shortenGlassName(materials[0][0])}, ${Number(plane1.match(/(\d+(?:[.,]\d+)?)\s*мм/i)[1])}(${gas}), ${shortenGlassName(materials[1][0])}${materials[2] ? `, ${Number(plane2.match(/(\d+(?:[.,]\d+)?)\s*мм/i)[1])}(${gas}), ${shortenGlassName(materials[2][0])}` : ''}, (${height}*${width})`
+    const name = `СП${planes.length == 1 ? 'О' : 'Д'}, ${allThickness}, ${shortenGlassName(materials[0][0], triplexShornNames)}, ${Number(plane1.match(/(\d+(?:[.,]\d+)?)\s*мм/i)[1])}${gas ? `(${gas})` : ''}, ${shortenGlassName(materials[1][0], triplexShornNames)}${materials[2] ? `, ${Number(plane2.match(/(\d+(?:[.,]\d+)?)\s*мм/i)[1])}${gas ? `(${gas})` : ''}, ${shortenGlassName(materials[2][0], triplexShornNames)}` : ''}, (${height}*${width})`
     // gas && result.materials.push({
     //     name: gas,
     //     value: selfcost.materials[gas].value * S * allPlaneThickness,
@@ -192,22 +196,25 @@ function constructMaterials(context){
     //     formula: 'Цена термоэтикетки 2шт'
     // });
 }
-export function shortenGlassName(fullName) {
-  const adjectives = ['зеркальное', 'осветленное', 'тонированное', 'узорчатое'];
+export function shortenGlassName(fullName, triplexShornNames) {
+    if(fullName.toLowerCase().includes('триплекс')){
+        return triplexShornNames[fullName]
+    }
+    const adjectives = ['зеркальное', 'осветленное', 'тонированное', 'узорчатое'];
 
-  const match = fullName.match(/^(?:Стекло|Зеркало)\s(.+?),\s*(\d+)\s*мм$/i);
-  if (!match) return fullName;
+    const match = fullName.match(/^(?:Стекло|Зеркало)\s(.+?),\s*(\d+)\s*мм$/i);
+    if (!match) return fullName;
 
-  let [, name, thickness] = match;
+    let [, name, thickness] = match;
 
-  const nameWords = name.split(/\s+/);
-  const cleanedWords = nameWords.filter(word => {
-    const lower = word.toLowerCase();
-    return !adjectives.includes(lower);
-  });
+    const nameWords = name.split(/\s+/);
+    const cleanedWords = nameWords.filter(word => {
+        const lower = word.toLowerCase();
+        return !adjectives.includes(lower);
+    });
 
-  const cleanedName = cleanedWords.join(' ').trim();
+    const cleanedName = cleanedWords.join(' ').trim();
 
-  return `${cleanedName} ${thickness}`;
+    return `${cleanedName} ${thickness}`;
 }
 export default Calculate

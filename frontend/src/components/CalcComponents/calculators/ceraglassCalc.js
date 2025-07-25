@@ -128,7 +128,6 @@ const Calculate = (data, selfcost) => {
 }
 
 function countSheets(sheetWidth, sheetHeight, parts) {
-  console.log(sheetWidth, sheetHeight, parts)
   // сортируем по убыванию высоты
   const items = parts.slice().sort((a, b) => b.h - a.h);
   const sheets = [];

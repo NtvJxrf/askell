@@ -17,6 +17,7 @@ const Calculate = (data, selfcost, triplexArray) => {
     ].filter(el => el[0])
     const planes = [plane1, plane2].filter(el => el)
 
+    
     const S = (height * width) / 1000000
     const P = 2 * (height + width) / 1000
     let weight = 0
@@ -55,7 +56,6 @@ const Calculate = (data, selfcost, triplexArray) => {
             const triplexObject = triplexArray.find(el => el.name == material[0])
             const triplexcalc = triplexcalulator(triplexObject.values, selfcost)
             triplexShornNames[material[0]] = triplexcalc.result.other.spName
-            console.log(triplexShornNames)
             result.materials.push({
                 name: triplexcalc.name,
                 value: triplexcalc.result.other.materialsandworks,

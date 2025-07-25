@@ -1,6 +1,7 @@
 import ApiError from "../utils/apiError.js"
 import Client from "../utils/got.js"
 import Details from "../databases/models/sklad/details.model.js"
+import getOrdersInWork from "../utils/getOrdersInWork.js"
 import { Op } from 'sequelize'
 import logger from "../utils/logger.js"
 import Processingprocess from "../databases/models/sklad/processingprocesses.model.js"
@@ -38,59 +39,6 @@ export default class SkladService {
         pricesAndCoefs: {}
     }
     static ordersInWork = {}
-    static async getOrdersInWork(){
-        console.time('finish')
-        let load = []
-        let pryamo = 0
-        let krivo = 0
-        const orders = await fetchAllRows('https://api.moysklad.ru/api/remap/1.2/entity/customerorder?filter=state.name=Подготовить (переделать) чертежи;state.name=В работе;state.name=Чертежи подготовлены, прикреплены;state.name=Поставлено в производство&expand=positions.assortment')
-        for(const order of orders){
-            for(const position of order.positions.rows){
-                const attributes = position.assortment?.attributes?.reduce((acc, curr) => {
-                    acc[curr.name] = curr.value
-                    return acc
-                }, {})
-                if(!attributes) continue
-                const height = Number(attributes['Длина в мм'])
-                const width = Number(attributes['Ширина в мм'])
-                const pfs = Number(attributes['Кол- во полуфабрикатов']) || 1
-                const cutsv1 = Number(attributes['Кол во вырезов 1 категорий/ шт']) || 0
-                const cutsv2 = Number(attributes['Кол во вырезов 2 категорий/ шт']) || 0
-                // const cutsv3 = Number(attributes['Кол во вырезов 3 категорий/ шт'])
-                const P = 2 * (height + width) / 1000
-                const stanok = attributes['тип станка обрабатывающий']
-                const time = stanok == 'Криволинейка' 
-                ? (((P * pfs * position.quantity / 0.22) + 10) + (cutsv1 * pfs * position.quantity * 20) + (cutsv2 * pfs * position.quantity * 40)) / 60 || 0
-                : (((P * pfs * position.quantity / 0.8) + 1) + (cutsv1 * pfs * position.quantity * 20) + (cutsv2 * pfs * position.quantity * 40)) / 60 * 2.5|| 0
-                load.push({
-                    created: order.created,
-                    position: position.assortment.name,
-                    stanok,
-                    productionTime: time,
-                    name: order.name
-                })
-                stanok == 'Криволинейка' ? krivo += time : pryamo += time
-            }
-        }
-        const res = load.filter(el => el.productionTime).sort((a, b) => new Date(a.created) - new Date(b.created))
-        const [krivArr, pryamArr, otherArr] = res.reduce(
-            ([kriv, pryam, other], el) => {
-                if (el.stanok === 'Криволинейка') kriv.push(el);
-                else if(el.stanok === 'Прямолинейка') pryam.push(el)
-                else other.push(el)
-                return [kriv, pryam, other];
-            },
-            [[], [], []]
-        );
-        SkladService.ordersInWork.kriv = krivArr
-        SkladService.ordersInWork.pryam = pryamArr
-        SkladService.ordersInWork.other = otherArr
-
-        SkladService.ordersInWork.pryamo = pryamo
-        SkladService.ordersInWork.krivo = krivo
-        console.timeEnd('finish')
-    }
-
     static async addPositionsToOrder(data) {
         const indexes = []
         const prevPositions = Array.isArray(data?.order?.positions?.rows)
@@ -192,7 +140,6 @@ export default class SkladService {
             deleteEntitys(deletedPositions)
         }
     }
-
     static async getOrder(name){
         const response = await Client.sklad(`https://api.moysklad.ru/api/remap/1.2/entity/customerorder?filter=name=${name}&expand=positions.assortment,agent,organization&limit=100`)
         const order = response.rows[0]
@@ -224,14 +171,7 @@ const triplex = async (data, order, position, createdEntitys) => {
     const pfs = []
     const materials = Object.entries(data.initialData).filter(([key, value]) => key.startsWith('material') && value !== undefined).map(([_, value]) => value);
 
-    const stagesSelk = ['1. РСК (раскрой)']
-        data.result.other.stanok == 'Прямолинейка' ? stagesSelk.push('4. ПРЛ (прямолинейная обработка)') : stagesSelk.push('3. КРЛ (криволинейная обработка)')
-        data.initialData.cutsv1 && stagesSelk.push('8. ВРЗ (вырезы в стекле 1 кат.)')
-        data.initialData.cutsv2 && stagesSelk.push('9. ВРЗ (вырезы в стекле 2 кат.)')
-        data.initialData.drills && stagesSelk.push('7. ОТВ (сверление в стекле отверстий)')
-        data.initialData.zenk && stagesSelk.push('10. Зенковка')
-        data.initialData.tempered && stagesSelk.push('Закалка')
-        stagesSelk.push('ОТК')
+    const stagesSelk = generateStages(data, 'selk')
 
 
     for(const material of materials){
@@ -247,10 +187,7 @@ const triplex = async (data, order, position, createdEntitys) => {
         pfs.push(product)
     }
 
-    const stagesViz = []
-        data.initialData.print && stagesSelk.push('УФ (УФ печать)')
-        stagesViz.push('5. ТРПЛ')
-        stagesViz.push('ОТК')
+    const stagesViz = generateStages(data, 'viz')
 
     const processingprocessViz = await makeprocessingprocess(stagesViz)
     const materialsViz = pfs.map(pf => {
@@ -272,7 +209,43 @@ const triplex = async (data, order, position, createdEntitys) => {
     return result
 }
 const ceraglass = async (data, order, position, createdEntitys) => {
+    const result = {
+        viz: [],
+        selk: []
+    }
+    const pf = null
+    const materials = [data.initialData.material1, data.initialData.material2]
 
+    for(const material of materials){
+        if(material.toLowerCase().includes('стекло')){
+            const stagesSelk = generateStages(data, 'selk')
+            const promises = []
+            promises.push(makeprocessingprocess(stagesSelk))
+            promises.push(makeProduct(data, material, true, createdEntitys))
+            const responses = await Promise.all(promises)
+            const processingprocess = responses[0]
+            const product = responses[1]
+            const plan = await makeProcessingPlanGlass(data, position.assortment.name, order, processingprocess, product, true, material, createdEntitys)
+            plan.quantity = position.quantity
+            result.selk.push(plan)
+            pf = product
+        }
+    }
+
+    const stagesViz = generateStages(data, 'viz')
+
+    const processingprocessViz = await makeprocessingprocess(stagesViz)
+    const materialsViz = []
+    if(pf){
+        materialsViz.push({
+            assortment: { meta: pf.meta},
+            quantity: 1
+        })
+    }
+    const planViz = await makeProcessingPlanViz(data, position.assortment.name, order, processingprocessViz, position.assortment, false, materialsViz, createdEntitys)
+    planViz.quantity = position.quantity
+    result.viz.push(planViz)
+    return result
 }
 const glass = async (data, order, position, createdEntitys) => {
     const result = {
@@ -280,14 +253,7 @@ const glass = async (data, order, position, createdEntitys) => {
         selk: []
     }
     data.initialData.print && (result.print = true)
-    const stagesSelk = ['1. РСК (раскрой)']
-    data.result.other.stanok == 'Прямолинейка' ? stagesSelk.push('4. ПРЛ (прямолинейная обработка)') : stagesSelk.push('3. КРЛ (криволинейная обработка)')
-    data.initialData.cutsv1 && stagesSelk.push('8. ВРЗ (вырезы в стекле 1 кат.)')
-    data.initialData.cutsv2 && stagesSelk.push('9. ВРЗ (вырезы в стекле 2 кат.)')
-    data.initialData.drills && stagesSelk.push('7. ОТВ (сверление в стекле отверстий)')
-    data.initialData.zenk && stagesSelk.push('10. Зенковка')
-    data.initialData.tempered && stagesSelk.push('Закалка')
-    stagesSelk.push('ОТК')
+    const stagesSelk = generateStages(data, 'selk')
     const isPF = data.result.other.viz
     const promises = []
     promises.push(makeprocessingprocess(stagesSelk))
@@ -299,10 +265,7 @@ const glass = async (data, order, position, createdEntitys) => {
     plan.quantity = position.quantity
     result.selk.push(plan)
     if(isPF){
-        const stagesViz = []
-        data.initialData.color && stagesSelk.push('Окраска стекла')
-        data.initialData.print && stagesSelk.push('УФ (УФ печать)')
-        stagesViz.push('ОТК')
+        const stagesViz = generateStages(data, 'viz')
         const processingprocessViz = await makeprocessingprocess(stagesViz)
         const materials = [{
             assortment: { meta: product.meta},
@@ -331,10 +294,7 @@ const smd = async (data, order, position, createdEntitys) => {
         selk: []
     }
     data.initialData.print && (result.print = true)
-    const stagesSelk = ['1. РСК (раскрой)']
-        data.result.other.stanok == 'Прямолинейка' ? stagesSelk.push('4. ПРЛ (прямолинейная обработка)') : stagesSelk.push('3. КРЛ (криволинейная обработка)')
-        data.initialData.cuts && stagesSelk.push('8. ВРЗ (вырезы в стекле 1 кат.)')
-        data.initialData.drillssmd && stagesSelk.push('8. ВРЗ (вырезы в стекле 1 кат.)')
+    const stagesSelk = generateStages(data, 'selk')
     const promises = []
     promises.push(makeprocessingprocess(stagesSelk))
     promises.push(makeProduct(data, position.assortment.name, true, createdEntitys))
@@ -616,32 +576,23 @@ const deleteEntitys = async (deletedPositions) => {
         Client.sklad(`https://api.moysklad.ru/api/remap/1.2/entity/product/delete`, "post", recordsToDelete.map(el => {return {meta: el.meta}}));
     }
 }
-async function fetchAllRows(urlBase) {
-  const limit = 100;
-  const firstUrl = `${urlBase}&limit=${limit}&offset=0`;
-  const firstResponse = await Client.sklad(firstUrl);
-
-  if (!firstResponse.rows || firstResponse.rows.length === 0) {
-    return [];
-  }
-
-  const allRows = [...firstResponse.rows];
-  const totalSize = firstResponse.meta?.size || allRows.length;
-
-  const requests = [];
-  for (let offset = limit; offset < totalSize; offset += limit) {
-    const url = `${urlBase}&limit=${limit}&offset=${offset}`;
-    requests.push(Client.sklad(url));
-  }
-
-  const responses = await Promise.all(requests);
-  for (const res of responses) {
-    if (res.rows) {
-      allRows.push(...res.rows);
+const generateStages = (data, place) => {
+    if(place == 'selk'){
+        const stagesSelk = ['1. РСК (раскрой)']
+        data.result.other.stanok == 'Прямолинейка' ? stagesSelk.push('4. ПРЛ (прямолинейная обработка)') : stagesSelk.push('3. КРЛ (криволинейная обработка)')
+        data.initialData.cutsv1 && stagesSelk.push('8. ВРЗ (вырезы в стекле 1 кат.)')
+        data.initialData.cutsv2 && stagesSelk.push('9. ВРЗ (вырезы в стекле 2 кат.)')
+        data.initialData.drills && stagesSelk.push('7. ОТВ (сверление в стекле отверстий)')
+        data.initialData.zenk && stagesSelk.push('10. Зенковка')
+        data.initialData.tempered && stagesSelk.push('Закалка')
+        stagesSelk.push('ОТК')
+    }else if(place == 'viz'){
+        const stagesViz = []
+        data.initialData.color && stagesSelk.push('Окраска стекла')
+        data.result.other.type == 'Триплекс' && stagesViz.push('5. ТРПЛ')
+        data.initialData.print && stagesSelk.push('УФ (УФ печать)')
+        stagesViz.push('ОТК')
     }
-  }
-
-  return allRows;
 }
 async function startWorker() {
     const conn = await amqp.connect('amqp://admin:%5EjZG1L%2Fi@localhost');
@@ -666,4 +617,12 @@ async function startWorker() {
         }
     }, { noAck: false });
 }
+setInterval(async () => {
+    try {
+        await getOrdersInWork()
+    } catch (err) {
+        console.error('getOrdersInWork error:', err)
+        logger.error('getOrdersInWork error:', err)
+    }
+}, 300_000)
 startWorker()

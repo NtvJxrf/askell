@@ -5,6 +5,7 @@ import Prices from '../databases/models/sklad/prices.mode.js'
 import WorkPrices from '../databases/models/sklad/workPrices.model.js'
 import { dictionary } from '../services/sklad.service.js'
 import ApiError from './apiError.js'
+import logger from './logger.js'
 const updates = {}
 const getMaterials = async () => {
     let materials = {}
@@ -184,16 +185,9 @@ async function fetchAllRows(urlBase) {
 
 setInterval(async () => {
     try {
-        await SkladService.getOrdersInWork()
-    } catch (err) {
-        console.error('getOrdersInWork error:', err)
-    }
-}, 300_000)
-
-setInterval(async () => {
-    try {
         await initSkladAdditions()
     } catch (err) {
         console.error('initSkladAdditions error:', err)
+        logger.error('initSkladAdditions error:', err)
     }
 }, 3_600_000)

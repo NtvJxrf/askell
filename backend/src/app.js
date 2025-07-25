@@ -8,11 +8,13 @@ import { initModels } from "./databases/db.js"
 import  loggerMiddleware  from "./middlewares/logger.middleware.js"
 import { initQueue } from './utils/rabbitmq.js';
 import { initSkladAdditions } from "./utils/skladAdditions.js"
-import SkladService from "./services/sklad.service.js"
-await initQueue();
-await initModels()
-await initSkladAdditions()
-await SkladService.getOrdersInWork()
+import getOrdersInWork from "./utils/getOrdersInWork.js"
+const promises = []
+promises.push(getOrdersInWork())
+promises.push(initModels())
+promises.push(initSkladAdditions())
+promises.push(initQueue)
+await Promise.all(promises)
 const app = express()
 
 app.use(loggerMiddleware)

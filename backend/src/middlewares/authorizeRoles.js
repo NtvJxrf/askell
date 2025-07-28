@@ -1,18 +1,43 @@
 import ApiError from "../utils/apiError.js";
-const authorizeRoles = (allowedRoles) => {
-  return async (req, res, next) => {
-    const user = req.user
-    if(user.roles.includes('admin')){
-      next()
-      return
-    }
-    if(allowedRoles === 'none')
-      throw new ApiError(403, 'FORBIDDEN')
-    const hasAccess = allowedRoles.some(role => user.roles.includes(role))
-    if (!hasAccess)
-        throw new ApiError(403, 'FORBIDDEN')
+const accessMap = {
+  '/api/user': [],//users
 
-    next();
-  };
+  '/api/sklad/getOrder': ['manager', 'accountant'],  //sklad
+  '/api/sklad/getSelfcost': ['anyone'],
+  '/api/sklad/addPositionsToOrder': ['manager', 'accountant'],
+  '/api/sklad/createPzHook': [],
+  '/api/sklad/updateSelfcosts': ['anyone'],
+  '/api/sklad/ordersInWork': ['anyone'],
+
+  '/api/reports/create': ['anyone'],//reports
+
+  '/api/prices/getAll': ['anyone'], // prices
+  '/api/prices/update': ['accountant'],
+  '/api/prices/create': ['accountant'],
+  '/api/prices/delete': [],
+  '/api/prices/bulk': ['accountant'],
 }
+const authorizeRoles = (req, res, next) => {
+  const user = req.user;
+  if (!req.user || !Array.isArray(req.user.roles))return next(new ApiError(401, 'UNAUTHORIZED'))
+
+  if (user.roles.includes('admin') || user.roles.includes('system'))return next()
+
+  const endpoint = req.originalUrl.split('?')[0]
+
+  const allowedRoles = getAllowedRoles(endpoint)
+  const hasAccess = allowedRoles.some(role => user.roles.includes(role) || role === 'anyone')
+
+  if (!hasAccess) return next(new ApiError(403, 'FORBIDDEN'))
+
+  next();
+};
+
+const getAllowedRoles = (endpoint) => {
+  const matchingKeys = Object.keys(accessMap).filter(path => endpoint.startsWith(path))
+
+  const bestMatch = matchingKeys.sort((a, b) => b.length - a.length)[0];
+
+  return accessMap[bestMatch] || [];
+};
 export default authorizeRoles

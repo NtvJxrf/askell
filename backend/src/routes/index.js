@@ -1,9 +1,7 @@
 import express from "express"
 import apiRoutes from "./api.routes.js"
-import authMiddleware from "../middlewares/auth.middleware.js"
 import path from "path"
 import { fileURLToPath } from "url"
-import UserController from "../controllers/user.controller.js"
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
 const router = express.Router()

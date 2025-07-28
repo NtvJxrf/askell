@@ -13,7 +13,7 @@ const promises = []
 promises.push(getOrdersInWork())
 promises.push(initModels())
 promises.push(initSkladAdditions())
-promises.push(initQueue)
+promises.push(initQueue())
 await Promise.all(promises)
 const app = express()
 

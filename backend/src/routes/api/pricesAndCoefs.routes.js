@@ -5,17 +5,17 @@ const router = express.Router()
 //api/pricesAndCoefs
 router
     .route('/getAll')
-    .get(pricesAndCoefsController.getAll)
+    .get(authorizeRoles, pricesAndCoefsController.getAll)
 router
     .route('/update')
-    .post(authorizeRoles(['accountant']), pricesAndCoefsController.update)
+    .post(authorizeRoles, pricesAndCoefsController.update)
 router
     .route('/create')
-    .post(authorizeRoles(['accountant']), pricesAndCoefsController.create)
+    .post(authorizeRoles, pricesAndCoefsController.create)
 router
     .route('/delete')
-    .post(authorizeRoles(['none']), pricesAndCoefsController.delete)
+    .post(authorizeRoles, pricesAndCoefsController.delete)
 router
     .route('/bulk')
-    .post(authorizeRoles(['accountant']), pricesAndCoefsController.bulk)    
+    .post(authorizeRoles, pricesAndCoefsController.bulk)    
 export default router

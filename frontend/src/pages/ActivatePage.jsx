@@ -36,7 +36,7 @@ const ActivatePage = () => {
             navigate('/calculators');
         }
     }, [token, navigate]);
-    if(!token) return 
+    if(!token) return null
     return (
         <div style={{ maxWidth: 500, margin: 'auto', marginTop: 60 }}>
             {contextHolder}

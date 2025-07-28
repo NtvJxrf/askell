@@ -23,7 +23,7 @@ router
 router
     .route('/activate')
     .post(UserController.activate)
-router.use('/user', authMiddleware, authorizeRoles(['none']), UserRouter)
+router.use('/user', authMiddleware, authorizeRoles, UserRouter)
 router.use('/sklad', authMiddleware, SkladRouter)
 router.use('/pricesAndCoefs', authMiddleware, PricesAndCoefsRouter)
 router.use('/reports', authMiddleware, ReportsRouter)

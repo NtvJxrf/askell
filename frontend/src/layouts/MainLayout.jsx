@@ -8,7 +8,7 @@ import CalcsLayout from "../layouts/CalcsLayout.jsx";
 import PricesAndCoefsPage from "../pages/PricesAndCoefsPage.jsx";
 import Init from "../init.js";
 import Aovam from "../pages/Aovam.jsx"
-import Settings from '../components/CalcComponents/Settings.jsx';
+import Settings from '../pages/Settings.jsx';
 import ProtectedRoute from "../components/ProtectedRoute.jsx";
 import AdminPage from "../pages/AdminPage.jsx";
 import NotFoundPage from "../pages/NotFoundPage.jsx";

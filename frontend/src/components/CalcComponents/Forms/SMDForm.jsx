@@ -19,7 +19,7 @@ const SMDForm = () => {
   }, [colorsArray]);
 
   if (!colorsArray.length) {
-    return <div>Загрузка данных...</div>;
+    return <div>Загрузка...</div>;
   }
 
   return (

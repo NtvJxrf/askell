@@ -63,7 +63,7 @@ const getOrdersInWork = async () => {
             const thisTriplex = SInPosition / 2 * (pfs - 1) / rate('Триплекс 10 мм')
 
             const firstOne = thisStraight + thisCurved + thisDrills
-            const setup = 0.17
+            const setup = 0.17 //Время на переналадку
 
             straightTotal += thisStraight * count
             curvedTotal += thisCurved * count

@@ -1,6 +1,9 @@
 import jwt from 'jsonwebtoken'
 import valkey from '../utils/valkey.js';
 import ApiError from '../utils/apiError.js';
+
+const refreshTTLSeconds = process.env.JWT_REFRESH_EXPIRATION_DAYS * 24 * 60 * 60
+
 export default class TokenService {
     static async generateTokens(payload) {
         const accessToken = this.generateAccessToken(payload)
@@ -14,9 +17,9 @@ export default class TokenService {
 
     static async generateRefreshToken(payload) {
         const refreshToken = jwt.sign(payload, process.env.JWT_REFRESH_SECRET, { expiresIn: `${process.env.JWT_REFRESH_EXPIRATION_DAYS}d` });
-        await valkey.set(refreshToken, payload.id, 'EX', process.env.JWT_REFRESH_EXPIRATION_DAYS * 24 * 60 * 60)
+        await valkey.set(refreshToken, payload.id, 'EX', refreshTTLSeconds)
         await valkey.sadd(`refreshTokens:${payload.id}`, refreshToken);
-        await valkey.expire(`refreshTokens:${payload.id}`, process.env.JWT_REFRESH_EXPIRATION_DAYS * 24 * 60 * 60);
+        await valkey.expire(`refreshTokens:${payload.id}`, refreshTTLSeconds);
         return refreshToken
     }
 
@@ -47,6 +50,6 @@ export default class TokenService {
             roles: payload.roles
         });
         await this.destroyRefreshToken(refreshToken, payload.id)
-        return tokens
+        return {...tokens, payload}
     }
 }

@@ -143,7 +143,7 @@ const formConfigs = {
           name: 'gas',
           label: 'Газ',
           type: 'select',
-          options: [],
+          options: ['Аргон'],
         },
         {
           name: 'customertype',

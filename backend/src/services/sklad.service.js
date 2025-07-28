@@ -286,7 +286,7 @@ const smd = async (data, order, position, createdEntitys) => {
                     productionVolume: position.quantity
                 }]
         const print = position.assortment.name.toLowerCase().includes('уф печать')
-        const pzViz = await makeProductionTask(`Склад ВИЗ ПФ`, `Екатеринбург ВИЗ СГИ`, productionRows, order, true, true, print, createdEntitys)
+        const pzViz = await makeProductionTask(`Склад ВИЗ ПФ`, `Екатеринбург ВИЗ СГИ`, productionRows, order, {viz: true, smd: true, print}, createdEntitys)
         return
     }
     const result = {
@@ -322,7 +322,7 @@ const smd = async (data, order, position, createdEntitys) => {
                     productionVolume: position.quantity
                 }]
     const print = data.initialData.print
-    const pzViz = await makeProductionTask(`Склад ВИЗ ПФ`, `Екатеринбург ВИЗ СГИ`, productionRows, order, true, true, print, createdEntitys)
+    const pzViz = await makeProductionTask(`Склад ВИЗ ПФ`, `Екатеринбург ВИЗ СГИ`, productionRows, order, {viz: true, smd: true, print}, createdEntitys)
     return result
 }
 const glassPacket = async (data, order, position, createdEntitys) => {
@@ -366,7 +366,7 @@ export const createProductionTask = async (id) =>{
                     })
                     return acc
                 }, [])
-            const pzSelk = await makeProductionTask(`Склад Селькоровская материалы/прочее`, `Склад Селькоровская ПФ`, productionRows, order, false, false, print, createdEntitys)
+            const pzSelk = await makeProductionTask(`Склад Селькоровская материалы/прочее`, `Склад Селькоровская ПФ`, productionRows, order, {viz: false, smd: false, print}, createdEntitys)
             if(vizResult.length > 0){
                 const productionRows = vizResult.reduce((acc, curr) => {
                     acc.push({  processingPlan: { meta: curr.meta },
@@ -374,7 +374,7 @@ export const createProductionTask = async (id) =>{
                         })
                         return acc
                     }, [])
-                const pzViz = await makeProductionTask(`Склад ВИЗ ПФ`, `Екатеринбург ВИЗ СГИ`, productionRows, order, true, false, print, createdEntitys)
+                const pzViz = await makeProductionTask(`Склад ВИЗ ПФ`, `Екатеринбург ВИЗ СГИ`, productionRows, order, {viz: true, smd: false, print}, createdEntitys)
             }
             console.timeEnd('creatingProudctionTask')
         }catch(error){
@@ -415,14 +415,14 @@ export const createProductionTask = async (id) =>{
         }
         
     }
-const makeProductionTask = async (materialsStore, productsStore, productionRows, order, viz, smd, print, createdEntitys) => {
+const makeProductionTask = async (materialsStore, productsStore, productionRows, order, checkboxes, createdEntitys) => {
     const task = await Client.sklad(`https://api.moysklad.ru/api/remap/1.2/entity/productiontask`, 'post', {
                 materialsStore: { meta: dictionary.stores[materialsStore]},
                 productsStore: { meta: dictionary.stores[productsStore]},
                 organization: { meta: order.organization.meta},
                 deliveryPlannedMoment: order.deliveryPlannedMoment,
                 owner: { meta: order.owner.meta},
-                attributes: generateProductionTaskAttributes(order, viz, smd, print),
+                attributes: generateProductionTaskAttributes(order, checkboxes),
                 productionRows
             })
     createdEntitys.task.push(task)
@@ -531,13 +531,15 @@ const generateProductAttributes = (data) => {
     }
     return result
 }
-const generateProductionTaskAttributes = (order, viz, smd, print) => {
+const generateProductionTaskAttributes = (order, checkboxes) => {
     const result = []
-        order.invoicesOut && result.push({ meta: dictionary.productiontaskAttributes["№ Счета"], value: order.invoicesOut.map(el => el.name).join(';') })
-        result.push({ meta: dictionary.productiontaskAttributes["№ заказа покупателя"], value: order.name })
-        viz && result.push({ meta: dictionary.productiontaskAttributes["Задание для ВИЗа"], value: viz }) 
-        smd && result.push({ meta: dictionary.productiontaskAttributes["СМД"], value: true }) 
-        print && result.push({ meta: dictionary.productiontaskAttributes["Есть УФ печать"], value: true }) 
+    const {viz, smd, print} = checkboxes
+
+    result.push({ meta: dictionary.productiontaskAttributes["№ заказа покупателя"], value: order.name })
+    order.invoicesOut && result.push({ meta: dictionary.productiontaskAttributes["№ Счета"], value: order.invoicesOut.map(el => el.name).join(';') })
+    viz && result.push({ meta: dictionary.productiontaskAttributes["Задание для ВИЗа"], value: true }) 
+    smd && result.push({ meta: dictionary.productiontaskAttributes["СМД"], value: true }) 
+    print && result.push({ meta: dictionary.productiontaskAttributes["Есть УФ печать"], value: true }) 
         
     return result
 }
@@ -586,12 +588,14 @@ const generateStages = (data, place) => {
         data.initialData.zenk && stagesSelk.push('10. Зенковка')
         data.initialData.tempered && stagesSelk.push('Закалка')
         stagesSelk.push('ОТК')
+        return stagesSelk;
     }else if(place == 'viz'){
         const stagesViz = []
-        data.initialData.color && stagesSelk.push('Окраска стекла')
+        data.initialData.color && stagesViz.push('Окраска стекла')
         data.result.other.type == 'Триплекс' && stagesViz.push('5. ТРПЛ')
-        data.initialData.print && stagesSelk.push('УФ (УФ печать)')
+        data.initialData.print && stagesViz.push('УФ (УФ печать)')
         stagesViz.push('ОТК')
+        return stagesViz;
     }
 }
 async function startWorker() {

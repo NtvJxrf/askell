@@ -19,7 +19,7 @@ export default class UserService {
         if(!id) throw new ApiError(400, 'The token is not valid')
         const user = await this.resetPassword(id, password)
         await generateAndSetTokens(user);
-        valkey.del(`activation:${token}`)
+        await valkey.del(`activation:${token}`)
         return user
     }
     static async resetUserPassword(id){
@@ -65,7 +65,7 @@ export default class UserService {
 
     static async delete(data, requester){
         const { id, force = false } = data
-        if(id === requester.id) throw new ApiError(400, 'suicide?')
+        if(id === requester.id) throw new ApiError(400, 'Cannot delete own user')
         await tokenService.deleteUserTokens(id)
         return await UserModel.destroy({ where: { id }, force })
     }

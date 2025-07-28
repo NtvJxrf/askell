@@ -3,18 +3,19 @@ import { ReloadOutlined } from "@ant-design/icons";
 import { useDispatch, useSelector } from "react-redux";
 
 import axios from "axios";
-import Init from "../../init";
+import Init from "../init";
 import { useState } from "react";
 const { Text, Title } = Typography;
 
 const Settings = () => {
     const selfcost = useSelector((state) => state.selfcost.selfcost);
+    const updates = selfcost?.updates ?? {};
     const [messageApi, contextHolder] = message.useMessage();
     const [loading, setLoading] = useState(false)
     const dispatch = useDispatch();
     if (!selfcost) return <div>Загрузка...</div>;
 
-    const updatedData = Object.entries(selfcost.updates).map(([key, timestamp]) => {
+    const updatedData = Object.entries(updates).map(([key, timestamp]) => {
         const isValidTimestamp = typeof timestamp === "number" && timestamp > 0;
         const date = isValidTimestamp ? new Date(timestamp).toLocaleString() : null;
 

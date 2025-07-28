@@ -15,16 +15,16 @@ const renderField = (field) => {
         );
     case 'checkbox':
         return (
-        <Form.Item
-            key={field.name}
-            valuePropName="checked"
-            label={field.label}
-            name={field.name}
-            rules={field.rules}
-            initialValue={false}
-        >
-            <Checkbox />
-        </Form.Item>
+            <Form.Item
+                key={field.name}
+                valuePropName="checked"
+                label={field.label}
+                name={field.name}
+                rules={field.rules}
+                initialValue={false}
+            >
+                <Checkbox />
+            </Form.Item>
         );
     case 'input':
         return (
@@ -33,9 +33,7 @@ const renderField = (field) => {
             </Form.Item>
         );
     case 'divider': 
-        return(
-            <Divider key={field.label}>{field.label}</Divider>
-        )
+        return <Divider key={field.label}>{field.label}</Divider>
     default:
         return null;
     }

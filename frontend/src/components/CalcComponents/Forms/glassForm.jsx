@@ -19,12 +19,8 @@ const GlassForm = () => {
 
   const glassFormFields = useMemo(() => {
     return formConfigs.glassForm.commonFields.map(field => {
-      if (field.name === 'material') {
-        return { ...field, options: materialsArray };
-      }
-      if (field.name === 'color') {
-        return { ...field, options: colorsArray };
-      }
+      if (field.name === 'material') return { ...field, options: materialsArray }
+      if (field.name === 'color') return { ...field, options: colorsArray }
       return field;
     });
   }, [materialsArray, colorsArray]);

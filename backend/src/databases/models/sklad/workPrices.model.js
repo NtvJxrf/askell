@@ -30,6 +30,10 @@ const WorkPrices = sequelize.define('work_prices', {
     type: DataTypes.STRING,
     allowNull: true,
   },
+  place: {
+    type: DataTypes.ENUM('ВИЗ', 'Селькоровская', 'Горный щит'),
+    allowNull: true,
+  }
 }, {
   tableName: 'work_prices',
   paranoid: true,

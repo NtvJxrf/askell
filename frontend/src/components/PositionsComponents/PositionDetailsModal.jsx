@@ -6,7 +6,7 @@ const { Text, Title } = Typography;
 
 const renderItem = (item, index) => {
     const hasDetails = item.string || item.formula;
-    const formattedValue = item?.value?.toFixed(2)
+    const formattedValue = item?.finalValue?.toFixed(2) || item?.value?.toFixed(2)
     return (
         <div key={index} style={{ marginBottom: 4 }}>
             <Text>
@@ -20,6 +20,18 @@ const renderItem = (item, index) => {
                                 )}
                                 {item.string && (
                                     <div><strong>Пояснение:</strong> {item.string}</div>
+                                )}
+                                {item.value && (
+                                    <div><strong>Работа:</strong> {item.value.toFixed(2)}</div>
+                                )}
+                                {item.workshopExpenses && (
+                                    <div><strong>Цеховые расходы:</strong> {item.workshopExpenses.toFixed(2)}</div>
+                                )}
+                                {item.commercialExpenses && (
+                                    <div><strong>Коммерческие расходы:</strong> {item.commercialExpenses.toFixed(2)}</div>
+                                )}
+                                {item.householdExpenses && (
+                                    <div><strong>Общехозяйственные расходы:</strong> {item.householdExpenses.toFixed(2)}</div>
                                 )}
                             </>
                         }
@@ -45,7 +57,7 @@ const renderDetails = (record) => {
     const { materials = [], works = [], expenses = [], finalPrice = []} = result;
 
     const totalMaterials = materials.reduce((sum, item) => sum + (item.value || 0), 0)
-    const totalWorks = works.reduce((sum, item) => sum + (item.value || 0), 0)
+    const totalWorks = works.reduce((sum, item) => sum + (item.finalValue || 0), 0)
     const totalExpenses = expenses.reduce((sum, item) => sum + (item.value || 0), 0)
 
     return (
@@ -158,7 +170,7 @@ const renderLabeledDataBlock = (title, data, dictionary = {}) => {
     );
 };
 
-const ignorLabels = ['ignor', 'calcType', 'productType', 'materialsandworks', 'materials', 'shortThickness']
+const ignorLabels = ['ignor', 'calcType', 'productType', 'materialsandworks', 'materials', 'shortThickness', 'spName']
 const initialDataLabels = {
     height: 'Высота',
     width: 'Ширина',

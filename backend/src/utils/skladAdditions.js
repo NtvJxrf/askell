@@ -94,7 +94,7 @@ export const getPicesAndCoefs = async () => {
         pricesAndCoefs[el.name] = el.value
     })
     result[2].forEach( el => {
-        pricesAndCoefs[el.name] = {ratePerHour: el.ratePerHour, costOfWork: el.costOfWork, salary: el.salary}
+        pricesAndCoefs[el.name] = {ratePerHour: el.ratePerHour, costOfWork: el.costOfWork, salary: el.salary, place: el.place}
     })
     SkladService.selfcost.pricesAndCoefs = pricesAndCoefs
     updates['Цены и коэффиценты'] = Date.now()

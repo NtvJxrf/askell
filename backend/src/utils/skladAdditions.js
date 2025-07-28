@@ -59,8 +59,8 @@ const getStores = async () => {
     updates['Склады'] = Date.now()
 }
 const getUnders = async () => {
-    const response = await Client.sklad("https://api.moysklad.ru/api/remap/1.2/entity/product?filter=pathName=Керагласс товары и полуфабрикаты/Подстолья&expand=buyPrice.currency")
-    SkladService.selfcost.unders = response.rows.reduce(( acc, curr ) => {
+    const response = await fetchAllRows("https://api.moysklad.ru/api/remap/1.2/entity/product?filter=pathName=Керагласс товары и полуфабрикаты/Подстолья&expand=buyPrice.currency")
+    SkladService.selfcost.unders = response.reduce(( acc, curr ) => {
         acc[curr.name] = {
             meta: curr.meta,
             value: convertPrice(curr.buyPrice)
@@ -148,11 +148,12 @@ export const initSkladAdditions = async () => {
     promises.push(getColors())
     promises.push(getPicesAndCoefs())
     promises.push(getPackagingMaterials())
-    await Promise.allSettled(promises)
+    const res = await Promise.allSettled(promises)
+    console.log(res)
     SkladService.selfcost.updates = updates
     console.log('all dependencies loaded')
 }
-const convertPrice = (price) => {
+const convertPrice = (price, ) => {
     return +(price.value / 100 * price.currency.rate).toFixed(2) || 0
 }
 async function fetchAllRows(urlBase) {

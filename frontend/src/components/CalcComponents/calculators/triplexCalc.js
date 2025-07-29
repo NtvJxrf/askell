@@ -103,6 +103,7 @@ const Calculate = (data, selfcost) => {
     print && result.works.push({
         name: 'Печать',
         value: selfcost.pricesAndCoefs[`УФ печать`],
+        finalValue: selfcost.pricesAndCoefs[`УФ печать`],
         string: `${selfcost.pricesAndCoefs[`УФ печать`]}`,
         formula: 'Себестоимость уф печати'
     });
@@ -120,11 +121,11 @@ const Calculate = (data, selfcost) => {
     cutsv2 && constructWorks('cutsv2', cutsv2 * materials.length, context);
     cutsv3 && constructWorks('cutsv3', cutsv3 * materials.length, context);
     color && constructWorks('color', S, context);
-    let materialsandworks
+    let materialsandworks = 0
     for (const item of Object.values(result.materials)) 
         materialsandworks += item.value
     for (const item of Object.values(result.works))
-        materialsandworks += item.value
+        materialsandworks += item.finalValue
     const price = materialsandworks * selfcost.pricesAndCoefs[`Триплекс ${customertype}`]
     result.finalPrice = [{
         name: 'Себестоимость',
@@ -168,7 +169,7 @@ const Calculate = (data, selfcost) => {
 }
 
 export const constructWorks = (work, quantity, context) => {
-    const { selfcost, result, stanok, thickness, allThickness } = context;
+    const { selfcost, result, thickness } = context;
     const res = (name, tableName) => {
         const PAC = selfcost.pricesAndCoefs
         const value = (quantity * PAC[tableName || name].costOfWork) 

@@ -4,16 +4,11 @@ const Calculate = (data, selfcost) => {
     console.log(selfcost)
     console.log(data)
     const { material, height, width, polishing, drills, zenk, cutsv1, cutsv2, cutsv3, tempered, shape, color, print, customertype, rounding } = data
-    const works = { tempered, polishing, drills, zenk, cutsv1, cutsv2, cutsv3, print }
     let S = (height * width) / 1000000
     if(S < 0.5){
         switch (rounding){
-            case 'Округление до 0.5':
-                S = 0.5
-            break
-            case 'Умножить на 2':
-                S = S * 2
-            break
+            case 'Округление до 0.5': S = 0.5; break
+            case 'Умножить на 2': S = S * 2; break
         }
     }
     const P = ((height + width) * 2) / 1000
@@ -43,12 +38,13 @@ const Calculate = (data, selfcost) => {
         formula: 'Цена за м² * 0.3'
     });
     print && result.works.push({
-                name: 'Печать',
-                value: selfcost.pricesAndCoefs[`УФ печать`],
-                string: `${selfcost.pricesAndCoefs[`УФ печать`]}`,
-                formula: 'Себестоимость уф печати'
-            });
-    const context = { works, selfcost, result, thickness};
+        name: 'Печать',
+        value: selfcost.pricesAndCoefs[`УФ печать`],
+        finalValue: selfcost.pricesAndCoefs[`УФ печать`],
+        string: `${selfcost.pricesAndCoefs[`УФ печать`]}`,
+        formula: 'Себестоимость уф печати'
+    });
+    const context = { selfcost, result, thickness};
     constructWorks('cutting1', S, context);
     constructWorks('cutting2', S, context);
     constructWorks('washing1', S, context);
@@ -62,12 +58,16 @@ const Calculate = (data, selfcost) => {
     cutsv3 && constructWorks('cutsv3', cutsv3, context);
     color && constructWorks('color', S, context);
 
-    const [materialsandworks, commercialExpenses, householdExpenses, workshopExpenses] = constructExpenses(result, selfcost)
-    const price = (materialsandworks + commercialExpenses + householdExpenses + workshopExpenses) * selfcost.pricesAndCoefs[`Стекло ${customertype}`]
+    let materialsandworks = 0
+    for (const item of Object.values(result.materials))
+        materialsandworks += item.value
+    for (const item of Object.values(result.works))
+        materialsandworks += item.finalValue
+    const price = materialsandworks * selfcost.pricesAndCoefs[`Стекло ${customertype}`]
     result.finalPrice = [{
         name: 'Себестоимость',
-        value: materialsandworks + commercialExpenses + householdExpenses + workshopExpenses,
-        string: `${(materialsandworks).toFixed(2)} + ${(commercialExpenses + householdExpenses + workshopExpenses).toFixed(2)}`,
+        value: materialsandworks,
+        string: `${(materialsandworks).toFixed(2)}`,
         formula: `(Материалы и работы) + Расходы`
     },{
         name: 'Наценка',

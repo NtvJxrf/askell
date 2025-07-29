@@ -80,14 +80,6 @@ const renderDetails = (record) => {
 
                 <Divider />
 
-                <Title level={4}>Расходы</Title>
-                {expenses.map(renderItem)}
-                <div style={{ marginTop: 8, fontWeight: 'bold' }}>
-                    Итого по доп расходам: {totalExpenses.toFixed(2)}
-                </div>
-
-                <Divider />
-
                 <Title level={4}>Цена</Title>
                 {finalPrice.map(renderItem)}
                 <div style={{ marginTop: 8, fontWeight: 'bold' }}>
@@ -170,7 +162,7 @@ const renderLabeledDataBlock = (title, data, dictionary = {}) => {
     );
 };
 
-const ignorLabels = ['ignor', 'calcType', 'productType', 'materialsandworks', 'materials', 'shortThickness', 'spName']
+const ignorLabels = ['ignor', 'calcType', 'productType', 'materialsandworks', 'materials', 'shortThickness', 'spName', 'notax', 'widths', 'heights']
 const initialDataLabels = {
     height: 'Высота',
     width: 'Ширина',
@@ -196,7 +188,8 @@ const initialDataLabels = {
     drillssmd: 'Сверление СМД',
     gas: 'Газ',
     blank: 'Пятак',
-    under: 'Подстолье'
+    under: 'Подстолье',
+    smdType: 'Тип СМД'
 };
 
 const labelPrefixes = [

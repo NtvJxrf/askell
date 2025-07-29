@@ -32,6 +32,12 @@ const renderField = (field) => {
                 <InputNumber min={0} step={1} style={{ width: '100%' }}/>
             </Form.Item>
         );
+    case 'inputp0':
+        return (
+            <Form.Item key={field.name} label={field.label} name={field.name} rules={field.rules}>
+                <InputNumber min={0} step={1} precision={0} style={{ width: '100%' }}/>
+            </Form.Item>
+        );
     case 'divider': 
         return <Divider key={field.label}>{field.label}</Divider>
     default:

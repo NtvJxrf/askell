@@ -90,12 +90,12 @@ const Calculate = (data, selfcost) => {
         materialsandworks += item.value
     }
     const price = materialsandworks
-    result.finalPrice = {
+    result.finalPrice = [{
         name: 'Итоговая цена',
         string: `${(materialsandworks).toFixed(2)}}`,
         formula: `Материалы и Работы`,
         value: price
-    }
+    }]
     result.other = {
         S,
         P,

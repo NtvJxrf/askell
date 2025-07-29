@@ -168,6 +168,8 @@ const triplex = async (data, order, position, createdEntitys) => {
         selk: []
     }
     data.initialData.print && (result.print = true)
+    data.initialData.color && (result.color = data.initialData.color)
+    result.triplex = true
     const pfs = []
     const materials = Object.entries(data.initialData).filter(([key, value]) => key.startsWith('material') && value !== undefined).map(([_, value]) => value);
 
@@ -213,35 +215,65 @@ const ceraglass = async (data, order, position, createdEntitys) => {
         viz: [],
         selk: []
     }
-    const pf = null
+    data.initialData.color && (result.color = data.initialData.color)
+    result.ceraglass = true
+    const pfs = []
     const materials = [data.initialData.material1, data.initialData.material2]
-
+    const heights = data.result.other.heights
+    const widths = data.result.other.widths
+    const stagesSelk = generateStages(data, 'selk')
+    const stagesViz = generateStages(data, 'vizCera')
+    const { polishing, drills, zenk, cutsv1, cutsv2, cutsv3, tempered, color, print } = data.initialData
     for(const material of materials){
         if(material.toLowerCase().includes('стекло')){
-            const stagesSelk = generateStages(data, 'selk')
+            for(let i = 0; i < heights.length; i++){
+                const promises = []
+                promises.push(makeprocessingprocess(stagesSelk))
+                const product = await Client.sklad('https://api.moysklad.ru/api/remap/1.2/entity/product', 'post', {
+                    name: `${'ПФ'} ${material} (${heights[i]}х${widths[i]}${polishing ? ', Полировка' : ''}${tempered ? ', Закаленное' : ''}${cutsv1 ? `, Вырезы 1 кат.: ${cutsv1}` : ''}${cutsv2 ? `, Вырезы 2 кат.: ${cutsv2}` : ''}${cutsv3 ? `, Вырезы 3 кат.: ${cutsv3}` : ''}${drills ? `, Сверление: ${drills}` : ''}${zenk ? `, Зенкование: ${zenk}` : ''}${print ? ', Печать' : ''}${color ? `, ${color}` : ''})`,
+                    attributes: generateProductAttributes({...data.initialData, ...data.result.other, height: heights[i], width: widths[i]})
+                })
+                const responses = await Promise.all(promises)
+                const processingprocess = responses[0]
+                createdEntitys.product.push(product)
+                const plan = await makeProcessingPlanGlass({initialData: {height: heights[i], width: widths[i]}}, position.assortment.name, order, processingprocess, product, true, material, createdEntitys)
+                plan.quantity = position.quantity
+                result.selk.push(plan)
+                pfs.push(product)
+            }
+            continue
+        }
+        for(let i = 0; i < heights.length; i++){
             const promises = []
-            promises.push(makeprocessingprocess(stagesSelk))
-            promises.push(makeProduct(data, material, true, createdEntitys))
+            promises.push(makeprocessingprocess(stagesViz))
+            const product = await Client.sklad('https://api.moysklad.ru/api/remap/1.2/entity/product', 'post', {
+                name: `${'ПФ'} ${material} (${heights[i]}х${widths[i]}${cutsv1 ? `, Вырезы 1 кат.: ${cutsv1}` : ''}${cutsv2 ? `, Вырезы 2 кат.: ${cutsv2}` : ''}${cutsv3 ? `, Вырезы 3 кат.: ${cutsv3}` : ''}${zenk ? `, Зенкование: ${zenk}` : ''}${print ? ', Печать' : ''}${color ? `, ${color}` : ''})`,
+                attributes: generateProductAttributes({...data.initialData, ...data.result.other, height: heights[i], width: widths[i]})
+            })
             const responses = await Promise.all(promises)
             const processingprocess = responses[0]
-            const product = responses[1]
-            const plan = await makeProcessingPlanGlass(data, position.assortment.name, order, processingprocess, product, true, material, createdEntitys)
+            createdEntitys.product.push(product)
+            const plan = await makeProcessingPlanGlass({initialData: {height: heights[i], width: widths[i]}, ceraTrim: data.result.other.ceraTrim }, position.assortment.name, order, processingprocess, product, true, material, createdEntitys)
             plan.quantity = position.quantity
-            result.selk.push(plan)
-            pf = product
+            result.viz.push(plan)
+            pfs.push(product)
         }
     }
-
-    const stagesViz = generateStages(data, 'viz')
-
-    const processingprocessViz = await makeprocessingprocess(stagesViz)
-    const materialsViz = []
-    if(pf){
-        materialsViz.push({
+    const materialsViz = pfs.map(pf => {
+        return {
             assortment: { meta: pf.meta},
             quantity: 1
-        })
-    }
+        }
+    })
+    data.initialData.blank && materialsViz.push({
+        assortment: { meta: SkladService.selfcost.materials['Пятак капролон черный D32 H11 М8'].meta},
+        quantity: data.initialData.blank
+    })
+    materialsViz.push({
+        assortment: { meta: SkladService.selfcost.materials['Клей кераглас'].meta},
+        quantity: data.result.materials.find(el => el.name == 'Клей кераглас').count
+    })
+    const processingprocessViz = await makeprocessingprocess(['ОТК'])
     const planViz = await makeProcessingPlanViz(data, position.assortment.name, order, processingprocessViz, position.assortment, false, materialsViz, createdEntitys)
     planViz.quantity = position.quantity
     result.viz.push(planViz)
@@ -253,6 +285,7 @@ const glass = async (data, order, position, createdEntitys) => {
         selk: []
     }
     data.initialData.print && (result.print = true)
+    data.initialData.color && (result.color = data.initialData.color)
     const stagesSelk = generateStages(data, 'selk')
     const isPF = data.result.other.viz
     const promises = []
@@ -293,7 +326,10 @@ const smd = async (data, order, position, createdEntitys) => {
         viz: [],
         selk: []
     }
-    data.initialData.print && (result.print = true)
+    const print = data.initialData.print
+    const color = data.initialData.color
+    print && (result.print = true)
+    color && (result.color = data.initialData.color)
     const stagesSelk = generateStages(data, 'selk')
     const promises = []
     promises.push(makeprocessingprocess(stagesSelk))
@@ -313,7 +349,6 @@ const smd = async (data, order, position, createdEntitys) => {
         "mediaType" : "application/json",
         "uuidHref" : "https://online.moysklad.ru/app/#processingprocess/edit?id=43072ea8-17cf-11ef-0a80-178100023cbc"
     }
-    const color = data.initialData.color
     const planViz = await makeProcessingPlanVizSmd(data, 'Доска стеклянная магнитно-маркерная ASKELL Size', order, processingprocessViz, position.assortment, color, product.meta, createdEntitys)
     const productionRows = [{
                     processingPlan: {
@@ -321,8 +356,7 @@ const smd = async (data, order, position, createdEntitys) => {
                     },
                     productionVolume: position.quantity
                 }]
-    const print = data.initialData.print
-    const pzViz = await makeProductionTask(`Склад ВИЗ ПФ`, `Екатеринбург ВИЗ СГИ`, productionRows, order, {viz: true, smd: true, print}, createdEntitys)
+    const pzViz = await makeProductionTask(`Склад ВИЗ ПФ`, `Екатеринбург ВИЗ СГИ`, productionRows, order, {viz: true, smd: true, print, height: data.initialData.height, width: data.initialData.width, colors: [color]}, createdEntitys)
     return result
 }
 const glassPacket = async (data, order, position, createdEntitys) => {
@@ -355,10 +389,16 @@ export const createProductionTask = async (id) =>{
             }
             if(results.length < 1) return
             let print = false
+            let triplex = false
+            let ceraglass = false
+            let colors = []
             results.forEach( el => {
                 el.selk && (selkResult = selkResult.concat(el.selk))
                 el.viz && (vizResult = vizResult.concat(el.viz))
                 el.print && (print = true)
+                el.triplex && (triplex = true)
+                el.ceraglass && (ceraglass = true)
+                el.color && (colors.push(el.color))
             })
             const productionRows = selkResult.reduce((acc, curr) => {
                     acc.push({  processingPlan: { meta: curr.meta },
@@ -366,7 +406,7 @@ export const createProductionTask = async (id) =>{
                     })
                     return acc
                 }, [])
-            const pzSelk = await makeProductionTask(`Склад Селькоровская материалы/прочее`, `Склад Селькоровская ПФ`, productionRows, order, {viz: false, smd: false, print}, createdEntitys)
+            const pzSelk = await makeProductionTask(`Склад Селькоровская материалы/прочее`, `Склад Селькоровская ПФ`, productionRows, order, {viz: false, smd: false, print, colors}, createdEntitys)
             if(vizResult.length > 0){
                 const productionRows = vizResult.reduce((acc, curr) => {
                     acc.push({  processingPlan: { meta: curr.meta },
@@ -374,7 +414,7 @@ export const createProductionTask = async (id) =>{
                         })
                         return acc
                     }, [])
-                const pzViz = await makeProductionTask(`Склад ВИЗ ПФ`, `Екатеринбург ВИЗ СГИ`, productionRows, order, {viz: true, smd: false, print}, createdEntitys)
+                const pzViz = await makeProductionTask(`Склад ВИЗ ПФ`, `Екатеринбург ВИЗ СГИ`, productionRows, order, {viz: true, smd: false, print, triplex, colors, ceraglass}, createdEntitys)
             }
             console.timeEnd('creatingProudctionTask')
         }catch(error){
@@ -444,6 +484,7 @@ const makeProcessingPlanViz = async (data, name, order, processingprocess, produ
     return response
 }
 const makeProcessingPlanGlass = async (data, name, order, processingprocess, product, isPF, material, createdEntitys) => {
+    const multi = data.ceraTrim ? data.ceraTrim : SkladService.selfcost.pricesAndCoefs['Коэффициент обрези стекло']
     const response = await Client.sklad('https://api.moysklad.ru/api/remap/1.2/entity/processingplan', 'post', {
         name: `${order.name}, ${isPF ? 'ПФ, ' : ''}${name}`,
         processingProcess: { meta: processingprocess },
@@ -451,7 +492,7 @@ const makeProcessingPlanGlass = async (data, name, order, processingprocess, pro
             assortment: {
                 meta: SkladService.selfcost.materials[material].meta
             },
-            quantity: (data.initialData.width * data.initialData.height) / 1000000 * SkladService.selfcost.pricesAndCoefs['Коэффициент обрези стекло']
+            quantity: (data.initialData.width * data.initialData.height) / 1000000 * multi
         }],
         products: [{
             assortment: {
@@ -467,7 +508,7 @@ const makeProduct = async (data, name, isPF, createdEntitys) => {
     const { height, width, polishing, drills, zenk, cutsv1, cutsv2, cutsv3, tempered, color, print } = data.initialData
     const product = await Client.sklad('https://api.moysklad.ru/api/remap/1.2/entity/product', 'post', {
         name: `${isPF ? 'ПФ' : ''} ${name} (${height}х${width}${polishing ? ', Полировка' : ''}${tempered ? ', Закаленное' : ''}${cutsv1 ? `, Вырезы 1 кат.: ${cutsv1}` : ''}${cutsv2 ? `, Вырезы 2 кат.: ${cutsv2}` : ''}${cutsv3 ? `, Вырезы 3 кат.: ${cutsv3}` : ''}${drills ? `, Сверление: ${drills}` : ''}${zenk ? `, Зенкование: ${zenk}` : ''}${print ? ', Печать' : ''}${color ? `, ${color}` : ''})`,
-        attributes: generateProductAttributes(data.initialData, data.result.other)
+        attributes: generateProductAttributes({...data.initialData, ...data.result.other, isPF})
     })
     createdEntitys.product.push(product)
     return product
@@ -511,6 +552,7 @@ const generateProductAttributes = (data) => {
             case 'width': result.push({ meta: dictionary.productAttributes["Ширина в мм"], value: String(data.width) }); break;
             case 'cutsv1': result.push({ meta: dictionary.productAttributes["Кол во вырезов 1 категорий/ шт"], value: String(data.cutsv1) }); break;
             case 'cutsv2': result.push({ meta: dictionary.productAttributes["Кол во вырезов 2 категорий/ шт"], value: String(data.cutsv2) }); break;
+            case 'cutsv3': result.push({ meta: dictionary.productAttributes["Кол во вырезов 3 категорий/ шт"], value: String(data.cutsv3) }); break;
             case 'drills': result.push({ meta: dictionary.productAttributes["Кол во сверлении/шт"], value: String(data.drills) }); break;
             case 'zenk': result.push({ meta: dictionary.productAttributes["Кол во зенковании/ шт"], value: String(data.zenk) }); break;
             case 'material': result.push({ meta: dictionary.productAttributes["Материал 1"], value: data.material }); break;
@@ -527,20 +569,28 @@ const generateProductAttributes = (data) => {
             case 'productType': result.push({ meta: dictionary.productAttributes["Вид номенклатуры"], value: dictionary.attributesValue["Готовая продукция"] }); break;
             case 'tempered': result.push({ meta: dictionary.productAttributes["Закалка"], value: data.tempered ? 'Да' : '' }); break;
             case 'smdType': result.push({ meta: dictionary.productAttributes["Тип СМД"], value: data.smdType }); break;
+            case 'isPF': result.push({ meta: dictionary.productAttributes["Это полуфабрикат"], value: true }); break;
         }
     }
     return result
 }
 const generateProductionTaskAttributes = (order, checkboxes) => {
     const result = []
-    const {viz, smd, print} = checkboxes
+    const {viz, smd, print, triplex, colors, ceraglass, height, width} = checkboxes
 
     result.push({ meta: dictionary.productiontaskAttributes["№ заказа покупателя"], value: order.name })
     order.invoicesOut && result.push({ meta: dictionary.productiontaskAttributes["№ Счета"], value: order.invoicesOut.map(el => el.name).join(';') })
     viz && result.push({ meta: dictionary.productiontaskAttributes["Задание для ВИЗа"], value: true }) 
     smd && result.push({ meta: dictionary.productiontaskAttributes["СМД"], value: true }) 
-    print && result.push({ meta: dictionary.productiontaskAttributes["Есть УФ печать"], value: true }) 
-        
+    print && result.push({ meta: dictionary.productiontaskAttributes["Есть УФ печать"], value: true })
+    triplex && result.push({ meta: dictionary.productiontaskAttributes["Триплекс"], value: true })
+    ceraglass && result.push({ meta: dictionary.productiontaskAttributes["Керагласс"], value: true })
+    height && result.push({ meta: dictionary.productiontaskAttributes["Высота"], value: height })
+    width && result.push({ meta: dictionary.productiontaskAttributes["Ширина"], value: width })
+    if (colors?.length > 0) {
+        result.push({ meta: dictionary.productiontaskAttributes["Окрашивание"], value: true });
+        result.push({ meta: dictionary.productiontaskAttributes["Цвет"], value: colors.join(';') });
+    }
     return result
 }
 const makeProcessingPlanVizSmd = async (data, name, order, processingprocess, product, color, material, createdEntitys) => {
@@ -559,23 +609,26 @@ const makeProcessingPlanVizSmd = async (data, name, order, processingprocess, pr
     return response
 }
 const deleteEntitys = async (deletedPositions) => {
-    if(deletedPositions.length > 0){
-        const records = await Details.findAll({
-            where: {
-                productId: {
-                    [Op.in]: deletedPositions.map(el => el.id)
+    try{
+        if(deletedPositions.length > 0){
+            const records = await Details.findAll({
+                where: {
+                    productId: {
+                        [Op.in]: deletedPositions.map(el => el.id)
+                    }
                 }
-            }
-        })
-        const recordsToDelete = deletedPositions.filter(el => records.find(rec => rec.productId == el.id))
-        Details.destroy({
-            where: {
-                productId: {
-                    [Op.in]: recordsToDelete.map(el => el.id)
+            })
+            const recordsToDelete = deletedPositions.filter(el => records.find(rec => rec.productId == el.id))
+            Details.destroy({
+                where: {
+                    productId: {
+                        [Op.in]: recordsToDelete.map(el => el.id)
+                    }
                 }
-            }
-        });
-        Client.sklad(`https://api.moysklad.ru/api/remap/1.2/entity/product/delete`, "post", recordsToDelete.map(el => {return {meta: el.meta}}));
+            });
+            Client.sklad(`https://api.moysklad.ru/api/remap/1.2/entity/product/delete`, "post", recordsToDelete.map(el => {return {meta: el.meta}})).catch(err => {console.error("Ошибка при удалении", err)});
+        }
+    }catch{
     }
 }
 const generateStages = (data, place) => {
@@ -594,6 +647,12 @@ const generateStages = (data, place) => {
         data.initialData.color && stagesViz.push('Окраска стекла')
         data.result.other.type == 'Триплекс' && stagesViz.push('5. ТРПЛ')
         data.initialData.print && stagesViz.push('УФ (УФ печать)')
+        stagesViz.push('ОТК')
+        return stagesViz;
+    }
+    else if(place == 'vizCera'){
+        const stagesViz = []
+        stagesViz.push('Раскрой гидрорез Керамики')
         stagesViz.push('ОТК')
         return stagesViz;
     }

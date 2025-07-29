@@ -19,6 +19,7 @@ const Calculate = (data, selfcost) => {
         errors: [],
         warnings: []
     }
+    let ceraTrim = 0
     let weight = 0
     let name = `Керагласс, ${materials.join(' + ')}, (${height}х${width}${cutsv1 ? `, Вырезы 1 кат.: ${cutsv1}` : ''}${cutsv2 ? `, Вырезы 2 кат.: ${cutsv2}` : ''}${cutsv3 ? `, Вырезы 3 кат.: ${cutsv3}` : ''})`
     color && result.materials.push({
@@ -28,9 +29,10 @@ const Calculate = (data, selfcost) => {
         formula: 'Цена * 0.3'
     });
     result.materials.push({
-        name: 'Эпоксидная смола',
-        value: selfcost.materials[`Эпоксидная смола`].value * Math.max(0.17 * S_all, 0.5),
-        string: `${selfcost.materials[`Эпоксидная смола`].value} * ${Math.max(0.17 * S_all, 0.5)}`,
+        name: 'Клей кераглас',
+        count: Math.max(0.17 * S_all, 0.5),
+        value: selfcost.materials[`Клей кераглас`].value * Math.max(0.17 * S_all, 0.5),
+        string: `${selfcost.materials[`Клей кераглас`].value} * ${Math.max(0.17 * S_all, 0.5)}`,
         formula: 'Цена * Большее из 0.17 * S или 0.5'
     });
     if(blank){
@@ -69,14 +71,15 @@ const Calculate = (data, selfcost) => {
           h: heights[i]
         }));
         let count = countSheets(sheetWidth, sheetHeight, parts)
+        ceraTrim = 1 + (1 - S_all / (count * S_cera))
         if(typeof count === 'string'){
           result.errors.push(count)
           count = 999
         }
         result.materials.push({
             name: material,
-            value: selfcost.materials[material].value * S *  (1 + (1 - S_all / (count * S_cera)) + selfcost.pricesAndCoefs[`Коэффициент брака керамика`]),
-            string: `${selfcost.materials[material].value} * ${S} * ${(1 + (1 - S_all / (count * S_cera)) + selfcost.pricesAndCoefs[`Коэффициент брака керамика`])}`,
+            value: selfcost.materials[material].value * S * (ceraTrim + selfcost.pricesAndCoefs[`Коэффициент брака керамика`]),
+            string: `${selfcost.materials[material].value} * ${S} * ${ceraTrim + selfcost.pricesAndCoefs[`Коэффициент брака керамика`]}`,
             formula: 'Цена * S * (Коэффициент обрези керамика + Коэффициент брака керамика)'
         });
         constructWorks('cuttingCera', S, context);
@@ -88,13 +91,19 @@ const Calculate = (data, selfcost) => {
     cutsv2 && constructWorks('cutsv2', cutsv2 * materials.length, context);
     cutsv3 && constructWorks('cutsv3', cutsv3 * materials.length, context);
     color && constructWorks('color', S_all, context);
-    const [materialsandworks, commercialExpenses, householdExpenses, workshopExpenses] = constructExpenses(result, selfcost)
-    const price = (materialsandworks + commercialExpenses + householdExpenses + workshopExpenses) * selfcost.pricesAndCoefs[`Керагласс ${customertype}`] + (under && selfcost.unders[under].value || 0)
+
+    let materialsandworks = 0
+    for (const item of Object.values(result.materials))
+        materialsandworks += item.value
+    for (const item of Object.values(result.works))
+        materialsandworks += item.finalValue
+      
+    const price = materialsandworks * selfcost.pricesAndCoefs[`Керагласс ${customertype}`] + (under && selfcost.unders[under].value || 0)
     result.finalPrice = [{
         name: 'Себестоимость',
-        value: materialsandworks + commercialExpenses + householdExpenses + workshopExpenses,
-        string: `${(materialsandworks).toFixed(2)} + ${(commercialExpenses + householdExpenses + workshopExpenses).toFixed(2)}`,
-        formula: `(Материалы и работы) + Расходы + Подстолье`
+        value: materialsandworks,
+        string: `${(materialsandworks).toFixed(2)}`,
+        formula: `Материалы и работы`
     },{
         name: 'Наценка',
         value: selfcost.pricesAndCoefs[`Керагласс ${customertype}`],
@@ -113,7 +122,10 @@ const Calculate = (data, selfcost) => {
         type: 'Керагласс',
         stanok,
         viz: true,
-        materials
+        materials,
+        heights,
+        widths,
+        ceraTrim
     }
     console.log(result)
     return {

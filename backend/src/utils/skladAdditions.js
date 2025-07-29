@@ -14,7 +14,7 @@ const getMaterials = async () => {
     promises.push(fetchAllRows("https://api.moysklad.ru/api/remap/1.2/entity/product?filter=pathName=0 Закупки/0.02.04 Пленка EVA/Пленка EVA прозрачная;pathName=0 Закупки/0.02.04 Пленка EVA/Плёнки декоративные и цветные&expand=buyPrice.currency"))
     promises.push(fetchAllRows("https://api.moysklad.ru/api/remap/1.2/entity/product?filter=pathName=0 Закупки/0.02.02 Керамика/LAMINAM;pathName=0 Закупки/0.02.02 Керамика/ДЕГОН Стандарт&expand=buyPrice.currency"))
     promises.push(fetchAllRows("https://api.moysklad.ru/api/remap/1.2/entity/product?filter=pathName=0 Закупки/Материалы для стеклопакетов&expand=buyPrice.currency"))
-    promises.push(fetchAllRows("https://api.moysklad.ru/api/remap/1.2/entity/product?filter=code=1060964;code=887970156141&expand=buyPrice.currency"))//Пятак, смола
+    promises.push(fetchAllRows("https://api.moysklad.ru/api/remap/1.2/entity/product?filter=code=1060964;code=11111599&expand=buyPrice.currency"))//Пятак, смола
     const results = await Promise.all(promises)
     for(const result of results){
         for(const material of result){

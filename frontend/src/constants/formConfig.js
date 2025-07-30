@@ -19,9 +19,16 @@ const formConfigs = {
         { name: 'width', type: 'input', label: 'Ширина, мм:', rules: [{ required: true, message: 'Fill this field' }] },
         {
           name: 'clientType',
-          label: 'Тип клитента',
+          label: 'Тип клиента',
           type: 'select',
           options: ['VIP', 'Дилер', 'Опт', 'Розница'],
+          rules: [{ required: true, message: 'Fill this field' }]
+        },
+        {
+          name: 'marker',
+          label: 'Маркер',
+          type: 'select',
+          options: ['Белый', 'Черный'],
           rules: [{ required: true, message: 'Fill this field' }]
         },
         {

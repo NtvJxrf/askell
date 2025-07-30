@@ -2,7 +2,7 @@ import { constructWorks, constructExpenses } from './triplexCalc.js'
 const Calculate = (data, selfcost) => {
     console.log(data)
     console.log(selfcost)
-    const { height, width, cutsv1, cutsv2, cutsv3, material1, material2, blank, color, under, customertype } = data
+    const { height, width, cutsv1, cutsv2, cutsv3, material1, material2, blank, color, under, customertype, quantity = 1} = data
     const heightsRaw = Object.entries(data).filter(([key]) => /^height\d+$/.test(key)).map(([_, value]) => value);
     const heights = heightsRaw.length > 0 ? heightsRaw : [height];
     const widthsRaw = Object.entries(data).filter(([key]) => /^width\d+$/.test(key)).map(([_, value]) => value)
@@ -129,11 +129,11 @@ const Calculate = (data, selfcost) => {
     }
     console.log(result)
     return {
-        key: Date.now(),
+        key: crypto.randomUUID(),
         name,
         price,
         added: false,
-        quantity: 1,
+        quantity,
         initialData: data,
         result
     }

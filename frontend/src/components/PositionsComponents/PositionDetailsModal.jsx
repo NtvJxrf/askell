@@ -162,7 +162,7 @@ const renderLabeledDataBlock = (title, data, dictionary = {}) => {
     );
 };
 
-const ignorLabels = ['ignor', 'calcType', 'productType', 'materialsandworks', 'materials', 'shortThickness', 'spName', 'notax', 'widths', 'heights']
+const ignorLabels = ['ignor', 'calcType', 'productType', 'materialsandworks', 'materials', 'shortThickness', 'spName', 'notax', 'widths', 'heights', 'ceraTrim']
 const initialDataLabels = {
     height: 'Высота',
     width: 'Ширина',
@@ -189,7 +189,9 @@ const initialDataLabels = {
     gas: 'Газ',
     blank: 'Пятак',
     under: 'Подстолье',
-    smdType: 'Тип СМД'
+    smdType: 'Тип СМД',
+    quantity: 'Количество',
+    marker: 'Маркер'
 };
 
 const labelPrefixes = [

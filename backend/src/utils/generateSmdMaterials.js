@@ -6,7 +6,7 @@ const getMeta = (code, color) =>
 export const generateSmdMaterials = (data, color, material) => {
     const materials = []
     const { result, initialData } = data
-    const { width, height, smdType } = initialData
+    const { width, height, smdType, marker } = initialData
     const { S, P } = result.other
     const larger = Math.max(width, height)
 
@@ -53,7 +53,7 @@ export const generateSmdMaterials = (data, color, material) => {
     add('УПАКОВКА СМД', 2, 1061527)                                                    // Этикет-лента
     add('УПАКОВКА СМД', S < 1 ? width / 1000 : height / 1000, 1061166)                               // Пленка пузырчатая
     add('УПАКОВКА СМД', Math.ceil((S * 2) / 2.5), 11111529)                             // Картон бурый
-
+    marker == 'Белый' ?  add('УПАКОВКА СМД', 1, 1060961) : add('УПАКОВКА СМД', 1, 1060866) 
     if (S >= 1.5) {
         add('УПАКОВКА СМД', 9, 11111712)                                               // Пенокартон
     }
@@ -113,6 +113,26 @@ const processPositionsMap = {
 
 }
 const smdMaterials  = {
+  "1060961": {
+    "meta": {
+      "href": "https://api.moysklad.ru/api/remap/1.2/entity/product/3e304cc5-81e7-11ed-0a80-0281000c7e3e",
+      "metadataHref" : "https://api.moysklad.ru/api/remap/1.2/entity/product/metadata",
+      "type" : "product",
+      "mediaType" : "application/json",
+      "uuidHref" : "https://online.moysklad.ru/app/#good/edit?id=3e304537-81e7-11ed-0a80-0281000c7e3c"
+    },
+    "name": "Маркер меловой белый"
+  },
+  "1060866": {
+    "meta": {
+      "href": "https://api.moysklad.ru/api/remap/1.2/entity/product/41bc57fa-81e7-11ed-0a80-0281000c81a5",
+      "metadataHref" : "https://api.moysklad.ru/api/remap/1.2/entity/product/metadata",
+      "type" : "product",
+      "mediaType" : "application/json",
+      "uuidHref" : "https://online.moysklad.ru/app/#good/edit?id=41bc525a-81e7-11ed-0a80-0281000c81a3"
+    },
+    "name": "Маркер черный BRAUBERG"
+  },
   "1060836": {
     "meta": {
       "href": "https://api.moysklad.ru/api/remap/1.2/entity/product/414b1c95-81e7-11ed-0a80-0281000c812f",

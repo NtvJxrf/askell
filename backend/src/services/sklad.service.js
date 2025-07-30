@@ -126,7 +126,7 @@ export default class SkladService {
                         assortment: {
                             meta: pos.position.assortment.meta
                         },
-                        price: pos.price * 100,
+                        price: Number((pos.price * 100).toFixed(2)),
                         quantity: pos.quantity,
                         vat: data.order.organization.name === 'ООО "А2"' ? 20 : 0
                     }
@@ -319,7 +319,11 @@ const smd = async (data, order, position, createdEntitys) => {
                     productionVolume: position.quantity
                 }]
         const print = position.assortment.name.toLowerCase().includes('уф печать')
-        const pzViz = await makeProductionTask(`Склад ВИЗ ПФ`, `Екатеринбург ВИЗ СГИ`, productionRows, order, {viz: true, smd: true, print}, createdEntitys)
+        const attributes = position?.assortment?.attributes.reduce((acc, curr) => {
+            acc[curr.name] = acc.value
+            return acc
+        }, {})
+        const pzViz = await makeProductionTask(`Склад ВИЗ ПФ`, `Екатеринбург ВИЗ СГИ`, productionRows, order, {viz: true, smd: true, print, height: attributes['Длина в мм'], width: attributes['Ширина в мм'], colors: [attributes['Цвет доски'].name]}, createdEntitys)
         return
     }
     const result = {
@@ -406,7 +410,7 @@ export const createProductionTask = async (id) =>{
                     })
                     return acc
                 }, [])
-            const pzSelk = await makeProductionTask(`Склад Селькоровская материалы/прочее`, `Склад Селькоровская ПФ`, productionRows, order, {viz: false, smd: false, print, colors}, createdEntitys)
+            const pzSelk = await makeProductionTask(`Склад Селькоровская материалы/прочее`, `Склад Селькоровская ПФ`, productionRows, order, {}, createdEntitys)
             if(vizResult.length > 0){
                 const productionRows = vizResult.reduce((acc, curr) => {
                     acc.push({  processingPlan: { meta: curr.meta },
@@ -593,11 +597,11 @@ const generateProductionTaskAttributes = (order, checkboxes) => {
     }
     return result
 }
-const makeProcessingPlanVizSmd = async (data, name, order, processingprocess, product, color, material, createdEntitys) => {
+const makeProcessingPlanVizSmd = async (data, name, order, processingprocess, product, color, materialMeta, createdEntitys) => {
     const response = await Client.sklad('https://api.moysklad.ru/api/remap/1.2/entity/processingplan', 'post', {
         name: `${order.name}, ${name}`,
         processingProcess: { meta: processingprocess },
-        materials: generateSmdMaterials(data, color, material),
+        materials: generateSmdMaterials(data, color, materialMeta),
         products: [{
             assortment: {
                 meta: product.meta,

@@ -9,7 +9,7 @@ const Calculate = (data, selfcost, triplexArray) => {
         tempered1, tempered2, tempered3,
         polishing1, polishing2, polishing3,
         blunting1, blunting2, blunting3,
-        height, width, gas, plane1, plane2, customertype } = data
+        height, width, gas, plane1, plane2, customertype, quantity = 1 } = data
     const materials = [
                     [material1, tempered1, polishing1, blunting1],
                     [material2, tempered2, polishing2, blunting2],
@@ -83,7 +83,7 @@ const Calculate = (data, selfcost, triplexArray) => {
             string: `${selfcost.materials[material[0]].value} * ${S.toFixed(2)} * ${selfcost.pricesAndCoefs['Коэффициент обрези стекло стеклопакет']}`,
             formula: 'Цена за м² * Площадь * Коэффициент обрези стекло стеклопакет'
         });
-        const context = { selfcost, result, thickness };
+        const context = { selfcost, result, thickness, spo: true };
         constructWorks('cutting1', S, context);
         constructWorks('cutting2', S, context);
         if(material[1]){
@@ -123,7 +123,7 @@ const Calculate = (data, selfcost, triplexArray) => {
     //     string: `${selfcost.materials[gas].value} * ${S} * ${allPlaneThickness}`,
     //     formula: 'Цена за м² * Площадь * Толщина всех рамок'
     // });
-    const context = { selfcost, result, allThickness, planes, P};
+    const context = { selfcost, result, allThickness, planes, P, spo: true};
     constructWorks('sealing', planes.length, context);
     constructWorks('assembleGlasspacket', planes.length, context);
     constructWorks('assemblePlane', planes.length, context);
@@ -133,19 +133,12 @@ const Calculate = (data, selfcost, triplexArray) => {
     for (const item of Object.values(result.materials)) 
         materialsandworks += item.value
     for (const item of Object.values(result.works)) 
-        materialsandworks += item.value
-    const expenses = materialsandworks * 0.45
-    result.expenses = [{
-        name: 'Расходы',
-        value: expenses,
-        string: `${(materialsandworks).toFixed(2)} * 0.45`,
-        formula: `(Материалы и работы) * 0.45`
-    }]
-    const price = (materialsandworks + expenses) * selfcost.pricesAndCoefs[`Стеклопакет ${customertype}`]
+        materialsandworks += item.finalValue
+    const price = materialsandworks * selfcost.pricesAndCoefs[`Стеклопакет ${customertype}`]
     result.finalPrice = [{
-        name: 'Прямые затраты',
-        value: materialsandworks + expenses,
-        string: `${(materialsandworks).toFixed(2)} + ${(expenses).toFixed(2)}`,
+        name: 'Себестоимость',
+        value: materialsandworks,
+        string: `${(materialsandworks).toFixed(2)}`,
         formula: `(Материалы и работы) + Расходы`
     },{
         name: 'Наценка',
@@ -169,7 +162,7 @@ const Calculate = (data, selfcost, triplexArray) => {
         name,
         price,
         added: false,
-        quantity: 1,
+        quantity,
         initialData: data,
         result
     }

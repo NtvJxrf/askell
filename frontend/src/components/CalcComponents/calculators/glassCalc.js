@@ -3,7 +3,7 @@ import { constructWorks, constructExpenses } from './triplexCalc'
 const Calculate = (data, selfcost) => {
     console.log(selfcost)
     console.log(data)
-    const { material, height, width, polishing, drills, zenk, cutsv1, cutsv2, cutsv3, tempered, shape, color, print, customertype, rounding } = data
+    const { material, height, width, polishing, drills, zenk, cutsv1, cutsv2, cutsv3, tempered, shape, color, print, customertype, rounding, quantity = 1 } = data
     let S = (height * width) / 1000000
     if(S < 0.5){
         switch (rounding){
@@ -91,7 +91,7 @@ const Calculate = (data, selfcost) => {
         name,
         price,
         added: false,
-        quantity: 1,
+        quantity,
         initialData: data,
         result
     }

@@ -18,14 +18,17 @@ const getMaterials = async () => {
     const results = await Promise.all(promises)
     for(const result of results){
         for(const material of result){
-            const l = material?.attributes?.find(el => el.name === 'Длина в мм')?.value
-            const w = material?.attributes?.find(el => el.name === 'Ширина в мм')?.value
-            materials[material.name] = {
+            const res = {
                 meta: material.meta,
                 value: convertPrice(material.buyPrice),
-                l: material.name.toLowerCase().includes('плита') ? +l : 0,
-                w: material.name.toLowerCase().includes('плита') ? +w : 0
             }
+            if(material.name.toLowerCase()?.includes('плита')){
+                const l = material?.attributes?.find(el => el.name === 'Длина в мм')?.value
+                const w = material?.attributes?.find(el => el.name === 'Ширина в мм')?.value
+                res.l = +l || 0,
+                res.w = +w || 0
+            }
+            materials[material.name] = res
         }
     }
     SkladService.selfcost.materials = materials

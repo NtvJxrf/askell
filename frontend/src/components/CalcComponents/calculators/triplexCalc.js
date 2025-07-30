@@ -2,7 +2,7 @@ import { shortenGlassName } from "./glasspacketCalc.js"
 const Calculate = (data, selfcost) => {
     console.log(selfcost)
     console.log(data)
-    const { height, width, polishing, drills, zenk, cutsv1, cutsv2, cutsv3, tempered, shape, addTape, print, customertype, rounding, color } = data
+    const { height, width, polishing, drills, zenk, cutsv1, cutsv2, cutsv3, tempered, shape, addTape, print, customertype, rounding, color, quantity = 1 } = data
     const tapes = Object.entries(data).filter(([key]) => key.startsWith('tape')).map(([_, value]) => value);
     const materials = Object.entries(data).filter(([key, value]) => key.startsWith('material') && value !== undefined).map(([_, value]) => value);
     addTape && tapes.push(addTape)
@@ -162,22 +162,22 @@ const Calculate = (data, selfcost) => {
             name,
             price,
             added: false,
-            quantity: 1,
+            quantity,
             initialData: data,
             result
     }
 }
 
 export const constructWorks = (work, quantity, context) => {
-    const { selfcost, result, thickness } = context;
+    const { selfcost, result, thickness, spo } = context;
     const res = (name, tableName) => {
         const PAC = selfcost.pricesAndCoefs
         const value = (quantity * PAC[tableName || name].costOfWork) 
         + (PAC[tableName || name].salary / PAC['Среднее количество рабочих часов в месяц'] * quantity / PAC[tableName || name].ratePerHour)
         const place = PAC[name].place
-        const workshopExpenses = value * PAC[`% цеховых расходов ${place}`]
-        const commercialExpenses = value * (name.toLowerCase().includes('триплекс') ? PAC[`% коммерческих расходов Селькоровская`] : PAC[`% коммерческих расходов ${place}`])
-        const householdExpenses = value * PAC[`% общехозяйственных расходов ${place}`]
+        const workshopExpenses = value * (spo ? 0.45 : PAC[`% цеховых расходов ${place}`])
+        const commercialExpenses = value * (spo ? 0.45 : name.toLowerCase().includes('триплекс') ? PAC[`% коммерческих расходов Селькоровская`] : PAC[`% коммерческих расходов ${place}`])
+        const householdExpenses = value * (spo ? 0.45 : PAC[`% общехозяйственных расходов ${place}`])
         result.works.push({
             name,
             finalValue: value + workshopExpenses + commercialExpenses + householdExpenses,

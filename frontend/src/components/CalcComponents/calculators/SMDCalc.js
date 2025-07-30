@@ -1,7 +1,7 @@
 const Calculate = (data, selfcost) => {
     console.log(selfcost)
     console.log(data)
-    const { material, height, width, cuts, smdType, color, rounds, drillssmd, clientType, print, notax } = data
+    const { material, height, width, cuts, smdType, color, rounds, drillssmd, clientType, print, notax, quantity = 1 } = data
     const result = {
         materials: [],
         works: [],
@@ -102,14 +102,14 @@ const Calculate = (data, selfcost) => {
         stanok,
         weight,
         productType: true,
-        type: 'СМД'
+        type: 'СМД',
     }
     return {
             key: crypto.randomUUID(),
             name,
             price,
             added: false,
-            quantity: 1,
+            quantity,
             initialData: data,
             result
     }

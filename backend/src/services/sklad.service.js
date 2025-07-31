@@ -495,7 +495,7 @@ const makeProcessingPlanGlass = async (data, name, order, processingprocess, pro
             assortment: {
                 meta: SkladService.selfcost.materials[material].meta
             },
-            quantity: (data.initialData.width * data.initialData.height) / 1000000 * (data.ceraTrim ? data.ceraTrim : 0.1)
+            quantity: (data.initialData.width * data.initialData.height) / 1000000 * (data.ceraTrim ? data.ceraTrim : 1.1)
         }],
         products: [{
             assortment: {

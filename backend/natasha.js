@@ -5,7 +5,7 @@ dotenv.config();
 import * as XLSX from 'xlsx';
 
 export default async function createReport() {
-    const urlBase = `https://api.moysklad.ru/api/remap/1.2/entity/invoiceout?filter=state.name=Оплачено;state.name=Предоплата;moment>2024-01-01;moment<2025-07-29&expand=positions.assortment,agent`
+    const urlBase = `https://api.moysklad.ru/api/remap/1.2/entity/invoiceout?filter=state.name=Оплачено;state.name=Предоплата;moment>2022-01-01;moment<2024-01-01&expand=positions.assortment,agent`
 
     const rows = await fetchAllRows(urlBase);
     exportToExcel(rows);
@@ -16,10 +16,10 @@ function exportToExcel(rows) {
 
   // Список месяцев с 2024-01 по 2025-07
   const monthHeaders = [];
-  for (let y = 2024; y <= 2025; y++) {
+  for (let y = 2022; y <= 2024; y++) {
     for (let m = 1; m <= 12; m++) {
       const key = `${y}-${String(m).padStart(2, '0')}`;
-      if (key >= '2024-01' && key <= '2025-07') {
+      if (key >= '2022-01' && key <= '2024-01') {
         monthHeaders.push(key);
       }
     }

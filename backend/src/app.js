@@ -10,7 +10,7 @@ import { initQueue } from './utils/rabbitmq.js';
 import { initSkladAdditions } from "./utils/skladAdditions.js"
 import getOrdersInWork from "./utils/getOrdersInWork.js"
 const promises = []
-// promises.push(getOrdersInWork())
+promises.push(getOrdersInWork())
 promises.push(initModels())
 promises.push(initSkladAdditions())
 promises.push(initQueue())

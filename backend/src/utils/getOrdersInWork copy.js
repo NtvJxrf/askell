@@ -37,23 +37,50 @@ const getOrdersInWork = async () => {
             const cutsv1 = Number(attributes['Кол во вырезов 1 категорий/ шт']) || 0
             const cutsv2 = Number(attributes['Кол во вырезов 2 категорий/ шт']) || 0
             const cutsv3 = Number(attributes['Кол во вырезов 3 категорий/ шт']) || 0
+            const drills = Number(attributes['Кол во сверлении/шт']) || 0
+            const zenk = Number(attributes['Кол во зенковании/ шт']) || 0
 
             const P = 2 * (height + width) / 1000
             const S = height * width / 1_000_000
             const count = pfs * position.quantity
+            const SInPosition = S * count
+
             const rate = (name) => ratesPerHour[name] || 1
-            const setup = 10 //Время на переналадку
-            const thisStraight = stanok === 'Прямолинейка' ? (P / 0.8 + 1) / 60 : 0
+
+            const thisStraight = stanok === 'Прямолинейка' ? P / rate('Прямолинейная обработка') : 0
             const thisCurved = stanok === 'Криволинейка'
-                ? (P / 0.22
-                + cutsv1 * 8
-                + cutsv2 * 16
-                + cutsv3 * 32
-                + setup) / 60
+                ? P / rate('Криволинейная обработка')
+                + cutsv1 / rate('Вырез в стекле 1 кат')
+                + cutsv2 / rate('Вырез в стекле 2 кат')
+                + cutsv3 / rate('Вырез в стекле 3 кат')
                 : 0
+            const thisDrills = drills / rate('Сверление') + zenk / rate('Зенковка')
+            const thisCutting = S * count / rate('Резка (Управление)')
+
+            const partsPerOneInFurnace = Math.ceil(5 / S)
+            const thisTempering = count / partsPerOneInFurnace / rate('Закалка 10 мм')
+
+            const thisTriplex = SInPosition / 2 * (pfs - 1) / rate('Триплекс 10 мм')
+
+            const firstOne = thisStraight + thisCurved + thisDrills
+            const setup = 0.17 //Время на переналадку
 
             straightTotal += thisStraight * count
             curvedTotal += thisCurved * count
+            drillsTotal += thisDrills * count
+            cuttingTotal += thisCutting
+            temperingTotal += thisTempering
+
+            if (position.assortment.name.toLowerCase().includes('триплекс')) {
+                triplexTotal += thisTriplex
+            }
+
+            const thisTime = firstOne + Math.max(thisStraight, thisCurved, thisDrills) * (count - 1)
+            const thisSelk = thisTime + setup + thisTempering + thisCutting
+            selk += thisSelk
+
+            const thisViz = thisTriplex
+            viz += thisViz
 
             load.push({
                 id: position.assortment.id,
@@ -63,6 +90,12 @@ const getOrdersInWork = async () => {
                 stanok,
                 thisStraight: thisStraight * count,
                 thisCurved: thisCurved * count,
+                thisDrills: thisDrills * count,
+                thisCutting,
+                thisTempering,
+                thisTriplex,
+                thisSelk,
+                thisViz,
                 name: order.name,
                 deliveryPlannedMoment: order?.deliveryPlannedMoment?.split(' ')[0],
             })

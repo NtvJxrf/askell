@@ -288,12 +288,10 @@ const glass = async (data, order, position, createdEntitys) => {
     data.initialData.color && (result.color = data.initialData.color)
     const stagesSelk = generateStages(data, 'selk')
     const isPF = data.result.other.viz
-    const promises = []
-    promises.push(makeprocessingprocess(stagesSelk))
-    promises.push(makeProduct(data, position.assortment.name, isPF, createdEntitys))
-    const responses = await Promise.all(promises)
-    const processingprocess = responses[0]
-    const product = responses[1]
+    const processingprocess = await makeprocessingprocess(stagesSelk)
+    let product = null
+    if(isPF) product = await makeProduct(data, data.initialData.material, isPF, createdEntitys)
+    else product = position.assortment
     const plan = await makeProcessingPlanGlass(data, position.assortment.name, order, processingprocess, product, isPF, data.initialData.material, createdEntitys)
     plan.quantity = position.quantity
     result.selk.push(plan)
@@ -337,7 +335,7 @@ const smd = async (data, order, position, createdEntitys) => {
     const stagesSelk = generateStages(data, 'selk')
     const promises = []
     promises.push(makeprocessingprocess(stagesSelk))
-    promises.push(makeProduct(data, position.assortment.name, true, createdEntitys))
+    promises.push(makeProduct(data, data.initialData.material, true, createdEntitys))
     const responses = await Promise.all(promises)
     const processingprocess = responses[0]
     const product = responses[1]

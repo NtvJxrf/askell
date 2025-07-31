@@ -3,13 +3,14 @@ import ApiError from '../utils/apiError.js';
 import logger from '../utils/logger.js';
 import ipRangeCheck from 'ip-range-check';
 
-export const trustedIps = ['23.105.238.220', '23.105.239.236', '127.0.0.1'];
+export const trustedIps = ['23.105.238.220', '23.105.239.236', '127.0.0.1', '::1'];
 
 
 
 const authMiddleware = async (req, res, next) => {
   try {
     const clientIp = req.ip
+    console.log(clientIp)
     if (ipRangeCheck(clientIp, trustedIps)) {
       req.user = { roles: ['system'], username: 'system' };
       return next();

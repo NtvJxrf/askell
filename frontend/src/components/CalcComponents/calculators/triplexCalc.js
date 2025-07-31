@@ -85,12 +85,11 @@ const Calculate = (data, selfcost) => {
         }
 
     }
-    const stanok = (shape && !cutsv1 && !cutsv2 && !cutsv3 && weight < 50) ? 'Прямолинейка' : 'Криволинейка'
     for(const material of materials){
         const thickness = Number(material.match(/(\d+(?:[.,]\d+)?)\s*мм/i)[1])
         shortThickness.push(thickness)
         allThickness += thickness
-        weight += 2.5 * S * thickness
+        weight += 2.5 * ((height * width) / 1000000) * thickness
         
         tempered && constructWorks('tempered', S, { thickness, result, selfcost})
         result.materials.push({
@@ -107,6 +106,7 @@ const Calculate = (data, selfcost) => {
         string: `${selfcost.pricesAndCoefs[`УФ печать`]}`,
         formula: 'Себестоимость уф печати'
     });
+    const stanok = (shape && !cutsv1 && !cutsv2 && !cutsv3 && weight < 50) ? 'Прямолинейка' : 'Криволинейка'
     const context = { selfcost, result, stanok, allThickness };
     constructWorks('cutting1', S * materials.length, context);
     constructWorks('cutting2', S * materials.length, context);

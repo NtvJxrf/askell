@@ -367,98 +367,98 @@ const glassPacket = async (data, order, position, createdEntitys) => {
 
 }
 export const createProductionTask = async (id) =>{
-        console.time('creatingProudctionTask')
-        const order = await Client.sklad(`https://api.moysklad.ru/api/remap/1.2/entity/customerorder/${id}?expand=positions.assortment,invoicesOut&limit=100`)
-        if(!order)
-            throw new ApiError(`Заказ покупателя с ${id} не найден`)
-        const map = {
-            'Триплекс': triplex,
-            'Керагласс': ceraglass,
-            'Стекло': glass,
-            'СМД': smd,
-            'Стеклопакет': glassPacket
-        }
-        const createdEntitys = { task: [], plan: [], product: [] }
-        let selkResult = []
-        let vizResult = []
-        const results = []
-        try{
-            for(const position of order.positions.rows){
-                if(position.assortment.pathName.toLowerCase().includes('смд')){
-                    await map['СМД'](null, order, position, createdEntitys)
-                    continue
-                }
-                const data = await Details.findOne({where: {productId: position.assortment.id}})
-                if(data) results.push(await map[data.result.other.type](data, order, position, createdEntitys))
+    console.time('creatingProudctionTask')
+    const order = await Client.sklad(`https://api.moysklad.ru/api/remap/1.2/entity/customerorder/${id}?expand=positions.assortment,invoicesOut&limit=100`)
+    if(!order)
+        throw new ApiError(`Заказ покупателя с ${id} не найден`)
+    const map = {
+        'Триплекс': triplex,
+        'Керагласс': ceraglass,
+        'Стекло': glass,
+        'СМД': smd,
+        'Стеклопакет': glassPacket
+    }
+    const createdEntitys = { task: [], plan: [], product: [] }
+    let selkResult = []
+    let vizResult = []
+    const results = []
+    try{
+        for(const position of order.positions.rows){
+            if(position.assortment.pathName.toLowerCase().includes('смд')){
+                await map['СМД'](null, order, position, createdEntitys)
+                continue
             }
-            if(results.length < 1) return
-            let print = false
-            let triplex = false
-            let ceraglass = false
-            let colors = []
-            results.forEach( el => {
-                el.selk && (selkResult = selkResult.concat(el.selk))
-                el.viz && (vizResult = vizResult.concat(el.viz))
-                el.print && (print = true)
-                el.triplex && (triplex = true)
-                el.ceraglass && (ceraglass = true)
-                el.color && (colors.push(el.color))
-            })
-            const productionRows = selkResult.reduce((acc, curr) => {
-                    acc.push({  processingPlan: { meta: curr.meta },
-                                productionVolume: curr.quantity
+            const data = await Details.findOne({where: {productId: position.assortment.id}})
+            if(data) results.push(await map[data.result.other.type](data, order, position, createdEntitys))
+        }
+        if(results.length < 1) return
+        let print = false
+        let triplex = false
+        let ceraglass = false
+        let colors = []
+        results.forEach( el => {
+            el.selk && (selkResult = selkResult.concat(el.selk))
+            el.viz && (vizResult = vizResult.concat(el.viz))
+            el.print && (print = true)
+            el.triplex && (triplex = true)
+            el.ceraglass && (ceraglass = true)
+            el.color && (colors.push(el.color))
+        })
+        const productionRows = selkResult.reduce((acc, curr) => {
+                acc.push({  processingPlan: { meta: curr.meta },
+                            productionVolume: curr.quantity
+                })
+                return acc
+            }, [])
+        const pzSelk = await makeProductionTask(`Склад Селькоровская материалы/прочее`, `Склад Селькоровская ПФ`, productionRows, order, {}, createdEntitys)
+        if(vizResult.length > 0){
+            const productionRows = vizResult.reduce((acc, curr) => {
+                acc.push({  processingPlan: { meta: curr.meta },
+                            productionVolume: curr.quantity
                     })
                     return acc
                 }, [])
-            const pzSelk = await makeProductionTask(`Склад Селькоровская материалы/прочее`, `Склад Селькоровская ПФ`, productionRows, order, {}, createdEntitys)
-            if(vizResult.length > 0){
-                const productionRows = vizResult.reduce((acc, curr) => {
-                    acc.push({  processingPlan: { meta: curr.meta },
-                                productionVolume: curr.quantity
-                        })
-                        return acc
-                    }, [])
-                const pzViz = await makeProductionTask(`Склад ВИЗ ПФ`, `Екатеринбург ВИЗ СГИ`, productionRows, order, {viz: true, smd: false, print, triplex, colors, ceraglass}, createdEntitys)
-            }
-            console.timeEnd('creatingProudctionTask')
-        }catch(error){
-            logger.error('Ошибка во время создания произодственного задания', {stack: error.stack})
-            for(const entity in createdEntitys){
-                switch(entity){
-                    case 'task':
-                        if(createdEntitys[entity].length > 0)
-                        await Client.sklad('https://api.moysklad.ru/api/remap/1.2/entity/productiontask/delete', 'post', createdEntitys[entity].map(el => {return {meta: el.meta}}))
-                        break
-                    case 'plan':
-                        if(createdEntitys[entity].length > 0)
-                        await Client.sklad('https://api.moysklad.ru/api/remap/1.2/entity/processingplan/delete', 'post', createdEntitys[entity].map(el => {return {meta: el.meta}}))
-                        break
-                    case 'product':
-                        if(createdEntitys[entity].length > 0)
-                        await Client.sklad('https://api.moysklad.ru/api/remap/1.2/entity/product/delete', 'post', createdEntitys[entity].map(el => {return {meta: el.meta}}))
-                        break
-                }
-            }
-            const task = await Client.sklad('https://api.moysklad.ru/api/remap/1.2/entity/task', 'post', {
-                assignee: {
-                    meta: order.owner.meta,
-                },
-                operation: {
-                    meta: order.meta
-                },
-                description: `Ошибка во время создания производственного задания ${order.name}`
-            })
-            await Client.sklad(`https://api.moysklad.ru/api/remap/1.2/entity/customerorder/${order.id}`, 'put', {
-                state: { meta: {
-                    "href" : "https://api.moysklad.ru/api/remap/1.2/entity/customerorder/metadata/states/6a37967b-5899-11f0-0a80-1bc9000373a3",
-                    "metadataHref" : "https://api.moysklad.ru/api/remap/1.2/entity/customerorder/metadata",
-                    "type" : "state",
-                    "mediaType" : "application/json"
-                }}
-            })
+            const pzViz = await makeProductionTask(`Склад ВИЗ ПФ`, `Екатеринбург ВИЗ СГИ`, productionRows, order, {viz: true, smd: false, print, triplex, colors, ceraglass}, createdEntitys)
         }
-        
+        console.timeEnd('creatingProudctionTask')
+    }catch(error){
+        logger.error('Ошибка во время создания произодственного задания', {stack: error.stack})
+        for(const entity in createdEntitys){
+            switch(entity){
+                case 'task':
+                    if(createdEntitys[entity].length > 0)
+                    await Client.sklad('https://api.moysklad.ru/api/remap/1.2/entity/productiontask/delete', 'post', createdEntitys[entity].map(el => {return {meta: el.meta}}))
+                    break
+                case 'plan':
+                    if(createdEntitys[entity].length > 0)
+                    await Client.sklad('https://api.moysklad.ru/api/remap/1.2/entity/processingplan/delete', 'post', createdEntitys[entity].map(el => {return {meta: el.meta}}))
+                    break
+                case 'product':
+                    if(createdEntitys[entity].length > 0)
+                    await Client.sklad('https://api.moysklad.ru/api/remap/1.2/entity/product/delete', 'post', createdEntitys[entity].map(el => {return {meta: el.meta}}))
+                    break
+            }
+        }
+        const task = await Client.sklad('https://api.moysklad.ru/api/remap/1.2/entity/task', 'post', {
+            assignee: {
+                meta: order.owner.meta,
+            },
+            operation: {
+                meta: order.meta
+            },
+            description: `Ошибка во время создания производственного задания ${order.name}`
+        })
+        await Client.sklad(`https://api.moysklad.ru/api/remap/1.2/entity/customerorder/${order.id}`, 'put', {
+            state: { meta: {
+                "href" : "https://api.moysklad.ru/api/remap/1.2/entity/customerorder/metadata/states/6a37967b-5899-11f0-0a80-1bc9000373a3",
+                "metadataHref" : "https://api.moysklad.ru/api/remap/1.2/entity/customerorder/metadata",
+                "type" : "state",
+                "mediaType" : "application/json"
+            }}
+        })
     }
+    
+}
 const makeProductionTask = async (materialsStore, productsStore, productionRows, order, checkboxes, createdEntitys) => {
     const task = await Client.sklad(`https://api.moysklad.ru/api/remap/1.2/entity/productiontask`, 'post', {
                 materialsStore: { meta: dictionary.stores[materialsStore]},
@@ -594,7 +594,8 @@ const generateProductionTaskAttributes = (order, checkboxes) => {
     width && result.push({ meta: dictionary.productiontaskAttributes["Ширина"], value: width })
     if (colors?.length > 0) {
         result.push({ meta: dictionary.productiontaskAttributes["Окрашивание"], value: true });
-        result.push({ meta: dictionary.productiontaskAttributes["Цвет"], value: colors.join(';') });
+        result.push({ meta: dictionary.productiontaskAttributes["Цвет"], value: [...new Set(colors)].join(';')
+    });
     }
     return result
 }

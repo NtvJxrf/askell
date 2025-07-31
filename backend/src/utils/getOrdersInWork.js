@@ -43,7 +43,7 @@ const getOrdersInWork = async () => {
             const count = pfs * position.quantity
             const rate = (name) => ratesPerHour[name] || 1
             const setup = 10 //Время на переналадку
-            const thisStraight = stanok === 'Прямолинейка' ? (P / 0.8 + 1) / 60 : 0
+            const thisStraight = stanok === 'Прямолинейка' ? (P / 0.8 + 1) / 60  * 2.5 : 0
             const thisCurved = stanok === 'Криволинейка'
                 ? (P / 0.22
                 + cutsv1 * 8

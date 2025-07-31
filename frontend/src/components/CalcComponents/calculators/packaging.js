@@ -167,14 +167,24 @@ const packaging = (positions) => {
             }) 
         break
     }
-    const [materialsandworks, commercialExpenses, householdExpenses, workshopExpenses] = constructExpenses(result, selfcost)
-    const price = (materialsandworks + commercialExpenses + householdExpenses + workshopExpenses) * selfcost.pricesAndCoefs[`Коэф-нт прибыли упаковка`]
-    result.finalPrice = {
-        name: 'Итоговая цена',
-        string: `(${(materialsandworks ).toFixed(2)} + ${((commercialExpenses + householdExpenses + workshopExpenses) ).toFixed(2)}) * ${selfcost.pricesAndCoefs[`Коэф-нт прибыли упаковка`]}`,
-        formula: `(Материалы и Работы + Расходы) * Коэф-нт прибыли упаковка`,
-        value: price
-    }
+    let materialsandworks = 0
+    for (const item of Object.values(result.materials))
+        materialsandworks += item.value
+    for (const item of Object.values(result.works))
+        materialsandworks += item.value
+    const price = materialsandworks * selfcost.pricesAndCoefs[`Коэф-нт прибыли упаковка`]
+    result.finalPrice = [{
+        name: 'Себестоимость',
+        value: materialsandworks,
+        string: `${(materialsandworks).toFixed(2)}`,
+        formula: `(Материалы и работы) + Расходы`
+    },{
+        name: 'Наценка',
+        value: selfcost.pricesAndCoefs[`Коэф-нт прибыли упаковка`],
+        string: selfcost.pricesAndCoefs[`Коэф-нт прибыли упаковка`],
+        formula: `Наценка для типа клиента ${selfcost.pricesAndCoefs[`Коэф-нт прибыли упаковка`]}`
+    }]
+
     return {
         key: crypto.randomUUID(),
         name,

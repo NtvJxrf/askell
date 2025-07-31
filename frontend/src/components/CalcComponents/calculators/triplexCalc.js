@@ -113,8 +113,8 @@ const Calculate = (data, selfcost) => {
     constructWorks('washing1', S * materials.length, context);
     stanok == 'Криволинейка' ? constructWorks('curvedProcessing', P * materials.length, context) : constructWorks('straightProcessing', P * materials.length, context)
     constructWorks('otk', S * materials.length, context);
-    constructWorks('triplexing1', S * materials.length - 1, context);
-    constructWorks('triplexing2', S * materials.length - 1, context);
+    constructWorks('triplexing1', S * (materials.length - 1), context);
+    constructWorks('triplexing2', S * (materials.length - 1), context);
     drills && constructWorks('drills', drills * materials.length, context);
     zenk && constructWorks('zenk', zenk * materials.length, context);
     cutsv1 && constructWorks('cutsv1', cutsv1 * materials.length, context);

@@ -467,7 +467,8 @@ const makeProductionTask = async (materialsStore, productsStore, productionRows,
                 deliveryPlannedMoment: order.deliveryPlannedMoment,
                 owner: { meta: order.owner.meta},
                 attributes: generateProductionTaskAttributes(order, checkboxes),
-                productionRows
+                productionRows,
+                reserve: true
             })
     createdEntitys.task.push(task)
     return task
@@ -488,7 +489,7 @@ const makeProcessingPlanViz = async (data, name, order, processingprocess, produ
     return response
 }
 const makeProcessingPlanGlass = async (data, name, order, processingprocess, product, isPF, material, createdEntitys) => {
-    const multi = data.ceraTrim ? data.ceraTrim : SkladService.selfcost.pricesAndCoefs['Коэффициент обрези стекло']
+    // const multi = data.ceraTrim ? data.ceraTrim : SkladService.selfcost.pricesAndCoefs['Коэффициент обрези стекло']
     const response = await Client.sklad('https://api.moysklad.ru/api/remap/1.2/entity/processingplan', 'post', {
         name: `${order.name}, ${isPF ? 'ПФ, ' : ''}${name}`,
         processingProcess: { meta: processingprocess },
@@ -496,7 +497,7 @@ const makeProcessingPlanGlass = async (data, name, order, processingprocess, pro
             assortment: {
                 meta: SkladService.selfcost.materials[material].meta
             },
-            quantity: (data.initialData.width * data.initialData.height) / 1000000 * multi
+            quantity: (data.initialData.width * data.initialData.height) / 1000000 * (data.ceraTrim ? data.ceraTrim : 0.1)
         }],
         products: [{
             assortment: {

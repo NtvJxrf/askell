@@ -30,7 +30,7 @@ const DragHandle = () => {
     );
 };
 
-const Row = props => {
+const Row = ({ rowStyles = {}, ...props }) => {
     const {
         attributes,
         listeners,
@@ -39,12 +39,11 @@ const Row = props => {
         transform,
         transition,
         isDragging,
-        rowStyles = {}, // получаем проп с инлайн стилями
-    } = props;
+    } = useSortable({ id: props['data-row-key'] });
 
     const style = {
         ...props.style,
-        ...rowStyles[props['data-row-key']],  // добавляем фон строки
+        ...rowStyles[props['data-row-key']],
         transform: CSS.Translate.toString(transform),
         transition,
         ...(isDragging ? { position: 'relative', zIndex: 1000 } : {}),
@@ -58,6 +57,7 @@ const Row = props => {
         </RowContext.Provider>
     );
 };
+
 
 const Positions = () => {
     const dispatch = useDispatch();

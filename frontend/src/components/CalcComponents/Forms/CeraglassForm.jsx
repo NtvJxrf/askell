@@ -65,10 +65,10 @@ const CeraglassForm = () => {
                 </div>
                 <div style={{ marginTop: 16, display: 'flex', gap: 12, flexDirection: 'column' }}>
                 <Button onClick={addMaterial} size="medium" shape="round" block>
-                    Добавить
+                    Добавить деталь
                 </Button>
                 <Button onClick={removeMaterial} size="medium" shape="round" block danger>
-                    Удалить
+                    Удалить деталь
                 </Button>
                 </div>
             </Col>

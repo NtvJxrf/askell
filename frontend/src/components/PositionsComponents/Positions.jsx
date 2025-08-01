@@ -83,21 +83,30 @@ const Positions = () => {
         });
         return styles;
     }, [positions]);
-    // useEffect( () => {
-    //     console.log(positions)
-    //     let S_all = 0, stanok = 'Прямолинейка', additions = false, triplex = false
-    //     positions.forEach(el => {
-    //         S_all += el.result.other.S * el.quantity
-    //         el.result.other.stanok === 'Криволинейка' && (stanok = 'Криволинейка')
-    //         el.result.other.type === 'Триплекс' && (triplex = true)
-    //         const {drills, cutsv1, cutsv2, cutsv3, zenk, color} = el.initialData
-    //         if(drills || cutsv1 || cutsv2 || cutsv3 || zenk, color) additions = true
-    //     })
-    //     const loadBeforeThisOrder = stanok === 'Прямолинейка' ? productionLoad.straightTotal : productionLoad.curvedTotal
-    //     console.log(loadBeforeThisOrder)
-    //     console.log(additions)
-    //     console.log(S_all)
-    // }, [positions])
+    useEffect( () => {
+        if(!positions.length) return
+        let S_all = 0, stanok = 'Криволинейка', additions = false, triplex = false
+        positions.forEach(el => {
+            if(!el.result) return
+            S_all += el.result.other.S * el.quantity
+            el.result.other.stanok === 'Прямолинейка' && (stanok = 'Прямолинейка')
+            el.result.other.type === 'Триплекс' && (triplex = true)
+            const {drills, cutsv1, cutsv2, cutsv3, zenk, color} = el.initialData
+            if(drills || cutsv1 || cutsv2 || cutsv3 || zenk || color) additions = true
+        })
+        const loadBeforeThisOrder = (stanok === 'Прямолинейка' ? productionLoad.straightTotal : productionLoad.curvedTotal) / 24
+        let res = 0
+        if(stanok === 'Прямолинейка')
+            res = loadBeforeThisOrder + Math.ceil(S_all / 80)
+        else(stanok === 'Криволинейка')
+            res = loadBeforeThisOrder + Math.ceil(S_all / 70)
+        triplex && (res += 1 + S_all / 27)
+        additions && (res += 2)
+        console.log(loadBeforeThisOrder)
+        console.log(additions)
+        console.log(S_all)
+        console.log(res)
+    }, [positions])
     const onDragEnd = ({ active, over }) => {
         if (active.id !== over?.id) {
             const oldIndex = positions.findIndex(item => item.key === active.id);

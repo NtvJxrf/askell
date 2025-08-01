@@ -238,8 +238,7 @@ export const constructName = (firstWord, {
     if (zenk) parts.push(`Зенкование: ${zenk}`);
     if (print) parts.push('Печать');
     const area = ((height * width) / 1_000_000).toFixed(2);
-    if(!firstWord.includes('Керагласс')) parts.push(`площадь: ${area}`);
-    console.log(parts)
+    if(!firstWord.includes('Керагласс')) parts.push(`площадь: ${area}`)
     return `${firstWord}, (${height}х${width}, ${parts.join(', ')})`;
 };
 export const constructExpenses = (result, selfcost) => {

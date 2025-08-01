@@ -83,20 +83,21 @@ const Positions = () => {
         });
         return styles;
     }, [positions]);
-    useEffect( () => {
-        console.log(positions)
-        let S_all = 0, stanok = 'Прямолинейка', additions = false
-        positions.forEach(el => {
-            S_all += el.result.other.S * el.quantity
-            el.result.other.stanok === 'Криволинейка' && (stanok = 'Криволинейка')
-            const {drills, cutsv1, cutsv2, cutsv3, zenk, color} = el.initialData
-            if(drills || cutsv1 || cutsv2 || cutsv3 || zenk, color) additions = true
-        })
-        const loadBeforeThisOrder = stanok === 'Прямолинейка' ? productionLoad.straightTotal : productionLoad.curvedTotal
-        console.log(loadBeforeThisOrder)
-        console.log(additions)
-        console.log(S_all)
-    }, [positions])
+    // useEffect( () => {
+    //     console.log(positions)
+    //     let S_all = 0, stanok = 'Прямолинейка', additions = false, triplex = false
+    //     positions.forEach(el => {
+    //         S_all += el.result.other.S * el.quantity
+    //         el.result.other.stanok === 'Криволинейка' && (stanok = 'Криволинейка')
+    //         el.result.other.type === 'Триплекс' && (triplex = true)
+    //         const {drills, cutsv1, cutsv2, cutsv3, zenk, color} = el.initialData
+    //         if(drills || cutsv1 || cutsv2 || cutsv3 || zenk, color) additions = true
+    //     })
+    //     const loadBeforeThisOrder = stanok === 'Прямолинейка' ? productionLoad.straightTotal : productionLoad.curvedTotal
+    //     console.log(loadBeforeThisOrder)
+    //     console.log(additions)
+    //     console.log(S_all)
+    // }, [positions])
     const onDragEnd = ({ active, over }) => {
         if (active.id !== over?.id) {
             const oldIndex = positions.findIndex(item => item.key === active.id);

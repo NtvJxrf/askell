@@ -116,7 +116,7 @@ const Calculate = (data, selfcost, triplexArray) => {
         });
     }
     weight += P * 12 * allThickness / 1000 //Вес вторичного герметика
-    const name = `СП${planes.length == 1 ? 'О' : 'Д'}, ${allThickness}, ${shortenGlassName(materials[0][0], triplexShornNames)}, ${Number(plane1.match(/(\d+(?:[.,]\d+)?)\s*мм/i)[1])}${gas ? `(${gas})` : ''}, ${shortenGlassName(materials[1][0], triplexShornNames)}${materials[2] ? `, ${Number(plane2.match(/(\d+(?:[.,]\d+)?)\s*мм/i)[1])}${gas ? `(${gas})` : ''}, ${shortenGlassName(materials[2][0], triplexShornNames)}` : ''}, (${height}*${width})`
+    const name = `СП${planes.length == 1 ? 'О' : 'Д'}, ${allThickness}, ${shortenGlassName(materials[0][0], triplexShornNames)}, ${Number(plane1.match(/(\d+(?:[.,]\d+)?)\s*мм/i)[1])}${gas ? `(${gas})` : ''}, ${shortenGlassName(materials[1][0], triplexShornNames)}${materials[2] ? `, ${Number(plane2.match(/(\d+(?:[.,]\d+)?)\s*мм/i)[1])}${gas ? `(${gas})` : ''}, ${shortenGlassName(materials[2][0], triplexShornNames)}` : ''}, (${height}*${width}, площадь: ${(height * width / 1000000).toFixed(2)})`
     // gas && result.materials.push({
     //     name: gas,
     //     value: selfcost.materials[gas].value * S * allPlaneThickness,

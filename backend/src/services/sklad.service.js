@@ -65,7 +65,7 @@ export default class SkladService {
             return {
                 name: product.name,
                 salePrices: [{
-                    value: product.price * 100,
+                    value: Number((product.price * 100).toFixed(2)),
                     priceType: {
                         meta: {
                             href: "https://api.moysklad.ru/api/remap/1.2/context/companysettings/pricetype/61e764a9-2ad0-11ee-0a80-0476000bb1a7",
@@ -510,7 +510,7 @@ const makeProcessingPlanGlass = async (data, name, order, processingprocess, pro
 const makeProduct = async (data, name, isPF, createdEntitys) => {
     const { height, width, polishing, drills, zenk, cutsv1, cutsv2, cutsv3, tempered, color, print } = data.initialData
     const product = await Client.sklad('https://api.moysklad.ru/api/remap/1.2/entity/product', 'post', {
-        name: `${isPF ? 'ПФ' : ''} ${name} (${height}х${width}${polishing ? ', Полировка' : ''}${tempered ? ', Закаленное' : ''}${cutsv1 ? `, Вырезы 1 кат.: ${cutsv1}` : ''}${cutsv2 ? `, Вырезы 2 кат.: ${cutsv2}` : ''}${cutsv3 ? `, Вырезы 3 кат.: ${cutsv3}` : ''}${drills ? `, Сверление: ${drills}` : ''}${zenk ? `, Зенкование: ${zenk}` : ''}${print ? ', Печать' : ''}${color ? `, ${color}` : ''})`,
+        name: `${isPF ? 'ПФ' : ''} ${name} (${height}х${width}${polishing ? ', Полировка' : ''}${tempered ? ', Закаленное' : ''}${cutsv1 ? `, Вырезы 1 кат.: ${cutsv1}` : ''}${cutsv2 ? `, Вырезы 2 кат.: ${cutsv2}` : ''}${cutsv3 ? `, Вырезы 3 кат.: ${cutsv3}` : ''}${drills ? `, Сверление: ${drills}` : ''}${zenk ? `, Зенкование: ${zenk}` : ''}${print ? ', Печать' : ''}${color ? `, ${color}` : ''}, площадь: ${height * width / 1000000})`,
         attributes: generateProductAttributes({...data.initialData, ...data.result.other, isPF})
     })
     createdEntitys.product.push(product)

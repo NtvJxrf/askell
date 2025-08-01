@@ -1,4 +1,4 @@
-import React, { useContext, useMemo, useState } from 'react';
+import React, { useContext, useMemo, useState, useEffect } from 'react';
 import { HolderOutlined } from '@ant-design/icons';
 import { DndContext } from '@dnd-kit/core';
 import { restrictToVerticalAxis } from '@dnd-kit/modifiers';
@@ -58,7 +58,6 @@ const Row = ({ rowStyles = {}, ...props }) => {
     );
 };
 
-
 const Positions = () => {
     const dispatch = useDispatch();
     const positions = useSelector(state => state.positions.positions);
@@ -83,7 +82,9 @@ const Positions = () => {
         });
         return styles;
     }, [positions]);
-
+    useEffect( () => {
+        console.log(positions.length)
+    }, [positions])
     const onDragEnd = ({ active, over }) => {
         if (active.id !== over?.id) {
             const oldIndex = positions.findIndex(item => item.key === active.id);

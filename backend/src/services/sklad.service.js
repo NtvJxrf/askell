@@ -68,10 +68,10 @@ export default class SkladService {
                     value: Number((product.price * 100).toFixed(2)),
                     priceType: {
                         meta: {
-                            href: "https://api.moysklad.ru/api/remap/1.2/context/companysettings/pricetype/61e764a9-2ad0-11ee-0a80-0476000bb1a7",
+                            href: "https://api.moysklad.ru/api/remap/1.2/context/companysettings/pricetype/29957787-f66e-11eb-0a80-028700026a8c",
                             type: "pricetype",
-                            mediaType: "application/json",
-                        },
+                            mediaType: "application/json"
+                        }
                     },
                     currency: {
                         meta: {
@@ -79,8 +79,6 @@ export default class SkladService {
                             metadataHref: "https://api.moysklad.ru/api/remap/1.2/entity/currency/metadata",
                             type: "currency",
                             mediaType: "application/json",
-                            uuidHref:
-                            "https://online.moysklad.ru/app/#currency/edit?id=0664a90c-6e69-11e4-90a2-8ecb0012e9ec",
                         },
                     },
                 }],
@@ -91,6 +89,14 @@ export default class SkladService {
                 productFolder: dictionary.productFolders.glassGuard,
                 attributes: generateProductAttributes({...product.initialData, ...product.result.other}),
                 owner: { meta: data.order.owner.meta},
+                uom: {
+                    meta: {
+                        "href" : "https://api.moysklad.ru/api/remap/1.2/entity/uom/19f1edc0-fc42-4001-94cb-c9ec9c62ec10",
+                        "metadataHref" : "https://api.moysklad.ru/api/remap/1.2/entity/uom/metadata",
+                        "type" : "uom",
+                        "mediaType" : "application/json"
+                    }
+                }
         }});
         let createdProducts = null
         if (productsToCreate.length > 0) {
@@ -511,7 +517,15 @@ const makeProduct = async (data, name, isPF, createdEntitys) => {
     const { height, width, polishing, drills, zenk, cutsv1, cutsv2, cutsv3, tempered, color, print } = data.initialData
     const product = await Client.sklad('https://api.moysklad.ru/api/remap/1.2/entity/product', 'post', {
         name: `${isPF ? 'ПФ' : ''} ${name} (${height}х${width}${polishing ? ', Полировка' : ''}${tempered ? ', Закаленное' : ''}${cutsv1 ? `, Вырезы 1 кат.: ${cutsv1}` : ''}${cutsv2 ? `, Вырезы 2 кат.: ${cutsv2}` : ''}${cutsv3 ? `, Вырезы 3 кат.: ${cutsv3}` : ''}${drills ? `, Сверление: ${drills}` : ''}${zenk ? `, Зенкование: ${zenk}` : ''}${print ? ', Печать' : ''}${color ? `, ${color}` : ''}, площадь: ${height * width / 1000000})`,
-        attributes: generateProductAttributes({...data.initialData, ...data.result.other, isPF})
+        attributes: generateProductAttributes({...data.initialData, ...data.result.other, isPF}),
+        uom: {
+            meta: {
+                "href" : "https://api.moysklad.ru/api/remap/1.2/entity/uom/19f1edc0-fc42-4001-94cb-c9ec9c62ec10",
+                "metadataHref" : "https://api.moysklad.ru/api/remap/1.2/entity/uom/metadata",
+                "type" : "uom",
+                "mediaType" : "application/json"
+            }
+        }
     })
     createdEntitys.product.push(product)
     return product

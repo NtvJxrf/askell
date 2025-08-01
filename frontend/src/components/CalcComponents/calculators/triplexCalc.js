@@ -6,7 +6,7 @@ const Calculate = (data, selfcost) => {
     const tapes = Object.entries(data).filter(([key]) => key.startsWith('tape')).map(([_, value]) => value);
     const materials = Object.entries(data).filter(([key, value]) => key.startsWith('material') && value !== undefined).map(([_, value]) => value);
     addTape && tapes.push(addTape)
-    let name = `Триплекс, ${materials.join(' + ')}, (${height}х${width}${polishing ? ', Полировка' : ''}${tempered ? ', Закаленное' : ''}${cutsv1 ? `, Вырезы 1 кат.: ${cutsv1}` : ''}${cutsv2 ? `, Вырезы 2 кат.: ${cutsv2}` : ''}${cutsv3 ? `, Вырезы 3 кат.: ${cutsv3}` : ''}${drills ? `, Сверление: ${drills}` : ''}${zenk ? `, Зенкование: ${zenk}` : ''}${print ? ', Печать' : ''}, площадь: ${(height * width / 1000000).toFixed(2)})`
+    // let name = `Триплекс, ${materials.join(' + ')}, (${height}х${width}${polishing ? ', Полировка' : ''}${tempered ? ', Закаленное' : ''}${cutsv1 ? `, Вырезы 1 кат.: ${cutsv1}` : ''}${cutsv2 ? `, Вырезы 2 кат.: ${cutsv2}` : ''}${cutsv3 ? `, Вырезы 3 кат.: ${cutsv3}` : ''}${drills ? `, Сверление: ${drills}` : ''}${zenk ? `, Зенкование: ${zenk}` : ''}${print ? ', Печать' : ''}, площадь: ${(height * width / 1000000).toFixed(2)})`
     let S = (height * width) / 1000000
     if(S < 0.5)
         switch (rounding){
@@ -107,6 +107,7 @@ const Calculate = (data, selfcost) => {
         formula: 'Себестоимость уф печати'
     });
     const stanok = (shape && !cutsv1 && !cutsv2 && !cutsv3 && weight < 50) ? 'Прямолинейка' : 'Криволинейка'
+    let name = constructName(`Триплекс, ${materials.join(' + ')}`, {...data, stanok})
     const context = { selfcost, result, stanok, allThickness };
     constructWorks('cutting1', S * materials.length, context);
     constructWorks('cutting2', S * materials.length, context);
@@ -212,6 +213,34 @@ export const constructWorks = (work, quantity, context) => {
         case 'cuttingCera': res(`Резка керамики`); break
         case 'color': res(`Окрашивание`); break
     }
+};
+export const constructName = (firstWord, {
+    height,
+    width,
+    stanok,
+    polishing = false,
+    tempered = false,
+    cutsv1 = 0,
+    cutsv2 = 0,
+    cutsv3 = 0,
+    drills = 0,
+    zenk = 0,
+    print = false
+}) => {
+    const parts = [];
+    if(stanok) stanok == 'Прямолинейка' ? parts.push('ПР') : parts.push('КР')
+    if (polishing) parts.push('Полировка');
+    if (tempered) parts.push('Закаленное');
+    if (cutsv1) parts.push(`Вырезы 1 кат.: ${cutsv1}`);
+    if (cutsv2) parts.push(`Вырезы 2 кат.: ${cutsv2}`);
+    if (cutsv3) parts.push(`Вырезы 3 кат.: ${cutsv3}`);
+    if (drills) parts.push(`Сверление: ${drills}`);
+    if (zenk) parts.push(`Зенкование: ${zenk}`);
+    if (print) parts.push('Печать');
+    const area = ((height * width) / 1_000_000).toFixed(2);
+    if(!firstWord.includes('Керагласс')) parts.push(`площадь: ${area}`);
+    console.log(parts)
+    return `${firstWord}, (${height}х${width}, ${parts.join(', ')})`;
 };
 export const constructExpenses = (result, selfcost) => {
     let materials = 0, worksViz = 0, worksSelk = 0, worksShield = 0

@@ -61,6 +61,7 @@ const Row = ({ rowStyles = {}, ...props }) => {
 const Positions = () => {
     const dispatch = useDispatch();
     const positions = useSelector(state => state.positions.positions);
+    const productionLoad = useSelector(state => state.positions.productionLoad);
     const selectedRowKeys = useSelector(state => state.positions.selectedPosition);
     const [isModalVisible, setIsModalVisible] = useState(false);
     const [selectedRecord, setSelectedRecord] = useState(null);
@@ -83,7 +84,18 @@ const Positions = () => {
         return styles;
     }, [positions]);
     useEffect( () => {
-        console.log(positions.length)
+        console.log(positions)
+        let S_all = 0, stanok = 'Прямолинейка', additions = false
+        positions.forEach(el => {
+            S_all += el.result.other.S * el.quantity
+            el.result.other.stanok === 'Криволинейка' && (stanok = 'Криволинейка')
+            const {drills, cutsv1, cutsv2, cutsv3, zenk, color} = el.initialData
+            if(drills || cutsv1 || cutsv2 || cutsv3 || zenk, color) additions = true
+        })
+        const loadBeforeThisOrder = stanok === 'Прямолинейка' ? productionLoad.straightTotal : productionLoad.curvedTotal
+        console.log(loadBeforeThisOrder)
+        console.log(additions)
+        console.log(S_all)
     }, [positions])
     const onDragEnd = ({ active, over }) => {
         if (active.id !== over?.id) {

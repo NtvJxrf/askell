@@ -1,12 +1,12 @@
 import React, { useEffect, useState } from "react";
 import { Tabs, Table, Spin, Typography, Space, Tooltip } from "antd";
 import axios from "axios";
+import { useSelector } from "react-redux";
 
 const { Title, Text } = Typography;
 
 const OrdersInWorkTables = () => {
-  const [data, setData] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const data = useSelector(state => state.positions.productionLoad)
 
   const columns = [
     { title: "Дата", dataIndex: "created", key: "created", fixed: "left", },
@@ -84,23 +84,6 @@ const OrdersInWorkTables = () => {
     },
   ];
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/sklad/ordersInWork`, { withCredentials: true });
-        setData(res.data || { kriv: [], pryam: [], other: [], krivo: 0, pryamo: 0 });
-      } catch (err) {
-        console.error("Ошибка при загрузке данных:", err);
-        setData({ kriv: [], pryam: [], other: [], krivo: 0, pryamo: 0 });
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchData();
-  }, []);
-
-  if (loading) return <Spin size="large" style={{ display: "block", margin: "2rem auto" }} />;
 
   const getItems = () => {
     const kriv = data?.kriv ?? [];

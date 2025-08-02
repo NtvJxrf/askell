@@ -13,9 +13,9 @@ import { Button, Table, Space, InputNumber } from 'antd';
 import { useDispatch, useSelector } from 'react-redux';
 import { setPositions, setSelectedRowKeys } from '../../slices/positionsSlice';
 import PositionDetailsModal from './PositionDetailsModal.jsx';
-
+import { setFormData } from '../../slices/formSlice.js';
+import { useNavigate } from 'react-router-dom'
 const RowContext = React.createContext({});
-
 const DragHandle = () => {
     const { setActivatorNodeRef, listeners } = useContext(RowContext);
     return (
@@ -58,7 +58,7 @@ const Row = ({ rowStyles = {}, ...props }) => {
     );
 };
 
-const Positions = () => {
+const Positions = ({form}) => {
     const dispatch = useDispatch();
     const positions = useSelector(state => state.positions.positions);
     const productionLoad = useSelector(state => state.positions.productionLoad);
@@ -66,13 +66,12 @@ const Positions = () => {
     const [isModalVisible, setIsModalVisible] = useState(false);
     const [selectedRecord, setSelectedRecord] = useState(null);
     const [pagination, setPagination] = useState({ current: 1, pageSize: 10 });
-
-    // Создаём объект с инлайн стилями для каждой строки по ключу
+    const navigate = useNavigate()
     const rowKeyToStyle = useMemo(() => {
         const styles = {};
         positions.forEach(record => {
-            const hasErrors = record.result?.errors?.length > 0;
-            const hasWarnings = record.result?.warnings?.length > 0;
+            const hasErrors = record?.result?.errors?.length > 0;
+            const hasWarnings = record?.result?.warnings?.length > 0;
             if (hasErrors) {
                 styles[record.key] = { backgroundColor: '#ffe6e6' }; // светло-красный
             } else if (hasWarnings) {
@@ -133,7 +132,26 @@ const Positions = () => {
         setSelectedRecord(record);
         setIsModalVisible(true);
     };
-
+    const handleEdit = record => {
+        const map = {
+            'СМД': 'SMDForm',
+            'Стекло': 'GlassForm',
+            'Триплекс': 'TriplexForm',
+            'Керагласс': 'CeraglassForm',
+            'Стеклопакет': 'GlassPacketForm',
+        }
+        const typeMap = {
+            'СМД': 'smd',
+            'Стекло': 'glass',
+            'Триплекс': 'triplex',
+            'Керагласс': 'ceraglass',
+            'Стеклопакет': 'glasspacket',
+        }
+        dispatch(setFormData({formType: map[record.result.other.type], values: record.initialData}))
+        handleDelete(record)
+        form.setFieldsValue(record.initialData)
+        navigate(`/calculators/${typeMap[record.result.other.type]}`)
+    }
     const columns = [
         { key: 'sort', align: 'center', width: 80, render: () => <DragHandle /> },
         { title: '№', key: 'index', align: 'center', render: (text, record) => positions.findIndex(item => item.key === record.key) + 1 },
@@ -201,10 +219,9 @@ const Positions = () => {
                         expandable={{
                             expandedRowRender: record => (
                                 <Space size="middle">
-                                    <Button danger onClick={() => handleDelete(record)}>
-                                        Удалить
-                                    </Button>
+                                    <Button danger onClick={() => handleDelete(record)}>Удалить</Button>
                                     <Button onClick={() => handleDetails(record)}>Подробнее</Button>
+                                    <Button onClick={() => handleEdit(record)}>Редактировать</Button>
                                 </Space>
                             ),
                         }}

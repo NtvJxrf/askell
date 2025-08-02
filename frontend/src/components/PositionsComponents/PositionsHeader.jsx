@@ -1,4 +1,4 @@
-import { Input, Button, Space, Typography, message, Upload } from 'antd';
+import { Input, Button, Space, Typography, message, Upload, Dropdown, Menu  } from 'antd';
 import React, { useRef, useState } from 'react';
 import { UploadOutlined } from '@ant-design/icons';
 const { Text } = Typography;
@@ -115,6 +115,25 @@ const PositionsHeader = () => {
         }
         dispatch(addNewPosition(result))
     }
+    const items = [
+        { key: 'Менее 200 тыс.', label: 'Менее 200 тыс.' },
+        { key: 'Более 200 тыс.', label: 'Более 200 тыс.' },
+        { key: 'Более 400 тыс.', label: 'Более 400 тыс.' },
+        { key: 'Более 800 тыс.', label: 'Более 800 тыс.' },
+    ];
+    const handleMenuClick = ({ key }) => {
+        handleRecalc(key);
+    };
+    const handleRecalc = key => {
+        const positions = store.getState().positions.positions
+        const selfcost = store.getState().selfcost.selfcost
+        const newPositions = positions.map((el) => {
+            if(!el.result) return el
+            return calcMap[el.result.other.type]({...el.initialData, quantity: el.quantity, customertype: key}, selfcost)
+        }).filter(Boolean)
+        if(!newPositions.length) return
+        dispatch(setPositions(newPositions))
+    }
     console.log('render pos header')
     return (
         <>
@@ -144,6 +163,11 @@ const PositionsHeader = () => {
                     <Button type="default" shape="round" onClick={handleSaveOrder} disabled={disabled}>Сохранить</Button>
                     <Button type="default" shape="round" onClick={handleDeleteSelected} disabled={disabled} danger>Удалить выделенное</Button>
                     <Button type="default" shape="round" onClick={handlePackaging} disabled={disabled}>Упаковка</Button>
+                    <Dropdown menu={{ items, onClick: handleMenuClick }} disabled={disabled} >
+                        <Button type="default" shape="round">
+                            Пересчитать тип цен
+                        </Button>
+                    </Dropdown>
                     <Upload
                         accept=".xlsx, .xls, .xlsm"
                         showUploadList={false}

@@ -1,9 +1,9 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useEffect } from "react";
 import { Form, Space, message } from "antd";
 import { useDispatch, useSelector } from "react-redux";
 import SubmitButton from "../buttons/SubmitButton.jsx";
 import ResetButton from "../buttons/ResetButton.jsx";
-import { setForm, clearForm } from '../../../slices/formSlice.js'
+import { setFormData, clearForm } from '../../../slices/formSlice.js'
 import store from '../../../store.js'
 import SMDForm from './SMDForm.jsx'
 import GlassForm from './glassForm.jsx'
@@ -30,9 +30,8 @@ const formsMap = {
     CeraglassForm,
     GlassPacketForm
 }
-const DynamicForm = ({type}) => {
+const DynamicForm = ({type, form}) => {
     const [messageApi, contextHolder] = message.useMessage();
-    const [form] = Form.useForm();
     const dispatch = useDispatch();
     const formData = store.getState().forms[type]
     const selfcost = useSelector(state => state.selfcost.selfcost)
@@ -44,7 +43,7 @@ const DynamicForm = ({type}) => {
     }
 
     const handleValuesChange = (_, allValues) => {
-        dispatch(setForm({ formType: type, values: allValues }));
+        dispatch(setFormData({ formType: type, values: allValues }));
     }
     
     const handleClearForm = () => {

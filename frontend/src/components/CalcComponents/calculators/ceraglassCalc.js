@@ -1,4 +1,4 @@
-import { constructWorks, constructExpenses, constructName } from './triplexCalc.js'
+import { constructWorks, constructName } from './triplexCalc.js'
 const Calculate = (data, selfcost) => {
     console.log(data)
     console.log(selfcost)
@@ -126,7 +126,8 @@ const Calculate = (data, selfcost) => {
         materials,
         heights,
         widths,
-        ceraTrim
+        ceraTrim,
+        weight
     }
     console.log(result)
     return {

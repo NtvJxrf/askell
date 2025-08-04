@@ -225,7 +225,8 @@ export const constructName = (firstWord, {
     cutsv3 = 0,
     drills = 0,
     zenk = 0,
-    print = false
+    print = false,
+    color = false
 }) => {
     const parts = [];
     if(stanok) stanok == 'Прямолинейка' ? parts.push('ПР') : parts.push('КР')
@@ -236,10 +237,11 @@ export const constructName = (firstWord, {
     if (cutsv3) parts.push(`Вырезы 3 кат.: ${cutsv3}`);
     if (drills) parts.push(`Сверление: ${drills}`);
     if (zenk) parts.push(`Зенкование: ${zenk}`);
-    if (print) parts.push('Печать');
+    if (print) parts.push('УФ Печать');
+    if (color) parts.push(`Окрашивание: ${color}`);
     const area = ((height * width) / 1_000_000).toFixed(2);
     if(!firstWord.includes('Керагласс')) parts.push(`площадь: ${area}`)
-    return `${firstWord}, (${height}х${width}, ${parts.join(', ')})`;
+    return `${firstWord}, (${height}х${width}${parts.length > 0 ? ', ' : ''}${parts.join(', ')})`;
 };
 export const constructExpenses = (result, selfcost) => {
     let materials = 0, worksViz = 0, worksSelk = 0, worksShield = 0

@@ -39,7 +39,6 @@ export default class UserController{
     }
     static async update(req, res){
         const { id, data } = req.body
-        console.log(req.body)
         const user = await userService.update(id, data)
         res.sendStatus(200)
     }
@@ -73,6 +72,16 @@ export default class UserController{
 }
 
 const setTokens = (res, user) => {
-    res.cookie('refreshToken', user.refreshToken, { maxAge: process.env.JWT_REFRESH_EXPIRATION_DAYS * 24 * 60 * 60 * 1000, httpOnly: true, secure: process.env.NODE_ENV === 'production' });
-    res.cookie('accessToken', user.accessToken, { maxAge: process.env.JWT_ACCESS_EXPIRATION_MINUTES * 60 * 1000, httpOnly: true, secure: process.env.NODE_ENV === 'production' });
+    res.cookie('refreshToken', user.refreshToken, { 
+        maxAge: Number(process.env.JWT_REFRESH_EXPIRATION_DAYS) * 24 * 60 * 60 * 1000,
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax'
+    });
+    res.cookie('accessToken', user.accessToken, { 
+        maxAge: Number(process.env.JWT_ACCESS_EXPIRATION_MINUTES) * 60 * 1000,
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax'
+    });
 }

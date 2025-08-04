@@ -26,6 +26,7 @@ const authMiddleware = async (req, res, next) => {
         req.user = payload;
         return next();
       } catch (err) {
+        logger.error('Invalid access token', err);
         // Переход к refreshToken
       }
     }
@@ -39,20 +40,20 @@ const authMiddleware = async (req, res, next) => {
           maxAge: Number(process.env.JWT_ACCESS_EXPIRATION_MINUTES) * 60 * 1000,
           httpOnly: true,
           secure: process.env.NODE_ENV === 'production',
-          sameSite: 'strict',
+          sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
         });
 
         res.cookie('refreshToken', tokens.refreshToken, {
           maxAge: Number(process.env.JWT_REFRESH_EXPIRATION_DAYS) * 24 * 60 * 60 * 1000,
           httpOnly: true,
           secure: process.env.NODE_ENV === 'production',
-          sameSite: 'strict',
+          sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
         });
 
         res.cookie('id', payload.id, {
           maxAge: Number(process.env.JWT_REFRESH_EXPIRATION_DAYS) * 24 * 60 * 60 * 1000,
           secure: process.env.NODE_ENV === 'production',
-          sameSite: 'strict',
+          sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
         });
 
         req.user = payload
@@ -60,6 +61,7 @@ const authMiddleware = async (req, res, next) => {
       } catch (err) {
         res.clearCookie('accessToken');
         res.clearCookie('refreshToken');
+        logger.error('Invalid refresh token', err);
         return next(new ApiError(401, 'Invalid refresh token'));
       }
     }

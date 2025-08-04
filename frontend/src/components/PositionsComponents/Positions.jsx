@@ -94,14 +94,14 @@ const Positions = ({form}) => {
             const {drills, cutsv1, cutsv2, cutsv3, zenk, color} = el.initialData
             if(drills || cutsv1 || cutsv2 || cutsv3 || zenk || color) additions = true
         })
-        const loadBeforeThisOrder = (stanok === 'Прямолинейка' ? productionLoad.straightTotal : productionLoad.curvedTotal) / 24
+        const loadBeforeThisOrder = (stanok === 'Прямолинейка' ? productionLoad.straightTotal : productionLoad.curvedTotal) / 24 || 0
         let res = 0
         if(stanok === 'Прямолинейка')
             res = loadBeforeThisOrder + Math.ceil(S_all / 80)
         else(stanok === 'Криволинейка')
             res = loadBeforeThisOrder + Math.ceil(S_all / 70)
         triplex && (res += 1 + Math.ceil(S_all / 27))
-        additions && (res += 2)
+        additions && (res += 1)
         console.log(loadBeforeThisOrder)
         console.log(additions)
         console.log(S_all)
@@ -189,7 +189,7 @@ const Positions = ({form}) => {
             dataIndex: 'quantity',
             key: 'quantity',
             render: (value, record) => (
-                <InputNumber min={0} value={value} onChange={val => handleQuantityChange(record.key, val)} style={{ maxWidth: 80 }} />
+                <InputNumber min={1} value={value} onChange={val => handleQuantityChange(record.key, val)} style={{ maxWidth: 80 }} />
             ),
         },
     ];
@@ -232,24 +232,41 @@ const Positions = ({form}) => {
                             let totalS = 0
                             positions.forEach(({ price, quantity, result, position}) => {
                                 totalAmount += price * quantity;
-                                totalS += result?.other?.S || position?.assortment?.volume || 0 * quantity
+                                totalS += (result?.other?.S || position?.assortment?.volume || 0) * quantity
                             });
 
                             return (
-                                <div style={{
-                                    display: 'flex',
-                                    justifyContent: 'flex-start',
-                                    gap: '16px',
-                                    padding: '8px 16px',
-                                    fontWeight: 'bold',
-                                    background: '#fafafa',
-                                    borderBottom: '1px solid #eee',
-                                    flexWrap: 'wrap'
-                                }}>
-                                    <span style={{ whiteSpace: 'nowrap' }}>Итого: {totalAmount.toFixed(2)}</span>
-                                    <span style={{ whiteSpace: 'nowrap' }}>~Срок изготовления: {orderLoad.toFixed(2)} рабочих дней</span>
-                                    <span style={{ whiteSpace: 'nowrap' }}>В заказе {totalS.toFixed(2)} м²</span>
-                                </div>
+                                <>
+                                    <div style={{
+                                        background: '#ffe5e5',
+                                        color: '#c62828',
+                                        textAlign: 'center',
+                                        padding: '12px 16px',
+                                        fontWeight: 'bold',
+                                        borderRadius: '8px',
+                                        margin: '8px 0',
+                                        border: '1px solid #f5c6cb'
+                                    }}>
+                                        ⚠️ Расчет сроков работает только на стекло и триплекс
+                                    </div>
+
+                                    <div style={{
+                                        display: 'flex',
+                                        justifyContent: 'center',
+                                        gap: '16px',
+                                        padding: '8px 16px',
+                                        fontWeight: 'bold',
+                                        background: '#fafafa',
+                                        borderBottom: '1px solid #eee',
+                                        borderRadius: '8px',
+                                        flexWrap: 'wrap'
+                                    }}>
+                                        <span style={{ whiteSpace: 'nowrap' }}>Итого: {totalAmount.toFixed(2)}</span>
+                                        <span style={{ whiteSpace: 'nowrap' }}>~Срок изготовления: {orderLoad.toFixed(2)} рабочих дней</span>
+                                        <span style={{ whiteSpace: 'nowrap' }}>В заказе {totalS.toFixed(2)} м²</span>
+                                    </div>
+                                </>
+
                             );
                         }}
                     />

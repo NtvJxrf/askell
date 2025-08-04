@@ -92,6 +92,7 @@ const PositionsHeader = () => {
     }
     const handleDeleteSelected = () => {
         const selected = store.getState().positions.selectedPosition
+        console.log(selected)
         if(!selected){
             messageApi.error('Нечего удалять')
             return
@@ -125,15 +126,22 @@ const PositionsHeader = () => {
         handleRecalc(key);
     };
     const handleRecalc = key => {
-        const positions = store.getState().positions.positions
-        const selfcost = store.getState().selfcost.selfcost
-        const newPositions = positions.map((el) => {
-            if(!el.result) return el
-            return calcMap[el.result.other.type]({...el.initialData, quantity: el.quantity, customertype: key}, selfcost)
+        const state = store.getState();
+        const allPositions = state.positions.positions;
+
+        if (!allPositions.length) {
+            messageApi.error('Нет позиций');
+            return;
+        }
+
+        const selfcost = state.selfcost.selfcost;
+
+        const newPositions = allPositions.map((el) => {
+            if (!el.result) return el;
+            return calcMap[el.result?.other?.type]?.({ ...el.initialData, quantity: el.quantity, customertype: key }, selfcost);
         }).filter(Boolean)
-        if(!newPositions.length) return
-        dispatch(setPositions(newPositions))
-    }
+        dispatch(setPositions(newPositions));
+    };
     console.log('render pos header')
     return (
         <>

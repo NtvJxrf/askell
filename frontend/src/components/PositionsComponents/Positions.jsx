@@ -66,6 +66,7 @@ const Positions = ({form}) => {
     const [isModalVisible, setIsModalVisible] = useState(false);
     const [selectedRecord, setSelectedRecord] = useState(null);
     const [pagination, setPagination] = useState({ current: 1, pageSize: 10 });
+    const [orderLoad, setOrderLoad] = useState(0); 
     const navigate = useNavigate()
     const rowKeyToStyle = useMemo(() => {
         const styles = {};
@@ -86,7 +87,7 @@ const Positions = ({form}) => {
         if(!positions.length) return
         let S_all = 0, stanok = 'Криволинейка', additions = false, triplex = false
         positions.forEach(el => {
-            if(!el.result) return
+            if(!el.result || el.result.other.type === 'СМД' || el.result.other.type === 'Керагласс' || el.result.other.type === 'Стеклопакет') return
             S_all += el.result.other.S * el.quantity
             el.result.other.stanok === 'Прямолинейка' && (stanok = 'Прямолинейка')
             el.result.other.type === 'Триплекс' && (triplex = true)
@@ -99,12 +100,13 @@ const Positions = ({form}) => {
             res = loadBeforeThisOrder + Math.ceil(S_all / 80)
         else(stanok === 'Криволинейка')
             res = loadBeforeThisOrder + Math.ceil(S_all / 70)
-        triplex && (res += 1 + S_all / 27)
+        triplex && (res += 1 + Math.ceil(S_all / 27))
         additions && (res += 2)
         console.log(loadBeforeThisOrder)
         console.log(additions)
         console.log(S_all)
         console.log(res)
+        setOrderLoad(res)
     }, [positions])
     const onDragEnd = ({ active, over }) => {
         if (active.id !== over?.id) {
@@ -225,19 +227,29 @@ const Positions = ({form}) => {
                                 </Space>
                             ),
                         }}
-                        summary={pageData => {
+                        title={() => {
                             let totalAmount = 0;
-                            pageData.forEach(({ price, quantity }) => {
+                            let totalS = 0
+                            positions.forEach(({ price, quantity, result, position}) => {
                                 totalAmount += price * quantity;
+                                totalS += result?.other?.S || position?.assortment?.volume || 0 * quantity
                             });
 
                             return (
-                                <Table.Summary.Row>
-                                    <Table.Summary.Cell>Итого</Table.Summary.Cell>
-                                    <Table.Summary.Cell>
-                                        <b>{totalAmount.toFixed(2)}</b>
-                                    </Table.Summary.Cell>
-                                </Table.Summary.Row>
+                                <div style={{
+                                    display: 'flex',
+                                    justifyContent: 'flex-start',
+                                    gap: '16px',
+                                    padding: '8px 16px',
+                                    fontWeight: 'bold',
+                                    background: '#fafafa',
+                                    borderBottom: '1px solid #eee',
+                                    flexWrap: 'wrap'
+                                }}>
+                                    <span style={{ whiteSpace: 'nowrap' }}>Итого: {totalAmount.toFixed(2)}</span>
+                                    <span style={{ whiteSpace: 'nowrap' }}>~Срок изготовления: {orderLoad.toFixed(2)} рабочих дней</span>
+                                    <span style={{ whiteSpace: 'nowrap' }}>В заказе {totalS.toFixed(2)} м²</span>
+                                </div>
                             );
                         }}
                     />

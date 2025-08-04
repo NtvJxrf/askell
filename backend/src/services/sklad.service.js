@@ -587,6 +587,7 @@ const generateProductAttributes = (data) => {
             case 'tempered': result.push({ meta: dictionary.productAttributes["Закалка"], value: data.tempered ? 'Да' : '' }); break;
             case 'smdType': result.push({ meta: dictionary.productAttributes["Тип СМД"], value: data.smdType }); break;
             case 'isPF': result.push({ meta: dictionary.productAttributes["Это полуфабрикат"], value: true }); break;
+            case 'P': result.push({ meta: dictionary.productAttributes["периметр 1 детали в пог. м"], value: (data.height + data.width) * 2 / 1000 }); break;
         }
     }
     return result

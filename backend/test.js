@@ -6,8 +6,8 @@ dotenv.config();
 // import getOrdersInWork from './src/utils/getOrdersInWork.js';
 // import SkladService from './src/services/sklad.service.js';
 // import MoySkladController from './src/controllers/moysklad.controller.js';
-import axios from 'axios';
-await axios.post('http://localhost:7878/api/sklad/createPzHook?id=56508553-4474-11f0-0a80-1b74001fc4eb')
+// import axios from 'axios';
+// await axios.post('http://localhost:7878/api/sklad/createPzHook?id=56508553-4474-11f0-0a80-1b74001fc4eb')
 
 
 // const machines = [
@@ -30,36 +30,37 @@ await axios.post('http://localhost:7878/api/sklad/createPzHook?id=56508553-4474-
 //   }
 // ];
 
-// const machines = [
-//   {
-//     name: "Станок 1",
-//     workDays: 22,
-//     shiftHours: 12,
-//     efficiency: 1,
-//     norm: 14
-//   },
-//   {
-//     name: "Станок 2",
-//     workDays: 15,
-//     shiftHours: 12,
-//     efficiency: 1,
-//     norm: 14
-//   }
-// ];
-// const meters = 3132;
-// const cuts = 183;
-// const cutsPerHour = 8;
+const machines = [
+  {
+    name: "Станок 1",
+    workDays: 22,
+    shiftHours: 12,
+    efficiency: 1,
+    norm: 14
+  },
+  {
+    name: "Станок 2",
+    workDays: 15,
+    shiftHours: 12,
+    efficiency: 1,
+    norm: 14
+  }
+];
+const meters = 3132;
+const cuts = 183;
+const cutsPerHour = 8;
 
-// const totalShift = machines.reduce((acc, curr) => {
-//   return acc + curr.shiftHours
-// }, 0)
-// const avgShift = totalShift / machines.length
-// const totalPCapacityPerMonth = machines.reduce((acc, curr) => {
-//   return acc + curr.norm * curr.shiftHours * curr.workDays
-// }, 0)
-// const pmPerDay = totalPCapacityPerMonth / 30
-// const daysForCurrentP = meters / pmPerDay
-// const daysForCuts = cuts / cutsPerHour / 24
-// console.log(daysForCuts)
-// console.log(totalPCapacityPerMonth)
-// console.log(pmPerDay)
+const totalShift = machines.reduce((acc, curr) => {
+  return acc + curr.shiftHours
+}, 0)
+const avgShift = totalShift / machines.length
+const totalPCapacityPerMonth = machines.reduce((acc, curr) => {
+  return acc + curr.norm * curr.shiftHours * curr.workDays
+}, 0)
+const pmPerDay = totalPCapacityPerMonth / 30
+const daysForCurrentP = meters / pmPerDay
+const daysForCuts = cuts / cutsPerHour / 24
+console.log(daysForCuts)
+console.log(totalPCapacityPerMonth)
+console.log(pmPerDay)
+console.log(daysForCurrentP + daysForCuts + 10 * 300 / 60 / 24)

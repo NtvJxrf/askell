@@ -30,36 +30,57 @@ dotenv.config();
 //   }
 // ];
 
-const machines = [
-  {
-    name: "Станок 1",
-    workDays: 22,
-    shiftHours: 12,
-    efficiency: 1,
-    norm: 14
-  },
-  {
-    name: "Станок 2",
-    workDays: 15,
-    shiftHours: 12,
-    efficiency: 1,
-    norm: 14
-  }
-];
-const meters = 3132;
-const cuts = 183;
-const cutsPerHour = 8;
+// const machines = [
+//   {
+//     name: "Станок 1",
+//     workDays: 22,
+//     shiftHours: 12,
+//     efficiency: 1,
+//     norm: 14
+//   },
+//   {
+//     name: "Станок 2",
+//     workDays: 15,
+//     shiftHours: 12,
+//     efficiency: 1,
+//     norm: 14
+//   }
+// ];
+// const meters = 3132;
+// const cuts = 183;
+// const cutsPerHour = 8;
 
-const totalShift = machines.reduce((acc, curr) => {
-  return acc + curr.shiftHours
-}, 0)
-const avgShift = totalShift / machines.length
-const totalPCapacityPerMonth = machines.reduce((acc, curr) => {
-  return acc + curr.norm * curr.shiftHours * curr.workDays
-}, 0)
-const pmPerDay = totalPCapacityPerMonth / 30
-const daysForCurrentP = meters / pmPerDay
-const daysForCuts = cuts / cutsPerHour / 24
-console.log(daysForCuts)
-console.log(totalPCapacityPerMonth)
-console.log(pmPerDay)
+// const totalShift = machines.reduce((acc, curr) => {
+//   return acc + curr.shiftHours
+// }, 0)
+// const avgShift = totalShift / machines.length
+// const totalPCapacityPerMonth = machines.reduce((acc, curr) => {
+//   return acc + curr.norm * curr.shiftHours * curr.workDays
+// }, 0)
+// const pmPerDay = totalPCapacityPerMonth / 30
+// const daysForCurrentP = meters / pmPerDay
+// const daysForCuts = cuts / cutsPerHour / 24
+// console.log(daysForCuts)
+// console.log(totalPCapacityPerMonth)
+// console.log(pmPerDay)
+
+import WebSocket from 'ws';
+
+const ws = new WebSocket('wss://calc.askell.ru/ws/');
+
+ws.on('open', () => {
+  console.log('Подключились к серверу');
+  ws.send('Привет серверу от бэка!');
+});
+
+ws.on('message', (data) => {
+  console.log('Сообщение от сервера:', data.toString());
+});
+
+ws.on('close', () => {
+  console.log('Соединение закрыто');
+});
+
+ws.on('error', (error) => {
+  console.error('Ошибка соединения:', error);
+});

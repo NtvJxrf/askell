@@ -6,8 +6,8 @@ dotenv.config();
 // import getOrdersInWork from './src/utils/getOrdersInWork.js';
 // import SkladService from './src/services/sklad.service.js';
 // import MoySkladController from './src/controllers/moysklad.controller.js';
-// import axios from 'axios';
-// await axios.post('http://localhost:7878/api/sklad/createPzHook?id=11c410d5-7134-11f0-0a80-13ab003522b9')
+import axios from 'axios';
+await axios.post('http://localhost:7878/api/sklad/createPzHook?id=56508553-4474-11f0-0a80-1b74001fc4eb')
 
 
 // const machines = [
@@ -63,24 +63,3 @@ dotenv.config();
 // console.log(daysForCuts)
 // console.log(totalPCapacityPerMonth)
 // console.log(pmPerDay)
-
-import WebSocket from 'ws';
-
-const ws = new WebSocket('wss://calc.askell.ru/ws/');
-
-ws.on('open', () => {
-  console.log('Подключились к серверу');
-  ws.send('Привет серверу от бэка!');
-});
-
-ws.on('message', (data) => {
-  console.log('Сообщение от сервера:', data.toString());
-});
-
-ws.on('close', () => {
-  console.log('Соединение закрыто');
-});
-
-ws.on('error', (error) => {
-  console.error('Ошибка соединения:', error);
-});

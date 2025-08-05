@@ -485,7 +485,10 @@ const makeProductionTask = async (materialsStore, productsStore, productionRows,
                 owner: { meta: order.owner.meta},
                 attributes: generateProductionTaskAttributes(order, checkboxes),
                 productionRows,
-                reserve: true
+                reserve: true,
+                customerOrders: [{
+                    meta: order.meta
+                }]
             })
     createdEntitys.task.push(task)
     return task

@@ -52,10 +52,6 @@ const PricesAndCoefsPage = () => {
     };
 
     fetchData();
-
-    return () => {
-      Init.getSelfcost(dispatch);
-    };
   }, [messageApi, dispatch]);
 
   const handleInputChange = (rowKey, field, value) => {

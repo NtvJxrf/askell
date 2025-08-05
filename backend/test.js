@@ -10,15 +10,15 @@ dotenv.config();
 // await axios.post('http://localhost:7878/api/sklad/createPzHook?id=56508553-4474-11f0-0a80-1b74001fc4eb')
 
 
-// const machines = [
-//   {
-//     name: "1 станок на прямолинейке",
-//     workDays: 22,
-//     shiftHours: 8,
-//     efficiency: 1,
-//     norm: 48
-//   }
-// ];
+const machines = [
+  {
+    name: "1 станок на прямолинейке",
+    workDays: 22,
+    shiftHours: 8,
+    efficiency: 1,
+    norm: 48
+  }
+];
 
 // const machines = [
 //   {
@@ -30,24 +30,24 @@ dotenv.config();
 //   }
 // ];
 
-const machines = [
-  {
-    name: "Станок 1",
-    workDays: 22,
-    shiftHours: 12,
-    efficiency: 1,
-    norm: 14
-  },
-  {
-    name: "Станок 2",
-    workDays: 15,
-    shiftHours: 12,
-    efficiency: 1,
-    norm: 14
-  }
-];
-const meters = 3132;
-const cuts = 183;
+// const machines = [
+//   {
+//     name: "Станок 1",
+//     workDays: 22,
+//     shiftHours: 12,
+//     efficiency: 1,
+//     norm: 14
+//   },
+//   {
+//     name: "Станок 2",
+//     workDays: 15,
+//     shiftHours: 12,
+//     efficiency: 1,
+//     norm: 14
+//   }
+// ];
+const meters = 5900;
+const cuts = 0;
 const cutsPerHour = 8;
 
 const totalShift = machines.reduce((acc, curr) => {
@@ -63,4 +63,4 @@ const daysForCuts = cuts / cutsPerHour / 24
 console.log(daysForCuts)
 console.log(totalPCapacityPerMonth)
 console.log(pmPerDay)
-console.log(daysForCurrentP + daysForCuts + 10 * 300 / 60 / 24)
+console.log(daysForCurrentP + daysForCuts + 1 * 300 / 60 / 24)

@@ -238,19 +238,6 @@ const Positions = ({form}) => {
                             return (
                                 <>
                                     <div style={{
-                                        background: '#ffe5e5',
-                                        color: '#c62828',
-                                        textAlign: 'center',
-                                        padding: '12px 16px',
-                                        fontWeight: 'bold',
-                                        borderRadius: '8px',
-                                        margin: '8px 0',
-                                        border: '1px solid #f5c6cb'
-                                    }}>
-                                        ⚠️ Расчет сроков работает только на стекло и триплекс
-                                    </div>
-
-                                    <div style={{
                                         display: 'flex',
                                         justifyContent: 'center',
                                         gap: '16px',

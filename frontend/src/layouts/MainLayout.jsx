@@ -15,7 +15,7 @@ import NotFoundPage from "../pages/NotFoundPage.jsx";
 import ActivatePage from "../pages/ActivatePage.jsx";
 import ReportsPage from '../pages/ReportsPage.jsx'
 import ProductionPage from "../pages/ProductionPage.jsx";
-
+import WebSocketHandler from "../ws.jsx";
 const MainLayout = () => {
     const dispatch = useDispatch();
 
@@ -45,6 +45,7 @@ const MainLayout = () => {
                 {/* fallback */}
                 <Route path="*" element={<NotFoundPage />} />
             </Routes>
+            <WebSocketHandler />
         </Layout>
     );
 };

@@ -23,7 +23,15 @@ import wss from './utils/WebSocket.js'
 
 app.use(loggerMiddleware)
 app.disable('etag');
-app.use(helmet())
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      connectSrc: ["'self'", "https://calc.askell.ru", "wss://calc.askell.ru:8080"],
+      styleSrc: ["'self'", "'unsafe-inline'"],
+    }
+  }
+}));
 app.use(cookieParser())
 app.use(cors({
   origin: ['http://localhost:5173', 'https://calc.askell.ru'],

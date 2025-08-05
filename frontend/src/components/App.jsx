@@ -9,23 +9,27 @@ import Init from "../init.js";
 function App() {
     const [loading, setLoading] = useState(true);
     const isAuth = useSelector((state) => state.user.isAuth);
+    const correctVersion = useSelector((state) => state.user.version);
     const dispatch = useDispatch();
 
     useEffect(() => {
         Init.checkAuth(dispatch, setLoading);
         Init.getProductionLoad(dispatch, setLoading)
         const authId = setInterval(() => Init.checkAuth(dispatch, setLoading), 5 * 60 * 1000); // каждые 5 минут
-        const loadId = setInterval(() => Init.getProductionLoad(dispatch, setLoading), 5 * 60 * 1000); // каждые 5 минут
         return () => {
             clearInterval(authId);
-            clearInterval(loadId);
         };
     }, [dispatch]);
+
+    useEffect(() => {
+        const LOCAL_VERSION = import.meta.env.VITE_APP_VERSION;
+        if (correctVersion && correctVersion != LOCAL_VERSION)
+            window.location.reload()
+    }, [correctVersion]);
 
     if (loading) {
         return <div>Loading...</div>;
     }
-
     return (
         <Router>
             <Routes>

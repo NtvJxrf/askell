@@ -5,7 +5,7 @@ const ProtectedRoute = ({ children, requiredRoles }) => {
     const user = store.getState().user.user
     if (!user) return <Navigate to="/login" replace />
 
-    if(user.roles.includes('admin')) return children
+    if(user.roles.includes('admin') || user.roles.includes('system')) return children
     const hasAccess = requiredRoles.some(role => user.roles.includes(role))
     if (requiredRoles && !hasAccess)
         return <ForbiddenPage />

@@ -6,13 +6,14 @@ import authMiddleware from "../middlewares/auth.middleware.js"
 import UserController from "../controllers/user.controller.js"
 import authorizeRoles from '../middlewares/authorizeRoles.js'
 import ReportsRouter from './api/reports.routes.js'
+import { version } from '../app.js'
 const router = express.Router()
 
 //api routes
 router
     .route('/isAuthenticated')
     .get(authMiddleware,(req, res) => {
-        res.json({ auth: true, user: req.user})
+        res.json({ auth: true, user: req.user, version})
     })
 router
     .route('/login')

@@ -1,7 +1,9 @@
 import SkladService from '../services/sklad.service.js'
 import { getQueueChannel } from '../utils/rabbitmq.js';
 import { initSkladAdditions } from '../utils/skladAdditions.js';
+import { getMaterials, getPackagingMaterials, getProcessingStages, getStores, getUnders, getColors, getPicesAndCoefs, getAttributes, getProcessingPlansSmd } from '../utils/skladAdditions.js'
 import ApiError from '../utils/apiError.js';
+import { broadcast } from '../utils/WebSocket.js';
 export default class MoySkladController{
     static async createPzHook(req, res){
         const channel = getQueueChannel();
@@ -26,6 +28,24 @@ export default class MoySkladController{
     static async updateSelfcosts(req, res){
         const result = await initSkladAdditions()
         res.sendStatus(200)
+        broadcast({type: 'selfcosts', data: SkladService.selfcost})
+    }
+    static async updateSelfcostsWithKey(req, res){
+        const skladUpdaters = {
+            materials: getMaterials,
+            packaging: getPackagingMaterials,
+            processingStages: getProcessingStages,
+            stores: getStores,
+            unders: getUnders,
+            colors: getColors,
+            pricing: getPicesAndCoefs,
+            attributes: getAttributes,
+            smdPlans: getProcessingPlansSmd,
+        };
+        const { key } = req.params;
+        const result = await skladUpdaters[key]()
+        res.sendStatus(200)
+        broadcast({type: 'selfcosts', data: SkladService.selfcost})
     }
     static async ordersInWork(req, res){
         res.send(SkladService.ordersInWork)

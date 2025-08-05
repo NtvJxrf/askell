@@ -1,6 +1,6 @@
 import { setSelfcost } from './slices/selfcostSlice.js'
 import axios from "axios";
-import { setIsAuth, setUser } from './slices/userSlice.js';
+import { setIsAuth, setUser, setVersion } from './slices/userSlice.js';
 import { setProductionLoad } from './slices/positionsSlice.js'
 export default class Init{
     static async getSelfcost(dispatch){
@@ -16,6 +16,7 @@ export default class Init{
             const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/isAuthenticated`, { withCredentials: true })
             dispatch(setIsAuth(response.data.auth === true))
             dispatch(setUser(response.data.user))
+            dispatch(setVersion(response.data.version))
         } catch (error) {
             console.error("Ошибка при проверке авторизации:", error);
             dispatch(setIsAuth(false));

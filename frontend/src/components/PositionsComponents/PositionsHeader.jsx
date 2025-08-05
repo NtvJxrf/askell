@@ -85,7 +85,7 @@ const PositionsHeader = () => {
             messageApi.success('Заказ обновлен')
         }catch(error){
             console.error(error)
-            messageApi.error(error.data.message || 'Не удалось сохранить заказ')
+            messageApi.error(error?.data?.message || 'Не удалось сохранить заказ')
         }finally{
             setDisabled(false)
         }

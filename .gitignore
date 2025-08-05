@@ -3,7 +3,6 @@ backend/node_modules/
 frontend/node_modules/
 *.log
 .env
-test.js
 create-user.js
 todo
 .github

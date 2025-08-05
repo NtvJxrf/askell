@@ -8,6 +8,7 @@ import Processingprocess from "../databases/models/sklad/processingprocesses.mod
 import amqp from 'amqplib';
 import crypto from 'crypto'
 import {generateSmdMaterials} from '../utils/generateSmdMaterials.js'
+import ProcessingPlansSmd from "../databases/models/sklad/processingPlansSmd.js"
 export const dictionary = {
     productFolders: {
         glassGuard: {
@@ -36,7 +37,8 @@ export const dictionary = {
 
 export default class SkladService {
     static selfcost = {
-        pricesAndCoefs: {}
+        pricesAndCoefs: {},
+        updates: {}
     }
     static ordersInWork = {}
     static async addPositionsToOrder(data) {
@@ -167,7 +169,18 @@ export default class SkladService {
         return order
     }
 }
+const records = await ProcessingPlansSmd.findAll();
 
+dictionary.smdPlans = {};
+
+for (const { name, meta } of records) {
+    dictionary.smdPlans[name] = { meta };
+}
+SkladService.selfcost.updates['Техкарты для смд'] = {
+    key: 'smdPlans',
+    date: Date.now(),
+};
+console.log(`Загружено ${records.length} техкарт из БД в dictionary`);
 const triplex = async (data, order, position, createdEntitys) => {
     const result = {
         viz: [],
@@ -324,10 +337,10 @@ const smd = async (data, order, position, createdEntitys) => {
                 }]
         const print = position.assortment.name.toLowerCase().includes('уф печать')
         const attributes = position?.assortment?.attributes.reduce((acc, curr) => {
-            acc[curr.name] = acc.value
+            acc[curr.name] = curr.value
             return acc
         }, {})
-        const pzViz = await makeProductionTask(`Склад ВИЗ ПФ`, `Екатеринбург ВИЗ СГИ`, productionRows, order, {viz: true, smd: true, print, height: attributes['Длина в мм'], width: attributes['Ширина в мм'], colors: [attributes['Цвет доски'].name]}, createdEntitys)
+        const pzViz = await makeProductionTask(`Склад ВИЗ ПФ`, `Екатеринбург ВИЗ СГИ`, productionRows, order, {viz: true, smd: true, print, height: attributes['Длина в мм'], width: attributes['Ширина в мм'], colors: [attributes['Цвет доски']?.name]}, createdEntitys)
         return
     }
     const result = {
@@ -603,8 +616,8 @@ const generateProductionTaskAttributes = (order, checkboxes) => {
     print && result.push({ meta: dictionary.productiontaskAttributes["Есть УФ печать"], value: true })
     triplex && result.push({ meta: dictionary.productiontaskAttributes["Триплекс"], value: true })
     ceraglass && result.push({ meta: dictionary.productiontaskAttributes["Керагласс"], value: true })
-    height && result.push({ meta: dictionary.productiontaskAttributes["Высота"], value: height })
-    width && result.push({ meta: dictionary.productiontaskAttributes["Ширина"], value: width })
+    height && result.push({ meta: dictionary.productiontaskAttributes["Высота"], value: Number(height) })
+    width && result.push({ meta: dictionary.productiontaskAttributes["Ширина"], value: Number(width) })
     if (colors?.length > 0) {
         result.push({ meta: dictionary.productiontaskAttributes["Окрашивание"], value: true });
         result.push({ meta: dictionary.productiontaskAttributes["Цвет"], value: [...new Set(colors)].join(';')

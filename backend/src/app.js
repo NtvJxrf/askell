@@ -9,6 +9,8 @@ import  loggerMiddleware  from "./middlewares/logger.middleware.js"
 import { initQueue } from './utils/rabbitmq.js';
 import { initSkladAdditions } from "./utils/skladAdditions.js"
 import getOrdersInWork from "./utils/getOrdersInWork.js"
+
+export const version = 1.01
 const promises = []
 await initModels()
 getOrdersInWork().then(() => console.log('Got orders in work'))
@@ -16,6 +18,8 @@ promises.push(initSkladAdditions())
 promises.push(initQueue())
 await Promise.all(promises)
 const app = express()
+
+import wss from './utils/WebSocket.js'
 
 app.use(loggerMiddleware)
 app.disable('etag');
@@ -27,8 +31,8 @@ app.use(cors({
 }))
 
 
-app.use(express.json({ limit: '15mb' }))
-app.use(express.urlencoded({ extended: true, limit: '15mb' }))
+app.use(express.json({ limit: '50mb' }))
+app.use(express.urlencoded({ extended: true, limit: '50mb' }))
 app.set('trust proxy', 'loopback');
 app.use('/', routes)
 // Error handling

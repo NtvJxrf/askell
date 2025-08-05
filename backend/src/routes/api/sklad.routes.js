@@ -19,6 +19,9 @@ router
     .route('/updateSelfcosts')
     .post(authorizeRoles, MoySkladController.updateSelfcosts)
 router
+    .route('/updateSelfcosts/:key')
+    .post(authorizeRoles, MoySkladController.updateSelfcostsWithKey)
+router
     .route('/ordersInWork')
     .get(authorizeRoles, MoySkladController.ordersInWork)
 export default router

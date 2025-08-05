@@ -83,7 +83,7 @@ export default function AdminPage() {
                 }))
             }catch(error){
                 console.error(error)
-                messageApi.error(error.response?.data?.message || 'Ошибка при получении пользователей')
+                messageApi.error(error?.response?.data?.message || 'Ошибка при получении пользователей')
             }
         }, [messageApi])
 

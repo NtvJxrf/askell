@@ -1,6 +1,7 @@
 import WorkPrices from "../databases/models/sklad/workPrices.model.js"
 import SkladService from "../services/sklad.service.js"
 import Client from "./got.js"
+import { broadcast } from "./WebSocket.js"
 const getOrdersInWork = async () => {
     const works = await WorkPrices.findAll()
     const ratesPerHour = works.reduce((acc, curr) => {
@@ -93,6 +94,7 @@ const getOrdersInWork = async () => {
         selk,
         viz,
     }
+    broadcast({type: 'ordersInWork', data: SkladService.ordersInWork})
 }
 
 async function fetchAllRows(urlBase) {

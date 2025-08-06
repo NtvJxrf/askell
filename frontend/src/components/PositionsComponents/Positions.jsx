@@ -85,12 +85,13 @@ const Positions = ({form}) => {
     }, [positions]);
     useEffect( () => {
         if(!positions.length) return
-        let S_all = 0, stanok = 'Криволинейка', additions = false, triplex = false
+        let S_all = 0, stanok = 'Криволинейка', additions = false, triplex = false, print = false
         positions.forEach(el => {
             if(!el.result || el.result.other.type === 'СМД' || el.result.other.type === 'Керагласс' || el.result.other.type === 'Стеклопакет') return
             S_all += el.result.other.S * el.quantity
             el.result.other.stanok === 'Прямолинейка' && (stanok = 'Прямолинейка')
             el.result.other.type === 'Триплекс' && (triplex = true)
+            el.result.other.print && (print = true)
             const {drills, cutsv1, cutsv2, cutsv3, zenk, color} = el.initialData
             if(drills || cutsv1 || cutsv2 || cutsv3 || zenk || color) additions = true
         })
@@ -102,6 +103,7 @@ const Positions = ({form}) => {
             res = loadBeforeThisOrder + Math.ceil(S_all / 70)
         triplex && (res += 1 + Math.ceil(S_all / 27))
         additions && (res += 1)
+        print && (res += 7)
         console.log(loadBeforeThisOrder)
         console.log(additions)
         console.log(S_all)

@@ -477,19 +477,20 @@ export const createProductionTask = async (id) =>{
     
 }
 const makeProductionTask = async (materialsStore, productsStore, productionRows, order, checkboxes, createdEntitys) => {
-    const task = await Client.sklad(`https://api.moysklad.ru/api/remap/1.2/entity/productiontask`, 'post', {
-                materialsStore: { meta: dictionary.stores[materialsStore]},
-                productsStore: { meta: dictionary.stores[productsStore]},
-                organization: { meta: order.organization.meta},
-                deliveryPlannedMoment: order.deliveryPlannedMoment,
-                owner: { meta: order.owner.meta},
-                attributes: generateProductionTaskAttributes(order, checkboxes),
-                productionRows,
-                reserve: true,
-                customerOrders: [{
-                    meta: order.meta
-                }]
-            })
+    const stats = {
+        materialsStore: { meta: dictionary.stores[materialsStore]},
+        productsStore: { meta: dictionary.stores[productsStore]},
+        organization: { meta: order?.organization?.meta},
+        attributes: generateProductionTaskAttributes(order, checkboxes),
+        productionRows,
+        reserve: true,
+        customerOrders: [{
+            meta: order.meta
+        }]
+    }
+    order?.owner?.meta && (stats.owner = { meta: order.owner.meta})
+    order?.deliveryPlannedMoment && (stats.deliveryPlannedMoment = order.deliveryPlannedMoment)
+    const task = await Client.sklad(`https://api.moysklad.ru/api/remap/1.2/entity/productiontask`, 'post', stats)
     createdEntitys.task.push(task)
     return task
 }   

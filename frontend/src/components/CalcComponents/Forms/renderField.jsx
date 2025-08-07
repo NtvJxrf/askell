@@ -21,7 +21,7 @@ const renderField = (field) => {
                 label={field.label}
                 name={field.name}
                 rules={field.rules}
-                initialValue={false}
+                initialValue={field.cheched || false}
             >
                 <Checkbox />
             </Form.Item>

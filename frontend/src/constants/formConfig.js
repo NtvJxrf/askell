@@ -15,8 +15,8 @@ const formConfigs = {
           options: ['Стекло Matelux, 4 мм', 'Стекло осветленное OptiWhite, 4 мм', 'Стекло М1, 4 мм'],
           rules: [{ required: true, message: 'Fill this field' }]
         },
-        { name: 'height', type: 'input', label: 'Высота, мм', rules: [{ required: true, message: 'Fill this field' }] },
         { name: 'width', type: 'input', label: 'Ширина, мм:', rules: [{ required: true, message: 'Fill this field' }] },
+        { name: 'height', type: 'input', label: 'Высота, мм', rules: [{ required: true, message: 'Fill this field' }] },
         {
           name: 'clientType',
           label: 'Тип клиента',
@@ -53,16 +53,16 @@ const formConfigs = {
           options: [],
           rules: [{ required: true, message: 'Fill this field' }]
         },
-        { name: 'height', type: 'input', label: 'Высота, мм', rules: [{ required: true, message: 'Fill this field' }] },
         { name: 'width', type: 'input', label: 'Ширина, мм', rules: [{ required: true, message: 'Fill this field' }] },
+        { name: 'height', type: 'input', label: 'Высота, мм', rules: [{ required: true, message: 'Fill this field' }] },
         { name: 'drills', type: 'inputp0', label: 'Сверление, шт' },
         { name: 'zenk', type: 'inputp0', label: 'Зенкование, шт' },
         { name: 'cutsv1', type: 'inputp0', label: 'Вырезы 1 кат. шт' },
         { name: 'cutsv2', type: 'inputp0', label: 'Вырезы 2 кат. шт' },
         { name: 'cutsv3', type: 'inputp0', label: 'Вырезы 3 кат. шт' },
         { name: 'color', label: 'Цвет', type: 'select' },
-        { name: 'shape', label: 'Прямоугольная форма', type: 'checkbox' },
-        { name: 'tempered', label: 'Закаленное', type: 'checkbox' },
+        { name: 'shape', label: 'Прямоугольная форма', type: 'checkbox', cheched: true },
+        { name: 'tempered', label: 'Закаленное', type: 'checkbox', cheched: true },
         { name: 'polishing', label: 'Полировка', type: 'checkbox' },
         { name: 'print', label: 'Печать', type: 'checkbox' },
         {
@@ -83,16 +83,16 @@ const formConfigs = {
     },
     triplexForm: {
       commonFields: [
-        { name: 'height', type: 'input', label: 'Высота, мм', rules: [{ required: true, message: 'Fill this field' }] },
         { name: 'width', type: 'input', label: 'Ширина, мм', rules: [{ required: true, message: 'Fill this field' }] },
+        { name: 'height', type: 'input', label: 'Высота, мм', rules: [{ required: true, message: 'Fill this field' }] },
         { name: 'drills', type: 'inputp0', label: 'Сверление, шт' },
         { name: 'zenk', type: 'inputp0', label: 'Зенкование, шт' },
         { name: 'cutsv1', type: 'inputp0', label: 'Вырезы 1 кат. шт' },
         { name: 'cutsv2', type: 'inputp0', label: 'Вырезы 2 кат. шт' },
         { name: 'cutsv3', type: 'inputp0', label: 'Вырезы 3 кат. шт' },
         { name: 'color', label: 'Цвет', type: 'select' },
-        { name: 'shape', label: 'Прямоугольная форма', type: 'checkbox' },
-        { name: 'tempered', label: 'Закаленное', type: 'checkbox' },
+        { name: 'shape', label: 'Прямоугольная форма', type: 'checkbox', cheched: true },
+        { name: 'tempered', label: 'Закаленное', type: 'checkbox', cheched: true },
         { name: 'polishing', label: 'Полировка', type: 'checkbox' },
         { name: 'print', label: 'Печать', type: 'checkbox' },
         {
@@ -144,8 +144,8 @@ const formConfigs = {
     },
     glasspacketForm: {
       commonFields: [
-        { name: 'height', type: 'input', label: 'Высота, мм', rules: [{ required: true, message: 'Fill this field' }] },
         { name: 'width', type: 'input', label: 'Ширина, мм', rules: [{ required: true, message: 'Fill this field' }] },
+        { name: 'height', type: 'input', label: 'Высота, мм', rules: [{ required: true, message: 'Fill this field' }] },
         {
           name: 'gas',
           label: 'Газ',
@@ -229,8 +229,8 @@ const formConfigs = {
           type: 'select',
           rules: [{ required: true, message: 'Fill this field' }]
         },
-        { name: 'height', type: 'input', label: 'Высота, мм', rules: [{ required: true, message: 'Fill this field' }] },
         { name: 'width', type: 'input', label: 'Ширина, мм', rules: [{ required: true, message: 'Fill this field' }] },
+        { name: 'height', type: 'input', label: 'Высота, мм', rules: [{ required: true, message: 'Fill this field' }] },
         { name: 'cutsv1', type: 'inputp0', label: 'Вырезы 1 кат. шт' },
         { name: 'cutsv2', type: 'inputp0', label: 'Вырезы 2 кат. шт' },
         { name: 'cutsv3', type: 'inputp0', label: 'Вырезы 3 кат. шт' },

@@ -490,6 +490,8 @@ const makeProductionTask = async (materialsStore, productsStore, productionRows,
     }
     order?.owner?.meta && (stats.owner = { meta: order.owner.meta})
     order?.deliveryPlannedMoment && (stats.deliveryPlannedMoment = order.deliveryPlannedMoment)
+    console.dir(stats, { depth: null, colors: true, maxArrayLength: null });
+
     const task = await Client.sklad(`https://api.moysklad.ru/api/remap/1.2/entity/productiontask`, 'post', stats)
     createdEntitys.task.push(task)
     return task
@@ -615,7 +617,7 @@ const generateProductionTaskAttributes = (order, checkboxes) => {
 
     result.push({ meta: dictionary.productiontaskAttributes["№ заказа покупателя"], value: order.name })
     order.invoicesOut && result.push({ meta: dictionary.productiontaskAttributes["№ Счета"], value: order.invoicesOut.map(el => el.name).join(';') })
-    order.agent && result.push({ meta: dictionary.productiontaskAttributes["Получатель"], value: order.agent.meta }) 
+    order.agent && result.push({ meta: dictionary.productiontaskAttributes["Получатель"], value: {meta: order.agent.meta} }) 
     viz && result.push({ meta: dictionary.productiontaskAttributes["Задание для ВИЗа"], value: true }) 
     smd && result.push({ meta: dictionary.productiontaskAttributes["СМД"], value: true }) 
     print && result.push({ meta: dictionary.productiontaskAttributes["Есть УФ печать"], value: true })

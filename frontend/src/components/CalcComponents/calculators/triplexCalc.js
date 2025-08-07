@@ -2,7 +2,7 @@ import { shortenGlassName } from "./glasspacketCalc.js"
 const Calculate = (data, selfcost) => {
     console.log(selfcost)
     console.log(data)
-    const { height, width, polishing, drills, zenk, cutsv1, cutsv2, cutsv3, tempered, shape, addTape, print, customertype, rounding, color, quantity = 1 } = data
+    const { height, width, drills, zenk, cutsv1, cutsv2, cutsv3, tempered, shape, addTape, print, customertype, rounding, color, quantity = 1 } = data
     const tapes = Object.entries(data).filter(([key]) => key.startsWith('tape')).map(([_, value]) => value);
     const materials = Object.entries(data).filter(([key, value]) => key.startsWith('material') && value !== undefined).map(([_, value]) => value);
     addTape && tapes.push(addTape)
@@ -20,6 +20,7 @@ const Calculate = (data, selfcost) => {
     const lesser = Math.min(height, width)
     const result = {
         materials: [],
+        calcMaterials: [],
         works: [],
         expenses: [],
         other: {},
@@ -95,6 +96,7 @@ const Calculate = (data, selfcost) => {
         result.materials.push({
             name: material,
             value: selfcost.materials[material].value * S * selfcost.pricesAndCoefs['Коэффициент обрези стекло'],
+            calcValue: (selfcost.materials[material].calcValue * S) * selfcost.pricesAndCoefs['Коэффициент обрези стекло'],
             string: `${selfcost.materials[material].value} * ${S.toFixed(2)} * ${selfcost.pricesAndCoefs['Коэффициент обрези стекло']}`,
             formula: 'Цена за м² * Площадь * Коэффициент обрези стекло'
         });
@@ -111,9 +113,9 @@ const Calculate = (data, selfcost) => {
     const context = { selfcost, result, stanok, allThickness };
     constructWorks('cutting1', S * materials.length, context);
     constructWorks('cutting2', S * materials.length, context);
-    constructWorks('washing1', S * materials.length, context);
+    constructWorks('washing1', materials.length, context);
     stanok == 'Криволинейка' ? constructWorks('curvedProcessing', P * materials.length, context) : constructWorks('straightProcessing', P * materials.length, context)
-    constructWorks('otk', S * materials.length, context);
+    constructWorks('otk', materials.length, context);
     constructWorks('triplexing1', S * (materials.length - 1), context);
     constructWorks('triplexing2', S * (materials.length - 1), context);
     drills && constructWorks('drills', drills * materials.length, context);
@@ -123,16 +125,26 @@ const Calculate = (data, selfcost) => {
     cutsv3 && constructWorks('cutsv3', cutsv3 * materials.length, context);
     color && constructWorks('color', S, context);
     let materialsandworks = 0
-    for (const item of Object.values(result.materials)) 
+    let calcmaterialsandworks = 0
+    for (const item of Object.values(result.materials)){
         materialsandworks += item.value
-    for (const item of Object.values(result.works))
+        calcmaterialsandworks += item.calcValue || item.value
+    }
+    for (const item of Object.values(result.works)){
         materialsandworks += item.finalValue
-    const price = materialsandworks * selfcost.pricesAndCoefs[`Триплекс ${customertype}`]
+        calcmaterialsandworks += item.finalValue
+    }
+    const price = calcmaterialsandworks * selfcost.pricesAndCoefs[`Триплекс ${customertype}`]
     result.finalPrice = [{
         name: 'Себестоимость',
         value: materialsandworks,
         string: `${(materialsandworks).toFixed(2)}`,
         formula: `(Материалы и работы) + Расходы`
+    },{
+        name: 'Себестоимость калькулятора',
+        value: calcmaterialsandworks,
+        string: `${(calcmaterialsandworks).toFixed(2)}`,
+        formula: `(Материалы и работы) + Расходы (Себестоимость стекла берется "Тип цен для калькулятора")`
     },{
         name: 'Наценка',
         value: selfcost.pricesAndCoefs[`Триплекс ${customertype}`],
@@ -214,7 +226,8 @@ export const constructWorks = (work, quantity, context) => {
         case 'color': res(`Окрашивание`); break
     }
 };
-export const constructName = (firstWord, {
+export const constructName = (firstWord, data) => {
+    const {
     height,
     width,
     stanok,
@@ -226,8 +239,9 @@ export const constructName = (firstWord, {
     drills = 0,
     zenk = 0,
     print = false,
-    color = false
-}) => {
+    color = false,
+    } = data
+    const tapes = Object.entries(data).filter(([key]) => key.startsWith('tape')).map(([_, value]) => value).filter(Boolean)
     const parts = [];
     if(stanok) stanok == 'Прямолинейка' ? parts.push('ПР') : parts.push('КР')
     if (polishing) parts.push('Полировка')
@@ -240,6 +254,7 @@ export const constructName = (firstWord, {
     if (zenk) parts.push(`Зенкование: ${zenk}`);
     if (print) parts.push('УФ Печать');
     if (color) parts.push(`Окрашивание: ${color}`);
+    if (tapes.length > 0) parts.push(`Пленка: ${tapes.join(';').replaceAll('Пленка', '')}`);
     const area = ((height * width) / 1_000_000).toFixed(2);
     if(!firstWord.includes('Керагласс')) parts.push(`площадь: ${area}`)
     return `${firstWord}, (${width}х${height}${parts.length > 0 ? ', ' : ''}${parts.join(', ')})`;

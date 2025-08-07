@@ -615,6 +615,7 @@ const generateProductionTaskAttributes = (order, checkboxes) => {
 
     result.push({ meta: dictionary.productiontaskAttributes["№ заказа покупателя"], value: order.name })
     order.invoicesOut && result.push({ meta: dictionary.productiontaskAttributes["№ Счета"], value: order.invoicesOut.map(el => el.name).join(';') })
+    order.agent && result.push({ meta: dictionary.productiontaskAttributes["Получатель"], value: order.agent.meta }) 
     viz && result.push({ meta: dictionary.productiontaskAttributes["Задание для ВИЗа"], value: true }) 
     smd && result.push({ meta: dictionary.productiontaskAttributes["СМД"], value: true }) 
     print && result.push({ meta: dictionary.productiontaskAttributes["Есть УФ печать"], value: true })

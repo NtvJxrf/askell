@@ -21,6 +21,7 @@ export const getMaterials = async () => {
             const res = {
                 meta: material.meta,
                 value: convertPrice(material.buyPrice),
+                calcValue: material.salePrices[0].value / 100
             }
             if(material.name.toLowerCase()?.includes('плита')){
                 const l = material?.attributes?.find(el => el.name === 'Длина в мм')?.value

@@ -1,140 +1,94 @@
 import Client from './src/utils/got.js';
-import dotenv from 'dotenv';
-dotenv.config();
-import axios from 'axios';
-import { writeFile, readFile } from 'fs/promises';
+import { broadcast } from "./WebSocket.js"
+const getOrdersInWork = async () => {
+    const orders = await fetchAllRows(
+        'https://api.moysklad.ru/api/remap/1.2/entity/customerorder?' +
+        'filter=state.name=Подготовить (переделать) чертежи;' +
+        'state.name=В работе;' +
+        'state.name=Чертежи подготовлены, прикреплены;' +
+        'state.name=Поставлено в производство&expand=positions.assortment'
+    )
+    // await writeFile('orders.json', JSON.stringify(orders, null, 2), 'utf8');
+    // const fileContent = await readFile('orders.json', 'utf-8');
+    // const orders = JSON.parse(fileContent);
+    let totalCutsv1 = 0, totalCutsv2 = 0, totalCutsv3 = 0;
+    const total = {
+        'Криволинейка': { count: 0, positionsCount: 0, S: 0, P: 0 },
+        'Прямолинейка': { count: 0, positionsCount: 0, S: 0, P: 0 }
+    };
 
-const res = await axios.post('http://localhost:7878/api/sklad/createPzHook?id=d80593b5-72b0-11f0-0a80-1bbb00a8d9a2')
-// async function main() {
-//   // Читаем заказы
-//   const fileContent = await readFile('orders.json', 'utf-8');
-//   const orders = JSON.parse(fileContent);
+    // Сбор статистики по заказам
+    for (const order of orders) {
+        for (const pos of order.positions.rows) {
+            const attrs = (pos.assortment?.attributes || []).reduce((a, x) => {
+                a[x.name] = x.value;
+                return a;
+            }, {});
+            const stanok = attrs['тип станка обрабатывающий'];
+            if (!stanok) continue;
 
-//   // Счётчики
-//   let totalCutsv1 = 0, totalCutsv2 = 0, totalCutsv3 = 0;
-//   const total = {
-//     'Криволинейка': { count: 0, positionsCount: 0, S: 0, P: 0 },
-//     'Прямолинейка': { count: 0, positionsCount: 0, S: 0, P: 0 }
-//   };
+            const h = Number(attrs['Длина в мм']) || 0;
+            const w = Number(attrs['Ширина в мм']) || 0;
+            const pfs = Number(attrs['Кол- во полуфабрикатов']) || 1;
+            totalCutsv1 += Number(attrs['Кол во вырезов 1 категорий/ шт']) || 0;
+            totalCutsv2 += Number(attrs['Кол во вырезов 2 категорий/ шт']) || 0;
+            totalCutsv3 += Number(attrs['Кол во вырезов 3 категорий/ шт']) || 0;
 
-//   // Сбор статистики по заказам
-//   for (const order of orders) {
-//     for (const pos of order.positions.rows) {
-//       const attrs = (pos.assortment?.attributes || []).reduce((a, x) => {
-//         a[x.name] = x.value;
-//         return a;
-//       }, {});
-//       const stanok = attrs['тип станка обрабатывающий'];
-//       if (!stanok) continue;
+            const P = 2 * (h + w) / 1000;          // пог.м
+            const S = h * w / 1_000_000;           // кв.м
+            const cnt = pfs * pos.quantity;
 
-//       const h = Number(attrs['Длина в мм']) || 0;
-//       const w = Number(attrs['Ширина в мм']) || 0;
-//       const pfs = Number(attrs['Кол- во полуфабрикатов']) || 1;
-//       totalCutsv1 += Number(attrs['Кол во вырезов 1 категорий/ шт']) || 0;
-//       totalCutsv2 += Number(attrs['Кол во вырезов 2 категорий/ шт']) || 0;
-//       totalCutsv3 += Number(attrs['Кол во вырезов 3 категорий/ шт']) || 0;
+            total[stanok].P += P * cnt;
+            total[stanok].S += S * cnt;
+            total[stanok].count += cnt;
+            total[stanok].positionsCount += 1;
+        }
+    }
 
-//       const P = 2 * (h + w) / 1000;          // пог.м
-//       const S = h * w / 1_000_000;           // кв.м
-//       const cnt = pfs * pos.quantity;
+    console.log('Итого по заказам:', total);
+    console.log('Вырезы 1 кат:', totalCutsv1);
+    console.log('Вырезы 2 кат:', totalCutsv2);
+    console.log('Вырезы 3 кат:', totalCutsv3);
+    const machinesStraight = [
+        { name: '1 станок прямолинейка', shiftHours: 8, norm: 48, efficiency: 1, schedule: { on: 5, off: 2 } }
+    ];
+    const machinesCurved = [
+        { name: '1 станок криволинейка', shiftHours: 12, norm: 14, efficiency: 1, schedule: { on: 3, off: 1 } },
+        { name: '2 станок криволинейка', shiftHours: 12, norm: 14, efficiency: 1, schedule: { on: 2, off: 2 } },
+    ];
+    const StraightLoad = Math.ceil(total['Прямолинейка'].P / (machinesStraight[0].shiftHours * machinesStraight[0].norm))
+    console.log('Загруженность прямолинейки в рабочих днях:', StraightLoad)
+    const CurvedLoad = Math.ceil((total['Криволинейка'].P / 14 + totalCutsv1 / 8 + totalCutsv2 / 4 + totalCutsv3 / 2 + total.Криволинейка.positionsCount * 0.166) / (12 * 1.25))
+    console.log('Загруженность криволинейки в рабочих днях:', CurvedLoad)
 
-//       total[stanok].P += P * cnt;
-//       total[stanok].S += S * cnt;
-//       total[stanok].count += cnt;
-//       total[stanok].positionsCount += 1;
-//     }
-//   }
 
-//   console.log('Итого по заказам:', total);
-//   console.log('Вырезы 1 кат:', totalCutsv1);
-//   console.log('Вырезы 2 кат:', totalCutsv2);
-//   console.log('Вырезы 3 кат:', totalCutsv3);
+}
+async function fetchAllRows(urlBase) {
+  const limit = 100;
+  const firstUrl = `${urlBase}&limit=${limit}&offset=0`;
+  const firstResponse = await Client.sklad(firstUrl);
 
-//   // Машины
-//   const machinesStraight = [
-//     { name: '1 станок прямолинейка', shiftHours: 8, norm: 48, efficiency: 1, schedule: { on: 5, off: 2 } }
-//   ];
-//   const machinesCurved = [
-//     { name: '1 станок криволинейка', shiftHours: 12, norm: 14, efficiency: 1, schedule: { on: 3, off: 1 } },
-//     { name: '2 станок криволинейка', shiftHours: 12, norm: 14, efficiency: 1, schedule: { on: 2, off: 2 } },
-//   ];
-// 5_361-384-384-384-384-384-0-0-384-384-384-384-384-0-0-384-384-384-384
+  if (!firstResponse.rows || firstResponse.rows.length === 0) {
+    return [];
+  }
 
-// 2_983-336-336-168-0-336-336-168-0-336-336-168-0-336-168
-// 2_983-168-168-336-168-168-168-336-168-168-336-168-168-336-168
+  const allRows = [...firstResponse.rows];
+  const totalSize = firstResponse.meta?.size || allRows.length;
 
-// 14_064-1_440-1_440-720-0-1_440-1_440-720-0-1_440-1_440-720-1_440-1_440-720
-//   // Расчёт
-//   console.log(
-//     'Криволинейка:',
-//     CalcLoad(machinesCurved, total['Криволинейка'].P, { v1: totalCutsv1, v2: totalCutsv2, v3: totalCutsv3 }, 'Криволинейка'),
-//   );
-//   console.log(
-//     'Прямолинейка:',
-//     CalcLoad(machinesStraight, total['Прямолинейка'].P, { v1: totalCutsv1, v2: totalCutsv2, v3: totalCutsv3 }, 'Прямолинейка'),
-//   );
-// }
+  const requests = [];
+  for (let offset = limit; offset < totalSize; offset += limit) {
+    const url = `${urlBase}&limit=${limit}&offset=${offset}`;
+    requests.push(Client.sklad(url));
+  }
 
-// function CalcLoad(machines, meters, cuts, name) {
-//   // 1. Считаем минуты на вырезы
-//   let cutMin = 0
-//   if(name == 'Криволинейка'){
-//     cutMin = (cuts.v1 || 0) * (60/8)
-//                + (cuts.v2 || 0) * (60/4)
-//                + (cuts.v3 || 0) * (60/2);
-//   }
+  const responses = await Promise.all(requests);
+  for (const res of responses) {
+    if (res.rows) {
+      allRows.push(...res.rows);
+    }
+  }
 
-//   // 2. Считаем среднее время на метр
-//   let wNorm = 0, wWeight = 0;
-//   machines.forEach(m => {
-//     const cap = m.shiftHours * 60 * m.efficiency;
-//     wNorm += m.norm * cap;
-//     wWeight += cap;
-//   });
-//   const avgNorm = wNorm / wWeight;       // м/ч
-//   const minPerMeter = 60 / avgNorm;      // мин/м
-//   const meterMin = meters * minPerMeter;
+  return allRows;
+}
 
-//   const totalMin = meterMin + cutMin;
-
-//   // 3. Симуляция по календарным дням, считаем только on-дни
-//   let remainingMin = totalMin;
-// let workDaysCount = 0;
-// let calendarDaysCount = 0;
-
-// for (let day = 1; day <= 365; day++) {
-//   calendarDaysCount++;
-//   let dayMin = 0;
-//   let anyWork = false;
-
-//   machines.forEach(m => {
-//     const cycle = m.schedule.on + m.schedule.off;
-//     const inCycle = (day - 1) % cycle;
-//     if (inCycle < m.schedule.on) {
-//       dayMin += m.shiftHours * 60 * m.efficiency;
-//       anyWork = true;
-//     }
-//   });
-
-//   if (!anyWork) continue;
-
-//   const usedMin = Math.min(remainingMin, dayMin);
-//   remainingMin -= usedMin;
-//   workDaysCount++;
-
-//   if (remainingMin <= 0) {
-//     break;
-//   }
-// }
-
-// if (remainingMin > 0) {
-//   throw new Error('Недостаточно смен в течение года для выполнения заказа');
-// }
-
-//   return {
-//     workDays: workDaysCount,
-//     calendarDays: calendarDaysCount
-//   };
-// }
-
-// main().catch(console.error);
+export default getOrdersInWork

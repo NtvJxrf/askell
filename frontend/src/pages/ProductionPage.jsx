@@ -137,12 +137,8 @@ const OrdersInWorkTables = () => {
     <div>
       <Space direction="vertical" style={{ marginBottom: 24 }}>
         <Title level={4}>Загрузка станков</Title>
-        <Text>Криволинейка: <strong>{(data?.curvedTotal ?? 0).toFixed(2)} ч</strong></Text>
-        <Text>Прямолинейка: <strong>{(data?.straightTotal ?? 0).toFixed(2)} ч</strong></Text>
-        <Text>Сверловка: <strong>{(data?.drillsTotal ?? 0).toFixed(2)} ч</strong></Text>
-        <Text>Раскрой: <strong>{(data?.cuttingTotal ?? 0).toFixed(2)} ч</strong></Text>
-        <Text>Закалка: <strong>{(data?.temperingTotal ?? 0).toFixed(2)} ч</strong></Text>
-        <Text>Триплекс: <strong>{(data?.triplexTotal ?? 0).toFixed(2)} ч</strong></Text>
+        <Text>Криволинейка: <strong>{(data?.curvedLoad ?? 0).toFixed(2)} рабочих дней</strong></Text>
+        <Text>Прямолинейка: <strong>{(data?.straightLoad ?? 0).toFixed(2)} рабочих дней</strong></Text>
       </Space>
 
       <Tabs items={getItems()} defaultActiveKey="kriv" centered />

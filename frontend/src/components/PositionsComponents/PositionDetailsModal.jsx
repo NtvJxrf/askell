@@ -22,7 +22,10 @@ const renderItem = (item, index) => {
                                     <div><strong>Пояснение:</strong> {item.string}</div>
                                 )}
                                 {item.value && (
-                                    <div><strong>Работа:</strong> {item.value.toFixed(2)}</div>
+                                    <div><strong>Цена</strong> {item.value.toFixed(2)}</div>
+                                )}
+                                {item.calcValue && (
+                                    <div><strong>Цена с типом цен "Для калькулятора"</strong> {item.calcValue.toFixed(2)}</div>
                                 )}
                                 {item.workshopExpenses && (
                                     <div><strong>Цеховые расходы:</strong> {item.workshopExpenses.toFixed(2)}</div>

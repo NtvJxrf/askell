@@ -85,29 +85,29 @@ const Positions = ({form}) => {
     }, [positions]);
     useEffect( () => {
         if(!positions.length) return
-        let S_all = 0, stanok = 'Криволинейка', additions = false, triplex = false, print = false
+        let S_all = 0, P_all = 0, stanok = 'Криволинейка', additions = false, triplex = false, print = false, totalCutsv1 = 0, totalCutsv2 = 0, totalCutsv3 = 0
         positions.forEach(el => {
             if(!el.result || el.result.other.type === 'СМД' || el.result.other.type === 'Керагласс' || el.result.other.type === 'Стеклопакет') return
             S_all += el.result.other.S * el.quantity
+            P_all += el.result.other.P * el.quantity
             el.result.other.stanok === 'Прямолинейка' && (stanok = 'Прямолинейка')
             el.result.other.type === 'Триплекс' && (triplex = true)
             el.result.other.print && (print = true)
             const {drills, cutsv1, cutsv2, cutsv3, zenk, color} = el.initialData
+            cutsv1 && (totalCutsv1 += cutsv1 * el.quantity)
+            cutsv2 && (totalCutsv2 += cutsv2 * el.quantity)
+            cutsv3 && (totalCutsv3 += cutsv3 * el.quantity)
             if(drills || cutsv1 || cutsv2 || cutsv3 || zenk || color) additions = true
         })
-        const loadBeforeThisOrder = (stanok === 'Прямолинейка' ? productionLoad.straightTotal : productionLoad.curvedTotal) / 24 || 0
+        const loadBeforeThisOrder = (stanok === 'Прямолинейка' ? productionLoad.straightLoad : productionLoad.curvedLoad) || 0
         let res = 0
         if(stanok === 'Прямолинейка')
-            res = loadBeforeThisOrder + Math.ceil(S_all / 80)
+            res = loadBeforeThisOrder + Math.ceil(P_all / (8 * 48))
         else(stanok === 'Криволинейка')
-            res = loadBeforeThisOrder + Math.ceil(S_all / 70)
+            res = loadBeforeThisOrder + Math.ceil((P_all / 14 + totalCutsv1 / 8 + totalCutsv2 / 4 + totalCutsv3 / 2 + positions.length * 0.166) / (12 * 1.25))
         triplex && (res += 1 + Math.ceil(S_all / 27))
         additions && (res += 1)
         print && (res += 7)
-        console.log(loadBeforeThisOrder)
-        console.log(additions)
-        console.log(S_all)
-        console.log(res)
         setOrderLoad(res)
     }, [positions])
     const onDragEnd = ({ active, over }) => {

@@ -86,6 +86,8 @@ const Calculate = (data, selfcost, triplexArray) => {
         const context = { selfcost, result, thickness, spo: true };
         constructWorks('cutting1', S, context);
         constructWorks('cutting2', S, context);
+        constructWorks('washing1', 1, context);
+        constructWorks('otk', 1, context);
         if(material[1]){
             constructWorks('tempered', S, context);
             constructWorks('blunting', P, context);

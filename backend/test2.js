@@ -13,6 +13,7 @@ let totalPositions = 0, totalCount = 0, totalSum = 0, totalS = 0, totalCutsv1 = 
 for (const order of orders) {
     for (const pos of order.positions.rows) {
         if(!pos.assortment.name.toLowerCase().includes('триплекс')) continue
+        console.log(pos.assortment.name)
         const attrs = (pos.assortment?.attributes || []).reduce((a, x) => {
             a[x.name] = x.value;
             return a;
@@ -29,8 +30,8 @@ for (const order of orders) {
         const cnt = pfs * pos.quantity;
 
         totalSum += pos.price * (1 - pos.discount / 100)
-        totalS += S * cnt;
-        totalCount += cnt;
+        totalS += S * pos.quantity;
+        totalCount += pos.quantity;
         totalPositions += 1;
     }
 }
@@ -38,6 +39,9 @@ console.log('Всего позиций:', totalPositions)
 console.log('Всего шт:', totalCount)
 console.log('Общая сумма:', totalSum)
 console.log('Общая площадь:', totalS)
+console.log('Всего вырезов 1 кат:', totalCutsv1)
+console.log('Всего вырезов 2 кат:', totalCutsv2)
+console.log('Всего вырезов 3 кат:', totalCutsv3)
 async function fetchAllRows(urlBase) {
     const limit = 100;
     const firstUrl = `${urlBase}&limit=${limit}&offset=0`;

@@ -87,8 +87,8 @@ const Calculate = (data, selfcost) => {
     }
     constructWorks('curvedProcessing', P_all, context);
     constructWorks('lamination', S_all, context);
-    constructWorks('washing1', 1, context);
-    constructWorks('otk', 1, context);
+    constructWorks('washing1', S_all * heights.length, context);
+    constructWorks('otk', S_all * heights.length, context);
     cutsv1 && constructWorks('cutsv1', cutsv1 * materials.length, context);
     cutsv2 && constructWorks('cutsv2', cutsv2 * materials.length, context);
     cutsv3 && constructWorks('cutsv3', cutsv3 * materials.length, context);

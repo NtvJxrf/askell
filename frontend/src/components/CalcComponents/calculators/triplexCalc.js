@@ -113,9 +113,9 @@ const Calculate = (data, selfcost) => {
     const context = { selfcost, result, stanok, allThickness };
     constructWorks('cutting1', S * materials.length, context);
     constructWorks('cutting2', S * materials.length, context);
-    constructWorks('washing1', materials.length, context);
     stanok == 'Криволинейка' ? constructWorks('curvedProcessing', P * materials.length, context) : constructWorks('straightProcessing', P * materials.length, context)
-    constructWorks('otk', materials.length, context);
+    constructWorks('washing1', S * materials.length, context);
+    constructWorks('otk', S * materials.length, context);
     constructWorks('triplexing1', S * (materials.length - 1), context);
     constructWorks('triplexing2', S * (materials.length - 1), context);
     drills && constructWorks('drills', drills * materials.length, context);

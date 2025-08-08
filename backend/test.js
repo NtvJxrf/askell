@@ -6,7 +6,14 @@ import fs from 'fs';
 import axios from 'axios'
 import { writeFile, readFile } from 'fs/promises';
 
-// await axios.post('http://localhost:7878/api/sklad/createPzHook?id=56508553-4474-11f0-0a80-1b74001fc4eb')
+// const orders = await fetchAllRows(
+//         'https://api.moysklad.ru/api/remap/1.2/entity/customerorder?' +
+//         'filter=state.name=Подготовить (переделать) чертежи;' +
+//         'state.name=В работе;' +
+//         'state.name=Чертежи подготовлены, прикреплены;' +
+//         'state.name=Поставлено в производство&expand=positions.assortment'
+//     )
+// await writeFile('orders.json', JSON.stringify(orders, null, 2), 'utf8');
 const fileContent = await readFile('orders.json', 'utf-8');
 const orders = JSON.parse(fileContent);
 let totalCutsv1 = 0, totalCutsv2 = 0, totalCutsv3 = 0;
@@ -51,43 +58,88 @@ const machinesStraight = [
     { name: 'Станок на прямолинейке', norm: 48, efficiency: 1 }
 ];
 const machinesCurved = [
-    { name: 'Интермак', norm: 14, efficiency: 1 },
-    { name: 'Альпа большая', norm: 14, efficiency: 1 },
-    { name: 'Альпа малая', norm: 14, efficiency: 1 },
+    { name: 'Интермак', norm: 18, efficiency: 1 },
+    { name: 'Альпа большая', norm: 10, efficiency: 1 },
+    { name: 'Альпа малая', norm: 12, efficiency: 1 },
 ]
 
-const filePath = './schedule.xlsx';
-
-const fileBuffer = fs.readFileSync(filePath);
-
-// Парсинг xlsx-файла
-const workbook = XLSX.read(fileBuffer, { type: 'buffer', cellDates: true });
-// Получаем имя первого листа
+const fileBuffer = fs.readFileSync('./schedule.xlsx');
+const workbook = XLSX.read(fileBuffer, { type: 'buffer' });
 const sheetName = workbook.SheetNames[0];
-
-// Получаем данные с листа
 const worksheet = workbook.Sheets[sheetName];
-const now = new Date();
-const array = XLSX.utils.sheet_to_json(worksheet);
-const filtered = array.filter(row => {
-  if (!(row.Дата instanceof Date)) return false;
-  return row.Дата > now;
-});
 
-let curved = total.Криволинейка.P 
-let straight = total.Прямолинейка.P
-let curvedDays = 0
-let straightDays = 0
-filtered.forEach(el => {
-    straight > 0 && straightDays++
+const array = XLSX.utils.sheet_to_json(worksheet);
+
+const now = new Date();
+
+let threshold = new Date(now);
+if (now.getHours() >= 15) {
+  // Сейчас 15:00 или позже — threshold = начало следующего дня
+  threshold.setDate(threshold.getDate() + 1);
+}
+threshold.setHours(0, 0, 0, 0);
+
+const filtered = array.filter(row => {
+  if (!row['Дата'] || typeof row['Дата'] !== 'number') return false;
+
+  // Конвертация excel-числа в JS Date
+  const jsDate = new Date((row['Дата'] - 25569) * 86400 * 1000);
+
+  return jsDate >= threshold;
+})
+// Счётчики
+let curved = total.Криволинейка.P + totalCutsv1 * 1.75 + totalCutsv2 * 3.5 + totalCutsv3 * 5.25 + total.Криволинейка.positionsCount * 2.33
+console.log(curved)
+let straight = total.Прямолинейка.P 
+console.log(straight)
+let curvedDays = 0;
+let straightDays = 0;
+
+// Обход
+for (const el of filtered) {
+
+    if (straight > 0) straightDays++;
     machinesStraight.forEach(machine => {
         straight -= el[machine.name] * machine.norm * machine.efficiency
-    })
-    curved > 0 && curvedDays++
+    });
+
+    if (curved > 0) curvedDays++;
     machinesCurved.forEach(machine => {
         curved -= el[machine.name] * machine.norm * machine.efficiency
-    })
-    if(curved < 0 && straight < 0) return
-})
-console.log('Криволинейка', curvedDays)
-console.log('Прямолинейка', straightDays)
+    });
+
+    if (curved <= 0 && straight <= 0) break;
+}
+
+// Итоги
+console.log('Криволинейка', curvedDays);
+console.log('Прямолинейка', straightDays);
+
+
+// async function fetchAllRows(urlBase) {
+//   const limit = 100;
+//   const firstUrl = `${urlBase}&limit=${limit}&offset=0`;
+//   const firstResponse = await Client.sklad(firstUrl);
+
+//   if (!firstResponse.rows || firstResponse.rows.length === 0) {
+//     return [];
+//   }
+
+//   const allRows = [...firstResponse.rows];
+//   const totalSize = firstResponse.meta?.size || allRows.length;
+
+//   const requests = [];
+//   for (let offset = limit; offset < totalSize; offset += limit) {
+//     const url = `${urlBase}&limit=${limit}&offset=${offset}`;
+//     requests.push(Client.sklad(url));
+//   }
+
+//   const responses = await Promise.all(requests);
+//   for (const res of responses) {
+//     if (res.rows) {
+//       allRows.push(...res.rows);
+//     }
+//   }
+
+//   return allRows;
+// }

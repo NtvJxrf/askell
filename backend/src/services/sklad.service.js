@@ -584,29 +584,29 @@ const generateProductAttributes = (data) => {
     const result = []
     for(const attribute in data){
         switch(attribute) {
-            case 'height': result.push({ meta: dictionary.productAttributes["Длина в мм"], value: String(data.height) }); break;
-            case 'width': result.push({ meta: dictionary.productAttributes["Ширина в мм"], value: String(data.width) }); break;
-            case 'cutsv1': result.push({ meta: dictionary.productAttributes["Кол во вырезов 1 категорий/ шт"], value: String(data.cutsv1) }); break;
-            case 'cutsv2': result.push({ meta: dictionary.productAttributes["Кол во вырезов 2 категорий/ шт"], value: String(data.cutsv2) }); break;
-            case 'cutsv3': result.push({ meta: dictionary.productAttributes["Кол во вырезов 3 категорий/ шт"], value: String(data.cutsv3) }); break;
-            case 'drills': result.push({ meta: dictionary.productAttributes["Кол во сверлении/шт"], value: String(data.drills) }); break;
-            case 'zenk': result.push({ meta: dictionary.productAttributes["Кол во зенковании/ шт"], value: String(data.zenk) }); break;
+            case 'height': result.push({ meta: dictionary.productAttributes["Длина в мм"], value: data.height }); break;
+            case 'width': result.push({ meta: dictionary.productAttributes["Ширина в мм"], value: data.width }); break;
+            case 'cutsv1': result.push({ meta: dictionary.productAttributes["Кол-во вырезов 1 категорий"], value: data.cutsv1 }); break;
+            case 'cutsv2': result.push({ meta: dictionary.productAttributes["Кол-во вырезов 2 категорий"], value: data.cutsv2 }); break;
+            case 'cutsv3': result.push({ meta: dictionary.productAttributes["Кол-во вырезов 3 категорий"], value: data.cutsv3 }); break;
+            case 'drills': result.push({ meta: dictionary.productAttributes["Кол-во сверлений"], value: data.drills }); break;
+            case 'zenk': result.push({ meta: dictionary.productAttributes["Кол-во зенкований"], value: data.zenk }); break;
             case 'material': result.push({ meta: dictionary.productAttributes["Материал 1"], value: data.material }); break;
-            case 'materials': result.push({ meta: dictionary.productAttributes["Кол- во полуфабрикатов"], value: data.materials.length }); break;
+            case 'materials': result.push({ meta: dictionary.productAttributes["Кол-во полуфабрикатов"], value: data.materials.length }); break;
             case 'material1': result.push({ meta: dictionary.productAttributes["Материал 1"], value: data.material1 }); break;
             case 'material2': result.push({ meta: dictionary.productAttributes["Материал 2"], value: data.material2 }); break;
             case 'material3': result.push({ meta: dictionary.productAttributes["Материал 3"], value: data.material3 }); break;
             case 'material4': result.push({ meta: dictionary.productAttributes["Материал 4"], value: data.material4 }); break;
             case 'color': result.push({ meta: dictionary.productAttributes["Окрашивание"], value: data.color || '' }); break;
-            case 'print': result.push({ meta: dictionary.productAttributes["Печать"], value: data.print ? 'Да' : '' }); break;
-            case 'polishing': result.push({ meta: dictionary.productAttributes["Полировка"], value: data.polishing ? 'Да' : '' }); break;
+            case 'print': result.push({ meta: dictionary.productAttributes["Печать"], value: true }); break;
+            case 'polishing': result.push({ meta: dictionary.productAttributes["Полировка"], value: true }); break;
             case 'type': result.push({ meta: dictionary.productAttributes["Тип изделия"], value: data.type }); break;
-            case 'stanok': result.push({ meta: dictionary.productAttributes["тип станка обрабатывающий"], value: data.stanok }); break;
+            case 'stanok': result.push({ meta: dictionary.productAttributes["Тип станка"], value: data.stanok }); break;
             case 'productType': result.push({ meta: dictionary.productAttributes["Вид номенклатуры"], value: dictionary.attributesValue["Готовая продукция"] }); break;
-            case 'tempered': result.push({ meta: dictionary.productAttributes["Закалка"], value: data.tempered ? 'Да' : '' }); break;
+            case 'tempered': result.push({ meta: dictionary.productAttributes["Закалка"], value: true }); break;
             case 'smdType': result.push({ meta: dictionary.productAttributes["Тип СМД"], value: data.smdType }); break;
             case 'isPF': result.push({ meta: dictionary.productAttributes["Это полуфабрикат"], value: true }); break;
-            case 'P': result.push({ meta: dictionary.productAttributes["периметр 1 детали в пог. м"], value: data.P }); break;
+            case 'P': result.push({ meta: dictionary.productAttributes["Периметр 1 детали в пог. м"], value: data.P }); break;
         }
     }
     return result

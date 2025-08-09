@@ -25,15 +25,15 @@ const getOrdersInWork = async () => {
                 a[x.name] = x.value;
                 return a;
             }, {});
-            const stanok = attrs['тип станка обрабатывающий'];
+            const stanok = attrs['Тип станка'];
             if (!stanok) continue;
 
             const h = Number(attrs['Длина в мм']) || 0;
             const w = Number(attrs['Ширина в мм']) || 0;
-            const pfs = Number(attrs['Кол- во полуфабрикатов']) || 1;
-            totalCutsv1 += Number(attrs['Кол во вырезов 1 категорий/ шт']) || 0;
-            totalCutsv2 += Number(attrs['Кол во вырезов 2 категорий/ шт']) || 0;
-            totalCutsv3 += Number(attrs['Кол во вырезов 3 категорий/ шт']) || 0;
+            const pfs = Number(attrs['Кол-во полуфабрикатов']) || 1;
+            totalCutsv1 += Number(attrs['Кол-во вырезов 1 категорий']) || 0;
+            totalCutsv2 += Number(attrs['Кол-во вырезов 2 категорий']) || 0;
+            totalCutsv3 += Number(attrs['Кол-во вырезов 3 категорий']) || 0;
 
             const P = 2 * (h + w) / 1000;          // пог.м
             const S = h * w / 1_000_000;           // кв.м

@@ -1,8 +1,9 @@
 import Client from './src/utils/got.js';
 import dotenv from 'dotenv';
 dotenv.config();
-
-import { writeFile, readFile } from 'fs/promises';
+import axios from 'axios';
+await axios.post('http://localhost:7878/api/sklad/createPzHook?id=38ff2ee9-7465-11f0-0a80-172f0124afa4')
+// import { writeFile, readFile } from 'fs/promises';
 
 async function main() {
   // Читаем заказы
@@ -51,11 +52,11 @@ async function main() {
 
   // Машины
   const machinesStraight = [
-    { name: '1 станок прямолинейка', shiftHours: 8, norm: 48, efficiency: 1, schedule: { on: 5, off: 2 } }
+    { name: '1 станок прямолинейка', norm: 48, efficiency: 1 }
   ];
   const machinesCurved = [
-    { name: '1 станок криволинейка', shiftHours: 12, norm: 14, efficiency: 1, schedule: { on: 3, off: 1 } },
-    { name: '2 станок криволинейка', shiftHours: 12, norm: 14, efficiency: 1, schedule: { on: 2, off: 2 } },
+    { name: 'Интермак', norm: 8.4, efficiency: 1 },
+    { name: 'Альпа большая', norm: 5.6, efficiency: 1 },
   ];
 5_361-384-384-384-384-384-0-0-384-384-384-384-384-0-0-384-384-384-384
 
@@ -75,65 +76,7 @@ async function main() {
 }
 
 function CalcLoad(machines, meters, cuts, name) {
-  // 1. Считаем минуты на вырезы
-  let cutMin = 0
-  if(name == 'Криволинейка'){
-    cutMin = (cuts.v1 || 0) * (60/8)
-               + (cuts.v2 || 0) * (60/4)
-               + (cuts.v3 || 0) * (60/2);
-  }
 
-  // 2. Считаем среднее время на метр
-  let wNorm = 0, wWeight = 0;
-  machines.forEach(m => {
-    const cap = m.shiftHours * 60 * m.efficiency;
-    wNorm += m.norm * cap;
-    wWeight += cap;
-  });
-  const avgNorm = wNorm / wWeight;       // м/ч
-  const minPerMeter = 60 / avgNorm;      // мин/м
-  const meterMin = meters * minPerMeter;
-
-  const totalMin = meterMin + cutMin;
-
-  // 3. Симуляция по календарным дням, считаем только on-дни
-  let remainingMin = totalMin;
-let workDaysCount = 0;
-let calendarDaysCount = 0;
-
-for (let day = 1; day <= 365; day++) {
-  calendarDaysCount++;
-  let dayMin = 0;
-  let anyWork = false;
-
-  machines.forEach(m => {
-    const cycle = m.schedule.on + m.schedule.off;
-    const inCycle = (day - 1) % cycle;
-    if (inCycle < m.schedule.on) {
-      dayMin += m.shiftHours * 60 * m.efficiency;
-      anyWork = true;
-    }
-  });
-
-  if (!anyWork) continue;
-
-  const usedMin = Math.min(remainingMin, dayMin);
-  remainingMin -= usedMin;
-  workDaysCount++;
-
-  if (remainingMin <= 0) {
-    break;
-  }
-}
-
-if (remainingMin > 0) {
-  throw new Error('Недостаточно смен в течение года для выполнения заказа');
-}
-
-  return {
-    workDays: workDaysCount,
-    calendarDays: calendarDaysCount
-  };
 }
 
 main().catch(console.error);

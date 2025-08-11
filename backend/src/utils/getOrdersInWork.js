@@ -54,12 +54,13 @@ const getOrdersInWork = async () => {
         { name: '1 станок прямолинейка', shiftHours: 8, norm: 48, efficiency: 1, schedule: { on: 5, off: 2 } }
     ];
     const machinesCurved = [
-        { name: '1 станок криволинейка', shiftHours: 12, norm: 14, efficiency: 1, schedule: { on: 3, off: 1 } },
-        { name: '2 станок криволинейка', shiftHours: 12, norm: 14, efficiency: 1, schedule: { on: 2, off: 2 } },
+        { name: '1 станок криволинейка', shiftHours: 12, norm: 8.4, efficiency: 1, schedule: { on: 3, off: 1 } },
+        { name: '2 станок криволинейка', shiftHours: 12, norm: 5.6, efficiency: 1, schedule: { on: 2, off: 2 } },
     ];
     const straightLoad = Math.ceil(total['Прямолинейка'].P / (8 * 48))
     console.log('Загруженность прямолинейки в рабочих днях:', straightLoad)
-    const curvedLoad = Math.ceil((total['Криволинейка'].P / 14 + totalCutsv1 / 8 + totalCutsv2 / 4 + totalCutsv3 / 2 + total.Криволинейка.positionsCount * 0.166) / (12 * 1.25))
+    const temp = Math.ceil((total['Криволинейка'].P / 14 + totalCutsv1 / 8 + totalCutsv2 / 4 + totalCutsv3 / 2 + total.Криволинейка.positionsCount * 0.166) / (12 * 1.25))
+    const curvedLoad = temp - Math.floor(temp / 7) * 2
     console.log('Загруженность криволинейки в рабочих днях:', curvedLoad)
     SkladService.ordersInWork = {straightLoad, curvedLoad}
     broadcast({type: 'ordersInWork', data: {straightLoad, curvedLoad}})

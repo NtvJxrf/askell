@@ -89,7 +89,7 @@ export default class SkladService {
                 weight: Number((product.result.other.weight).toFixed(2)),
                 volume: Number((product.result.other.S).toFixed(2)),
                 productFolder: dictionary.productFolders.glassGuard,
-                attributes: generateProductAttributes({...product.initialData, ...product.result.other}),
+                attributes: generateProductAttributes({...product.initialData, ...product.result.other, order: data.order}),
                 owner: { meta: data.order.owner.meta},
                 uom: {
                     meta: {
@@ -198,7 +198,7 @@ const triplex = async (data, order, position, createdEntitys) => {
     for(const material of materials){
         const promises = []
         promises.push(makeprocessingprocess(stagesSelk))
-        promises.push(makeProduct(data, material, true, createdEntitys))
+        promises.push(makeProduct(data, material, true, createdEntitys, order))
         const responses = await Promise.all(promises)
         const processingprocess = responses[0]
         const product = responses[1]
@@ -250,7 +250,7 @@ const ceraglass = async (data, order, position, createdEntitys) => {
                 promises.push(makeprocessingprocess(stagesSelk))
                 const product = await Client.sklad('https://api.moysklad.ru/api/remap/1.2/entity/product', 'post', {
                     name: `${'ПФ'} ${material} (${heights[i]}х${widths[i]}${polishing ? ', Полировка' : ''}${tempered ? ', Закаленное' : ''}${cutsv1 ? `, Вырезы 1 кат.: ${cutsv1}` : ''}${cutsv2 ? `, Вырезы 2 кат.: ${cutsv2}` : ''}${cutsv3 ? `, Вырезы 3 кат.: ${cutsv3}` : ''}${drills ? `, Сверление: ${drills}` : ''}${zenk ? `, Зенкование: ${zenk}` : ''}${print ? ', Печать' : ''}${color ? `, ${color}` : ''})`,
-                    attributes: generateProductAttributes({...data.initialData, ...data.result.other, height: heights[i], width: widths[i]})
+                    attributes: generateProductAttributes({...data.initialData, ...data.result.other, height: heights[i], width: widths[i], order})
                 })
                 const responses = await Promise.all(promises)
                 const processingprocess = responses[0]
@@ -267,7 +267,7 @@ const ceraglass = async (data, order, position, createdEntitys) => {
             promises.push(makeprocessingprocess(stagesViz))
             const product = await Client.sklad('https://api.moysklad.ru/api/remap/1.2/entity/product', 'post', {
                 name: `${'ПФ'} ${material} (${heights[i]}х${widths[i]}${cutsv1 ? `, Вырезы 1 кат.: ${cutsv1}` : ''}${cutsv2 ? `, Вырезы 2 кат.: ${cutsv2}` : ''}${cutsv3 ? `, Вырезы 3 кат.: ${cutsv3}` : ''}${zenk ? `, Зенкование: ${zenk}` : ''}${print ? ', Печать' : ''}${color ? `, ${color}` : ''})`,
-                attributes: generateProductAttributes({...data.initialData, ...data.result.other, height: heights[i], width: widths[i]})
+                attributes: generateProductAttributes({...data.initialData, ...data.result.other, height: heights[i], width: widths[i], order})
             })
             const responses = await Promise.all(promises)
             const processingprocess = responses[0]
@@ -309,7 +309,7 @@ const glass = async (data, order, position, createdEntitys) => {
     const isPF = data.result.other.viz
     const processingprocess = await makeprocessingprocess(stagesSelk)
     let product = null
-    if(isPF) product = await makeProduct(data, data.initialData.material, isPF, createdEntitys)
+    if(isPF) product = await makeProduct(data, data.initialData.material, isPF, createdEntitys, order)
     else product = position.assortment
     const plan = await makeProcessingPlanGlass(data, position.assortment.name, order, processingprocess, product, isPF, data.initialData.material, createdEntitys)
     plan.quantity = position.quantity
@@ -354,7 +354,7 @@ const smd = async (data, order, position, createdEntitys) => {
     const stagesSelk = generateStages(data, 'selk')
     const promises = []
     promises.push(makeprocessingprocess(stagesSelk))
-    promises.push(makeProduct(data, data.initialData.material, true, createdEntitys))
+    promises.push(makeProduct(data, data.initialData.material, true, createdEntitys, order))
     const responses = await Promise.all(promises)
     const processingprocess = responses[0]
     const product = responses[1]
@@ -490,7 +490,6 @@ const makeProductionTask = async (materialsStore, productsStore, productionRows,
     }
     order?.owner?.meta && (stats.owner = { meta: order.owner.meta})
     order?.deliveryPlannedMoment && (stats.deliveryPlannedMoment = order.deliveryPlannedMoment)
-    console.dir(stats, { depth: null, colors: true, maxArrayLength: null });
 
     const task = await Client.sklad(`https://api.moysklad.ru/api/remap/1.2/entity/productiontask`, 'post', stats)
     createdEntitys.task.push(task)
@@ -532,11 +531,11 @@ const makeProcessingPlanGlass = async (data, name, order, processingprocess, pro
     createdEntitys.plan.push(response)
     return response
 }
-const makeProduct = async (data, name, isPF, createdEntitys) => {
+const makeProduct = async (data, name, isPF, createdEntitys, order) => {
     const { height, width, polishing, drills, zenk, cutsv1, cutsv2, cutsv3, tempered, color, print } = data.initialData
     const product = await Client.sklad('https://api.moysklad.ru/api/remap/1.2/entity/product', 'post', {
         name: `${isPF ? 'ПФ' : ''} ${name} (${height}х${width}${polishing ? ', Полировка' : ''}${tempered ? ', Закаленное' : ''}${cutsv1 ? `, Вырезы 1 кат.: ${cutsv1}` : ''}${cutsv2 ? `, Вырезы 2 кат.: ${cutsv2}` : ''}${cutsv3 ? `, Вырезы 3 кат.: ${cutsv3}` : ''}${drills ? `, Сверление: ${drills}` : ''}${zenk ? `, Зенкование: ${zenk}` : ''}${print ? ', Печать' : ''}${color ? `, ${color}` : ''}, площадь: ${height * width / 1000000})`,
-        attributes: generateProductAttributes({...data.initialData, ...data.result.other, isPF}),
+        attributes: generateProductAttributes({...data.initialData, ...data.result.other, isPF, order}),
         uom: {
             meta: {
                 "href" : "https://api.moysklad.ru/api/remap/1.2/entity/uom/19f1edc0-fc42-4001-94cb-c9ec9c62ec10",
@@ -582,6 +581,7 @@ function getStagesHash(stages) {
 }
 const generateProductAttributes = (data) => {
     const result = []
+    data?.order?.name && result.push({ meta: dictionary.productAttributes["№ заказа покупателя"], value: data.order.name })
     for(const attribute in data){
         switch(attribute) {
             case 'height': result.push({ meta: dictionary.productAttributes["Длина в мм"], value: data.height }); break;

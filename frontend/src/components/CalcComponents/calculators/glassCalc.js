@@ -70,7 +70,7 @@ const Calculate = (data, selfcost) => {
         materialsandworks += item.finalValue
         calcmaterialsandworks += item.finalValue
     }
-    const price = calcmaterialsandworks * selfcost.pricesAndCoefs[`Стекло ${customertype}`]
+    const price = calcmaterialsandworks * selfcost.pricesAndCoefs[`Стекло ${customertype}`] + S * 100
     result.finalPrice = [{
         name: 'Настоящая себестоимость',
         value: materialsandworks,
@@ -81,6 +81,11 @@ const Calculate = (data, selfcost) => {
         value: calcmaterialsandworks,
         string: `${(calcmaterialsandworks).toFixed(2)}`,
         formula: `(Материалы и работы) + Расходы (Себестоимость стекла берется "Тип цен для калькулятора")`
+    },{
+        name: 'Упаковка',
+        value: S * 100,
+        string: `${(S * 100).toFixed(2)}`,
+        formula: `Площадь * 100`
     },{
         name: 'Наценка',
         value: selfcost.pricesAndCoefs[`Стекло ${customertype}`],

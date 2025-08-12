@@ -512,15 +512,29 @@ const makeProcessingPlanViz = async (data, name, order, processingprocess, produ
 }
 const makeProcessingPlanGlass = async (data, name, order, processingprocess, product, isPF, material, createdEntitys) => {
     // const multi = data.ceraTrim ? data.ceraTrim : SkladService.selfcost.pricesAndCoefs['Коэффициент обрези стекло']
+    const materials = [{
+        assortment: {
+            meta: SkladService.selfcost.materials[material].meta
+        },
+        quantity: (data.initialData.width * data.initialData.height) / 1000000 * (data.ceraTrim ? data.ceraTrim : 1.1)
+    }]
+
+    if(data.result.other.package){
+        const processingProcessPositions = await Client.sklad(`${processingprocess.href}/positions`)
+        materials.push({
+            processingProcessPosition: {
+                meta: processingProcessPositions.rows.at(-1).meta
+            },
+            assortment: {
+                meta: SkladService.selfcost.packagingMaterials['Гофролист Т21 1050х2000 мм'].meta
+            },
+            quantity: data.result.other.S * 2
+        })
+    }
     const response = await Client.sklad('https://api.moysklad.ru/api/remap/1.2/entity/processingplan', 'post', {
         name: `${order.name}, ${isPF ? 'ПФ, ' : ''}${name}`,
         processingProcess: { meta: processingprocess },
-        materials: [{
-            assortment: {
-                meta: SkladService.selfcost.materials[material].meta
-            },
-            quantity: (data.initialData.width * data.initialData.height) / 1000000 * (data.ceraTrim ? data.ceraTrim : 1.1)
-        }],
+        materials,
         products: [{
             assortment: {
                 meta: product.meta,
@@ -626,7 +640,7 @@ const generateProductionTaskAttributes = (order, checkboxes) => {
     height && result.push({ meta: dictionary.productiontaskAttributes["Высота"], value: Number(height) })
     width && result.push({ meta: dictionary.productiontaskAttributes["Ширина"], value: Number(width) })
     if (colors?.length > 0) {
-        result.push({ meta: dictionary.productiontaskAttributes["Окрашивание"], value: true });
+        !smd && result.push({ meta: dictionary.productiontaskAttributes["Окрашивание"], value: true });
         result.push({ meta: dictionary.productiontaskAttributes["Цвет"], value: [...new Set(colors)].join(';')
     });
     }

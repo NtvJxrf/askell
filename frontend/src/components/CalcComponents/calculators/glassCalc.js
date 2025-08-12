@@ -70,7 +70,7 @@ const Calculate = (data, selfcost) => {
         materialsandworks += item.finalValue
         calcmaterialsandworks += item.finalValue
     }
-    const price = calcmaterialsandworks * selfcost.pricesAndCoefs[`Стекло ${customertype}`] + S * 100
+    const price = calcmaterialsandworks * selfcost.pricesAndCoefs[`Стекло ${customertype}`] + (!material.includes('М1') ? (S * 2 * 100 + S * 100) : 0)
     result.finalPrice = [{
         name: 'Настоящая себестоимость',
         value: materialsandworks,
@@ -82,17 +82,17 @@ const Calculate = (data, selfcost) => {
         string: `${(calcmaterialsandworks).toFixed(2)}`,
         formula: `(Материалы и работы) + Расходы (Себестоимость стекла берется "Тип цен для калькулятора")`
     },{
-        name: 'Упаковка',
-        value: S * 100,
-        string: `${(S * 100).toFixed(2)}`,
-        formula: `Площадь * 100`
-    },{
         name: 'Наценка',
         value: selfcost.pricesAndCoefs[`Стекло ${customertype}`],
         string: selfcost.pricesAndCoefs[`Стекло ${customertype}`],
         formula: `Наценка для типа клиента ${selfcost.pricesAndCoefs[`Стекло ${customertype}`]}`
     }]
-
+    !material.includes('М1') && result.finalPrice.push({
+        name: 'Упаковка',
+        value: (S * 2 * 100 + S * 100),
+        string: `${((S * 2 * 100 + S * 100)).toFixed(2)}`,
+        formula: `Площадь * 100`
+    })
     result.other = {
         S,
         P,
@@ -101,8 +101,10 @@ const Calculate = (data, selfcost) => {
         type: 'Стекло',
         productType: true,
         viz: (color || print) ? true : false,
-        materials: [material]
+        materials: [material],
+        package: !material.includes('М1') ? true : false
     }
+    console.log(result)
     return {
         key: crypto.randomUUID(),
         name,

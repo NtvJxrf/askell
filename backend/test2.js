@@ -1,47 +1,45 @@
 import Client from './src/utils/got.js';
 import dotenv from 'dotenv';
+import * as XLSX from 'xlsx';
+import axios from 'axios';
 dotenv.config();
 
-const orders = await fetchAllRows(
-    'https://api.moysklad.ru/api/remap/1.2/entity/customerorder?' +
-    'filter=state.name=Подготовить (переделать) чертежи;' +
-    'state.name=В работе;' +
-    'state.name=Чертежи подготовлены, прикреплены;' +
-    'state.name=Поставлено в производство&expand=positions.assortment'
-)
-let totalPositions = 0, totalCount = 0, totalSum = 0, totalS = 0, totalCutsv1 = 0, totalCutsv2 = 0, totalCutsv3 = 0
-for (const order of orders) {
-    for (const pos of order.positions.rows) {
-        if(!pos.assortment.name.toLowerCase().includes('триплекс')) continue
-        console.log(pos.assortment.name)
-        const attrs = (pos.assortment?.attributes || []).reduce((a, x) => {
-            a[x.name] = x.value;
-            return a;
-        }, {});
+await axios.post('http://localhost:7878/api/sklad/createPzHook?id=56508553-4474-11f0-0a80-1b74001fc4eb')
+// const orders = await fetchAllRows(
+//     'https://api.moysklad.ru/api/remap/1.2/entity/customerorder?filter=agent=https://api.moysklad.ru/api/remap/1.2/entity/counterparty/ddff8f46-e2fe-11ec-0a80-0cef002e4e8d&expand=positions.assortment'
+// );
 
-        const h = Number(attrs['Длина в мм']) || 0;
-        const w = Number(attrs['Ширина в мм']) || 0;
-        const pfs = Number(attrs['Кол- во полуфабрикатов']) || 1;
-        totalCutsv1 += Number(attrs['Кол во вырезов 1 категорий/ шт']) || 0;
-        totalCutsv2 += Number(attrs['Кол во вырезов 2 категорий/ шт']) || 0;
-        totalCutsv3 += Number(attrs['Кол во вырезов 3 категорий/ шт']) || 0;
+// // сортируем по дате создания
+// orders.sort((a, b) => new Date(a.created) - new Date(b.created));
 
-        const S = h * w / 1_000_000;           // кв.м
-        const cnt = pfs * pos.quantity;
+// const data = [
+//     ['Номер заказа', 'Дата', 'Товар', 'Количество', 'Цена', 'Скидка %', 'Сумма', 'м²']
+// ];
 
-        totalSum += pos.price * (1 - pos.discount / 100)
-        totalS += S * pos.quantity;
-        totalCount += pos.quantity;
-        totalPositions += 1;
-    }
-}
-console.log('Всего позиций:', totalPositions)
-console.log('Всего шт:', totalCount)
-console.log('Общая сумма:', totalSum)
-console.log('Общая площадь:', totalS)
-console.log('Всего вырезов 1 кат:', totalCutsv1)
-console.log('Всего вырезов 2 кат:', totalCutsv2)
-console.log('Всего вырезов 3 кат:', totalCutsv3)
+// for (const order of orders) {
+//     for (const pos of order.positions.rows) {
+//         data.push([
+//             order.name,
+//             new Date(order.created).toLocaleDateString('ru-RU'),
+//             pos.assortment?.name || '',
+//             pos.quantity,
+//             pos.price / 100,
+//             pos.discount || 0,
+//             (pos.price / 100) * (1 - (pos.discount || 0) / 100) * pos.quantity,
+//             (pos?.assortment?.volume || 0) * pos.quantity
+//         ]);
+//     }
+//     // пустая строка между заказами
+//     data.push([]);
+// }
+
+// const worksheet = XLSX.utils.aoa_to_sheet(data);
+// const workbook = XLSX.utils.book_new();
+// XLSX.utils.book_append_sheet(workbook, worksheet, 'Orders');
+
+// XLSX.writeFile(workbook, 'liga.xlsx');
+// console.log(`Excel файл создан`);
+
 async function fetchAllRows(urlBase) {
     const limit = 100;
     const firstUrl = `${urlBase}&limit=${limit}&offset=0`;

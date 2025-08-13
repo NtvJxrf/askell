@@ -1,5 +1,6 @@
 import pricesAndCoefsService from '../services/pricesAndCoefs.service.js';
 import SkladService from '../services/sklad.service.js';
+import { broadcast } from '../utils/WebSocket.js';
 export default class pricesAndCoefsController {
     static async getAll(req, res) {
         const result = await pricesAndCoefsService.getAll();

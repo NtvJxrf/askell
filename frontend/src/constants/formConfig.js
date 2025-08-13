@@ -76,7 +76,7 @@ const formConfigs = {
           name: 'customertype',
           label: 'Тип клиента',
           type: 'select',
-          options: ['Менее 200 тыс.', 'Более 200 тыс.', 'Более 400 тыс.', 'Более 800 тыс.'],
+          options: ['Выше госта', 'Менее 200 тыс.', 'Более 200 тыс.', 'Более 400 тыс.', 'Более 800 тыс.'],
           rules: [{ required: true, message: 'Fill this field' }]
         },
       ]

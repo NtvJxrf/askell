@@ -20,13 +20,7 @@ const reportConfigs = [
     fields: [
       {
         name: 'dateRange',
-        label: 'Период (Для заказа покупателю(озон))',
-        component: <RangePicker />,
-        required: true,
-      },
-      {
-        name: 'bindDate',
-        label: 'Дата привязки платежа(Для счета покупателю)',
+        label: 'Период',
         component: <RangePicker />,
         required: true,
       },
@@ -56,7 +50,6 @@ const Reports = () => {
   const [messageApi, contextHolder] = message.useMessage();
   const [loading, setLoading] = useState(false);
 
-  // ✅ Хуки вызываются безопасно
   const formInstances = reportConfigs.map(() => Form.useForm());
 
   const handleSubmit = async (type, form) => {
@@ -71,13 +64,6 @@ const Reports = () => {
         filters.startDate = filters.dateRange[0].format('YYYY-MM-DD');
         filters.endDate = filters.dateRange[1].format('YYYY-MM-DD');
         delete filters.dateRange;
-      }
-
-      // Обработка bindDate
-      if (filters.bindDate) {
-        filters.bindStart = filters.bindDate[0].format('YYYY-MM-DD');
-        filters.bindEnd = filters.bindDate[1].format('YYYY-MM-DD');
-        delete filters.bindDate;
       }
 
       const response = await axios.post(

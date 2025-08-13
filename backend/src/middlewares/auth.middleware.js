@@ -26,7 +26,12 @@ const authMiddleware = async (req, res, next) => {
         req.user = payload;
         return next();
       } catch (err) {
-        logger.error('Invalid access token', err);
+        if (err.name === 'TokenExpiredError') {
+          // Токен просто истёк — тихо пропускаем к refreshToken
+          logger.debug('Access token expired, trying refresh token');
+        } else {
+          logger.error('Invalid access token', err);
+        }
         // Переход к refreshToken
       }
     }

@@ -1,3 +1,4 @@
+import { create } from 'got';
 import SkladService from '../services/sklad.service.js';
 import Client from './got.js';
 import { broadcast } from "./WebSocket.js"
@@ -17,7 +18,7 @@ const getOrdersInWork = async () => {
         'Криволинейка': { count: 0, positionsCount: 0, S: 0, P: 0 },
         'Прямолинейка': { count: 0, positionsCount: 0, S: 0, P: 0 }
     };
-
+    const curvedArr = [], straightArr = [], otherArr = []
     // Сбор статистики по заказам
     for (const order of orders) {
         for (const pos of order.positions.rows) {
@@ -26,6 +27,8 @@ const getOrdersInWork = async () => {
                 return a;
             }, {});
             const stanok = attrs['Тип станка'];
+            const positionData = {id: pos.id, position: pos.assortment.name, deliveryPlannedMoment: order.deliveryPlannedMoment, name: order.name, created: order.created, quantity: pos.quantity}
+            !stanok && otherArr.push(positionData)
             if (!stanok) continue;
 
             const h = Number(attrs['Длина в мм']) || 0;
@@ -43,6 +46,8 @@ const getOrdersInWork = async () => {
             total[stanok].S += S * cnt;
             total[stanok].count += cnt;
             total[stanok].positionsCount += 1;
+            const currArr = stanok === 'Прямолинейка' ? straightArr : curvedArr
+            currArr.push(positionData)
         }
     }
 
@@ -54,16 +59,27 @@ const getOrdersInWork = async () => {
         { name: '1 станок прямолинейка', shiftHours: 8, norm: 48, efficiency: 1, schedule: { on: 5, off: 2 } }
     ];
     const machinesCurved = [
-        { name: '1 станок криволинейка', shiftHours: 12, norm: 8.4, efficiency: 1, schedule: { on: 3, off: 1 } },
-        { name: '2 станок криволинейка', shiftHours: 12, norm: 5.6, efficiency: 1, schedule: { on: 2, off: 2 } },
+        { name: '1 станок криволинейка', shiftHours: 12, norm: 15, efficiency: 1, schedule: { on: 3, off: 1 } },
+        { name: '2 станок криволинейка', shiftHours: 12, norm: 10, efficiency: 1, schedule: { on: 2, off: 2 } },
     ];
     const straightLoad = Math.ceil(total['Прямолинейка'].P / (8 * 48))
     console.log('Загруженность прямолинейки в рабочих днях:', straightLoad)
     const temp = Math.ceil((total['Криволинейка'].P / 14 + totalCutsv1 / 8 + totalCutsv2 / 4 + totalCutsv3 / 2 + total.Криволинейка.positionsCount * 0.166) / (12 * 1.25))
     const curvedLoad = temp - Math.floor(temp / 7) * 2
     console.log('Загруженность криволинейки в рабочих днях:', curvedLoad)
-    SkladService.ordersInWork = {straightLoad, curvedLoad}
-    broadcast({type: 'ordersInWork', data: {straightLoad, curvedLoad}})
+    const res = {
+      straightLoad,
+      curvedLoad,
+      total,
+      totalCutsv1,
+      totalCutsv2,
+      totalCutsv3,
+      curvedArr: curvedArr.sort((a, b) => new Date(a.created) - new Date(b.created)),
+      straightArr: straightArr.sort((a, b) => new Date(a.created) - new Date(b.created)),
+      otherArr: otherArr.sort((a, b) => new Date(a.created) - new Date(b.created))
+    }
+    SkladService.ordersInWork = res
+    broadcast({type: 'ordersInWork', data: res})
 
 }
 async function fetchAllRows(urlBase) {

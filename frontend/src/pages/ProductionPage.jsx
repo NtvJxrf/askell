@@ -1,18 +1,18 @@
-import React, { useEffect, useState } from "react";
-import { Tabs, Table, Spin, Typography, Space, Tooltip } from "antd";
-import axios from "axios";
+import React, { useState } from "react";
+import { Tabs, Table, Tooltip, Typography, Row, Col, Card, Descriptions, Progress } from "antd";
 import { useSelector } from "react-redux";
+import { BarChart, Bar, XAxis, YAxis, Tooltip as RechartsTooltip, ResponsiveContainer } from "recharts";
 
 const { Title, Text } = Typography;
 
 const OrdersInWorkTables = () => {
-  const data = useSelector(state => state.positions.productionLoad)
-
+  const data = useSelector(state => state.positions.productionLoad);
+  const [pagination, setPagination] = useState({ current: 1, pageSize: 10 });
   const columns = [
-    { title: "Дата", dataIndex: "created", key: "created", fixed: "left", },
-    { title: "Номер", dataIndex: "name", key: "name", fixed: "left", },
-    { title: "План. дата отгрузки", dataIndex: "deliveryPlannedMoment", key: "deliveryPlannedMoment",},
-    { title: "Позиция", dataIndex: "position", key: "position", 
+    { title: "Дата", dataIndex: "created", key: "created", fixed: "left" },
+    { title: "Номер", dataIndex: "name", key: "name", fixed: "left" },
+    { title: "План. дата отгрузки", dataIndex: "deliveryPlannedMoment", key: "deliveryPlannedMoment" },
+    { title: "Позиция", dataIndex: "position", key: "position",
       render: (text) => (
         <Tooltip title={text} popupStyle={{ maxWidth: 600, whiteSpace: 'normal' }}>
           <div
@@ -32,63 +32,12 @@ const OrdersInWorkTables = () => {
       ),
     },
     { title: "Кол-во", dataIndex: "quantity", key: "quantity" },
-    {
-      title: "Прямолинейка (ч)",
-      dataIndex: "thisStraight",
-      key: "thisStraight",
-      render: (val) => val?.toFixed(2),
-    },
-    {
-      title: "Криволинейка (ч)",
-      dataIndex: "thisCurved",
-      key: "thisCurved",
-      render: (val) => val?.toFixed(2),
-    },
-    {
-      title: "Сверловка (ч)",
-      dataIndex: "thisDrills",
-      key: "thisDrills",
-      render: (val) => val?.toFixed(2),
-    },
-    {
-      title: "Раскрой (ч)",
-      dataIndex: "thisCutting",
-      key: "thisCutting",
-      render: (val) => val?.toFixed(2),
-    },
-    {
-      title: "Закалка (ч)",
-      dataIndex: "thisTempering",
-      key: "thisTempering",
-      render: (val) => val?.toFixed(2),
-    },
-    {
-      title: "Триплекс (ч)",
-      dataIndex: "thisTriplex",
-      key: "thisTriplex",
-      render: (val) => val?.toFixed(2),
-    },
-    {
-      title: "Селькоровская (ч)",
-      dataIndex: "thisSelk",
-      key: "thisSelk",
-      fixed: "right",
-      render: (val) => val?.toFixed(2),
-    },
-    {
-      title: "Виз (ч)",
-      dataIndex: "thisViz",
-      key: "thisViz",
-      fixed: "right",
-      render: (val) => val?.toFixed(2),
-    },
   ];
 
-
   const getItems = () => {
-    const kriv = data?.kriv ?? [];
-    const pryam = data?.pryam ?? [];
-    const other = data?.other ?? [];
+    const kriv = data?.curvedArr ?? [];
+    const pryam = data?.straightArr ?? [];
+    const other = data?.otherArr ?? [];
 
     return [
       {
@@ -99,7 +48,14 @@ const OrdersInWorkTables = () => {
             dataSource={kriv}
             columns={columns}
             rowKey={(record) => `${record.id}`}
-            pagination={{ pageSize: 50 }}
+            pagination={{
+                current: pagination.current,
+                pageSize: pagination.pageSize,
+                showSizeChanger: true,
+                pageSizeOptions: ['5', '10', '20', '50', '100', '200'],
+                position: ['topRight'],
+                onChange: (page, pageSize) => setPagination({ current: page, pageSize }),
+            }}
             scroll={{ x: 'max-content' }}
           />
         ),
@@ -111,8 +67,15 @@ const OrdersInWorkTables = () => {
           <Table
             dataSource={pryam}
             columns={columns}
-            rowKey={(record) => `${record.name}`}
-            pagination={{ pageSize: 50 }}
+            rowKey={(record) => `${record.id}`}
+            pagination={{
+                current: pagination.current,
+                pageSize: pagination.pageSize,
+                showSizeChanger: true,
+                pageSizeOptions: ['5', '10', '20', '50', '100', '200'],
+                position: ['topRight'],
+                onChange: (page, pageSize) => setPagination({ current: page, pageSize }),
+            }}
             scroll={{ x: 'max-content' }}
           />
         ),
@@ -124,8 +87,15 @@ const OrdersInWorkTables = () => {
           <Table
             dataSource={other}
             columns={columns}
-            rowKey={(record) => `${record.name}`}
-            pagination={{ pageSize: 50 }}
+            rowKey={(record) => `${record.id}`}
+            pagination={{
+                current: pagination.current,
+                pageSize: pagination.pageSize,
+                showSizeChanger: true,
+                pageSizeOptions: ['5', '10', '20', '50', '100', '200'],
+                position: ['topRight'],
+                onChange: (page, pageSize) => setPagination({ current: page, pageSize }),
+            }}
             scroll={{ x: 'max-content' }}
           />
         ),
@@ -133,14 +103,54 @@ const OrdersInWorkTables = () => {
     ];
   };
 
+  const MachineCard = React.memo(({ title, load, total }) => { 
+    const chartData = [
+      { name: "Пог. м", value: total?.P.toFixed(2) ?? 0 },
+      { name: "м²", value: total?.S.toFixed(2) ?? 0 },
+    ];
+
+    return (
+      <Card title={title}>
+        {/* Загрузка в процентах */}
+        <Progress
+          percent={Math.min((load / 10) * 100, 100)}
+          format={() => `${load?.toFixed(2) || 0} раб. дней`}
+          strokeColor={load > 15 ? "red" : load > 10 ? "orange" : "green"}
+        />
+
+        {/* BarChart */}
+        <div style={{ height: 150, marginTop: 16 }}>
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart data={chartData}>
+              <XAxis dataKey="name" />
+              <YAxis />
+              <RechartsTooltip />
+              <Bar dataKey="value" fill="#1890ff" radius={[4, 4, 0, 0]} />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+
+        {/* Цифры */}
+        <Descriptions column={1} size="small" colon={false} style={{ marginTop: 16 }}>
+          <Descriptions.Item label="Позиций">{(total?.positionsCount ?? 0).toFixed(2)}</Descriptions.Item>
+          <Descriptions.Item label="Штук">{(total?.count ?? 0).toFixed(2)}</Descriptions.Item>
+        </Descriptions>
+      </Card>
+    );
+  })
+  const MachineCards = React.memo(({ data }) => (
+  <Row gutter={16}>
+    <Col span={12}>
+      <MachineCard title="Криволинейка" load={data?.curvedLoad} total={data?.total?.Криволинейка} />
+    </Col>
+    <Col span={12}>
+      <MachineCard title="Прямолинейка" load={data?.straightLoad} total={data?.total?.Прямолинейка} />
+    </Col>
+  </Row>
+));
   return (
     <div>
-      <Space direction="vertical" style={{ marginBottom: 24 }}>
-        <Title level={4}>Загрузка станков</Title>
-        <Text>Криволинейка: <strong>{(data?.curvedLoad ?? 0).toFixed(2)} рабочих дней</strong></Text>
-        <Text>Прямолинейка: <strong>{(data?.straightLoad ?? 0).toFixed(2)} рабочих дней</strong></Text>
-      </Space>
-
+      <MachineCards data={data} />
       <Tabs items={getItems()} defaultActiveKey="kriv" centered />
     </div>
   );

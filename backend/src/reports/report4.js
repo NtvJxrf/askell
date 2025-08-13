@@ -4,8 +4,8 @@ dotenv.config();
 import * as XLSX from 'xlsx';
 
 export default async function createReport (filters){
-  const { startDate, endDate, employee, bindStart, bindEnd } = filters
-  const urlBase = `https://api.moysklad.ru/api/remap/1.2/entity/invoiceout?filter=https://api.moysklad.ru/api/remap/1.2/entity/invoiceout/metadata/attributes/a38c0fc9-24c2-11f0-0a80-194c00046502>${bindStart} 00:00:00;https://api.moysklad.ru/api/remap/1.2/entity/invoiceout/metadata/attributes/a38c0fc9-24c2-11f0-0a80-194c00046502<${bindEnd} 23:59:59&expand=positions.assortment`
+  const { startDate, endDate } = filters
+  const urlBase = `https://api.moysklad.ru/api/remap/1.2/entity/invoiceout?filter=https://api.moysklad.ru/api/remap/1.2/entity/invoiceout/metadata/attributes/a38c0fc9-24c2-11f0-0a80-194c00046502>${startDate} 00:00:00;https://api.moysklad.ru/api/remap/1.2/entity/invoiceout/metadata/attributes/a38c0fc9-24c2-11f0-0a80-194c00046502<${endDate} 23:59:59&expand=positions.assortment`
   const urlBaseOzon = `https://api.moysklad.ru/api/remap/1.2/entity/customerorder?filter=moment>${startDate} 00:00:00;moment<${endDate} 23:59:59;applicable=true;state!=https://api.moysklad.ru/api/remap/1.2/entity/customerorder/metadata/states/9118d36c-9302-11ed-0a80-08e10003a2e0;agent=https://api.moysklad.ru/api/remap/1.2/entity/counterparty/c1c9d6d1-a0ea-11ef-0a80-0e1200509b38&expand=positions.assortment`
 
   const rows = await fetchAllRows(urlBase);

@@ -329,6 +329,8 @@ const glass = async (data, order, position, createdEntitys) => {
 }
 const smd = async (data, order, position, createdEntitys) => {
     if(!data){
+        console.log('НАЗВАНИЕ СМД', position.assortment.name)
+        console.log(dictionary.smdPlans[position.assortment.name])
         const productionRows = [{
                     processingPlan: {
                         meta: dictionary.smdPlans[position.assortment.name].meta
@@ -343,6 +345,7 @@ const smd = async (data, order, position, createdEntitys) => {
         const pzViz = await makeProductionTask(`Склад ВИЗ ПФ`, `Екатеринбург ВИЗ СГИ`, productionRows, order, {viz: true, smd: true, print, height: attributes['Длина в мм'], width: attributes['Ширина в мм'], colors: [attributes['Цвет доски']?.name]}, createdEntitys)
         return
     }
+    console.log('делаю смд не стандартную')
     const result = {
         viz: [],
         selk: []
@@ -385,9 +388,11 @@ const glassPacket = async (data, order, position, createdEntitys) => {
 }
 export const createProductionTask = async (id) =>{
     console.time('creatingProudctionTask')
+    console.log('делаю запрос на заказ покупателя')
     const order = await Client.sklad(`https://api.moysklad.ru/api/remap/1.2/entity/customerorder/${id}?expand=positions.assortment,invoicesOut&limit=100`)
     if(!order)
         throw new ApiError(`Заказ покупателя с ${id} не найден`)
+    console.log('заказ получен')
     const map = {
         'Триплекс': triplex,
         'Керагласс': ceraglass,
@@ -400,6 +405,7 @@ export const createProductionTask = async (id) =>{
     let vizResult = []
     const results = []
     try{
+        console.log('цикл для позиций')
         for(const position of order.positions.rows){
             if(position.assortment.pathName.toLowerCase().includes('смд')){
                 await map['СМД'](null, order, position, createdEntitys)

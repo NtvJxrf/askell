@@ -7,8 +7,7 @@ const formConfigs = {
           type: 'select',
           options: ['Иное', 'Krystal', 'Round', 'Lux', 'Premium', 'Standart', 'Hexagon'],
           rules: [{ required: true, message: 'Fill this field' }]
-        },
-        {
+        },{
           name: 'material',
           label: 'Материал',
           type: 'select',
@@ -23,24 +22,26 @@ const formConfigs = {
           type: 'select',
           options: ['VIP', 'Дилер', 'Опт', 'Розница'],
           rules: [{ required: true, message: 'Fill this field' }]
-        },
-        {
+        },{
           name: 'marker',
           label: 'Маркер',
           type: 'select',
           options: ['Белый', 'Черный'],
           rules: [{ required: true, message: 'Fill this field' }]
-        },
-        {
+        },{
           name: 'color',
           label: 'Цвет',
           type: 'select',
           options: [],
+        },{
+          name: 'print',
+          label: 'Печать',
+          type: 'select',
+          options: ['Нет', 'С 1 стороны', 'С 2 сторон'],
         },
         { name: 'drillssmd', type: 'inputp0', label: 'Сверление, шт' },
         { name: 'cuts', type: 'inputp0', label: 'Вырезы, шт' },
         { name: 'rounds', type: 'inputp0', label: 'Скругления, шт' },
-        { name: 'print', label: 'Печать', type: 'checkbox' },
         { name: 'notax', label: 'Optiwhite без наценки', type: 'checkbox' },
       ]
     },
@@ -61,10 +62,15 @@ const formConfigs = {
         { name: 'cutsv2', type: 'inputp0', label: 'Вырезы 2 кат. шт' },
         { name: 'cutsv3', type: 'inputp0', label: 'Вырезы 3 кат. шт' },
         { name: 'color', label: 'Цвет', type: 'select' },
+        {
+          name: 'print',
+          label: 'Печать',
+          type: 'select',
+          options: ['Нет', 'С 1 стороны', 'С 2 сторон'],
+        },
         { name: 'shape', label: 'Прямоугольная форма', type: 'checkbox', cheched: true },
         { name: 'tempered', label: 'Закаленное', type: 'checkbox', cheched: true },
         { name: 'polishing', label: 'Полировка', type: 'checkbox' },
-        { name: 'print', label: 'Печать', type: 'checkbox' },
         {
           name: 'rounding',
           label: 'Округление',
@@ -91,10 +97,15 @@ const formConfigs = {
         { name: 'cutsv2', type: 'inputp0', label: 'Вырезы 2 кат. шт' },
         { name: 'cutsv3', type: 'inputp0', label: 'Вырезы 3 кат. шт' },
         { name: 'color', label: 'Цвет', type: 'select' },
+        {
+          name: 'print',
+          label: 'Печать',
+          type: 'select',
+          options: ['Нет', 'С 1 стороны', 'С 2 сторон'],
+        },
         { name: 'shape', label: 'Прямоугольная форма', type: 'checkbox', cheched: true },
         { name: 'tempered', label: 'Закаленное', type: 'checkbox', cheched: true },
         { name: 'polishing', label: 'Полировка', type: 'checkbox' },
-        { name: 'print', label: 'Печать', type: 'checkbox' },
         {
           name: 'addTape',
           label: 'Доп пленка',

@@ -8,6 +8,7 @@ const accessMap = {
   '/api/sklad/createPzHook': [],
   '/api/sklad/updateSelfcosts': ['anyone'],
   '/api/sklad/ordersInWork': ['anyone'],
+  '/api/sklad/changeStatusByDemand': [],
 
   '/api/reports/create': ['anyone'],//reports
 

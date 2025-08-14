@@ -13,6 +13,14 @@ export default class MoySkladController{
         if (!success) throw new Error('Failed to enqueue task');
         res.sendStatus(200);
     }
+    static async changeStatusByDemand(req, res){
+        const channel = getQueueChannel();
+        const id = req.query.id
+        const success = channel.sendToQueue('changeStatusByDemand', Buffer.from(id), { persistent: true });
+
+        if (!success) throw new Error('Failed to enqueue task');
+        res.sendStatus(200);
+    }
     static async getOrder(req, res){
         const name = req.query.orderName
         const result = await SkladService.getOrder(name)

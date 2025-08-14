@@ -710,10 +710,26 @@ const generateStages = (data, place) => {
         return stagesViz;
     }
 }
-async function startWorker() {
+const changeStatusForPZ = async (id) => {
+    const demand = await Client.sklad(`https://api.moysklad.ru/api/remap/1.2/entity/demand/${id}`)
+    const order = await Client.sklad(demand.customerOrder.meta.href)
+    if(!order.productionTasks) return
+    Client.sklad('https://api.moysklad.ru/api/remap/1.2/entity/productiontask', 'post', order.productionTasks.map(el => {
+        return {
+            meta: el.meta,
+            state: {meta: {
+                "href" : "https://api.moysklad.ru/api/remap/1.2/entity/productiontask/metadata/states/fa4868dd-5f60-11ed-0a80-0bf1000f79a7",
+                "metadataHref" : "https://api.moysklad.ru/api/remap/1.2/entity/productiontask/metadata",
+                "type" : "state",
+                "mediaType" : "application/json"
+            }}
+        }
+    }))
+}
+async function startWorker(name, func) {
     const conn = await amqp.connect('amqp://admin:%5EjZG1L%2Fi@localhost');
     const channel = await conn.createChannel();
-    const QUEUE_NAME = 'pzwebhook';
+    const QUEUE_NAME = name
     await channel.assertQueue(QUEUE_NAME, { durable: true });
     channel.prefetch(1);
 
@@ -723,10 +739,10 @@ async function startWorker() {
         if (msg !== null) {
             const id = msg.content.toString()
             try {
-                await createProductionTask(id)
+                await func(id)
                 channel.ack(msg);
             } catch (error) {
-                logger.error(`Ошибка при создании производственного задания с id ${id}`, {error: error?.message || error});
+                logger.error(`Ошибка при работе воркера ${name} с id ${id}`, {error: error?.message || error});
                 console.error(error)
                 channel.reject(msg, false)
             }
@@ -741,4 +757,5 @@ setInterval(async () => {
         logger.error('getOrdersInWork error:', err)
     }
 }, 300_000)
-startWorker()
+startWorker('pzwebhook', createProductionTask)
+startWorker('changeStatusByDemand', changeStatusForPZ)

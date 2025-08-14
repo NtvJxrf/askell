@@ -16,6 +16,9 @@ router
     .route('/createPzHook')
     .post(authorizeRoles, MoySkladController.createPzHook)
 router
+    .route('/changeStatusByDemand')
+    .post(authorizeRoles, MoySkladController.changeStatusByDemand)
+router
     .route('/updateSelfcosts')
     .post(authorizeRoles, MoySkladController.updateSelfcosts)
 router

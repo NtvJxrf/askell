@@ -148,13 +148,15 @@ export const getProcessingPlansSmd = async () => {
     'askell krystall',
     'askell premium',
     'askell acoustic',
-    'askell Mobile',
-    'askell Flipchart',
-    'askell Multiwall',
+    'askell mobile',
+    'askell flipchart',
+    'askell multiwall',
     'askell wave',
     'askell hexagon',
     'askell triangle',
     'askell long',
+    'askell twirl',
+    'askell video'
   ];
 
   const urls = filters.map((name) => `https://api.moysklad.ru/api/remap/1.2/entity/processingplan?filter=name~${name}&expand=products.assortment`);

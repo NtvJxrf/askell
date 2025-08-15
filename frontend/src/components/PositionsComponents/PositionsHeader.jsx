@@ -47,7 +47,6 @@ const PositionsHeader = () => {
                 return
             }
             const positions = res.data.positions.rows.map( (position) => {
-                if(!position.result) return //УБИРАЕТ ИЗ КАЛЬКУЛЯТОРА ВСЕ ЧТО НЕ СОЗДАНО В НЕМ
                 return {
                     key: position.assortment.id,
                     name: position.assortment.name,
@@ -59,7 +58,7 @@ const PositionsHeader = () => {
                     position
                 }
             })
-            dispatch(addOrderPositions(positions.filter(Boolean)))//ФИЛЬТР УБИРАЕТ ИЗ КАЛЬКУЛЯТОРА ВСЕ ЧТО НЕ СОЗДАНО В НЕМ
+            dispatch(addOrderPositions(positions))
         }catch(error){
             console.error(error)
             messageApi.error('Не удалось получить заказ')

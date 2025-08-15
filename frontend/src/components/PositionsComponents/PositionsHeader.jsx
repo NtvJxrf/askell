@@ -117,6 +117,7 @@ const PositionsHeader = () => {
         dispatch(addNewPosition(result))
     }
     const items = [
+        { key: 'Выше госта', label: 'Выше госта' },
         { key: 'Менее 200 тыс.', label: 'Менее 200 тыс.' },
         { key: 'Более 200 тыс.', label: 'Более 200 тыс.' },
         { key: 'Более 400 тыс.', label: 'Более 400 тыс.' },

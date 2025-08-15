@@ -101,13 +101,22 @@ const Calculate = (data, selfcost) => {
             formula: 'Цена за м² * Площадь * Коэффициент обрези стекло'
         });
     }
-    print && result.works.push({
-        name: 'Печать',
-        value: selfcost.pricesAndCoefs[`УФ печать`],
-        finalValue: selfcost.pricesAndCoefs[`УФ печать`],
-        string: `${selfcost.pricesAndCoefs[`УФ печать`]}`,
-        formula: 'Себестоимость уф печати'
-    });
+    switch (print){
+        case 'С 1 стороны': result.works.push({
+            name: 'Печать',
+            value: selfcost.pricesAndCoefs[`УФ печать`] * S,
+            finalValue: selfcost.pricesAndCoefs[`УФ печать`] * S,
+            string: `${selfcost.pricesAndCoefs[`УФ печать`]} * ${S.toFixed(2)}`,
+            formula: 'Себестоимость уф печати * S'
+        }); break
+        case 'С 2 сторон': result.works.push({
+            name: 'Печать',
+            value: selfcost.pricesAndCoefs[`УФ печать`] * S * 2,
+            finalValue: selfcost.pricesAndCoefs[`УФ печать`] * S * 2,
+            string: `${selfcost.pricesAndCoefs[`УФ печать`]} * ${S.toFixed(2)} * 2`,
+            formula: 'Себестоимость уф печати * S * 2'
+        }); break
+    }
     const stanok = (shape && !cutsv1 && !cutsv2 && !cutsv3 && weight < 50) ? 'Прямолинейка' : 'Криволинейка'
     let name = constructName(`Триплекс, ${materials.join(' + ')}`, {...data, stanok})
     const context = { selfcost, result, stanok, allThickness };

@@ -39,13 +39,22 @@ const Calculate = (data, selfcost) => {
         string: `${selfcost.colors[color].value} * 0.3`,
         formula: 'Цена за м² * 0.3'
     });
-    print && result.works.push({
-        name: 'Печать',
-        value: selfcost.pricesAndCoefs[`УФ печать`],
-        finalValue: selfcost.pricesAndCoefs[`УФ печать`],
-        string: `${selfcost.pricesAndCoefs[`УФ печать`]}`,
-        formula: 'Себестоимость уф печати'
-    });
+    switch (print){
+        case 'С 1 стороны': result.works.push({
+            name: 'Печать',
+            value: selfcost.pricesAndCoefs[`УФ печать`] * S,
+            finalValue: selfcost.pricesAndCoefs[`УФ печать`] * S,
+            string: `${selfcost.pricesAndCoefs[`УФ печать`]} * ${S.toFixed(2)}`,
+            formula: 'Себестоимость уф печати * S'
+        }); break
+        case 'С 2 сторон': result.works.push({
+            name: 'Печать',
+            value: selfcost.pricesAndCoefs[`УФ печать`] * S * 2,
+            finalValue: selfcost.pricesAndCoefs[`УФ печать`] * S * 2,
+            string: `${selfcost.pricesAndCoefs[`УФ печать`]} * ${S.toFixed(2)} * 2`,
+            formula: 'Себестоимость уф печати * S * 2'
+        }); break
+    }
     const context = { selfcost, result, thickness};
     constructWorks('cutting1', S, context);
     constructWorks('cutting2', S, context);

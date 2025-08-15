@@ -388,11 +388,14 @@ const glassPacket = async (data, order, position, createdEntitys) => {
 }
 export const createProductionTask = async (id) =>{
     console.time('creatingProudctionTask')
-    console.log('делаю запрос на заказ покупателя')
     const order = await Client.sklad(`https://api.moysklad.ru/api/remap/1.2/entity/customerorder/${id}?expand=positions.assortment,invoicesOut&limit=100`)
     if(!order)
         throw new ApiError(`Заказ покупателя с ${id} не найден`)
-    console.log('заказ получен')
+    const orderAttr = order.attributes.reduce((a, x) => {
+                a[x.name] = x.value;
+                return a;
+            }, {});
+    if(orderAttr['Не создавать ПЗ']) return
     const map = {
         'Триплекс': triplex,
         'Керагласс': ceraglass,
@@ -405,14 +408,19 @@ export const createProductionTask = async (id) =>{
     let vizResult = []
     const results = []
     try{
-        console.log('цикл для позиций')
         for(const position of order.positions.rows){
-            if(position.assortment.pathName.toLowerCase().includes('смд')){
-                await map['СМД'](null, order, position, createdEntitys)
+            const data = await Details.findOne({where: {productId: position.assortment.id}})
+            if(data){
+                results.push(await map[data.result.other.type](data, order, position, createdEntitys))
                 continue
             }
-            const data = await Details.findOne({where: {productId: position.assortment.id}})
-            if(data) results.push(await map[data.result.other.type](data, order, position, createdEntitys))
+            const attrs = (position.assortment?.attributes || []).reduce((a, x) => {
+                a[x.name] = x.value;
+                return a;
+            }, {});
+            if(!data && (attrs['Тип СМД'] || attrs['Серия'])){
+                await map['СМД'](null, order, position, createdEntitys)
+            }
         }
         if(results.length < 1) return
         let print = false

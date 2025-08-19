@@ -9,7 +9,7 @@ const Calculate = (data, selfcost, triplexArray) => {
         tempered1, tempered2, tempered3,
         polishing1, polishing2, polishing3,
         blunting1, blunting2, blunting3,
-        height, width, gas, plane1, plane2, customertype, quantity = 1 } = data
+        height, width, gas, plane1, plane2, quantity = 1 } = data
     const materials = [
                     [material1, tempered1, polishing1, blunting1],
                     [material2, tempered2, polishing2, blunting2],
@@ -136,17 +136,42 @@ const Calculate = (data, selfcost, triplexArray) => {
         materialsandworks += item.value
     for (const item of Object.values(result.works)) 
         materialsandworks += item.finalValue
-    const price = materialsandworks * selfcost.pricesAndCoefs[`Стеклопакет ${customertype}`]
+
+    const gostPrice = 0
+    const retailPrice = materialsandworks * selfcost.pricesAndCoefs[`Стеклопакет Розница`]
+    const bulkPrice = materialsandworks * selfcost.pricesAndCoefs[`Стеклопакет Опт`]
+    const dealerPrice = materialsandworks * selfcost.pricesAndCoefs[`Стеклопакет Дилер`]
+    const vipPrice = materialsandworks * selfcost.pricesAndCoefs[`Стеклопакет ВИП`]
     result.finalPrice = [{
         name: 'Себестоимость',
         value: materialsandworks,
         string: `${(materialsandworks).toFixed(2)}`,
         formula: `(Материалы и работы) + Расходы`
     },{
-        name: 'Наценка',
-        value: selfcost.pricesAndCoefs[`Стеклопакет ${customertype}`],
-        string: selfcost.pricesAndCoefs[`Стеклопакет ${customertype}`],
-        formula: `Наценка для типа клиента ${selfcost.pricesAndCoefs[`Стеклопакет ${customertype}`]}`
+        name: 'Цена для Выше госта',
+        value: gostPrice,
+        string: `${materialsandworks.toFixed(2)} * ${selfcost.pricesAndCoefs[`Стеклопакет Выше госта`]}`,
+        formula: `Себестоимость калькулятора * Наценка для типа клиента "Выше госта"`
+    },{
+        name: 'Цена для Розница',
+        value: retailPrice,
+        string: `${materialsandworks.toFixed(2)} * ${selfcost.pricesAndCoefs[`Стеклопакет Розница`]}`,
+        formula: `Себестоимость калькулятора * Наценка для типа клиента "Розница"`
+    },{
+        name: 'Цена для Опт',
+        value: bulkPrice,
+        string: `${materialsandworks.toFixed(2)} * ${selfcost.pricesAndCoefs[`Стеклопакет Опт`]}`,
+        formula: `Себестоимость калькулятора * Наценка для типа клиента "Опт"`
+    },{
+        name: 'Цена для Дилер',
+        value: dealerPrice,
+        string: `${materialsandworks.toFixed(2)} * ${selfcost.pricesAndCoefs[`Стеклопакет Дилер`]}`,
+        formula: `Себестоимость калькулятора * Наценка для типа клиента "Дилер"`
+    },{
+        name: 'Цена для ВИП',
+        value: vipPrice,
+        string: `${materialsandworks.toFixed(2)} * ${selfcost.pricesAndCoefs[`Стеклопакет ВИП`]}`,
+        formula: `Себестоимость калькулятора * Наценка для типа клиента "ВИП"`
     }]
     result.other = {
         S,
@@ -162,7 +187,13 @@ const Calculate = (data, selfcost, triplexArray) => {
     return {
         key: crypto.randomUUID(),
         name,
-        price,
+        prices: {
+            gostPrice,
+            retailPrice,
+            bulkPrice,
+            dealerPrice,
+            vipPrice
+        },
         added: false,
         quantity,
         initialData: data,

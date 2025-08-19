@@ -21,7 +21,7 @@ export const getMaterials = async () => {
             const res = {
                 meta: material.meta,
                 value: convertPrice(material.buyPrice),
-                calcValue: material.salePrices[0].value / 100
+                calcValue: material.salePrices.find(el => el.priceType.name == 'Цена для расчёта в калькуляторе').value / 100
             }
             if(material.name.toLowerCase()?.includes('плита')){
                 const l = material?.attributes?.find(el => el.name === 'Длина в мм')?.value
@@ -99,6 +99,32 @@ export const getColors = async () => {
     }, {})
     SkladService.selfcost.updates['Цвета'] = {
         key: 'colors',
+        date: Date.now()
+    }
+}
+export const getCurrency = async () => {
+    const response = await Client.sklad('https://api.moysklad.ru/api/remap/1.2/entity/currency/')
+    dictionary.currencies = response.rows.reduce(( acc, curr ) => {
+        acc[curr.name] = {
+            meta: curr.meta,
+        }
+        return acc
+    }, {})
+    SkladService.selfcost.updates['Валюты'] = {
+        key: 'currencies',
+        date: Date.now()
+    }
+}
+export const getPriceTypes = async () => {
+    const response = await Client.sklad('https://api.moysklad.ru/api/remap/1.2/context/companysettings/pricetype')
+    dictionary.priceTypes = response.reduce(( acc, curr ) => {
+        acc[curr.name] = {
+            meta: curr.meta,
+        }
+        return acc
+    }, {})
+    SkladService.selfcost.updates['Типы цен'] = {
+        key: 'priceTypes',
         date: Date.now()
     }
 }
@@ -202,6 +228,8 @@ export const initSkladAdditions = async () => {
     promises.push(getColors())
     promises.push(getPicesAndCoefs())
     promises.push(getPackagingMaterials())
+    promises.push(getCurrency())
+    promises.push(getPriceTypes())
     const res = await Promise.allSettled(promises)
     console.log(res)
     console.log('all dependencies loaded')

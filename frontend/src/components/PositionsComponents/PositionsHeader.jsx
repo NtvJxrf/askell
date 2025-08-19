@@ -1,10 +1,10 @@
-import { Input, Button, Space, Typography, message, Upload, Dropdown, Menu  } from 'antd';
+import { Input, Button, Space, Typography, message, Upload, Dropdown, Menu, Tooltip } from 'antd';
 import React, { useRef, useState } from 'react';
-import { UploadOutlined } from '@ant-design/icons';
+import { UploadOutlined, DownOutlined, InfoCircleOutlined } from '@ant-design/icons';
 const { Text } = Typography;
 import axios from 'axios'
 import { useDispatch, useSelector } from 'react-redux'
-import { addOrderPositions, setOrder, setPositions, addNewPosition, addNewPositions, setSelectedRowKeys } from '../../slices/positionsSlice.js'
+import { addOrderPositions, setOrder, setPositions, addNewPosition, addNewPositions, setSelectedRowKeys, setDisplayPrice } from '../../slices/positionsSlice.js'
 import store from '../../store.js';
 import packaging from '../CalcComponents/calculators/packaging.js'
 import * as XLSX from 'xlsx';
@@ -22,12 +22,36 @@ const calcMap = {
     'СМД': SMDCalc,
     'Стеклопакет': glasspacketCalc
 }
-
+const pricesDescription = (
+  <>
+    Выше госта: Повышенное требование<br />
+    Розница: Менее 200тыс.<br />
+    Опт: Более 200тыс.<br />
+    Дилер: Более 400тыс.<br />
+    ВИП: Более 800тыс.<br />
+  </>
+);
+const priceItems = [
+        { key: 'gostPrice', label: 'Выше госта' },
+        { key: 'retailPrice', label: 'Розница' },
+        { key: 'bulkPrice', label: 'Опт' },
+        { key: 'dealerPrice', label: 'Дилер' },
+        { key: 'vipPrice', label: 'ВИП' },
+];
+const priceMap = priceItems.reduce((acc, { key, label }) => {
+    acc[label] = key;
+    return acc;
+}, {});
+const reverseMap = priceItems.reduce((acc, { key, label }) => {
+    acc[key] = label;
+    return acc;
+}, {});
 const PositionsHeader = () => {
     const orderNumberRef = useRef(null);
     const [disabled, setDisabled] = useState(false)
     const [messageApi, contextHolder] = message.useMessage()
     const order = useSelector(state => state.positions.order)
+    const priceType = useSelector(state => state.positions.displayPrice)
     const dispatch = useDispatch()
     const handleSearchClick = async (value = null) => {
         const orderName = typeof value === 'object' ? orderNumberRef.current : value
@@ -50,7 +74,10 @@ const PositionsHeader = () => {
                 return {
                     key: position.assortment.id,
                     name: position.assortment.name,
-                    price: position.price / 100,
+                    prices: position.assortment.salePrices.reduce((acc, curr) => {
+                        acc[priceMap[curr.priceType.name]] = curr.value / 100
+                        return acc
+                    }, {}),
                     added: true,
                     quantity: position.quantity,
                     result: position.result,
@@ -58,6 +85,7 @@ const PositionsHeader = () => {
                     position
                 }
             })
+            console.log(positions)
             dispatch(addOrderPositions(positions))
         }catch(error){
             console.error(error)
@@ -73,13 +101,14 @@ const PositionsHeader = () => {
     const handleSaveOrder = async () => {
         setDisabled(true)
         const data = store.getState().positions
+        const { productionLoad, ...dataToSend } = data
         if(!data.order){
             messageApi.error('Загрузите заказ')
             setDisabled(false)
             return
         }
         try{
-            await axios.post(`${import.meta.env.VITE_API_URL}/api/sklad/addPositionsToOrder`, data, { withCredentials: true})
+            await axios.post(`${import.meta.env.VITE_API_URL}/api/sklad/addPositionsToOrder`, dataToSend, { withCredentials: true})
             dispatch(setPositions([]))
             handleSearchClick(order.name)
             messageApi.success('Заказ обновлен')
@@ -116,32 +145,8 @@ const PositionsHeader = () => {
         }
         dispatch(addNewPosition(result))
     }
-    const items = [
-        { key: 'Выше госта', label: 'Выше госта' },
-        { key: 'Менее 200 тыс.', label: 'Менее 200 тыс.' },
-        { key: 'Более 200 тыс.', label: 'Более 200 тыс.' },
-        { key: 'Более 400 тыс.', label: 'Более 400 тыс.' },
-        { key: 'Более 800 тыс.', label: 'Более 800 тыс.' },
-    ];
-    const handleMenuClick = ({ key }) => {
-        handleRecalc(key);
-    };
-    const handleRecalc = key => {
-        const state = store.getState();
-        const allPositions = state.positions.positions;
-
-        if (!allPositions.length) {
-            messageApi.error('Нет позиций');
-            return;
-        }
-
-        const selfcost = state.selfcost.selfcost;
-
-        const newPositions = allPositions.map((el) => {
-            if (!el.result) return el;
-            return calcMap[el.result?.other?.type]?.({ ...el.initialData, quantity: el.quantity, customertype: key }, selfcost);
-        }).filter(Boolean)
-        dispatch(setPositions(newPositions));
+    const handlePriceSelect = ({ key }) => {
+        dispatch(setDisplayPrice(key))
     };
     console.log('render pos header')
     return (
@@ -159,7 +164,7 @@ const PositionsHeader = () => {
             >
                 <Space style={{ width: '100%' }} align="center" size="middle">
                     <Text style={{color: '#fff'}}>Номер заказа: </Text>
-                    <Input placeholder="Номер заказа" style={{ width: 80 }} onChange={(e) => { orderNumberRef.current = e.target.value }} />
+                    <Input placeholder="Номер заказа" style={{ width: 80 }} onChange={(e) => { orderNumberRef.current = e.target.value }} onPressEnter={() => handleSearchClick()} />
                     <Button type="primary" shape="round" onClick={handleSearchClick} disabled={disabled}>Найти</Button>
                     <Button type="primary" shape="round" onClick={handleResetClick} disabled={disabled}>Сбросить</Button>
                 </Space>
@@ -172,9 +177,12 @@ const PositionsHeader = () => {
                     <Button type="default" shape="round" onClick={handleSaveOrder} disabled={disabled}>Сохранить</Button>
                     <Button type="default" shape="round" onClick={handleDeleteSelected} disabled={disabled} danger>Удалить выделенное</Button>
                     <Button type="default" shape="round" onClick={handlePackaging} disabled={disabled}>Упаковка</Button>
-                    <Dropdown menu={{ items, onClick: handleMenuClick }} disabled={disabled} >
+                    <Dropdown menu={{ items: priceItems, onClick: handlePriceSelect }} disabled={disabled} >
                         <Button type="default" shape="round">
-                            Пересчитать тип цен
+                            Цены: {reverseMap[priceType]} <DownOutlined />
+                            <Tooltip title={pricesDescription} styles={{ fontSize: '16px', padding: '12px 16px', maxWidth: 800 }}>
+                                <InfoCircleOutlined style={{ color: '#1890ff' }} />
+                            </Tooltip>
                         </Button>
                     </Dropdown>
                     <Upload

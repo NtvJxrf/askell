@@ -34,7 +34,13 @@ export const dictionary = {
         }
     }
 }
-
+const mapPrices = {
+            gostPrice: 'Выше госта',
+            retailPrice: 'Розница',
+            bulkPrice: 'Опт',
+            dealerPrice: 'Дилер',
+            vipPrice: 'ВИП'
+        }
 export default class SkladService {
     static selfcost = {
         pricesAndCoefs: {},
@@ -66,24 +72,11 @@ export default class SkladService {
         const productsToCreate = positionsToCreate.map(product => {
             return {
                 name: product.name,
-                salePrices: [{
-                    value: Number((product.price * 100).toFixed(2)),
-                    priceType: {
-                        meta: {
-                            href: "https://api.moysklad.ru/api/remap/1.2/context/companysettings/pricetype/29957787-f66e-11eb-0a80-028700026a8c",
-                            type: "pricetype",
-                            mediaType: "application/json"
-                        }
-                    },
-                    currency: {
-                        meta: {
-                            href: "https://api.moysklad.ru/api/remap/1.2/entity/currency/0664a90c-6e69-11e4-90a2-8ecb0012e9ec",
-                            metadataHref: "https://api.moysklad.ru/api/remap/1.2/entity/currency/metadata",
-                            type: "currency",
-                            mediaType: "application/json",
-                        },
-                    },
-                }],
+                salePrices: Object.entries(product.prices).map(([key, value]) =>({
+                    value: Number((value * 100).toFixed(2)),
+                    priceType: dictionary.priceTypes[mapPrices[key]],
+                    currency: dictionary.currencies['руб']
+                })),
                 vat: data.order.organization.name === 'ООО "А2"' ? 20 : 0,
                 vatEnabled: true,
                 weight: Number((product.result.other.weight).toFixed(2)),
@@ -134,7 +127,7 @@ export default class SkladService {
                         assortment: {
                             meta: pos.position.assortment.meta
                         },
-                        price: Number((pos.price * 100).toFixed(2)),
+                        price: Number(pos.prices[data.displayPrice].toFixed(2) * 100),
                         quantity: pos.quantity,
                         vat: data.order.organization.name === 'ООО "А2"' ? 20 : 0
                     }
@@ -329,8 +322,6 @@ const glass = async (data, order, position, createdEntitys) => {
 }
 const smd = async (data, order, position, createdEntitys) => {
     if(!data){
-        console.log('НАЗВАНИЕ СМД', position.assortment.name)
-        console.log(dictionary.smdPlans[position.assortment.name])
         const productionRows = [{
                     processingPlan: {
                         meta: dictionary.smdPlans[position.assortment.name].meta
@@ -345,7 +336,6 @@ const smd = async (data, order, position, createdEntitys) => {
         const pzViz = await makeProductionTask(`Склад ВИЗ ПФ`, `Екатеринбург ВИЗ СГИ`, productionRows, order, {viz: true, smd: true, print, height: attributes['Длина в мм'], width: attributes['Ширина в мм'], colors: [attributes['Цвет доски']?.name]}, createdEntitys)
         return
     }
-    console.log('делаю смд не стандартную')
     const result = {
         viz: [],
         selk: []
@@ -625,6 +615,9 @@ const generateProductAttributes = (data) => {
             case 'material2': result.push({ meta: dictionary.productAttributes["Материал 2"], value: data.material2 }); break;
             case 'material3': result.push({ meta: dictionary.productAttributes["Материал 3"], value: data.material3 }); break;
             case 'material4': result.push({ meta: dictionary.productAttributes["Материал 4"], value: data.material4 }); break;
+            case 'tape1': result.push({ meta: dictionary.productAttributes["Пленка 1"], value: {meta: SkladService.selfcost.materials[data.tape1].meta} }); break;
+            case 'tape2': result.push({ meta: dictionary.productAttributes["Пленка 1"], value: {meta: SkladService.selfcost.materials[data.tape2].meta} }); break;
+            case 'tape3': result.push({ meta: dictionary.productAttributes["Пленка 1"], value: {meta: SkladService.selfcost.materials[data.tape3].meta} }); break;
             case 'color': result.push({ meta: dictionary.productAttributes["Окрашивание"], value: data.color || '' }); break;
             case 'print': result.push({ meta: dictionary.productAttributes["Печать"], value: true }); break;
             case 'polishing': result.push({ meta: dictionary.productAttributes["Полировка"], value: true }); break;

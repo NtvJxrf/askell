@@ -1,10 +1,18 @@
-import { Form, Select, InputNumber, Divider, Checkbox } from 'antd'
-
+import { Form, Select, InputNumber, Divider, Checkbox, Tooltip } from 'antd'
+import { InfoCircleOutlined } from '@ant-design/icons';
 const renderField = (field) => {
+    const labelWithTooltip = field.description ? (
+        <span>
+            {field.label}{' '}
+            <Tooltip title={field.description}>
+                <InfoCircleOutlined style={{ color: '#1890ff' }} />
+            </Tooltip>
+        </span>
+    ) : field.label;
     switch (field.type) {
     case 'select':
         return (
-            <Form.Item key={field.name} label={field.label} name={field.name} rules={field.rules}>
+            <Form.Item key={field.name} label={labelWithTooltip} name={field.name} rules={field.rules}>
                 <Select showSearch mode="combobox" options={field?.options?.map(option => ({ label: option, value: option }))} allowClear={true} popupMatchSelectWidth={false} filterOption={(input, option) => {
                     if (!option?.label) return false;
                     const inputParts = input.toLowerCase().split(/\s+/).filter(Boolean);
@@ -18,7 +26,7 @@ const renderField = (field) => {
             <Form.Item
                 key={field.name}
                 valuePropName="checked"
-                label={field.label}
+                label={labelWithTooltip}
                 name={field.name}
                 rules={field.rules}
                 initialValue={field.cheched || false}
@@ -28,13 +36,13 @@ const renderField = (field) => {
         );
     case 'input':
         return (
-            <Form.Item key={field.name} label={field.label} name={field.name} rules={field.rules}>
+            <Form.Item key={field.name} label={labelWithTooltip} name={field.name} rules={field.rules}>
                 <InputNumber min={0} step={1} style={{ width: '100%' }}/>
             </Form.Item>
         );
     case 'inputp0':
         return (
-            <Form.Item key={field.name} label={field.label} name={field.name} rules={field.rules}>
+            <Form.Item key={field.name} label={labelWithTooltip} name={field.name} rules={field.rules}>
                 <InputNumber min={0} step={1} precision={0} style={{ width: '100%' }}/>
             </Form.Item>
         );

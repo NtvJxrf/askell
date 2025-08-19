@@ -96,6 +96,7 @@ async function main() {
     'Прямолинейка:',
     CalcLoad(rows, machinesStraight, total['Прямолинейка'].P, { v1: totalCutsv1, v2: totalCutsv2, v3: totalCutsv3 }, 'Прямолинейка'),
   );
+  console.log(Math.ceil(40 / (8 * 48)))
 }
 
 function excelDateToJSDate(serial) {

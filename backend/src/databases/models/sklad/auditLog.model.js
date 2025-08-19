@@ -18,7 +18,7 @@ const AuditLog = sequelize.define('audit_log', {
   },
   changedBy: {
     type: DataTypes.UUID,
-    allowNull: false,
+    allowNull: true,
   },
   changedAt: {
     type: DataTypes.DATE,

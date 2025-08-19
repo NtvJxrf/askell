@@ -63,6 +63,7 @@ const Positions = ({form}) => {
     const positions = useSelector(state => state.positions.positions);
     const productionLoad = useSelector(state => state.positions.productionLoad);
     const selectedRowKeys = useSelector(state => state.positions.selectedPosition);
+    const priceType = useSelector(state => state.positions.displayPrice)
     const [isModalVisible, setIsModalVisible] = useState(false);
     const [selectedRecord, setSelectedRecord] = useState(null);
     const [pagination, setPagination] = useState({ current: 1, pageSize: 10 });
@@ -162,9 +163,12 @@ const Positions = ({form}) => {
         { title: 'Название', dataIndex: 'name', key: 'name' },
         {
             title: 'Цена',
-            dataIndex: 'price',
-            key: 'price',
-            render: value => value.toFixed(2),
+            dataIndex: 'prices',
+            key: 'prices',
+            render: value => {
+                const num = value?.[priceType];
+                return isNaN(num) ? 0 : num.toFixed(2);
+            },
         },
         {
             title: 'Создано',
@@ -232,8 +236,8 @@ const Positions = ({form}) => {
                         title={() => {
                             let totalAmount = 0;
                             let totalS = 0
-                            positions.forEach(({ price, quantity, result, position}) => {
-                                totalAmount += price * quantity;
+                            positions.forEach(({ prices, quantity, result, position}) => {
+                                totalAmount += (prices[priceType] || 0) * quantity;
                                 totalS += (result?.other?.S || position?.assortment?.volume || 0) * quantity
                             });
 

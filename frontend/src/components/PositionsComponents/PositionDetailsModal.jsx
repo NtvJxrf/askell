@@ -85,9 +85,6 @@ const renderDetails = (record) => {
 
                 <Title level={4}>Цена</Title>
                 {finalPrice.map(renderItem)}
-                <div style={{ marginTop: 8, fontWeight: 'bold' }}>
-                    Итого цена: {record.price.toFixed(2)}
-                </div>
             </div>
 
             {/* Правая колонка — исходные данные */}

@@ -17,12 +17,6 @@ const formConfigs = {
         { name: 'width', type: 'input', label: 'Ширина, мм:', rules: [{ required: true, message: 'Fill this field' }] },
         { name: 'height', type: 'input', label: 'Высота, мм', rules: [{ required: true, message: 'Fill this field' }] },
         {
-          name: 'clientType',
-          label: 'Тип клиента',
-          type: 'select',
-          options: ['VIP', 'Дилер', 'Опт', 'Розница'],
-          rules: [{ required: true, message: 'Fill this field' }]
-        },{
           name: 'marker',
           label: 'Маркер',
           type: 'select',
@@ -73,14 +67,7 @@ const formConfigs = {
           type: 'select',
           options: ['Округление до 0.5', 'Умножить на 2'],
           rules: [{ required: true, message: 'Fill this field' }]
-        },
-        {
-          name: 'customertype',
-          label: 'Тип клиента',
-          type: 'select',
-          options: ['Выше госта', 'Менее 200 тыс.', 'Более 200 тыс.', 'Более 400 тыс.', 'Более 800 тыс.'],
-          rules: [{ required: true, message: 'Fill this field' }]
-        },
+        }
       ]
     },
     triplexForm: {
@@ -114,14 +101,7 @@ const formConfigs = {
           type: 'select',
           options: ['Округление до 0.5', 'Умножить на 2'],
           rules: [{ required: true, message: 'Fill this field' }]
-        },
-        {
-          name: 'customertype',
-          label: 'Тип клиента',
-          type: 'select',
-          options: ['Менее 200 тыс.', 'Более 200 тыс.', 'Более 400 тыс.', 'Более 800 тыс.'],
-          rules: [{ required: true, message: 'Fill this field' }]
-        },
+        }
       ],
       materialFields: [
         {label: 'Материал 1', type: 'divider'},
@@ -137,7 +117,7 @@ const formConfigs = {
           name: 'tape1',
           label: 'Пленка',
           type: 'select',
-          options: ['Пленка EVA №25 Хамелеон Гладкий 1.4', 'Смарт пленка Magic Glass', 'Смарт-пленка белая (для Триплекса)', 'плёнка ORACAL 641-OOM 1.26x50ru', 'Пленка Boneva FORCE 0.76', 'Пленка EVA Orange (Оранжевая) 0,38 мм', 'Пленка EVA №1 Black Черная', 'Пленка EvoLam 0,38мм  2,1х50 м (Blue T (синяя))', 'Пленка EVA №2 White (БЕЛАЯ)-MILK(молоко)', 'Пленка EVA Green (зелёный) 0,38мм', 'Пленка EVA Bronze (бронза) 0,38мм', 'пленка EVA №6 Серая непрозрачная', 'Пленка EVA Super White (насыщенно белая) 0,38мм', 'Пленка EVA Black (чёрная) 0,38мм', 'Пленка EVA yellow (желтый) 0,38мм', 'Пленка EVA №7 Бежевая непрозрачная', 'Пленка EVA sapphire (сапфир) 0,38мм', 'Пленка EVA White (белая) 0,38мм', 'пленка EVA №3 FS (САТИН)', 'Пленка EVA Grey (серая) 0,38мм', 'Пленка EVA №24 черная прозрачная- Dark Grey (темно-серая)'],
+          options: [],
         },
         {label: 'Материал 2', type: 'divider'},
         {
@@ -158,13 +138,6 @@ const formConfigs = {
           label: 'Газ',
           type: 'select',
           options: ['Аргон'],
-        },
-        {
-          name: 'customertype',
-          label: 'Тип клиента',
-          type: 'select',
-          options: ['Менее 200 тыс.', 'Более 200 тыс.', 'Более 400 тыс.', 'Более 800 тыс.'],
-          rules: [{ required: true, message: 'Fill this field' }]
         },
       ],
       materialFields: [
@@ -242,15 +215,9 @@ const formConfigs = {
         { name: 'cutsv2', type: 'inputp0', label: 'Вырезы 2 кат. шт' },
         { name: 'cutsv3', type: 'inputp0', label: 'Вырезы 3 кат. шт' },
         { name: 'blank', type: 'inputp0', label: 'Количество пятаков' },
+        { name: 'trim', type: 'input', label: '% обрези', description: 'Указывать десятичное число, например 30% обрези = 0.3' },
         { name: 'color', label: 'Цвет', type: 'select' },
-        { name: 'under', label: 'Подстолье', type: 'select' },
-        {
-          name: 'customertype',
-          label: 'Тип клиента',
-          type: 'select',
-          options: ['Менее 200 тыс.', 'Более 200 тыс.', 'Более 400 тыс.', 'Более 800 тыс.'],
-          rules: [{ required: true, message: 'Fill this field' }]
-        },
+        { name: 'under', label: 'Подстолье', type: 'select' }
       ],materialFields: []
     }
   };

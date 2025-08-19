@@ -7,7 +7,8 @@ const positionsSlice = createSlice({
     order: null,
     selectedPosition: null,
     triplexForGlasspacket: [],
-    productionLoad: { kriv: [], pryam: [], other: [], straightTotal: 0, curvedTotal: 0, drillsTotal: 0, cuttingTotal: 0, temperingTotal: 0, triplexTotal: 0, viz: 0, selk: 0}
+    productionLoad: { kriv: [], pryam: [], other: [], straightTotal: 0, curvedTotal: 0, drillsTotal: 0, cuttingTotal: 0, temperingTotal: 0, triplexTotal: 0, viz: 0, selk: 0},
+    displayPrice: 'retailPrice'
   },
   reducers: {
     addOrderPositions: (state, action) => {
@@ -23,9 +24,10 @@ const positionsSlice = createSlice({
     removeTriplexForGlasspacket: (state, action) => {
       state.triplexForGlasspacket = state.triplexForGlasspacket.filter(el => el.name != action.payload.name)
     },
-    setProductionLoad: (state, action) => { state.productionLoad = action.payload }
+    setProductionLoad: (state, action) => { state.productionLoad = action.payload },
+    setDisplayPrice: (state, action) => { state.displayPrice = action.payload }
   }
 })
 
-export const { setProductionLoad, addNewPosition, addOrderPositions, setPositions, setOrder, setSelectedRowKeys, addNewPositions, addTriplexForGlasspacket, removeTriplexForGlasspacket } = positionsSlice.actions;
+export const { setDisplayPrice, setProductionLoad, addNewPosition, addOrderPositions, setPositions, setOrder, setSelectedRowKeys, addNewPositions, addTriplexForGlasspacket, removeTriplexForGlasspacket } = positionsSlice.actions;
 export default positionsSlice.reducer;

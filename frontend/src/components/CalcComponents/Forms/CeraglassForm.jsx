@@ -33,8 +33,8 @@ const CeraglassForm = () => {
         setAdditionalMaterials(prev => [
             ...prev,
             { id: `Деталь${materialCount.current + 1}`, label: `Деталь ${materialCount.current + 1}`, type: 'divider' },
-            { id: `height${materialCount.current + 1}`, name: `height${materialCount.current + 1}`, type: 'input', label: `Высота ${materialCount.current + 1}` },
             { id: `width${materialCount.current + 1}`, name: `width${materialCount.current + 1}`, type: 'input', label: `Ширина ${materialCount.current + 1}` },
+            { id: `height${materialCount.current + 1}`, name: `height${materialCount.current + 1}`, type: 'input', label: `Высота ${materialCount.current + 1}` },
         ]);
         materialCount.current++;
     };

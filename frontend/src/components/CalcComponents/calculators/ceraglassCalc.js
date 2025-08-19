@@ -2,7 +2,7 @@ import { constructWorks, constructName } from './triplexCalc.js'
 const Calculate = (data, selfcost) => {
     console.log(data)
     console.log(selfcost)
-    const { height, width, cutsv1, cutsv2, cutsv3, material1, material2, blank, color, under, customertype, quantity = 1} = data
+    const { height, width, cutsv1, cutsv2, cutsv3, material1, material2, blank, color, under, quantity = 1, trim} = data
     const heightsRaw = Object.entries(data).filter(([key]) => /^height\d+$/.test(key)).map(([_, value]) => value);
     const heights = heightsRaw.length > 0 ? heightsRaw : [height];
     const widthsRaw = Object.entries(data).filter(([key]) => /^width\d+$/.test(key)).map(([_, value]) => value)
@@ -72,7 +72,8 @@ const Calculate = (data, selfcost) => {
           h: heights[i]
         }));
         let count = countSheets(sheetWidth, sheetHeight, parts)
-        ceraTrim = 1 + (1 - S_all / (count * S_cera))
+        console.log(trim)
+        ceraTrim = 1 + (trim ?? (1 - S_all / (count * S_cera)))
         if(typeof count === 'string'){
           result.errors.push(count)
           count = 999
@@ -100,17 +101,43 @@ const Calculate = (data, selfcost) => {
     for (const item of Object.values(result.works))
         materialsandworks += item.finalValue
       
-    const price = materialsandworks * selfcost.pricesAndCoefs[`Керагласс ${customertype}`] + (under && selfcost.unders[under].value || 0)
+    const underPrice = under && selfcost.unders[under].value || 0
+
+    const gostPrice = 0
+    const retailPrice = materialsandworks * selfcost.pricesAndCoefs[`Керагласс Розница`] + underPrice
+    const bulkPrice = materialsandworks * selfcost.pricesAndCoefs[`Керагласс Опт`] + underPrice
+    const dealerPrice = materialsandworks * selfcost.pricesAndCoefs[`Керагласс Дилер`] + underPrice
+    const vipPrice = materialsandworks * selfcost.pricesAndCoefs[`Керагласс ВИП`] + underPrice
     result.finalPrice = [{
         name: 'Себестоимость',
         value: materialsandworks,
         string: `${(materialsandworks).toFixed(2)}`,
         formula: `Материалы и работы`
     },{
-        name: 'Наценка',
-        value: selfcost.pricesAndCoefs[`Керагласс ${customertype}`],
-        string: selfcost.pricesAndCoefs[`Керагласс ${customertype}`],
-        formula: `Наценка для типа клиента ${selfcost.pricesAndCoefs[`Керагласс ${customertype}`]}`
+        name: 'Цена для Выше госта',
+        value: gostPrice,
+        string: `${materialsandworks.toFixed(2)} * ${selfcost.pricesAndCoefs[`Керагласс Выше госта`]} + ${underPrice}`,
+        formula: `Себестоимость калькулятора * Наценка для типа клиента "Выше госта" + Подстолье`
+    },{
+        name: 'Цена для Розница',
+        value: retailPrice,
+        string: `${materialsandworks.toFixed(2)} * ${selfcost.pricesAndCoefs[`Керагласс Розница`]} + ${underPrice}`,
+        formula: `Себестоимость калькулятора * Наценка для типа клиента "Розница" + Подстолье`
+    },{
+        name: 'Цена для Опт',
+        value: bulkPrice,
+        string: `${materialsandworks.toFixed(2)} * ${selfcost.pricesAndCoefs[`Керагласс Опт`]} + ${underPrice}`,
+        formula: `Себестоимость калькулятора * Наценка для типа клиента "Опт" + Подстолье`
+    },{
+        name: 'Цена для Дилер',
+        value: dealerPrice,
+        string: `${materialsandworks.toFixed(2)} * ${selfcost.pricesAndCoefs[`Керагласс Дилер`]} + ${underPrice}`,
+        formula: `Себестоимость калькулятора * Наценка для типа клиента "Дилер" + Подстолье`
+    },{
+        name: 'Цена для ВИП',
+        value: vipPrice,
+        string: `${materialsandworks.toFixed(2)} * ${selfcost.pricesAndCoefs[`Керагласс ВИП`]} + ${underPrice}`,
+        formula: `Себестоимость калькулятора * Наценка для типа клиента "ВИП" + Подстолье`
     }]
     under && result.finalPrice.push({
         name: 'Подстолье',
@@ -134,7 +161,13 @@ const Calculate = (data, selfcost) => {
     return {
         key: crypto.randomUUID(),
         name,
-        price,
+        prices: {
+            gostPrice,
+            retailPrice,
+            bulkPrice,
+            dealerPrice,
+            vipPrice
+        },
         added: false,
         quantity,
         initialData: data,

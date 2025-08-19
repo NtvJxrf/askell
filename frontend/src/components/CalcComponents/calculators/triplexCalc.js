@@ -79,7 +79,6 @@ const Calculate = (data, selfcost) => {
                 break;
 
             default:
-                console.log(tape)
                 constructTape(S_tape, tape)
                 constructTape(S_tape, 'Пленка EVA Прозрачная 0,38 мм')
                 break;
@@ -144,6 +143,12 @@ const Calculate = (data, selfcost) => {
         calcmaterialsandworks += item.finalValue
     }
     const price = calcmaterialsandworks * selfcost.pricesAndCoefs[`Триплекс ${customertype}`]
+
+    const gostPrice = 0
+    const retailPrice = calcmaterialsandworks * selfcost.pricesAndCoefs[`Триплекс Розница`]
+    const bulkPrice = calcmaterialsandworks * selfcost.pricesAndCoefs[`Триплекс Опт`]
+    const dealerPrice = calcmaterialsandworks * selfcost.pricesAndCoefs[`Триплекс Дилер`]
+    const vipPrice = calcmaterialsandworks * selfcost.pricesAndCoefs[`Триплекс ВИП`]
     result.finalPrice = [{
         name: 'Себестоимость',
         value: materialsandworks,
@@ -155,10 +160,30 @@ const Calculate = (data, selfcost) => {
         string: `${(calcmaterialsandworks).toFixed(2)}`,
         formula: `(Материалы и работы) + Расходы (Себестоимость стекла берется "Тип цен для калькулятора")`
     },{
-        name: 'Наценка',
-        value: selfcost.pricesAndCoefs[`Триплекс ${customertype}`],
-        string: selfcost.pricesAndCoefs[`Триплекс ${customertype}`],
-        formula: `Наценка для типа клиента ${selfcost.pricesAndCoefs[`Триплекс ${customertype}`]}`
+        name: 'Цена для Выше госта',
+        value: gostPrice,
+        string: `${calcmaterialsandworks.toFixed(2)} * ${selfcost.pricesAndCoefs[`Триплекс Выше госта`]}`,
+        formula: `Себестоимость калькулятора * Наценка для типа клиента "Выше госта"`
+    },{
+        name: 'Цена для Розница',
+        value: retailPrice,
+        string: `${calcmaterialsandworks.toFixed(2)} * ${selfcost.pricesAndCoefs[`Триплекс Розница`]}`,
+        formula: `Себестоимость калькулятора * Наценка для типа клиента "Розница"`
+    },{
+        name: 'Цена для Опт',
+        value: bulkPrice,
+        string: `${calcmaterialsandworks.toFixed(2)} * ${selfcost.pricesAndCoefs[`Триплекс Опт`]}`,
+        formula: `Себестоимость калькулятора * Наценка для типа клиента "Опт"`
+    },{
+        name: 'Цена для Дилер',
+        value: dealerPrice,
+        string: `${calcmaterialsandworks.toFixed(2)} * ${selfcost.pricesAndCoefs[`Триплекс Дилер`]}`,
+        formula: `Себестоимость калькулятора * Наценка для типа клиента "Дилер"`
+    },{
+        name: 'Цена для ВИП',
+        value: vipPrice,
+        string: `${calcmaterialsandworks.toFixed(2)} * ${selfcost.pricesAndCoefs[`Триплекс ВИП`]}`,
+        formula: `Себестоимость калькулятора * Наценка для типа клиента "ВИП"`
     }]
     result.other = {
         S,
@@ -182,7 +207,13 @@ const Calculate = (data, selfcost) => {
     return {
             key: crypto.randomUUID(),
             name,
-            price,
+            prices: {
+                gostPrice,
+                retailPrice,
+                bulkPrice,
+                dealerPrice,
+                vipPrice
+            },
             added: false,
             quantity,
             initialData: data,

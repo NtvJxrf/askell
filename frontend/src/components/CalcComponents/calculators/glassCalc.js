@@ -128,6 +128,8 @@ const Calculate = (data, selfcost) => {
         formula: `Площадь * 100`
     })
     result.other = {
+        materialsandworks,
+        calcmaterialsandworks,
         S,
         P,
         stanok,

@@ -248,7 +248,7 @@ export const constructWorks = (work, quantity, context) => {
         case 'cutsv1': res('Вырез в стекле 1 кат'); break
         case 'cutsv2': res('Вырез в стекле 2 кат'); break
         case 'cutsv3': res('Вырез в стекле 3 кат'); break
-        case 'tempered': res(`Закалка ${thickness} мм`); break
+        case 'tempered': res(`Закалка`); break
         case 'cutting1': res('Резка (Управление)'); break
         case 'cutting2': res('Резка (Помощь)'); break
         case 'washing1': res('Мойка 1'); break

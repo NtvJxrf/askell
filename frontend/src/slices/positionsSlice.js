@@ -25,9 +25,10 @@ const positionsSlice = createSlice({
       state.triplexForGlasspacket = state.triplexForGlasspacket.filter(el => el.name != action.payload.name)
     },
     setProductionLoad: (state, action) => { state.productionLoad = action.payload },
-    setDisplayPrice: (state, action) => { state.displayPrice = action.payload }
+    setDisplayPrice: (state, action) => { state.displayPrice = action.payload },
+    setPositionAtIndex: (state, action) => { state.positions[action.payload.index] = action.payload.data}
   }
 })
 
-export const { setDisplayPrice, setProductionLoad, addNewPosition, addOrderPositions, setPositions, setOrder, setSelectedRowKeys, addNewPositions, addTriplexForGlasspacket, removeTriplexForGlasspacket } = positionsSlice.actions;
+export const { setPositionAtIndex, setDisplayPrice, setProductionLoad, addNewPosition, addOrderPositions, setPositions, setOrder, setSelectedRowKeys, addNewPositions, addTriplexForGlasspacket, removeTriplexForGlasspacket } = positionsSlice.actions;
 export default positionsSlice.reducer;

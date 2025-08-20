@@ -11,10 +11,9 @@ import {
 import { CSS } from '@dnd-kit/utilities';
 import { Button, Table, Space, InputNumber } from 'antd';
 import { useDispatch, useSelector } from 'react-redux';
-import { setPositions, setSelectedRowKeys } from '../../slices/positionsSlice';
+import { setPositions, setSelectedRowKeys, setPositionAtIndex } from '../../slices/positionsSlice';
 import PositionDetailsModal from './PositionDetailsModal.jsx';
-import { setFormData } from '../../slices/formSlice.js';
-import { useNavigate } from 'react-router-dom'
+import EditPositionModal from './EditPositionModal.jsx';
 const RowContext = React.createContext({});
 const DragHandle = () => {
     const { setActivatorNodeRef, listeners } = useContext(RowContext);
@@ -29,7 +28,6 @@ const DragHandle = () => {
         />
     );
 };
-
 const Row = ({ rowStyles = {}, ...props }) => {
     const {
         attributes,
@@ -67,8 +65,10 @@ const Positions = ({form}) => {
     const [isModalVisible, setIsModalVisible] = useState(false);
     const [selectedRecord, setSelectedRecord] = useState(null);
     const [pagination, setPagination] = useState({ current: 1, pageSize: 10 });
-    const [orderLoad, setOrderLoad] = useState(0); 
-    const navigate = useNavigate()
+    const [orderLoad, setOrderLoad] = useState(0);
+
+    const [editModalVisible, setEditModalVisible] = useState(false);
+
     const rowKeyToStyle = useMemo(() => {
         const styles = {};
         positions.forEach(record => {
@@ -119,43 +119,28 @@ const Positions = ({form}) => {
             dispatch(setPositions(newOrder));
         }
     };
-
     const handleQuantityChange = (key, quantity) => {
         dispatch(setPositions(positions.map(p => p.key === key ? { ...p, quantity } : p)));
     };
-
     const handleSelectionChange = (newSelectedKeys) => {
         dispatch(setSelectedRowKeys(newSelectedKeys));
     };
-
     const handleDelete = record => {
         const updated = positions.filter(item => item.key !== record.key);
         dispatch(setPositions(updated));
     };
-
     const handleDetails = record => {
         setSelectedRecord(record);
         setIsModalVisible(true);
     };
     const handleEdit = record => {
-        const map = {
-            'СМД': 'SMDForm',
-            'Стекло': 'GlassForm',
-            'Триплекс': 'TriplexForm',
-            'Керагласс': 'CeraglassForm',
-            'Стеклопакет': 'GlassPacketForm',
-        }
-        const typeMap = {
-            'СМД': 'smd',
-            'Стекло': 'glass',
-            'Триплекс': 'triplex',
-            'Керагласс': 'ceraglass',
-            'Стеклопакет': 'glasspacket',
-        }
-        dispatch(setFormData({formType: map[record.result.other.type], values: record.initialData}))
-        handleDelete(record)
-        form.setFieldsValue(record.initialData)
-        navigate(`/calculators/${typeMap[record.result.other.type]}`)
+        setSelectedRecord(record);
+        setEditModalVisible(true)
+    }
+    const handleSubmitEditing = (result) => {
+        const index = positions.findIndex(item => item.key === selectedRecord.key)
+        dispatch(setPositionAtIndex({index, data: result}))
+        setEditModalVisible(false)
     }
     const columns = [
         { key: 'sort', align: 'center', width: 80, render: () => <DragHandle /> },
@@ -265,7 +250,7 @@ const Positions = ({form}) => {
                     />
                 </SortableContext>
             </DndContext>
-
+            <EditPositionModal open={editModalVisible} onClose={() => setEditModalVisible(false)} record={selectedRecord} onSubmit={handleSubmitEditing}/>
             <PositionDetailsModal open={isModalVisible} onClose={() => setIsModalVisible(false)} record={selectedRecord} />
         </>
     );

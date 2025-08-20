@@ -125,7 +125,7 @@ const Calculate = (data, selfcost) => {
         name: 'Упаковка',
         value: (S * 2 * 100 + S * 100),
         string: `${((S * 2 * 100 + S * 100)).toFixed(2)}`,
-        formula: `Площадь * 100`
+        formula: `S * 2 * 100 + S * 100`
     })
     result.other = {
         materialsandworks,

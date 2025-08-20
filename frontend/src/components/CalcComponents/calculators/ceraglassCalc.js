@@ -146,6 +146,7 @@ const Calculate = (data, selfcost) => {
         formula: `Цена подстолья`
     })
     result.other = {
+        materialsandworks,
         S: S_all,
         productType: true,
         type: 'Керагласс',

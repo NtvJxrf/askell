@@ -13,7 +13,7 @@ import SMDCalc from '../CalcComponents/calculators/SMDCalc.js'
 import glasspacketCalc from '../CalcComponents/calculators/glasspacketCalc.js'
 import store from '../../store.js'
 const EditPositionModal = ({ open, onClose, record, onSubmit }) => {
-    if(!record) return null
+    if(!record || !record.result) return null
     const [form] = Form.useForm();
     useEffect(() => {
         if (record) {

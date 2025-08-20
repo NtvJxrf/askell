@@ -85,7 +85,15 @@ const PositionsHeader = () => {
                     position
                 }
             })
-            console.log(positions)
+            try{
+                const salePrices = res.data.positions.rows[0].assortment.salePrices;
+                const price = res.data.positions.rows[0].price;
+
+                const match = salePrices.find(p => p.value === price);
+                dispatch(setDisplayPrice(priceMap[match.priceType.name]))
+            }catch{
+                console.error('У найденого заказа не совпадает цена с калькулятором')
+            }
             dispatch(addOrderPositions(positions))
         }catch(error){
             console.error(error)

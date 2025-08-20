@@ -35,12 +35,12 @@ export const dictionary = {
     }
 }
 const mapPrices = {
-            gostPrice: 'Выше госта',
-            retailPrice: 'Розница',
-            bulkPrice: 'Опт',
-            dealerPrice: 'Дилер',
-            vipPrice: 'ВИП'
-        }
+    gostPrice: 'Выше госта',
+    retailPrice: 'Розница',
+    bulkPrice: 'Опт',
+    dealerPrice: 'Дилер',
+    vipPrice: 'ВИП'
+}
 export default class SkladService {
     static selfcost = {
         pricesAndCoefs: {},
@@ -70,6 +70,7 @@ export default class SkladService {
         })
         const deletedPositions = prevPositions.filter(el => !map[el.id])
         const productsToCreate = positionsToCreate.map(product => {
+            console.log(product)
             return {
                 name: product.name,
                 salePrices: Object.entries(product.prices).map(([key, value]) =>({
@@ -91,7 +92,8 @@ export default class SkladService {
                         "type" : "uom",
                         "mediaType" : "application/json"
                     }
-                }
+                },
+                minPrice: {currency: dictionary.currencies['руб'], value: product?.result?.other?.materialsandworks * 100 || 0}
         }});
         let createdProducts = null
         if (productsToCreate.length > 0) {
@@ -431,7 +433,7 @@ export const createProductionTask = async (id) =>{
                 })
                 return acc
             }, [])
-        const pzSelk = await makeProductionTask(`Склад Селькоровская материалы/прочее`, `Склад Селькоровская ПФ`, productionRows, order, {}, createdEntitys)
+        const pzSelk = await makeProductionTask(`Склад Селькоровская материалы/прочее`, `Склад Селькоровская СГИ`, productionRows, order, {}, createdEntitys)
         if(vizResult.length > 0){
             const productionRows = vizResult.reduce((acc, curr) => {
                 acc.push({  processingPlan: { meta: curr.meta },

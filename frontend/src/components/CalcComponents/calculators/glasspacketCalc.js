@@ -174,6 +174,7 @@ const Calculate = (data, selfcost, triplexArray) => {
         formula: `Себестоимость калькулятора * Наценка для типа клиента "ВИП"`
     }]
     result.other = {
+        materialsandworks,
         S,
         allThickness,
         P,

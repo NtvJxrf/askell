@@ -14,7 +14,7 @@ const Calculate = (data, selfcost) => {
     const P = ((height + width) * 2) / 1000
     const thickness = Number(material.match(/\d+/)[0])
     let weight = S * 2.5 * thickness
-    let name = `Доска стеклянная магнитно-маркерная ASKELL ${smdType === 'Иное' ? 'Size' : smdType} (${height}х${width}), ${material}${color ? `, ${color}` : ''}${print ? `, УФ печать` : ''}${cuts ? `, Вырезы: ${cuts}` : ''}`
+    let name = `Доска стеклянная магнитно-маркерная ASKELL ${smdType === 'Иное' ? 'Size' : smdType} (${width}х${height}), ${material}${color ? `, ${color}` : ''}${print ? `, УФ печать` : ''}${cuts ? `, Вырезы: ${cuts}` : ''}`
     const straightTypes = ['Lux', 'Standart', 'Krystal']
     const larger = Math.max(height, width)
     const stanok = (straightTypes.includes(smdType), larger > 2500 && cuts == 0 && weight < 50) ? 'Прямолинейка' : 'Криволинейка'

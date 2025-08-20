@@ -186,6 +186,8 @@ const Calculate = (data, selfcost) => {
         formula: `Себестоимость калькулятора * Наценка для типа клиента "ВИП"`
     }]
     result.other = {
+        materialsandworks,
+        calcmaterialsandworks,
         S,
         S_tape,
         P,

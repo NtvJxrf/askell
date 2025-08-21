@@ -87,12 +87,14 @@ const PositionsHeader = () => {
             })
             try{
                 const salePrices = res.data.positions.rows[0].assortment.salePrices;
-                const price = res.data.positions.rows[0].price;
-
-                const match = salePrices.find(p => p.value === price);
+                const price = Math.round(res.data.positions.rows[0].price)
+                const match = salePrices.find(p => Math.round(p.value) === price)
                 dispatch(setDisplayPrice(priceMap[match.priceType.name]))
-            }catch{
-                console.error('У найденого заказа не совпадает цена с калькулятором')
+                messageApi.success(`Установлен тип цен ${match.priceType.name}`)
+            }catch(error){
+                console.error(error)
+                messageApi.error('Не удалось подобрать тип цен, установлено "Розница"')
+                dispatch(setDisplayPrice('retailPrice'))
             }
             dispatch(addOrderPositions(positions))
         }catch(error){

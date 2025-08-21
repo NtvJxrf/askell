@@ -17,6 +17,8 @@ const updateKeys = [
   { label: "Цены и коэффиценты", key: "pricing" },
   { label: "Атрибуты", key: "attributes" },
   { label: "Техкарты для смд", key: "smdPlans" },
+  { label: "Валюты", key: "currencies" },
+  { label: "Типы цен", key: "priceTypes" },
 ];
 
 const Settings = () => {

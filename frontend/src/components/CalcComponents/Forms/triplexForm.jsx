@@ -6,7 +6,6 @@ import { useState, useRef, useMemo } from "react";
 
 const filterWords = ['стекло', 'зеркало'];
 const tapesWords = ['пленка']
-const tapesExcludedWords = ['прозрачн']
 
 const TriplexForm = () => {
   const materials = useSelector(state => state.selfcost.selfcost?.materials) || []
@@ -19,7 +18,7 @@ const TriplexForm = () => {
   const colorsArray = useMemo(() => Object.keys(colors).sort(), [colors]);
   const tapesArray = useMemo(() => {
     return Object.keys(materials)
-      .filter(el => tapesWords.some(word => el.toLowerCase().includes(word))).filter(el => tapesExcludedWords.some(word => !el.toLowerCase().includes(word)))
+      .filter(el => tapesWords.some(word => el.toLowerCase().includes(word)))
       .sort();
   }, [materials]);
   const triplexFormFields = useMemo(() => {

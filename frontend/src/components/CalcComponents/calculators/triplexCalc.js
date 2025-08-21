@@ -60,8 +60,8 @@ const Calculate = (data, selfcost) => {
                     constructTape(S_tape, 'Пленка EVA Прозрачная 0,76 мм')
                 break;
 
-            case 'Смарт пленка Magic Glass':
-                constructTape(S_tape, 'Смарт пленка Magic Glass')
+            case 'Многослойная смарт-пленка White':
+                constructTape(S_tape, 'Многослойная смарт-пленка White')
                 constructTape(S_tape * 2, 'Пленка EVA Прозрачная 0,76 мм')
                 break;
 

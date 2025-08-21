@@ -70,7 +70,8 @@ export default class SkladService {
         })
         const deletedPositions = prevPositions.filter(el => !map[el.id])
         const productsToCreate = positionsToCreate.map(product => {
-            console.log(product)
+            console.log(product.result.other.S)
+            console.log(Number((product.result.other.S).toFixed(2)))
             return {
                 name: product.name,
                 salePrices: Object.entries(product.prices).map(([key, value]) =>({

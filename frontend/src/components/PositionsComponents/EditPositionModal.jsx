@@ -17,6 +17,7 @@ const EditPositionModal = ({ open, onClose, record, onSubmit }) => {
     const [form] = Form.useForm();
     useEffect(() => {
         if (record) {
+            form.resetFields();
             form.setFieldsValue(record.initialData);
         }
     }, [record, form]);
@@ -36,7 +37,7 @@ const EditPositionModal = ({ open, onClose, record, onSubmit }) => {
     }
     const onFinish = (res) => {
         const selfcost = store.getState().selfcost.selfcost
-        const calcRes = calcMap[record.result.other.type](res, selfcost)
+        const calcRes = calcMap[record.result.other.type]({...res, quantity: record.quantity}, selfcost)
         form.resetFields();
         onSubmit(calcRes)
     }
@@ -58,6 +59,7 @@ const EditPositionModal = ({ open, onClose, record, onSubmit }) => {
             size='small'
             onFinish={onFinish}
             initialValues={record.initialData}
+            key={record.key}
         >
             <CurrentForm />
             <Form.Item style={{ display: 'flex', justifyContent: 'center', marginTop: 16 }}>

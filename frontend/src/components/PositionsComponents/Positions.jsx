@@ -55,7 +55,23 @@ const Row = ({ rowStyles = {}, ...props }) => {
         </RowContext.Provider>
     );
 };
+const QuantityCell = ({ value, record, onChange }) => {
+    const [localVal, setLocalVal] = useState(value);
 
+    useEffect(() => {
+        setLocalVal(value); // синхронизировать если стор обновился
+    }, [value]);
+
+    return (
+        <InputNumber
+            min={1}
+            value={localVal}
+            onChange={val => setLocalVal(val)}
+            onBlur={() => onChange(record.key, localVal)}
+            style={{ maxWidth: 80 }}
+        />
+    );
+};
 const Positions = ({form}) => {
     const dispatch = useDispatch();
     const positions = useSelector(state => state.positions.positions);
@@ -180,7 +196,7 @@ const Positions = ({form}) => {
             dataIndex: 'quantity',
             key: 'quantity',
             render: (value, record) => (
-                <InputNumber min={1} value={value} onChange={val => handleQuantityChange(record.key, val)} style={{ maxWidth: 80 }} />
+                <QuantityCell value={value} record={record} onChange={handleQuantityChange} />
             ),
         },
     ];

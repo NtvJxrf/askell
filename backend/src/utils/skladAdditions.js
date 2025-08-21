@@ -12,7 +12,7 @@ export const getMaterials = async () => {
     const promises = []
     promises.push(fetchAllRows("https://api.moysklad.ru/api/remap/1.2/entity/product?filter=pathName=0 Закупки/0.02.03 Стекло/Материал от поставщиков, Стекло/Матированное стекло (Matelux);pathName=0 Закупки/0.02.03 Стекло/Материал от поставщиков, Стекло/Осветленное стекло;pathName=0 Закупки/0.02.03 Стекло/Материал от поставщиков, Стекло/Простое стекло;pathName=0 Закупки/0.02.03 Стекло/Материал от поставщиков, Стекло/Рифленое стекло;pathName=0 Закупки/0.02.03 Стекло/Материал от поставщиков, Стекло/Стекло Stopsol и Зеркало;pathName=0 Закупки/0.02.03 Стекло/Материал от поставщиков, Стекло/Цветное стекло&expand=buyPrice.currency"))
     promises.push(fetchAllRows("https://api.moysklad.ru/api/remap/1.2/entity/product?filter=pathName=0 Закупки/0.02.04 Пленка EVA/Пленка EVA прозрачная;pathName=0 Закупки/0.02.04 Пленка EVA/Плёнки декоративные и цветные&expand=buyPrice.currency"))
-    promises.push(fetchAllRows("https://api.moysklad.ru/api/remap/1.2/entity/product?filter=pathName=0 Закупки/0.02.02 Керамика/LAMINAM;pathName=0 Закупки/0.02.02 Керамика/ДЕГОН Стандарт&expand=buyPrice.currency"))
+    promises.push(fetchAllRows("https://api.moysklad.ru/api/remap/1.2/entity/product?filter=pathName=0 Закупки/0.02.02 Керамика/LAMINAM;pathName=0 Закупки/0.02.02 Керамика/ДЕГОН Стандарт&expand=buyPrice.currency,salePrices.currency"))
     promises.push(fetchAllRows("https://api.moysklad.ru/api/remap/1.2/entity/product?filter=pathName=0 Закупки/Материалы для стеклопакетов&expand=buyPrice.currency"))
     promises.push(fetchAllRows("https://api.moysklad.ru/api/remap/1.2/entity/product?filter=code=1060964;code=11111599&expand=buyPrice.currency"))//Пятак, смола
     const results = await Promise.all(promises)
@@ -21,7 +21,7 @@ export const getMaterials = async () => {
             const res = {
                 meta: material.meta,
                 value: convertPrice(material.buyPrice),
-                calcValue: material.salePrices.find(el => el.priceType.name == 'Цена для расчёта в калькуляторе').value / 100
+                calcValue: convertPrice(material.salePrices.find(el => el.priceType.name == 'Цена для расчёта в калькуляторе'))
             }
             if(material.name.toLowerCase()?.includes('плита')){
                 const l = material?.attributes?.find(el => el.name === 'Длина в мм')?.value
@@ -234,7 +234,7 @@ export const initSkladAdditions = async () => {
     console.log(res)
     console.log('all dependencies loaded')
 }
-const convertPrice = (price, ) => {
+const convertPrice = price => {
     return +(price.value / 100 * price.currency.rate).toFixed(2) || 0
 }
 async function fetchAllRows(urlBase) {

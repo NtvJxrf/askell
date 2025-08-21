@@ -65,7 +65,7 @@ const formConfigs = {
           name: 'rounding',
           label: 'Округление',
           type: 'select',
-          options: ['Округление до 0.5', 'Умножить на 2'],
+          options: ['Округление до 0.3', 'Округление до 0.5', 'Умножить на 2'],
           rules: [{ required: true, message: 'Fill this field' }]
         }
       ]
@@ -99,7 +99,7 @@ const formConfigs = {
           name: 'rounding',
           label: 'Округление',
           type: 'select',
-          options: ['Округление до 0.5', 'Умножить на 2'],
+          options: ['Округление до 0.3', 'Округление до 0.5', 'Умножить на 2'],
           rules: [{ required: true, message: 'Fill this field' }]
         }
       ],

@@ -5,10 +5,17 @@ const Calculate = (data, selfcost) => {
     console.log(data)
     const { material, height, width, polishing, drills, zenk, cutsv1, cutsv2, cutsv3, tempered, shape, color, print, rounding, quantity = 1 } = data
     let S = (height * width) / 1000000
-    if(S < 0.5){
-        switch (rounding){
-            case 'Округление до 0.5': S = 0.5; break
-            case 'Умножить на 2': S = S * 2; break
+    let S_calc = S
+    if (S < 0.3 && rounding == 'Округление до 0.3') {
+        S_calc = 0.3
+    } else if (S < 0.5) {
+        switch (rounding) {
+            case 'Округление до 0.5':
+                S_calc = 0.5
+                break
+            case 'Умножить на 2':
+                S_calc = S * 2
+                break
         }
     }
     const P = ((height + width) * 2) / 1000
@@ -27,9 +34,9 @@ const Calculate = (data, selfcost) => {
     }
     result.materials.push({
         name: material,
-        value: (selfcost.materials[material].value * S) * selfcost.pricesAndCoefs['Коэффициент обрези стекло'],
-        calcValue: (selfcost.materials[material].calcValue * S) * selfcost.pricesAndCoefs['Коэффициент обрези стекло'],
-        string: `(${selfcost.materials[material].value} * ${S.toFixed(2)}) * ${selfcost.pricesAndCoefs['Коэффициент обрези стекло']}`,
+        value: (selfcost.materials[material].value * S_calc) * selfcost.pricesAndCoefs['Коэффициент обрези стекло'],
+        calcValue: (selfcost.materials[material].calcValue * S_calc) * selfcost.pricesAndCoefs['Коэффициент обрези стекло'],
+        string: `(${selfcost.materials[material].value} * ${S_calc.toFixed(2)}) * ${selfcost.pricesAndCoefs['Коэффициент обрези стекло']}`,
         formula: '(Цена за м² * Площадь) * Коэффициент обрези стекло'
     });
     color && result.materials.push({
@@ -41,32 +48,32 @@ const Calculate = (data, selfcost) => {
     switch (print){
         case 'С 1 стороны': result.works.push({
             name: 'Печать',
-            value: selfcost.pricesAndCoefs[`УФ печать`] * S,
-            finalValue: selfcost.pricesAndCoefs[`УФ печать`] * S,
-            string: `${selfcost.pricesAndCoefs[`УФ печать`]} * ${S.toFixed(2)}`,
+            value: selfcost.pricesAndCoefs[`УФ печать`] * S_calc,
+            finalValue: selfcost.pricesAndCoefs[`УФ печать`] * S_calc,
+            string: `${selfcost.pricesAndCoefs[`УФ печать`]} * ${S_calc.toFixed(2)}`,
             formula: 'Себестоимость уф печати * S'
         }); break
         case 'С 2 сторон': result.works.push({
             name: 'Печать',
-            value: selfcost.pricesAndCoefs[`УФ печать`] * S * 2,
-            finalValue: selfcost.pricesAndCoefs[`УФ печать`] * S * 2,
-            string: `${selfcost.pricesAndCoefs[`УФ печать`]} * ${S.toFixed(2)} * 2`,
+            value: selfcost.pricesAndCoefs[`УФ печать`] * S_calc * 2,
+            finalValue: selfcost.pricesAndCoefs[`УФ печать`] * S_calc * 2,
+            string: `${selfcost.pricesAndCoefs[`УФ печать`]} * ${S_calc.toFixed(2)} * 2`,
             formula: 'Себестоимость уф печати * S * 2'
         }); break
     }
     const context = { selfcost, result, thickness};
-    constructWorks('cutting1', S, context);
-    constructWorks('cutting2', S, context);
-    constructWorks('washing1', S, context);
-    constructWorks('otk', S, context);
+    constructWorks('cutting1', S_calc, context);
+    constructWorks('cutting2', S_calc, context);
+    constructWorks('washing1', S_calc, context);
+    constructWorks('otk', S_calc, context);
     stanok == 'Криволинейка' ? constructWorks('curvedProcessing', P, context) : constructWorks('straightProcessing', P, context)
     drills && constructWorks('drills', drills, context);
     zenk && constructWorks('zenk', zenk, context);
-    tempered && constructWorks('tempered', S, context);
+    tempered && constructWorks('tempered', S_calc, context);
     cutsv1 && constructWorks('cutsv1', cutsv1, context);
     cutsv2 && constructWorks('cutsv2', cutsv2, context);
     cutsv3 && constructWorks('cutsv3', cutsv3, context);
-    color && constructWorks('color', S, context);
+    color && constructWorks('color', S_calc, context);
 
     let materialsandworks = 0
     let calcmaterialsandworks = 0
@@ -78,7 +85,7 @@ const Calculate = (data, selfcost) => {
         materialsandworks += item.finalValue
         calcmaterialsandworks += item.finalValue
     }
-    const pack = (!material.includes('М1') ? (S * 2 * 100 + S * 100) : 0)
+    const pack = (!material.includes('М1') ? (S_calc * 2 * 100 + S_calc * 100) : 0)
 
     const gostPrice = calcmaterialsandworks * selfcost.pricesAndCoefs[`Стекло Выше госта`] + pack
     const retailPrice = calcmaterialsandworks * selfcost.pricesAndCoefs[`Стекло Розница`] + pack
@@ -123,8 +130,8 @@ const Calculate = (data, selfcost) => {
     }]
     !material.includes('М1') && result.finalPrice.push({
         name: 'Упаковка',
-        value: (S * 2 * 100 + S * 100),
-        string: `${((S * 2 * 100 + S * 100)).toFixed(2)}`,
+        value: (S_calc * 2 * 100 + S_calc * 100),
+        string: `${((S_calc * 2 * 100 + S_calc * 100)).toFixed(2)}`,
         formula: `S * 2 * 100 + S * 100`
     })
     result.other = {

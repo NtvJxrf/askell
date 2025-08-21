@@ -8,11 +8,19 @@ const Calculate = (data, selfcost) => {
     addTape && tapes.push(addTape)
     // let name = `Триплекс, ${materials.join(' + ')}, (${height}х${width}${polishing ? ', Полировка' : ''}${tempered ? ', Закаленное' : ''}${cutsv1 ? `, Вырезы 1 кат.: ${cutsv1}` : ''}${cutsv2 ? `, Вырезы 2 кат.: ${cutsv2}` : ''}${cutsv3 ? `, Вырезы 3 кат.: ${cutsv3}` : ''}${drills ? `, Сверление: ${drills}` : ''}${zenk ? `, Зенкование: ${zenk}` : ''}${print ? ', Печать' : ''}, площадь: ${(height * width / 1000000).toFixed(2)})`
     let S = (height * width) / 1000000
-    if(S < 0.5)
-        switch (rounding){
-            case 'Округление до 0.5': S = 0.5; break
-            case 'Умножить на 2': S = S * 2; break
+    let S_calc = S
+    if (S < 0.3 && rounding == 'Округление до 0.3') {
+        S_calc = 0.3
+    } else if (S < 0.5) {
+        switch (rounding) {
+            case 'Округление до 0.5':
+                S_calc = 0.5
+                break
+            case 'Умножить на 2':
+                S_calc = S * 2
+                break
         }
+    }
     const P = 2 * (height + width) / 1000
     let allThickness = 0
     let weight = 0
@@ -91,47 +99,47 @@ const Calculate = (data, selfcost) => {
         allThickness += thickness
         weight += 2.5 * ((height * width) / 1000000) * thickness
         
-        tempered && constructWorks('tempered', S, { thickness, result, selfcost})
+        tempered && constructWorks('tempered', S_calc, { thickness, result, selfcost})
         result.materials.push({
             name: material,
-            value: selfcost.materials[material].value * S * selfcost.pricesAndCoefs['Коэффициент обрези стекло'],
-            calcValue: (selfcost.materials[material].calcValue * S) * selfcost.pricesAndCoefs['Коэффициент обрези стекло'],
-            string: `${selfcost.materials[material].value} * ${S.toFixed(2)} * ${selfcost.pricesAndCoefs['Коэффициент обрези стекло']}`,
+            value: selfcost.materials[material].value * S_calc * selfcost.pricesAndCoefs['Коэффициент обрези стекло'],
+            calcValue: (selfcost.materials[material].calcValue * S_calc) * selfcost.pricesAndCoefs['Коэффициент обрези стекло'],
+            string: `${selfcost.materials[material].value} * ${S_calc.toFixed(2)} * ${selfcost.pricesAndCoefs['Коэффициент обрези стекло']}`,
             formula: 'Цена за м² * Площадь * Коэффициент обрези стекло'
         });
     }
     switch (print){
         case 'С 1 стороны': result.works.push({
             name: 'Печать',
-            value: selfcost.pricesAndCoefs[`УФ печать`] * S,
-            finalValue: selfcost.pricesAndCoefs[`УФ печать`] * S,
-            string: `${selfcost.pricesAndCoefs[`УФ печать`]} * ${S.toFixed(2)}`,
+            value: selfcost.pricesAndCoefs[`УФ печать`] * S_calc,
+            finalValue: selfcost.pricesAndCoefs[`УФ печать`] * S_calc,
+            string: `${selfcost.pricesAndCoefs[`УФ печать`]} * ${S_calc.toFixed(2)}`,
             formula: 'Себестоимость уф печати * S'
         }); break
         case 'С 2 сторон': result.works.push({
             name: 'Печать',
-            value: selfcost.pricesAndCoefs[`УФ печать`] * S * 2,
-            finalValue: selfcost.pricesAndCoefs[`УФ печать`] * S * 2,
-            string: `${selfcost.pricesAndCoefs[`УФ печать`]} * ${S.toFixed(2)} * 2`,
+            value: selfcost.pricesAndCoefs[`УФ печать`] * S_calc * 2,
+            finalValue: selfcost.pricesAndCoefs[`УФ печать`] * S_calc * 2,
+            string: `${selfcost.pricesAndCoefs[`УФ печать`]} * ${S_calc.toFixed(2)} * 2`,
             formula: 'Себестоимость уф печати * S * 2'
         }); break
     }
     const stanok = (shape && !cutsv1 && !cutsv2 && !cutsv3 && weight < 50) ? 'Прямолинейка' : 'Криволинейка'
     let name = constructName(`Триплекс, ${materials.join(' + ')}`, {...data, stanok})
     const context = { selfcost, result, stanok, allThickness };
-    constructWorks('cutting1', S * materials.length, context);
-    constructWorks('cutting2', S * materials.length, context);
+    constructWorks('cutting1', S_calc * materials.length, context);
+    constructWorks('cutting2', S_calc * materials.length, context);
     stanok == 'Криволинейка' ? constructWorks('curvedProcessing', P * materials.length, context) : constructWorks('straightProcessing', P * materials.length, context)
-    constructWorks('washing1', S * materials.length, context);
-    constructWorks('otk', S * materials.length, context);
-    constructWorks('triplexing1', S * (materials.length - 1), context);
-    constructWorks('triplexing2', S * (materials.length - 1), context);
+    constructWorks('washing1', S_calc * materials.length, context);
+    constructWorks('otk', S_calc * materials.length, context);
+    constructWorks('triplexing1', S_calc * (materials.length - 1), context);
+    constructWorks('triplexing2', S_calc * (materials.length - 1), context);
     drills && constructWorks('drills', drills * materials.length, context);
     zenk && constructWorks('zenk', zenk * materials.length, context);
     cutsv1 && constructWorks('cutsv1', cutsv1 * materials.length, context);
     cutsv2 && constructWorks('cutsv2', cutsv2 * materials.length, context);
     cutsv3 && constructWorks('cutsv3', cutsv3 * materials.length, context);
-    color && constructWorks('color', S, context);
+    color && constructWorks('color', S_calc, context);
     let materialsandworks = 0
     let calcmaterialsandworks = 0
     for (const item of Object.values(result.materials)){

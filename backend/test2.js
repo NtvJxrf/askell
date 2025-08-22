@@ -4,7 +4,7 @@ import * as XLSX from 'xlsx';
 import axios from 'axios';
 dotenv.config();
 
-await axios.post('http://localhost:7878/api/sklad/createPzHook?id=23459a4f-768f-11f0-0a80-19eb002bcdce')
+await axios.post('http://localhost:7878/api/sklad/createPzHook?id=56508553-4474-11f0-0a80-1b74001fc4eb')
 // const orders = await fetchAllRows(
 //     'https://api.moysklad.ru/api/remap/1.2/entity/customerorder?filter=agent=https://api.moysklad.ru/api/remap/1.2/entity/counterparty/ddff8f46-e2fe-11ec-0a80-0cef002e4e8d&expand=positions.assortment'
 // );

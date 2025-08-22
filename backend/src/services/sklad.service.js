@@ -379,9 +379,30 @@ const glassPacket = async (data, order, position, createdEntitys) => {
 }
 export const createProductionTask = async (id) =>{
     console.time('creatingProudctionTask')
-    const order = await Client.sklad(`https://api.moysklad.ru/api/remap/1.2/entity/customerorder/${id}?expand=positions.assortment,invoicesOut&limit=100`)
+    const order = await Client.sklad(`https://api.moysklad.ru/api/remap/1.2/entity/customerorder/${id}?expand=positions.assortment,invoicesOut,agent&limit=100`)
     if(!order)
         throw new ApiError(`Заказ покупателя с ${id} не найден`)
+    const debt = order.agent.tags.includes('долг')
+    if(debt){
+        const task = await Client.sklad('https://api.moysklad.ru/api/remap/1.2/entity/task', 'post', {
+            assignee: {
+                meta: order.owner.meta,
+            },
+            operation: {
+                meta: order.meta
+            },
+            description: `У контрагента есть долг, создание пз не было выполнено`
+        })
+        await Client.sklad(`https://api.moysklad.ru/api/remap/1.2/entity/customerorder/${order.id}`, 'put', {
+            state: { meta: {
+                "href" : "https://api.moysklad.ru/api/remap/1.2/entity/customerorder/metadata/states/6a37967b-5899-11f0-0a80-1bc9000373a3",
+                "metadataHref" : "https://api.moysklad.ru/api/remap/1.2/entity/customerorder/metadata",
+                "type" : "state",
+                "mediaType" : "application/json"
+            }}
+        })
+        return
+    }
     const orderAttr = order.attributes.reduce((a, x) => {
                 a[x.name] = x.value;
                 return a;

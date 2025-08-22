@@ -740,10 +740,10 @@ const generateStages = (data, place) => {
     }
 }
 const changeStatusForPZ = async (id) => {
-    const demand = await Client.sklad(`https://api.moysklad.ru/api/remap/1.2/entity/demand/${id}`)
-    const order = await Client.sklad(demand.customerOrder.meta.href)
-    if(!order.productionTasks) return
-    Client.sklad('https://api.moysklad.ru/api/remap/1.2/entity/productiontask', 'post', order.productionTasks.map(el => {
+    const demand = await Client.sklad(`https://api.moysklad.ru/api/remap/1.2/entity/demand/${id}?expand=invoicesOut.customerOrder.productionTasks,customerOrder.productionTasks&limit=100`)
+    const tasks = demand?.invoicesOut[0]?.customerOrder?.productionTasks || demand?.customerOrder?.productionTasks
+    if(!tasks) return
+    Client.sklad('https://api.moysklad.ru/api/remap/1.2/entity/productiontask', 'post', tasks.map(el => {
         return {
             meta: el.meta,
             state: {meta: {

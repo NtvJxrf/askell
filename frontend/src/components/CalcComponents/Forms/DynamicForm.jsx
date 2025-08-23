@@ -16,7 +16,6 @@ import glassCalc from '../calculators/glassCalc.js'
 import SMDCalc from '../calculators/SMDCalc.js'
 import glasspacketCalc from '../calculators/glasspacketCalc.js'
 import { addNewPosition } from "../../../slices/positionsSlice.js";
-// import * as XLSX from 'xlsx';
 const calcMap = {
     TriplexForm: triplexCalc,
     CeraglassForm: ceraglassCalc,
@@ -36,7 +35,6 @@ const DynamicForm = ({type, form}) => {
     const dispatch = useDispatch();
     const formData = store.getState().forms[type]
     const selfcost = useSelector(state => state.selfcost.selfcost)
-    // const materials = useSelector(state => state.selfcost.selfcost?.materials) || [];
     const onFinish = async (value) => {
         // const filterWrods = ['стекло', 'зеркало'];
         // const materialsArray = Object.keys(materials)

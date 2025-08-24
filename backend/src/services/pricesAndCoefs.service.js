@@ -50,7 +50,7 @@ export default class pricesAndCoefsService {
         createData.ratePerHour = ratePerHour
         createData.costOfWork = costOfWork
         createData.salary = salary
-        updateData.place = place
+        createData.place = place
     } else
         createData.value = value
 

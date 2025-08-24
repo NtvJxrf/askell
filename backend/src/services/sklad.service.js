@@ -70,7 +70,7 @@ export default class SkladService {
         })
         const deletedPositions = prevPositions.filter(el => !map[el.id])
         const productsToCreate = positionsToCreate.map(product => {
-            return {
+            const params = {
                 name: product.name,
                 salePrices: Object.entries(product.prices).map(([key, value]) =>({
                     value: Number((value * 100).toFixed(2)),
@@ -93,8 +93,56 @@ export default class SkladService {
                     }
                 },
                 minPrice: {currency: dictionary.currencies['руб'], value: product?.result?.other?.materialsandworks * 100 || 0}
-        }});
+            }
+            switch (product.result.other.type){
+                case 'Стекло':
+                    params.productFolder = {
+                        meta: {
+                            "href" : "https://api.moysklad.ru/api/remap/1.2/entity/productfolder/20ea16d2-80c3-11f0-0a80-001e001e5b2d",
+                            "metadataHref" : "https://api.moysklad.ru/api/remap/1.2/entity/productfolder/metadata",
+                            "type" : "productfolder",
+                            "mediaType" : "application/json"
+                        }
+                    }
+                break
+                case 'Керагласс':
+                    params.productFolder = {
+                        meta: {
+                            "href" : "https://api.moysklad.ru/api/remap/1.2/entity/productfolder/2c406074-80c3-11f0-0a80-1b2d001e8696",
+                            "metadataHref" : "https://api.moysklad.ru/api/remap/1.2/entity/productfolder/metadata",
+                            "type" : "productfolder",
+                            "mediaType" : "application/json"
+                        }
+                    }
+                break
+                case 'Триплекс':
+                    params.productFolder = {
+                        meta: {
+                            "href" : "https://api.moysklad.ru/api/remap/1.2/entity/productfolder/26ce840f-80c3-11f0-0a80-1530001f634a",
+                            "metadataHref" : "https://api.moysklad.ru/api/remap/1.2/entity/productfolder/metadata",
+                            "type" : "productfolder",
+                            "mediaType" : "application/json"
+                        }
+                    }
+                break
+                case 'СМД':
+                    params.productFolder = {
+                        meta: {
+                            "href" : "https://api.moysklad.ru/api/remap/1.2/entity/productfolder/31909ce4-80c3-11f0-0a80-0f23001e1345",
+                            "metadataHref" : "https://api.moysklad.ru/api/remap/1.2/entity/productfolder/metadata",
+                            "type" : "productfolder",
+                            "mediaType" : "application/json"
+                        }
+                    }
+                break
+                case 'Стеклопакет':
+
+                break
+            }
+            return params
+        });
         let createdProducts = null
+        console.log(productsToCreate.length)
         if (productsToCreate.length > 0) {
             createdProducts = await Client.sklad("https://api.moysklad.ru/api/remap/1.2/entity/product", "post", productsToCreate)
             const promises = []
@@ -244,7 +292,15 @@ const ceraglass = async (data, order, position, createdEntitys) => {
                 promises.push(makeprocessingprocess(stagesSelk))
                 const product = await Client.sklad('https://api.moysklad.ru/api/remap/1.2/entity/product', 'post', {
                     name: `${'ПФ'} ${material} (${heights[i]}х${widths[i]}${polishing ? ', Полировка' : ''}${tempered ? ', Закаленное' : ''}${cutsv1 ? `, Вырезы 1 кат.: ${cutsv1}` : ''}${cutsv2 ? `, Вырезы 2 кат.: ${cutsv2}` : ''}${cutsv3 ? `, Вырезы 3 кат.: ${cutsv3}` : ''}${drills ? `, Сверление: ${drills}` : ''}${zenk ? `, Зенкование: ${zenk}` : ''}${print ? ', Печать' : ''}${color ? `, ${color}` : ''})`,
-                    attributes: generateProductAttributes({...data.initialData, ...data.result.other, height: heights[i], width: widths[i], order})
+                    attributes: generateProductAttributes({...data.initialData, ...data.result.other, height: heights[i], width: widths[i], order}),
+                    productFolder: {
+                        meta: {
+                            "href" : "https://api.moysklad.ru/api/remap/1.2/entity/productfolder/7158b3fd-879a-11ef-0a80-0b580038350a",
+                            "metadataHref" : "https://api.moysklad.ru/api/remap/1.2/entity/productfolder/metadata",
+                            "type" : "productfolder",
+                            "mediaType" : "application/json",
+                        }
+                    }
                 })
                 const responses = await Promise.all(promises)
                 const processingprocess = responses[0]
@@ -261,12 +317,21 @@ const ceraglass = async (data, order, position, createdEntitys) => {
             promises.push(makeprocessingprocess(stagesViz))
             const product = await Client.sklad('https://api.moysklad.ru/api/remap/1.2/entity/product', 'post', {
                 name: `${'ПФ'} ${material} (${heights[i]}х${widths[i]}${cutsv1 ? `, Вырезы 1 кат.: ${cutsv1}` : ''}${cutsv2 ? `, Вырезы 2 кат.: ${cutsv2}` : ''}${cutsv3 ? `, Вырезы 3 кат.: ${cutsv3}` : ''}${zenk ? `, Зенкование: ${zenk}` : ''}${print ? ', Печать' : ''}${color ? `, ${color}` : ''})`,
-                attributes: generateProductAttributes({...data.initialData, ...data.result.other, height: heights[i], width: widths[i], order})
+                attributes: generateProductAttributes({...data.initialData, ...data.result.other, height: heights[i], width: widths[i], order}),
+                productFolder: {
+                    meta: {
+                        "href" : "https://api.moysklad.ru/api/remap/1.2/entity/productfolder/7158b3fd-879a-11ef-0a80-0b580038350a",
+                        "metadataHref" : "https://api.moysklad.ru/api/remap/1.2/entity/productfolder/metadata",
+                        "type" : "productfolder",
+                        "mediaType" : "application/json",
+                    }
+                }
             })
             const responses = await Promise.all(promises)
             const processingprocess = responses[0]
             createdEntitys.product.push(product)
-            const plan = await makeProcessingPlanGlass({initialData: {height: heights[i], width: widths[i]}, ceraTrim: data.result.other.ceraTrim }, position.assortment.name, order, processingprocess, product, true, material, createdEntitys)
+            const newData = { ...data, ...{initialData: {height: heights[i], width: widths[i]}, ceraTrim: data.result.other.ceraTrim }}
+            const plan = await makeProcessingPlanGlass(newData, position.assortment.name, order, processingprocess, product, true, material, createdEntitys)
             plan.quantity = position.quantity
             result.viz.push(plan)
             pfs.push(product)
@@ -334,7 +399,7 @@ const smd = async (data, order, position, createdEntitys) => {
             acc[curr.name] = curr.value
             return acc
         }, {})
-        const pzViz = await makeProductionTask(`Склад ВИЗ ПФ`, `Екатеринбург ВИЗ СГИ`, productionRows, order, {viz: true, smd: true, print, height: attributes['Длина в мм'], width: attributes['Ширина в мм'], colors: [attributes['Цвет доски']?.name]}, createdEntitys)
+        const pzViz = await makeProductionTask(`ВИЗ ПФ`, `ВИЗ СГИ`, productionRows, order, {viz: true, smd: true, print, height: attributes['Длина в мм'], width: attributes['Ширина в мм'], colors: [attributes['Цвет доски']?.name]}, createdEntitys)
         return
     }
     const result = {
@@ -371,7 +436,7 @@ const smd = async (data, order, position, createdEntitys) => {
                     },
                     productionVolume: position.quantity
                 }]
-    const pzViz = await makeProductionTask(`Склад ВИЗ ПФ`, `Екатеринбург ВИЗ СГИ`, productionRows, order, {viz: true, smd: true, print, height: data.initialData.height, width: data.initialData.width, colors: [color]}, createdEntitys)
+    const pzViz = await makeProductionTask(`ВИЗ ПФ`, `ВИЗ СГИ`, productionRows, order, {viz: true, smd: true, print, height: data.initialData.height, width: data.initialData.width, colors: [color]}, createdEntitys)
     return result
 }
 const glassPacket = async (data, order, position, createdEntitys) => {
@@ -453,7 +518,7 @@ export const createProductionTask = async (id) =>{
                 })
                 return acc
             }, [])
-        const pzSelk = await makeProductionTask(`Склад Селькоровская материалы/прочее`, `Склад Селькоровская СГИ`, productionRows, order, {}, createdEntitys)
+        const pzSelk = await makeProductionTask(`Селькоровская материалы/прочее`, `Селькоровская СГИ`, productionRows, order, {}, createdEntitys)
         if(vizResult.length > 0){
             const productionRows = vizResult.reduce((acc, curr) => {
                 acc.push({  processingPlan: { meta: curr.meta },
@@ -461,7 +526,7 @@ export const createProductionTask = async (id) =>{
                     })
                     return acc
                 }, [])
-            const pzViz = await makeProductionTask(`Склад ВИЗ ПФ`, `Екатеринбург ВИЗ СГИ`, productionRows, order, {viz: true, smd: false, print, triplex, colors, ceraglass}, createdEntitys)
+            const pzViz = await makeProductionTask(`ВИЗ ПФ`, `ВИЗ СГИ`, productionRows, order, {viz: true, smd: false, print, triplex, colors, ceraglass}, createdEntitys)
         }
         console.timeEnd('creatingProudctionTask')
     }catch(error){
@@ -512,7 +577,13 @@ const makeProductionTask = async (materialsStore, productsStore, productionRows,
         reserve: true,
         customerOrders: [{
             meta: order.meta
-        }]
+        }],
+        state: { meta: {
+            "href" : "https://api.moysklad.ru/api/remap/1.2/entity/productiontask/metadata/states/80ac3d11-6c11-11ef-0a80-0c2300044c17",
+            "metadataHref" : "https://api.moysklad.ru/api/remap/1.2/entity/productiontask/metadata",
+            "type" : "state",
+            "mediaType" : "application/json"
+        }}
     }
     order?.owner?.meta && (stats.owner = { meta: order.owner.meta})
     order?.deliveryPlannedMoment && (stats.deliveryPlannedMoment = order.deliveryPlannedMoment)
@@ -531,7 +602,15 @@ const makeProcessingPlanViz = async (data, name, order, processingprocess, produ
                 meta: product.meta,
             },
             quantity: 1
-        }]
+        }],
+        parent: {
+            meta: {
+                "href" : "https://api.moysklad.ru/api/remap/1.2/entity/processingplanfolder/f699d4ef-7cdb-11f0-0a80-17360009d500",
+                "metadataHref" : "https://api.moysklad.ru/api/remap/1.2/entity/processingplanfolder/metadata",
+                "type" : "processingplanfolder",
+                "mediaType" : "application/json"
+            }
+        }
     })
     createdEntitys.plan.push(response)
     return response
@@ -545,7 +624,7 @@ const makeProcessingPlanGlass = async (data, name, order, processingprocess, pro
         quantity: (data.initialData.width * data.initialData.height) / 1000000 * (data.ceraTrim ? data.ceraTrim : 1.1)
     }]
 
-    if(data.result.other.package){
+    if(data?.result?.other?.package){
         const processingProcessPositions = await Client.sklad(`${processingprocess.href}/positions`)
         materials.push({
             processingProcessPosition: {
@@ -566,14 +645,22 @@ const makeProcessingPlanGlass = async (data, name, order, processingprocess, pro
                 meta: product.meta,
             },
             quantity: 1
-        }]
+        }],
+        parent: {
+            meta: {
+                "href" : "https://api.moysklad.ru/api/remap/1.2/entity/processingplanfolder/f699d4ef-7cdb-11f0-0a80-17360009d500",
+                "metadataHref" : "https://api.moysklad.ru/api/remap/1.2/entity/processingplanfolder/metadata",
+                "type" : "processingplanfolder",
+                "mediaType" : "application/json"
+            }
+        }
     })
     createdEntitys.plan.push(response)
     return response
 }
 const makeProduct = async (data, name, isPF, createdEntitys, order) => {
     const { height, width, polishing, drills, zenk, cutsv1, cutsv2, cutsv3, tempered, color, print } = data.initialData
-    const product = await Client.sklad('https://api.moysklad.ru/api/remap/1.2/entity/product', 'post', {
+    const params = {
         name: `${isPF ? 'ПФ' : ''} ${name} (${height}х${width}${polishing ? ', Полировка' : ''}${tempered ? ', Закаленное' : ''}${cutsv1 ? `, Вырезы 1 кат.: ${cutsv1}` : ''}${cutsv2 ? `, Вырезы 2 кат.: ${cutsv2}` : ''}${cutsv3 ? `, Вырезы 3 кат.: ${cutsv3}` : ''}${drills ? `, Сверление: ${drills}` : ''}${zenk ? `, Зенкование: ${zenk}` : ''}${print ? ', Печать' : ''}${color ? `, ${color}` : ''}, площадь: ${height * width / 1000000})`,
         attributes: generateProductAttributes({...data.initialData, ...data.result.other, isPF, order}),
         uom: {
@@ -583,8 +670,17 @@ const makeProduct = async (data, name, isPF, createdEntitys, order) => {
                 "type" : "uom",
                 "mediaType" : "application/json"
             }
+        },
+        productFolder: {
+            meta: {
+                "href" : "https://api.moysklad.ru/api/remap/1.2/entity/productfolder/7158b3fd-879a-11ef-0a80-0b580038350a",
+                "metadataHref" : "https://api.moysklad.ru/api/remap/1.2/entity/productfolder/metadata",
+                "type" : "productfolder",
+                "mediaType" : "application/json",
+            }
         }
-    })
+    }
+    const product = await Client.sklad('https://api.moysklad.ru/api/remap/1.2/entity/product', 'post', params)
     createdEntitys.product.push(product)
     return product
 }
@@ -685,7 +781,15 @@ const makeProcessingPlanVizSmd = async (data, name, order, processingprocess, pr
                 meta: product.meta,
             },
             quantity: 1
-        }]
+        }],
+        parent: {
+            meta: {
+                "href" : "https://api.moysklad.ru/api/remap/1.2/entity/processingplanfolder/92522e19-80c1-11f0-0a80-09fe001efbca",
+                "metadataHref" : "https://api.moysklad.ru/api/remap/1.2/entity/processingplanfolder/metadata",
+                "type" : "processingplanfolder",
+                "mediaType" : "application/json"
+            }
+        }
     })
     createdEntitys.plan.push(response)
     return response
@@ -715,19 +819,20 @@ const deleteEntitys = async (deletedPositions) => {
 }
 const generateStages = (data, place) => {
     if(place == 'selk'){
-        const stagesSelk = ['1. РСК (раскрой)']
-        data.result.other.stanok == 'Прямолинейка' ? stagesSelk.push('4. ПРЛ (прямолинейная обработка)') : stagesSelk.push('3. КРЛ (криволинейная обработка)')
-        data.initialData.cutsv1 && stagesSelk.push('8. ВРЗ (вырезы в стекле 1 кат.)')
-        data.initialData.cutsv2 && stagesSelk.push('9. ВРЗ (вырезы в стекле 2 кат.)')
-        data.initialData.drills && stagesSelk.push('7. ОТВ (сверление в стекле отверстий)')
-        data.initialData.zenk && stagesSelk.push('10. Зенковка')
+        const stagesSelk = ['Раскрой']
+        data.result.other.stanok == 'Прямолинейка' ? stagesSelk.push('Прямолинейная обработка') : stagesSelk.push('Криволинейная обработка')
+        data.initialData.cutsv1 && stagesSelk.push('Вырезы в стекле 1 категории')
+        data.initialData.cutsv2 && stagesSelk.push('Вырезы в стекле 2 категории')
+        data.initialData.cutsv3 && stagesSelk.push('Вырезы в стекле 3 категории')
+        data.initialData.drills && stagesSelk.push('Сверление')
+        data.initialData.zenk && stagesSelk.push('Зенковка')
         data.initialData.tempered && stagesSelk.push('Закалка')
         stagesSelk.push('ОТК')
         return stagesSelk;
     }else if(place == 'viz'){
         const stagesViz = []
         data.initialData.color && stagesViz.push('Окраска стекла')
-        data.result.other.type == 'Триплекс' && stagesViz.push('5. ТРПЛ')
+        data.result.other.type == 'Триплекс' && stagesViz.push('Триплексование')
         data.initialData.print && stagesViz.push('УФ (УФ печать)')
         stagesViz.push('ОТК')
         return stagesViz;

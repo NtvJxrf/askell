@@ -205,7 +205,6 @@ const Calculate = (data, selfcost) => {
         type: 'Триплекс',
         productType: true,
         viz: true,
-        materialsandworks,
         materials,
         shortThickness,
         spName: materials.reduce((acc, curr) => {

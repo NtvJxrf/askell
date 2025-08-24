@@ -58,7 +58,7 @@ export const getProcessingStages = async () => {
         acc[curr.name] = curr.meta
         return acc
     }, {})
-    SkladService.selfcost.updates['Техпроцессы'] = {
+    SkladService.selfcost.updates['Этапы'] = {
         key: 'processingStages',
         date: Date.now()
     }

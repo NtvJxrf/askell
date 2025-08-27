@@ -362,6 +362,15 @@ const glass = async (data, order, position, createdEntitys) => {
         viz: [],
         selk: []
     }
+    if(data.initialData.customerSuppliedGlassForTempering){
+        const stagesSelk = ['Закалка', 'ОТК']
+        const processingprocess = await makeprocessingprocess(stagesSelk)
+        const product = position.assortment
+        const plan = await makeProcessingPlanForTempering(position.assortment.name, order, processingprocess, product, createdEntitys)
+        plan.quantity = position.quantity
+        result.selk.push(plan)
+        return result
+    }
     data.initialData.print && (result.print = true)
     data.initialData.color && (result.color = data.initialData.color)
     const stagesSelk = generateStages(data, 'selk')
@@ -504,6 +513,7 @@ export const createProductionTask = async (id) =>{
         let triplex = false
         let ceraglass = false
         let colors = []
+        let nonReserved = 0
         results.forEach( el => {
             el.selk && (selkResult = selkResult.concat(el.selk))
             el.viz && (vizResult = vizResult.concat(el.viz))
@@ -513,12 +523,13 @@ export const createProductionTask = async (id) =>{
             el.color && (colors.push(el.color))
         })
         const productionRows = selkResult.reduce((acc, curr) => {
-                acc.push({  processingPlan: { meta: curr.meta },
-                            productionVolume: curr.quantity
-                })
-                return acc
-            }, [])
-        const pzSelk = await makeProductionTask(`Селькоровская материалы/прочее`, `Селькоровская СГИ`, productionRows, order, {}, createdEntitys)
+            nonReserved += curr.materials.meta.size
+            acc.push({  processingPlan: { meta: curr.meta },
+                        productionVolume: curr.quantity
+            })
+            return acc
+        }, [])
+        const pzSelk = await makeProductionTask(`Селькоровская материалы/прочее`, `Селькоровская СГИ`, productionRows, order, {}, nonReserved, createdEntitys)
         if(vizResult.length > 0){
             const productionRows = vizResult.reduce((acc, curr) => {
                 acc.push({  processingPlan: { meta: curr.meta },
@@ -567,14 +578,15 @@ export const createProductionTask = async (id) =>{
     }
     
 }
-const makeProductionTask = async (materialsStore, productsStore, productionRows, order, checkboxes, createdEntitys) => {
+const makeProductionTask = async (materialsStore, productsStore, productionRows, order, checkboxes, nonReserved, createdEntitys) => {
     const stats = {
         materialsStore: { meta: dictionary.stores[materialsStore]},
         productsStore: { meta: dictionary.stores[productsStore]},
         organization: { meta: order?.organization?.meta},
         attributes: generateProductionTaskAttributes(order, checkboxes),
         productionRows,
-        reserve: true,
+        reserve: nonReserved == 0 ? false : true,
+        awaiting: true,
         customerOrders: [{
             meta: order.meta
         }],
@@ -597,6 +609,28 @@ const makeProcessingPlanViz = async (data, name, order, processingprocess, produ
         name: `${order.name}, ${isPF ? 'ПФ, ' : ''}${name}`,
         processingProcess: { meta: processingprocess },
         materials,
+        products: [{
+            assortment: {
+                meta: product.meta,
+            },
+            quantity: 1
+        }],
+        parent: {
+            meta: {
+                "href" : "https://api.moysklad.ru/api/remap/1.2/entity/processingplanfolder/f699d4ef-7cdb-11f0-0a80-17360009d500",
+                "metadataHref" : "https://api.moysklad.ru/api/remap/1.2/entity/processingplanfolder/metadata",
+                "type" : "processingplanfolder",
+                "mediaType" : "application/json"
+            }
+        }
+    })
+    createdEntitys.plan.push(response)
+    return response
+}
+const makeProcessingPlanForTempering = async (name, order, processingprocess, product, createdEntitys) => {
+    const response = await Client.sklad('https://api.moysklad.ru/api/remap/1.2/entity/processingplan', 'post', {
+        name: `${order.name}, ${name}`,
+        processingProcess: { meta: processingprocess },
         products: [{
             assortment: {
                 meta: product.meta,

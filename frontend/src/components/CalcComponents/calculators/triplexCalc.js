@@ -24,6 +24,7 @@ const Calculate = (data, selfcost) => {
     const P = 2 * (height + width) / 1000
     let allThickness = 0
     let weight = 0
+    const allWeights = []
     const larger = Math.max(height, width)
     const lesser = Math.min(height, width)
     const result = {
@@ -98,6 +99,7 @@ const Calculate = (data, selfcost) => {
         shortThickness.push(thickness)
         allThickness += thickness
         weight += 2.5 * ((height * width) / 1000000) * thickness
+        allWeights.push(2.5 * ((height * width) / 1000000) * thickness)
         
         tempered && constructWorks('tempered', S_calc, { thickness, result, selfcost})
         result.materials.push({
@@ -124,7 +126,7 @@ const Calculate = (data, selfcost) => {
             formula: 'Себестоимость уф печати * S * 2'
         }); break
     }
-    const stanok = (shape && !cutsv1 && !cutsv2 && !cutsv3 && weight < 50) ? 'Прямолинейка' : 'Криволинейка'
+    const stanok = (shape && !cutsv1 && !cutsv2 && !cutsv3 && !allWeights.some(w => w > 50)) ? 'Прямолинейка' : 'Криволинейка'
     let name = constructName(`Триплекс, ${materials.join(' + ')}`, {...data, stanok})
     const context = { selfcost, result, stanok, allThickness };
     constructWorks('cutting1', S_calc * materials.length, context);

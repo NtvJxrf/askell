@@ -28,6 +28,7 @@
     "joi": "^17.13.3",
     "jsonwebtoken": "^9.0.2",
     "morgan": "^1.10.0",
+    "natural": "^8.1.0",
     "pg": "^8.14.1",
     "sequelize": "^6.37.7",
     "winston": "^3.17.0",

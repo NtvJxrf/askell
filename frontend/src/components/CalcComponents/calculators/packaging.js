@@ -59,7 +59,7 @@ const packaging = (positions) => {
             result.works.push({
                 name: 'Работы',
                 value: (selfcost.pricesAndCoefs['Зар.плата плотника'] * 1.395 / 168 + selfcost.pricesAndCoefs['Сделка упаковка'] * 1.1) * 0.833,
-                string: `(${selfcost.pricesAndCoefs['Зар.плата плотника'] } * 1.395 / 168 + ${selfcost.pricesAndCoefs['Сделка упаковка'] } * 1.1) * 0.833`,
+                string: `(${selfcost.pricesAndCoefs['Зар.плата плотника'] } * 1.395 / 168 + ${selfcost.pricesAndCoefs['Сделка упаковка']} * 1.1) * 0.833`,
                 formula: `(Зар.плата плотника * 1.395 / 168 + Сделка упаковка * 1.1) * 0.833`
             })
         break
@@ -184,7 +184,7 @@ const packaging = (positions) => {
         string: selfcost.pricesAndCoefs[`Коэф-нт прибыли упаковка`],
         formula: `Наценка для типа клиента ${selfcost.pricesAndCoefs[`Коэф-нт прибыли упаковка`]}`
     }]
-
+    console.log(result)
     return {
         key: crypto.randomUUID(),
         name,

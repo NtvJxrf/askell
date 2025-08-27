@@ -61,6 +61,7 @@ const formConfigs = {
         { name: 'shape', label: 'Прямоугольная форма', type: 'checkbox', cheched: true },
         { name: 'tempered', label: 'Закаленное', type: 'checkbox', cheched: true },
         { name: 'polishing', label: 'Полировка', type: 'checkbox' },
+        { name: 'customerSuppliedGlassForTempering', label: 'Закалка давальческого стекла', type: 'checkbox' },
         {
           name: 'rounding',
           label: 'Округление',

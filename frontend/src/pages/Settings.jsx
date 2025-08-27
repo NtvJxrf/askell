@@ -10,7 +10,7 @@ const { Text, Title } = Typography;
 const updateKeys = [
   { label: "Материалы", key: "materials" },
   { label: "Упаковочные материалы", key: "packaging" },
-  { label: "Техпроцессы", key: "processingStages" },
+  { label: "Этапы", key: "processingStages" },
   { label: "Склады", key: "stores" },
   { label: "Подстолья", key: "unders" },
   { label: "Цвета", key: "colors" },

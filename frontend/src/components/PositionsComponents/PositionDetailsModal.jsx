@@ -162,7 +162,7 @@ const renderLabeledDataBlock = (title, data, dictionary = {}) => {
     );
 };
 
-const ignorLabels = ['ignor', 'calcType', 'productType', 'materialsandworks', 'calcmaterialsandworks', 'materials', 'shortThickness', 'spName', 'notax', 'widths', 'heights', 'ceraTrim']
+const ignorLabels = ['customerSuppliedGlassForTempering', 'ignor', 'calcType', 'productType', 'materialsandworks', 'calcmaterialsandworks', 'materials', 'shortThickness', 'spName', 'notax', 'widths', 'heights', 'ceraTrim']
 const initialDataLabels = {
     height: 'Высота',
     width: 'Ширина',

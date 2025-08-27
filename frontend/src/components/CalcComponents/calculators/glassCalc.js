@@ -3,8 +3,59 @@ import { constructWorks, constructExpenses, constructName } from './triplexCalc'
 const Calculate = (data, selfcost) => {
     console.log(selfcost)
     console.log(data)
-    const { material, height, width, polishing, drills, zenk, cutsv1, cutsv2, cutsv3, tempered, shape, color, print, rounding, quantity = 1 } = data
+    const { material, height, width, polishing, drills, zenk, cutsv1, cutsv2, cutsv3, tempered, shape, color, print, rounding, quantity = 1, customerSuppliedGlassForTempering = false } = data
     let S = (height * width) / 1000000
+    const thickness = Number(material.match(/(\d+(?:[.,]\d+)?)\s*мм/i)[1])
+    let weight = (height * width) / 1000000 * 2.5 * thickness
+    const result = {
+        materials: [],
+        calcMaterials: [],
+        works: [],
+        expenses: [],
+        errors: [],
+        warnings: []
+    }
+    if(customerSuppliedGlassForTempering){
+        const temperingSelfcost = selfcost.pricesAndCoefs[`Закалка давальческого стекла ${thickness} мм`]
+        const temperingPrice = temperingSelfcost * S
+        result.other = {    
+            customerSuppliedGlassForTempering,
+            S,
+            weight,
+            type: 'Стекло',
+            productType: true,
+            viz: false,
+        }
+        result.finalPrice = [{
+            name: 'Настоящая себестоимость',
+            value: temperingPrice,
+            string: `${temperingPrice.toFixed(2)}`,
+            formula: `Себестоимость закалки давальческого стекла`
+        },{
+            name: 'Цена для Розница',
+            value: temperingPrice,
+            string: `${temperingPrice}`,
+            formula: `Себестоимость закалки давальческого стекла`
+        }]
+        result.works.push({
+            name: 'Закалка давальческого стекла',
+            value: temperingSelfcost * S,
+            finalValue: temperingSelfcost * S,
+            string: `${temperingSelfcost} * ${S.toFixed(2)}`,
+            formula: 'Себестоимость закалки * S'
+        })
+        return {
+            key: crypto.randomUUID(),
+            name: `Закалка давальческого стекла ${thickness} мм (${width}х${height})`,
+            prices: {
+                retailPrice: temperingPrice
+            },
+            added: false,
+            quantity,
+            initialData: data,
+            result
+        }
+    }
     let S_calc = S
     if (S < 0.3 && rounding == 'Округление до 0.3') {
         S_calc = 0.3
@@ -19,19 +70,9 @@ const Calculate = (data, selfcost) => {
         }
     }
     const P = ((height + width) * 2) / 1000
-    const thickness = Number(material.match(/(\d+(?:[.,]\d+)?)\s*мм/i)[1])
-    let weight = (height * width) / 1000000 * 2.5 * thickness
     const stanok = (shape && !cutsv1 && !cutsv2 && !cutsv3 && weight < 50) ? 'Прямолинейка' : 'Криволинейка'
     let name = constructName(material, {...data, stanok})
     // ЧЕ ТО ПРО ВЕС ГОВОРИЛ РУСЛАН, НА НОВОМ ПРОИЗВОДСТВЕ, ЧТО ЕСЛИ ВЕС БОЛЬШОЙ НА КУДА ТО В ДРУГОЙ СТАНОК
-    const result = {
-        materials: [],
-        calcMaterials: [],
-        works: [],
-        expenses: [],
-        errors: [],
-        warnings: []
-    }
     result.materials.push({
         name: material,
         value: (selfcost.materials[material].value * S_calc) * selfcost.pricesAndCoefs['Коэффициент обрези стекло'],

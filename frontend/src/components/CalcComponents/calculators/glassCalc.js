@@ -73,6 +73,9 @@ const Calculate = (data, selfcost) => {
     const stanok = (shape && !cutsv1 && !cutsv2 && !cutsv3 && weight < 50) ? 'Прямолинейка' : 'Криволинейка'
     let name = constructName(material, {...data, stanok})
     // ЧЕ ТО ПРО ВЕС ГОВОРИЛ РУСЛАН, НА НОВОМ ПРОИЗВОДСТВЕ, ЧТО ЕСЛИ ВЕС БОЛЬШОЙ НА КУДА ТО В ДРУГОЙ СТАНОК
+    if(material.toLowerCase().includes('зеркало') && tempered)
+        result.warnings.push('Зеркало не может быть закалено')
+    
     result.materials.push({
         name: material,
         value: (selfcost.materials[material].value * S_calc) * selfcost.pricesAndCoefs['Коэффициент обрези стекло'],

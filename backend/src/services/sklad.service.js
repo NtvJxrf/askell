@@ -58,7 +58,7 @@ export default class SkladService {
         const positions = Array.isArray(data?.positions) ? data.positions : [];
         const map = positions.reduce((acc, curr) => {
             if (curr?.key != null) {
-            acc[String(curr.key)] = true;
+                acc[String(curr.key)] = true;
             }
             return acc;
         }, {});
@@ -83,7 +83,6 @@ export default class SkladService {
                 volume: Number((product.result.other.S).toFixed(2)),
                 productFolder: dictionary.productFolders.glassGuard,
                 attributes: generateProductAttributes({...product.initialData, ...product.result.other, order: data.order}),
-                owner: { meta: data.order.owner.meta},
                 uom: {
                     meta: {
                         "href" : "https://api.moysklad.ru/api/remap/1.2/entity/uom/19f1edc0-fc42-4001-94cb-c9ec9c62ec10",
@@ -92,6 +91,7 @@ export default class SkladService {
                         "mediaType" : "application/json"
                     }
                 },
+                shared: false,
                 minPrice: {currency: dictionary.currencies['руб'], value: product?.result?.other?.materialsandworks * 100 || 0}
             }
             switch (product.result.other.type){
@@ -142,7 +142,6 @@ export default class SkladService {
             return params
         });
         let createdProducts = null
-        console.log(productsToCreate.length)
         if (productsToCreate.length > 0) {
             createdProducts = await Client.sklad("https://api.moysklad.ru/api/remap/1.2/entity/product", "post", productsToCreate)
             const promises = []
@@ -176,7 +175,7 @@ export default class SkladService {
                         assortment: {
                             meta: pos.position.assortment.meta
                         },
-                        price: Number(pos.prices[data.displayPrice].toFixed(2) * 100),
+                        price: pos.added ? pos.position.price : Number(pos.prices[data.displayPrice].toFixed(2) * 100),
                         quantity: pos.quantity,
                         vat: data.order.organization.name === 'ООО "А2"' ? 20 : 0
                     }

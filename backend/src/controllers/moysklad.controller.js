@@ -61,7 +61,7 @@ export default class MoySkladController{
         res.send(SkladService.ordersInWork)
     }
     static async pzChangedWebhook(req, res){
-        const result = await SkladHooks.pzChange(res.body)
+        const result = await SkladHooks.pzChange(req.body)
         res.sendStatus(200)
     }
 }

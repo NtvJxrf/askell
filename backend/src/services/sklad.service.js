@@ -455,27 +455,9 @@ export const createProductionTask = async (id) =>{
     const order = await Client.sklad(`https://api.moysklad.ru/api/remap/1.2/entity/customerorder/${id}?expand=positions.assortment,invoicesOut,agent&limit=100`)
     if(!order)
         throw new ApiError(`Заказ покупателя с ${id} не найден`)
-    const debt = order.agent.tags.includes('долг')
-    if(debt){
-        const task = await Client.sklad('https://api.moysklad.ru/api/remap/1.2/entity/task', 'post', {
-            assignee: {
-                meta: order.owner.meta,
-            },
-            operation: {
-                meta: order.meta
-            },
-            description: `У контрагента есть долг, создание пз не было выполнено`
-        })
-        await Client.sklad(`https://api.moysklad.ru/api/remap/1.2/entity/customerorder/${order.id}`, 'put', {
-            state: { meta: {
-                "href" : "https://api.moysklad.ru/api/remap/1.2/entity/customerorder/metadata/states/6a37967b-5899-11f0-0a80-1bc9000373a3",
-                "metadataHref" : "https://api.moysklad.ru/api/remap/1.2/entity/customerorder/metadata",
-                "type" : "state",
-                "mediaType" : "application/json"
-            }}
-        })
-        return
-    }
+    const debt = await checkDebt(order)
+    console.log(debt)
+    if(debt) return
     const orderAttr = order.attributes.reduce((a, x) => {
                 a[x.name] = x.value;
                 return a;
@@ -600,7 +582,6 @@ const makeProductionTask = async (materialsStore, productsStore, productionRows,
     order?.deliveryPlannedMoment && (stats.deliveryPlannedMoment = order.deliveryPlannedMoment)
 
     const task = await Client.sklad(`https://api.moysklad.ru/api/remap/1.2/entity/productiontask`, 'post', stats)
-    console.log(task)
     createdEntitys.task.push(task)
     return task
 }   
@@ -893,6 +874,32 @@ const changeStatusForPZ = async (id) => {
             }}
         }
     }))
+}
+const checkDebt = async order => {
+    const counterpartyReport = await Client.sklad(`https://api.moysklad.ru/api/remap/1.2/report/counterparty/${order.agent.id}`)
+    const debt = counterpartyReport.balance < -1000
+    const attrValue = order.attributes.find(el => el.name === '% обрези из калькулятора')?.value?.toLowerCase()
+    if(debt && attrValue !== 'всевышний, создай пз пожожда'){
+        const task = await Client.sklad('https://api.moysklad.ru/api/remap/1.2/entity/task', 'post', {
+            assignee: {
+                meta: order.owner.meta,
+            },
+            operation: {
+                meta: order.meta
+            },
+            description: `У контрагента есть долг, создание пз не было выполнено`
+        })
+        await Client.sklad(`https://api.moysklad.ru/api/remap/1.2/entity/customerorder/${order.id}`, 'put', {
+            state: { meta: {
+                "href" : "https://api.moysklad.ru/api/remap/1.2/entity/customerorder/metadata/states/6a37967b-5899-11f0-0a80-1bc9000373a3",
+                "metadataHref" : "https://api.moysklad.ru/api/remap/1.2/entity/customerorder/metadata",
+                "type" : "state",
+                "mediaType" : "application/json"
+            }}
+        })
+        return true
+    }
+    return false
 }
 async function startWorker(name, func) {
     const conn = await amqp.connect('amqp://admin:%5EjZG1L%2Fi@localhost');

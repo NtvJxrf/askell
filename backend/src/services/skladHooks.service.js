@@ -5,23 +5,21 @@ export default class SkladHooks{
         let document = null
         let order = null
         const event = data.events[0]
-        switch(event.updatedFields){
-            case 'Отложенная дата производства':
-                document ??= await Client.sklad(event.meta.href)
-                order ??= await Client.sklad(document.customerOrders[0].meta.href + '?expand=owner')
-                const date = document.attributes.find(el => el.name == 'Отложенная дата производства').value
-                const res = await Client.sklad(order.meta.href, 'put', {
-                    state: {meta: {
-                        "href" : "https://api.moysklad.ru/api/remap/1.2/entity/customerorder/metadata/states/2c012da7-84cf-11f0-0a80-15b300223cc3",
-                        "metadataHref" : "https://api.moysklad.ru/api/remap/1.2/entity/customerorder/metadata",
-                        "type" : "state",
-                        "mediaType" : "application/json"
-                    }}
-                })
-                const res2 = await Client.sklad(order.meta.href + '/notes', 'post', {
-                    description: `{{employee;${order.owner.id}}}Сроки изготовления производственного задания № ${document.name} перенесены на ${date}`
-                })
-            break
+        if(event.updatedFields.includes('Отложенная дата производства')){
+            document ??= await Client.sklad(event.meta.href)
+            order ??= await Client.sklad(document.customerOrders[0].meta.href + '?expand=owner')
+            const date = document.attributes.find(el => el.name == 'Отложенная дата производства').value
+            const res = await Client.sklad(order.meta.href, 'put', {
+                state: {meta: {
+                    "href" : "https://api.moysklad.ru/api/remap/1.2/entity/customerorder/metadata/states/2c012da7-84cf-11f0-0a80-15b300223cc3",
+                    "metadataHref" : "https://api.moysklad.ru/api/remap/1.2/entity/customerorder/metadata",
+                    "type" : "state",
+                    "mediaType" : "application/json"
+                }}
+            })
+            const res2 = await Client.sklad(`${order.meta.href.split('?')[0]}/notes`, 'post', {
+                description: `{{employee;${order.owner.id}}}Сроки изготовления производственного задания № ${document.name} перенесены на ${date}`
+            })
         }
     }
 }

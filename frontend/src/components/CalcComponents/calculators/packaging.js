@@ -185,14 +185,23 @@ const packaging = (positions) => {
         formula: `Наценка для типа клиента ${selfcost.pricesAndCoefs[`Коэф-нт прибыли упаковка`]}`
     }]
     console.log(result)
+    result.other = {
+        type: 'Упаковка'
+    }
     return {
         key: crypto.randomUUID(),
         name,
-        price,
+        prices: {
+            gostPrice: price,
+            retailPrice: price,
+            bulkPrice: price,
+            dealerPrice: price,
+            vipPrice: price
+        },
         added: false,
         initialData: temp,
         quantity: Math.ceil(temp.weight / selfcost.pricesAndCoefs[`Вес, входящий в ${name}`]),
-        result
+        result,
     }
 }
 

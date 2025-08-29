@@ -10,7 +10,7 @@ import { initQueue } from './utils/rabbitmq.js';
 import { initSkladAdditions } from "./utils/skladAdditions.js"
 import getOrdersInWork from "./utils/getOrdersInWork.js"
 
-export const version = 1.22
+export const version = 1.23
 const promises = []
 await initModels()
 getOrdersInWork().then(() => console.log('Got orders in work'))

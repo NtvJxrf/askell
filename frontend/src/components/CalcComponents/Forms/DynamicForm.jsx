@@ -36,51 +36,15 @@ const DynamicForm = ({type, form}) => {
     const formData = store.getState().forms[type]
     const selfcost = useSelector(state => state.selfcost.selfcost)
     const onFinish = async (value) => {
-        // const filterWrods = ['стекло', 'зеркало'];
-        // const materialsArray = Object.keys(materials)
-        //       .filter(el => filterWrods.some(word => el.toLowerCase().includes(word)))
-        //       .sort();
-        // const res = [['Станок', 'Материал', 'Настоящая себестоимость', 'Себестоимость калькулятора', 'Выше госта', 'Розница', 'Опт', 'Дилер', 'ВИП']];
-        //     const fmt = p => Number(p.toFixed(2));
-        // for(const material of materialsArray){
-        //     const straight = glassCalc({material, height: 1000, width: 1000, tempered: true, shape: true}, selfcost)
-        //     res.push([
-        //         straight.result.other.stanok,
-        //         material,
-        //         fmt(straight.result.other.materialsandworks),
-        //         fmt(straight.result.other.calcmaterialsandworks),
-        //         fmt(straight.prices.gostPrice),
-        //         fmt(straight.prices.retailPrice),
-        //         fmt(straight.prices.bulkPrice),
-        //         fmt(straight.prices.dealerPrice),
-        //         fmt(straight.prices.vipPrice),
-        //     ]);
-        //     const curved = glassCalc({material, height: 1000, width: 1000, tempered: true}, selfcost)
-        //     res.push([
-        //         curved.result.other.stanok,
-        //         material,
-        //         fmt(curved.result.other.materialsandworks),
-        //         fmt(curved.result.other.calcmaterialsandworks),
-        //         fmt(curved.prices.gostPrice),
-        //         fmt(curved.prices.retailPrice),
-        //         fmt(curved.prices.bulkPrice),
-        //         fmt(curved.prices.dealerPrice),
-        //         fmt(curved.prices.vipPrice),
-        //     ]);
-        //     res.push([])
-        // }
-        // const worksheet = XLSX.utils.aoa_to_sheet(res);
-
-        // // Создаём workbook и добавляем лист
-        // const workbook = XLSX.utils.book_new();
-        // XLSX.utils.book_append_sheet(workbook, worksheet, "Лист1");
-
-        // // Сохраняем файл
-        // XLSX.writeFile(workbook, "данные.xlsx");
         const triplex = store.getState().positions.triplexForGlasspacket
-        const position = calcMap[type]({...value}, selfcost, triplex)
-        dispatch(addNewPosition(position))
-        messageApi.success('Позиция добавлена')
+        try{
+            const position = calcMap[type]({...value}, selfcost, triplex)
+            dispatch(addNewPosition(position))
+            messageApi.success('Позиция добавлена')
+        }catch(err){
+            console.error(err)
+            messageApi.error(err.message)
+        }
     }
 
     const handleValuesChange = (_, allValues) => {

@@ -2,7 +2,7 @@ import SkladService from '../services/sklad.service.js'
 import { getQueueChannel } from '../utils/rabbitmq.js';
 import { initSkladAdditions } from '../utils/skladAdditions.js';
 import { getMaterials, getPackagingMaterials, getProcessingStages, getStores, getUnders, getColors, getPicesAndCoefs, getAttributes, getProcessingPlansSmd, getCurrency, getPriceTypes } from '../utils/skladAdditions.js'
-import ApiError from '../utils/apiError.js';
+import SkladHooks from '../services/skladHooks.service.js';
 import { broadcast } from '../utils/WebSocket.js';
 export default class MoySkladController{
     static async createPzHook(req, res){
@@ -59,5 +59,9 @@ export default class MoySkladController{
     }
     static async ordersInWork(req, res){
         res.send(SkladService.ordersInWork)
+    }
+    static async pzChangedWebhook(req, res){
+        const result = await SkladHooks.pzChange(res.body)
+        res.sendStatus(200)
     }
 }

@@ -74,7 +74,7 @@ const Calculate = (data, selfcost) => {
     let name = constructName(material, {...data, stanok})
     // ЧЕ ТО ПРО ВЕС ГОВОРИЛ РУСЛАН, НА НОВОМ ПРОИЗВОДСТВЕ, ЧТО ЕСЛИ ВЕС БОЛЬШОЙ НА КУДА ТО В ДРУГОЙ СТАНОК
     if(material.toLowerCase().includes('зеркало') && tempered)
-        result.warnings.push('Зеркало не может быть закалено')
+        throw new Error('Зеркало не может быть закаленным')
     
     result.materials.push({
         name: material,

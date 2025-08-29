@@ -27,4 +27,7 @@ router
 router
     .route('/ordersInWork')
     .get(authorizeRoles, MoySkladController.ordersInWork)
+router
+    .route('/pzChanged')
+    .get(authorizeRoles, MoySkladController.pzChangedWebhook)
 export default router

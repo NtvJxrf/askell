@@ -95,6 +95,8 @@ const Calculate = (data, selfcost) => {
 
     }
     for(const material of materials){
+        if(material.toLowerCase().includes('зеркало') && tempered)
+            throw new Error('Зеркало не может быть закаленным')
         const thickness = Number(material.match(/(\d+(?:[.,]\d+)?)\s*мм/i)[1])
         shortThickness.push(thickness)
         allThickness += thickness

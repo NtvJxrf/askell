@@ -1,6 +1,6 @@
 
 export default class SkladHooks{
     static async pzChange(data){
-        console.log(data)
+        console.dir(data, { depth: null });
     }
 }

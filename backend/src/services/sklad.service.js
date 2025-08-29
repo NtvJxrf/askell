@@ -407,7 +407,7 @@ const smd = async (data, order, position, createdEntitys) => {
             acc[curr.name] = curr.value
             return acc
         }, {})
-        const pzViz = await makeProductionTask(`ВИЗ ПФ`, `ВИЗ СГИ`, productionRows, order, {viz: true, smd: true, print, height: attributes['Длина в мм'], width: attributes['Ширина в мм'], colors: [attributes['Цвет доски']?.name]}, createdEntitys)
+        const pzViz = await makeProductionTask(`ВИЗ ПФ`, `ВИЗ СГИ`, productionRows, order, {viz: true, smd: true, print, height: attributes['Длина в мм'], width: attributes['Ширина в мм'], colors: [attributes['Цвет доски']?.name]}, 0, createdEntitys)
         return
     }
     const result = {
@@ -444,7 +444,7 @@ const smd = async (data, order, position, createdEntitys) => {
                     },
                     productionVolume: position.quantity
                 }]
-    const pzViz = await makeProductionTask(`ВИЗ ПФ`, `ВИЗ СГИ`, productionRows, order, {viz: true, smd: true, print, height: data.initialData.height, width: data.initialData.width, colors: [color]}, createdEntitys)
+    const pzViz = await makeProductionTask(`ВИЗ ПФ`, `ВИЗ СГИ`, productionRows, order, {viz: true, smd: true, print, height: data.initialData.height, width: data.initialData.width, colors: [color]}, 0, createdEntitys)
     return result
 }
 const glassPacket = async (data, order, position, createdEntitys) => {
@@ -536,7 +536,7 @@ export const createProductionTask = async (id) =>{
                     })
                     return acc
                 }, [])
-            const pzViz = await makeProductionTask(`ВИЗ ПФ`, `ВИЗ СГИ`, productionRows, order, {viz: true, smd: false, print, triplex, colors, ceraglass}, createdEntitys)
+            const pzViz = await makeProductionTask(`ВИЗ ПФ`, `ВИЗ СГИ`, productionRows, order, {viz: true, smd: false, print, triplex, colors, ceraglass}, 0, createdEntitys)
         }
         console.timeEnd('creatingProudctionTask')
     }catch(error){
@@ -600,6 +600,7 @@ const makeProductionTask = async (materialsStore, productsStore, productionRows,
     order?.deliveryPlannedMoment && (stats.deliveryPlannedMoment = order.deliveryPlannedMoment)
 
     const task = await Client.sklad(`https://api.moysklad.ru/api/remap/1.2/entity/productiontask`, 'post', stats)
+    console.log(task)
     createdEntitys.task.push(task)
     return task
 }   

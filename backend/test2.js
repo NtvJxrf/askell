@@ -4,12 +4,7 @@ import Client from './src/utils/got.js';
 import dotenv from 'dotenv';
 dotenv.config();
 import axios from 'axios';
-const res = await Client.sklad('https://api.moysklad.ru/api/remap/1.2/entity/webhook', 'post', {
-            "url": "https://calc.askell.ru/api/sklad/pzChanged",
-            "action": "UPDATE",
-            "entityType": "productiontask",
-            "diffType": "FIELDS"
-})
+const res = await axios.post('http://localhost:7878/api/sklad/createPzHook?id=56508553-4474-11f0-0a80-1b74001fc4eb')
 console.log(res)
 // 1) Поиск ключа-колонки с именем (например: "Наименование", "Наименование контрагента", и т.п.)
 // function detectNameKey(row) {

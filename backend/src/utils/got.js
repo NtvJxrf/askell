@@ -7,6 +7,9 @@ const gotClient = got.extend({
         statusCodes: [408, 500, 502, 503, 504],
         errorCodes: ['ETIMEDOUT', 'ECONNREFUSED'],
     },
+    timeout: {
+        request: 600_000, // 10 минут
+    },
     throwHttpErrors: false,
 });
 let moyskladRequestCount = 0;

@@ -43,8 +43,10 @@ const createPrice = () => {
   const calcs = {}
   const fmt = p => Math.ceil(p);
   for(const material of materialsArray){
-    const straight = glassCalc({material, height: 1000, width: 1000, tempered: true, shape: true}, selfcost)
-    const curved = glassCalc({material, height: 1000, width: 1000, tempered: true}, selfcost)
+    let tempered = true
+    if(material.toLowerCase().includes('зеркало')) tempered = false
+    const straight = glassCalc({material, height: 1000, width: 1000, tempered, shape: true}, selfcost)
+    const curved = glassCalc({material, height: 1000, width: 1000, tempered}, selfcost)
     const parts = material.split(',')
     const materialName = parts[0]
     const thickness = parts[1].match(/(\d+(?:\.\d+)?)/)[1]

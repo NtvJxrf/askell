@@ -63,7 +63,7 @@ export default class SkladService {
             return acc;
         }, {});
         const positionsToCreate = data.positions.filter((el, index) => {
-            if(!el.added){
+            if(!el.added && el.result.other.type){
                 indexes.push(index)
                 return true
             }
@@ -132,6 +132,16 @@ export default class SkladService {
                             "metadataHref" : "https://api.moysklad.ru/api/remap/1.2/entity/productfolder/metadata",
                             "type" : "productfolder",
                             "mediaType" : "application/json"
+                        }
+                    }
+                break
+                case 'Упаковка':
+                    params.productFolder = {
+                        meta: {
+                            "href" : "https://api.moysklad.ru/api/remap/1.2/entity/productfolder/90bb2da2-88ac-11f0-0a80-09aa000b4e5d",
+                            "metadataHref" : "https://api.moysklad.ru/api/remap/1.2/entity/productfolder/metadata",
+                            "type" : "productfolder",
+                            "mediaType" : "application/json",
                         }
                     }
                 break
@@ -407,7 +417,7 @@ const smd = async (data, order, position, createdEntitys) => {
             acc[curr.name] = curr.value
             return acc
         }, {})
-        const pzViz = await makeProductionTask(`ВИЗ ПФ`, `ВИЗ СГИ`, productionRows, order, {viz: true, smd: true, print, height: attributes['Длина в мм'], width: attributes['Ширина в мм'], colors: [attributes['Цвет доски']?.name]}, 0, createdEntitys)
+        const pzViz = await makeProductionTask(`ВИЗ ПФ`, `ВИЗ СГИ`, productionRows, order, {viz: true, smd: true, print, height: attributes['Длина в мм'], width: attributes['Ширина в мм'], colors: [attributes['Цвет доски']?.name]}, 1, createdEntitys)
         return
     }
     const result = {
@@ -444,11 +454,31 @@ const smd = async (data, order, position, createdEntitys) => {
                     },
                     productionVolume: position.quantity
                 }]
-    const pzViz = await makeProductionTask(`ВИЗ ПФ`, `ВИЗ СГИ`, productionRows, order, {viz: true, smd: true, print, height: data.initialData.height, width: data.initialData.width, colors: [color]}, 0, createdEntitys)
+    const pzViz = await makeProductionTask(`ВИЗ ПФ`, `ВИЗ СГИ`, productionRows, order, {viz: true, smd: true, print, height: data.initialData.height, width: data.initialData.width, colors: [color]}, 1, createdEntitys)
     return result
 }
 const glassPacket = async (data, order, position, createdEntitys) => {
 
+}
+const packageBox = async (data, order, position, createdEntitys) => {
+    const result = {
+        viz: [],
+        selk: []
+    }
+    const stagesSelk = ['Сборка ящика', 'ОТК']
+    const processingprocess = await makeprocessingprocess(stagesSelk)
+    const product = position.assortment
+    const materials = data.result.materials.map(el => {
+        return {
+            assortment: {meta: SkladService.selfcost.packagingMaterials[el.name].meta},
+            quantity: el.count
+        }
+    })
+    console.log(materials)
+    const plan = await makeProcessingPlanPackage(position.assortment.name, order, processingprocess, product, materials, createdEntitys)
+    plan.quantity = position.quantity
+    result.selk.push(plan)
+    return result
 }
 export const createProductionTask = async (id) =>{
     console.time('creatingProudctionTask')
@@ -468,7 +498,8 @@ export const createProductionTask = async (id) =>{
         'Керагласс': ceraglass,
         'Стекло': glass,
         'СМД': smd,
-        'Стеклопакет': glassPacket
+        'Стеклопакет': glassPacket,
+        'Упаковка': packageBox
     }
     const createdEntitys = { task: [], plan: [], product: [] }
     let selkResult = []
@@ -518,7 +549,7 @@ export const createProductionTask = async (id) =>{
                     })
                     return acc
                 }, [])
-            const pzViz = await makeProductionTask(`ВИЗ ПФ`, `ВИЗ СГИ`, productionRows, order, {viz: true, smd: false, print, triplex, colors, ceraglass}, 0, createdEntitys)
+            const pzViz = await makeProductionTask(`ВИЗ ПФ`, `ВИЗ СГИ`, productionRows, order, {viz: true, smd: false, print, triplex, colors, ceraglass}, 1, createdEntitys)
         }
         console.timeEnd('creatingProudctionTask')
     }catch(error){
@@ -588,6 +619,29 @@ const makeProductionTask = async (materialsStore, productsStore, productionRows,
 const makeProcessingPlanViz = async (data, name, order, processingprocess, product, isPF, materials, createdEntitys) => {
     const response = await Client.sklad('https://api.moysklad.ru/api/remap/1.2/entity/processingplan', 'post', {
         name: `${order.name}, ${isPF ? 'ПФ, ' : ''}${name}`,
+        processingProcess: { meta: processingprocess },
+        materials,
+        products: [{
+            assortment: {
+                meta: product.meta,
+            },
+            quantity: 1
+        }],
+        parent: {
+            meta: {
+                "href" : "https://api.moysklad.ru/api/remap/1.2/entity/processingplanfolder/f699d4ef-7cdb-11f0-0a80-17360009d500",
+                "metadataHref" : "https://api.moysklad.ru/api/remap/1.2/entity/processingplanfolder/metadata",
+                "type" : "processingplanfolder",
+                "mediaType" : "application/json"
+            }
+        }
+    })
+    createdEntitys.plan.push(response)
+    return response
+}
+const makeProcessingPlanPackage = async (name, order, processingprocess, product, materials, createdEntitys) => {
+    const response = await Client.sklad('https://api.moysklad.ru/api/remap/1.2/entity/processingplan', 'post', {
+        name: `${order.name}, ${name}`,
         processingProcess: { meta: processingprocess },
         materials,
         products: [{

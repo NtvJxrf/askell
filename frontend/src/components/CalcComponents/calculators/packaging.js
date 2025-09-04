@@ -1,5 +1,4 @@
 import store from "../../../store.js"
-import { constructExpenses } from "./triplexCalc.js"
 const allowedTypes = ['СМД', 'Керагласс', 'Триплекс', 'Стекло']
 const packaging = (positions) => {
     const selfcost = store.getState().selfcost.selfcost
@@ -41,18 +40,21 @@ const packaging = (positions) => {
             result.materials.push({
                 name: 'Доска 25х100х3000',
                 value: selfcost.packagingMaterials['Доска 25х100х3000'].value * (plankCount / 3),
+                count: plankCount / 3,
                 string: `${selfcost.packagingMaterials['Доска 25х100х3000'].value} * ${(plankCount / 3).toFixed(2)}`,
                 formula: 'Себестоимость * Количество'
             })
             result.materials.push({
                 name: 'Саморез по дереву 4,2х75',
-                value: selfcost.packagingMaterials['Саморез по дереву 4,2х75'].value * plankCount * 5,
-                string: `${selfcost.packagingMaterials['Саморез по дереву 4,2х75'].value} * ${plankCount * 5}`,
+                value: selfcost.packagingMaterials['Саморез по дереву 4,2х75'].value * Math.ceil(plankCount * 5),
+                count: Math.ceil(plankCount * 5),
+                string: `${selfcost.packagingMaterials['Саморез по дереву 4,2х75'].value} * ${plankCount} * ${5}`,
                 formula: 'Себестоимость * Количество досок * 5'
             })
             result.materials.push({
                 name: 'ДВП 3,2*1700*2745',
                 value: selfcost.packagingMaterials['ДВП 3,2*1700*2745'].value * Math.ceil(larger * lesser / 1000000 * 2 / 4.59),
+                count: Math.ceil(larger * lesser / 1000000 * 2 / 4.59),
                 string: `${selfcost.packagingMaterials['ДВП 3,2*1700*2745'].value} * ${Math.ceil(larger * lesser / 1000000 * 2 / 4.59)}`,
                 formula: 'Себестоимость * Количество'
             })
@@ -66,27 +68,31 @@ const packaging = (positions) => {
         case 2:
             name = `Стандартный ящик 50`
             plankCount = (Math.max(larger, lesser) * 0.006 + Math.min(larger, lesser) * 0.002) - ((larger * 0.001 + lesser * 0.001) * 2)
-            result.materials.push({
+            result.materials.push({ 
                 name: 'Доска 25х100х3000',
                 value: selfcost.packagingMaterials['Доска 25х100х3000'].value * (plankCount / 3),
+                count: plankCount / 3,
                 string: `${selfcost.packagingMaterials['Доска 25х100х3000'].value } * ${(plankCount / 3)}`,
                 formula: `Себестоимость * Количество`
             })
             result.materials.push({
                 name: 'Саморез по дереву 4,2х75',
-                value: selfcost.packagingMaterials['Саморез по дереву 4,2х75'].value * plankCount * 5,
+                value: selfcost.packagingMaterials['Саморез по дереву 4,2х75'].value * Math.ceil(plankCount * 5),
+                count: Math.ceil(plankCount * 5),
                 string: `${selfcost.packagingMaterials['Саморез по дереву 4,2х75'].value } * Количество досок * 5`,
                 formula: 'Себестоимость * Количество досок * 5'
             })
             result.materials.push({
                 name: 'ДВП 3,2*1700*2745',
                 value: selfcost.packagingMaterials['ДВП 3,2*1700*2745'].value * Math.ceil(larger * lesser / 1000000 * 2 / 4.59),
+                count: Math.ceil(larger * lesser / 1000000 * 2 / 4.59),
                 string: `${(selfcost.packagingMaterials['ДВП 3,2*1700*2745'].value) } * ${Math.ceil(larger * lesser / 1000000 * 2 / 4.59)}`,
                 formula: 'Себестоимость * Количество'
             })
             result.materials.push({
                 name: 'Брус 50х40-50х3000',
                 value: (selfcost.packagingMaterials['Брус 50х40-50х3000'].value / 3) * (((larger + lesser + 100) / 1000) * 2),
+                count: (((larger + lesser + 100) / 1000) * 2),
                 string: `(${selfcost.packagingMaterials['Брус 50х40-50х3000'].value } / 3) * ${((larger + lesser + 100) / 1000) * 2}`,
                 formula: '(Себестоимость за шт / 3) * Количество'
             })
@@ -104,24 +110,28 @@ const packaging = (positions) => {
             result.materials.push({
                 name: 'Доска 25х100х3000',
                 value: selfcost.packagingMaterials['Доска 25х100х3000'].value * plankCount / 3,
+                count: plankCount / 3,
                 string: `${selfcost.packagingMaterials['Доска 25х100х3000'].value} * ${(plankCount / 3).toFixed(2)}`,
                 formula: `Себестоимость * Количество`
             })
             result.materials.push({
                 name: 'Саморез по дереву 4,2х75',
-                value: selfcost.packagingMaterials['Саморез по дереву 4,2х75'].value * plankCount * 6,
+                value: selfcost.packagingMaterials['Саморез по дереву 4,2х75'].value * Math.ceil(plankCount * 6),
+                count: Math.ceil(plankCount * 6),
                 string: `${selfcost.packagingMaterials['Саморез по дереву 4,2х75'].value} * ${plankCount} * 6`,
                 formula: 'Себестоимость * Количество досок * 6'
             })
             result.materials.push({
                 name: 'ДВП 3,2*1700*2745',
                 value: selfcost.packagingMaterials['ДВП 3,2*1700*2745'].value * Math.ceil(larger * lesser / 1000000 / 4.59),
+                count: Math.ceil(larger * lesser / 1000000 / 4.59),
                 string: `Себестоимость * ${Math.ceil(larger * lesser / 1000000 / 4.59)}`,
                 formula: 'Себестоимость * Количество'
             })
             result.materials.push({
                 name: 'Брус 50х40-50х3000',
                 value: selfcost.packagingMaterials['Брус 50х40-50х3000'].value / 3 * Math.min(larger, lesser) / 1000 + 0.6,
+                count: 3 * Math.min(larger, lesser) / 1000 + 0.6,
                 string: `${selfcost.packagingMaterials['Брус 50х40-50х3000'].value} / 3 * ${Math.min(larger, lesser) / 1000 + 0.6}`,
                 formula: '(Себестоимость за шт / 3) * Количество'
             })
@@ -138,24 +148,28 @@ const packaging = (positions) => {
             result.materials.push({
                 name: 'Доска 25х150х3000',
                 value: selfcost.packagingMaterials['Доска 25х150х3000'].value * 12,
+                count: 12,
                 string: `${selfcost.packagingMaterials['Доска 25х150х3000'].value} * ${12}`,
                 formula: 'Себестоимость * 12'
             })
             result.materials.push({
                 name: 'Саморез по дереву 4,2х75',
                 value: selfcost.packagingMaterials['Саморез по дереву 4,2х75'].value * 48,
+                count: 48,
                 string: `${selfcost.packagingMaterials['Саморез по дереву 4,2х75'].value } * 48`,
                 formula: 'Себестоимость * 48'
             })
             result.materials.push({
                 name: 'Саморез по дереву 3,5х51',
                 value: selfcost.packagingMaterials['Саморез по дереву 3,5х51'].value * 63,
+                count: 63,
                 string: `${selfcost.packagingMaterials['Саморез по дереву 3,5х51'].value } * 63`,
                 formula: 'Себестоимость * 63'
             })
             result.materials.push({
                 name: 'Брус 50х40-50х3000',
                 value: selfcost.packagingMaterials['Брус 50х40-50х3000'].value / 3 * 4,
+                count: 4,
                 string: `${selfcost.packagingMaterials['Брус 50х40-50х3000'].value} / 3 * 4`,
                 formula: '(Себестоимость за шт / 3) * 4'
             })
@@ -184,10 +198,12 @@ const packaging = (positions) => {
         string: selfcost.pricesAndCoefs[`Коэф-нт прибыли упаковка`],
         formula: `Наценка для типа клиента ${selfcost.pricesAndCoefs[`Коэф-нт прибыли упаковка`]}`
     }]
-    console.log(result)
     result.other = {
-        type: 'Упаковка'
+        type: 'Упаковка',
+        weight: 0,
+        S: larger * lesser / 1_000_000
     }
+    console.log(result)
     return {
         key: crypto.randomUUID(),
         name,

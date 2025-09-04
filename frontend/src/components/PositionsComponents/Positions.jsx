@@ -102,6 +102,7 @@ const Positions = ({form}) => {
     }, [positions]);
     useEffect( () => {
         if(!positions.length) return
+        console.log(positions)
         let S_all = 0, P_all = 0, stanok = 'Криволинейка', additions = false, triplex = false, print = false, totalCutsv1 = 0, totalCutsv2 = 0, totalCutsv3 = 0
         positions.forEach(el => {
             if(!el.result || el.result.other.type === 'СМД' || el.result.other.type === 'Керагласс' || el.result.other.type === 'Стеклопакет') return
@@ -109,7 +110,7 @@ const Positions = ({form}) => {
             P_all += el.result.other.P * el.quantity
             el.result.other.stanok === 'Прямолинейка' && (stanok = 'Прямолинейка')
             el.result.other.type === 'Триплекс' && (triplex = true)
-            el.result.other.print && (print = true)
+            el.initialData.print && (print = true)
             const {drills, cutsv1, cutsv2, cutsv3, zenk, color} = el.initialData
             cutsv1 && (totalCutsv1 += cutsv1 * el.quantity)
             cutsv2 && (totalCutsv2 += cutsv2 * el.quantity)

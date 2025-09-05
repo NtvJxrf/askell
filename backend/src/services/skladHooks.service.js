@@ -15,7 +15,15 @@ export default class SkladHooks{
                     "metadataHref" : "https://api.moysklad.ru/api/remap/1.2/entity/customerorder/metadata",
                     "type" : "state",
                     "mediaType" : "application/json"
-                }}
+                }},
+                attributes: [{
+                    meta: {
+                        "href" : "https://api.moysklad.ru/api/remap/1.2/entity/customerorder/metadata/attributes/f9622e53-8a1f-11f0-0a80-01080003c4a4",
+                        "type" : "attributemetadata",
+                        "mediaType" : "application/json"
+                    },
+                    value: date
+                }]
             })
             const res2 = await Client.sklad(`${order.meta.href.split('?')[0]}/notes`, 'post', {
                 description: `{{employee;${order.owner.id}}}Сроки изготовления производственного задания № ${document.name} перенесены на ${date}`

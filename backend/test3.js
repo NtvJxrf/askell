@@ -3,36 +3,28 @@ import Client from './src/utils/got.js';
 import dotenv from 'dotenv';
 dotenv.config();
 import axios from 'axios';
-
-const res = await fetchAllRows('https://api.moysklad.ru/api/remap/1.2/entity/invoiceout?filter=moment>2023-01-01;moment<2025-01-01&expand=payments');
+import { writeFile, readFile } from 'fs/promises';
+const res = await fetchAllRows('https://api.moysklad.ru/api/remap/1.2/entity/productiontask?filter=moment>2025-01-01');
 const newData = []
-let count = 0
-for(const invoiceout of res){
-  if(!invoiceout.payments || invoiceout.payments.length === 0) continue;
-  const attributes = invoiceout?.attributes?.reduce((acc, curr) => {
+const skippedPz = []
+for(const pz of res){
+  const attributes = pz?.attributes?.reduce((acc, curr) => {
     acc[curr.name] = curr
     return acc
   }, {})
-  if(attributes?.['Дата привязки платежа']) continue
-  const targetDate = new Date(invoiceout.created.replace(" ", "T"));
-  const closestPayment = invoiceout.payments.reduce((closest, current) => {
-    const currentDate = new Date(current.incomingDate.replace(" ", "T"));
-    const closestDate = new Date(closest.incomingDate.replace(" ", "T"));
-
-    const diffCurrent = Math.abs(currentDate - targetDate);
-    const diffClosest = Math.abs(closestDate - targetDate);
-
-    return diffCurrent < diffClosest ? current : closest;
-  });
-  console.log(invoiceout.name)
-  newData.push({meta: invoiceout.meta, name: `a${count}`, attributes: [{meta: {
-    "href" : "https://api.moysklad.ru/api/remap/1.2/entity/invoiceout/metadata/attributes/a38c0fc9-24c2-11f0-0a80-194c00046502",
-    "type" : "attributemetadata",
-    "mediaType" : "application/json"
-  }, value: closestPayment.incomingDate}]})
-  count++
+  if(!pz.customerOrders.length){
+    const orderName = attributes['№ заказа покупателя']
+    skippedPz.push(`У производственного задания ${pz.name} нет связанного заказа покупателя${orderName ? `. Зато заполнено поле № заказа покупателя: ${orderName}, какая удача!` : ''}`)
+  }
+  if(!pz.productionEnd) continue
+  newData.push({meta: pz.customerOrders[0].meta, attributes: [{meta: {
+      "href" : "https://api.moysklad.ru/api/remap/1.2/entity/customerorder/metadata/attributes/3c649a9d-0f3d-11ee-0a80-0d9c0007730f",
+      "type" : "attributemetadata",
+      "mediaType" : "application/json"
+  }, value: pz.productionEnd}]})
 }
 console.log('СКОК СЧЕТВО:', newData.length)
+await writeFile('pz.json', JSON.stringify(skippedPz, null, 2), 'utf8');
 function chunkArray(arr, size) {
   const chunks = [];
   for (let i = 0; i < arr.length; i += size) {
@@ -45,7 +37,7 @@ const chunks = chunkArray(newData, 900);
 
 for (const chunk of chunks) {
   await Client.sklad(
-    'https://api.moysklad.ru/api/remap/1.2/entity/invoiceout',
+    'https://api.moysklad.ru/api/remap/1.2/entity/customerorder',
     'post',
     chunk
   );

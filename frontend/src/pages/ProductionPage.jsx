@@ -146,6 +146,9 @@ const OrdersInWorkTables = () => {
     <Col span={12}>
       <MachineCard title="Прямолинейка" load={data?.straightLoad} total={data?.total?.Прямолинейка} />
     </Col>
+    <Col span={12}>
+      <MachineCard title="Триплекс" load={data?.triplexLoad} total={data?.total?.['Триплекс (Без учета резки стекла)']} />
+    </Col>
   </Row>
 ));
   return (

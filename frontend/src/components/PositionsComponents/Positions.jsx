@@ -117,7 +117,9 @@ const Positions = ({form}) => {
             cutsv3 && (totalCutsv3 += cutsv3 * el.quantity)
             if(drills || cutsv1 || cutsv2 || cutsv3 || zenk || color) additions = true
         })
-        const loadBeforeThisOrder = (stanok === 'Прямолинейка' ? productionLoad.straightLoad : productionLoad.curvedLoad) || 0
+        let loadBeforeThisOrder = (stanok === 'Прямолинейка' ? productionLoad.straightLoad : productionLoad.curvedLoad) || 0
+        if(triplex)
+            loadBeforeThisOrder = Math.max(loadBeforeThisOrder, productionLoad.triplexLoad)
         let res = 0
         if(stanok === 'Прямолинейка')
             res = loadBeforeThisOrder + Math.ceil(P_all / (8 * 48))

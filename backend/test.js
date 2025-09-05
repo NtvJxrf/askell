@@ -1,123 +1,126 @@
-import Client from './src/utils/got.js';
-import dotenv from 'dotenv';
-dotenv.config();
-import axios from 'axios';
-import xlsx from 'xlsx';
-// await axios.post('http://localhost:7878/api/sklad/createPzHook?id=38ff2ee9-7465-11f0-0a80-172f0124afa4')
+import SkladService from '../backend/src/services/sklad.service.js'
+import Client from '../backend/src/utils/got.js';
 import { writeFile, readFile } from 'fs/promises';
-async function main() {
-  // Читаем заказы
-  const fileContent = await readFile('orders.json', 'utf-8');
-  const orders = JSON.parse(fileContent);
 
-  // Счётчики
-  let totalCutsv1 = 0, totalCutsv2 = 0, totalCutsv3 = 0;
-  const total = {
-    'Криволинейка': { count: 0, positionsCount: 0, S: 0, P: 0 },
-    'Прямолинейка': { count: 0, positionsCount: 0, S: 0, P: 0 }
-  };
+const getOrdersInWork = async () => {
+    const orders = await fetchAllRows(
+        'https://api.moysklad.ru/api/remap/1.2/entity/customerorder?' +
+        'filter=state.name=Подготовить (переделать) чертежи;' +
+        'state.name=В работе;' +
+        'state.name=Чертежи подготовлены, прикреплены;' +
+        'state.name=Поставлено в производство;' +
+        'state.name=Проверить чертежи;' +
+        'state.name=Проверено технологом' +
+        '&expand=positions.assortment'
+    )
+    await writeFile('orders.json', JSON.stringify(orders, null, 2), 'utf8');
+    // const fileContent = await readFile('orders.json', 'utf-8');
+    // const orders = JSON.parse(fileContent);
+    let totalCutsv1 = 0, totalCutsv2 = 0, totalCutsv3 = 0, totalTriplexM2 = 0
+    const total = {
+        'Криволинейка': { count: 0, positionsCount: 0, S: 0, P: 0 },
+        'Прямолинейка': { count: 0, positionsCount: 0, S: 0, P: 0 },
+        'Триплекс (Без учета резки стекла)': { count: 0, positionsCount: 0, S: 0, P: 0 }
+    };
+    const curvedArr = [], straightArr = [], otherArr = []
+    // Сбор статистики по заказам
+    for (const order of orders) {
+        for (const pos of order.positions.rows) {
+            const attrs = (pos.assortment?.attributes || []).reduce((a, x) => {
+                a[x.name] = x.value;
+                return a;
+            }, {});
+            const stanok = attrs['Тип станка'];
+            const positionData = {id: pos.id, position: pos.assortment.name, deliveryPlannedMoment: order.deliveryPlannedMoment, name: order.name, created: order.created, quantity: pos.quantity}
+            !stanok && otherArr.push(positionData)
+            if (!stanok) continue;
+            const h = Number(attrs['Длина в мм']) || 0;
+            const w = Number(attrs['Ширина в мм']) || 0;
+            const pfs = Number(attrs['Кол-во полуфабрикатов']) || 1;
+            totalCutsv1 += Number(attrs['Кол-во вырезов 1 категорий']) || 0;
+            totalCutsv2 += Number(attrs['Кол-во вырезов 2 категорий']) || 0;
+            totalCutsv3 += Number(attrs['Кол-во вырезов 3 категорий']) || 0;
 
-  // Сбор статистики по заказам
-  for (const order of orders) {
-    for (const pos of order.positions.rows) {
-      const attrs = (pos.assortment?.attributes || []).reduce((a, x) => {
-        a[x.name] = x.value;
-        return a;
-      }, {});
-      const stanok = attrs['тип станка обрабатывающий'];
-      if (!stanok) continue;
-
-      const h = Number(attrs['Длина в мм']) || 0;
-      const w = Number(attrs['Ширина в мм']) || 0;
-      const pfs = Number(attrs['Кол- во полуфабрикатов']) || 1;
-      totalCutsv1 += Number(attrs['Кол во вырезов 1 категорий/ шт']) || 0;
-      totalCutsv2 += Number(attrs['Кол во вырезов 2 категорий/ шт']) || 0;
-      totalCutsv3 += Number(attrs['Кол во вырезов 3 категорий/ шт']) || 0;
-
-      const P = 2 * (h + w) / 1000;          // пог.м
-      const S = h * w / 1_000_000;           // кв.м
-      const cnt = pfs * pos.quantity;
-
-      total[stanok].P += P * cnt;
-      total[stanok].S += S * cnt;
-      total[stanok].count += cnt;
-      total[stanok].positionsCount += 1;
-    }
-  }
-
-  console.log('Итого по заказам:', total);
-  console.log('Вырезы 1 кат:', totalCutsv1);
-  console.log('Вырезы 2 кат:', totalCutsv2);
-  console.log('Вырезы 3 кат:', totalCutsv3);
-
-  // Машины
-  const machinesStraight = [
-    { name: 'Станок на прямолинейке', norm: 48, efficiency: 1 }
-  ];
-  const machinesCurved = [
-    { name: 'Интермак', norm: 15, efficiency: 1 },
-    { name: 'Альпа большая', norm: 10, efficiency: 1 },
-  ];
-  // Расчёт
-    const workbook = xlsx.readFile('schedule.xlsx');
-    const sheetName = workbook.SheetNames[0];
-    const sheet = workbook.Sheets[sheetName];
-
-    let rows = xlsx.utils.sheet_to_json(sheet);
-
-    const now = new Date();
-    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-
-    rows = rows
-      .map(row => ({
-        ...row,
-        parsedDate: excelDateToJSDate(row['Дата']),
-      }))
-      .filter(row => {
-        const rowDate = new Date(
-          row.parsedDate.getFullYear(),
-          row.parsedDate.getMonth(),
-          row.parsedDate.getDate()
-        );
-
-        if (rowDate.getTime() === today.getTime()) {
-          // Если сегодня — проверяем время
-          return now.getHours() < 15;
+            const P = 2 * (h + w) / 1000;          // пог.м
+            const S = h * w / 1_000_000;           // кв.м
+            const cnt = pfs * pos.quantity;
+            if(pos.assortment.name.toLowerCase().includes('триплекс')){
+              total['Триплекс (Без учета резки стекла)'].P += P * pos.quantity;
+              total['Триплекс (Без учета резки стекла)'].S += S * pos.quantity;
+              total['Триплекс (Без учета резки стекла)'].count += pos.quantity
+              total['Триплекс (Без учета резки стекла)'].positionsCount += 1
+              totalTriplexM2 += pos.assortment.volume * pos.quantity
+            }
+            total[stanok].P += P * cnt;
+            total[stanok].S += S * cnt;
+            total[stanok].count += cnt;
+            total[stanok].positionsCount += 1;
+            const currArr = stanok === 'Прямолинейка' ? straightArr : curvedArr
+            currArr.push(positionData)
         }
-        // Все даты в будущем включаем
-        return rowDate > today;
-      })
-      .sort((a, b) => a.parsedDate - b.parsedDate);
-  console.log(
-    'Криволинейка:',
-    CalcLoad(rows, machinesCurved, total['Криволинейка'].P, { v1: totalCutsv1, v2: totalCutsv2, v3: totalCutsv3 }, 'Криволинейка'),
-  );
-  console.log(
-    'Прямолинейка:',
-    CalcLoad(rows, machinesStraight, total['Прямолинейка'].P, { v1: totalCutsv1, v2: totalCutsv2, v3: totalCutsv3 }, 'Прямолинейка'),
-  );
-  console.log(Math.ceil(40 / (8 * 48)))
+    }
+    console.log(`Total Triplex: ${totalTriplexM2}`)
+    console.log('Итого по заказам:', total);
+    console.log('Вырезы 1 кат:', totalCutsv1);
+    console.log('Вырезы 2 кат:', totalCutsv2);
+    console.log('Вырезы 3 кат:', totalCutsv3);
+    const machinesStraight = [
+        { name: '1 станок прямолинейка', shiftHours: 8, norm: 48, efficiency: 1, schedule: { on: 5, off: 2 } }
+    ];
+    const machinesCurved = [
+        { name: '1 станок криволинейка', shiftHours: 12, norm: 15, efficiency: 1, schedule: { on: 3, off: 1 } },
+        { name: '2 станок криволинейка', shiftHours: 12, norm: 10, efficiency: 1, schedule: { on: 2, off: 2 } },
+    ];
+    const straightLoad = Math.ceil(total['Прямолинейка'].P / (8 * 48))
+    console.log('Загруженность прямолинейки в рабочих днях:', straightLoad)
+    const temp = Math.ceil((total['Криволинейка'].P / 14 + totalCutsv1 / 8 + totalCutsv2 / 4 + totalCutsv3 / 2 + total.Криволинейка.positionsCount * 0.166) / (12 * 1.25))
+    const curvedLoad = temp - Math.floor(temp / 7) * 2
+    console.log('Загруженность криволинейки в рабочих днях:', curvedLoad)
+    const triplexLoad = Math.ceil(total['Триплекс (Без учета резки стекла)'].S / 27)
+    console.log(total['Триплекс (Без учета резки стекла)'].S / 27)
+    console.log(triplexLoad)
+    const res = {
+      straightLoad,
+      curvedLoad,
+      triplexLoad,
+      total,
+      totalCutsv1,
+      totalCutsv2,
+      totalCutsv3,
+      curvedArr: curvedArr.sort((a, b) => new Date(a.created) - new Date(b.created)),
+      straightArr: straightArr.sort((a, b) => new Date(a.created) - new Date(b.created)),
+      otherArr: otherArr.sort((a, b) => new Date(a.created) - new Date(b.created))
+    }
+    SkladService.ordersInWork = res
+
 }
+getOrdersInWork()
+async function fetchAllRows(urlBase) {
+  const limit = 100;
+  const firstUrl = `${urlBase}&limit=${limit}&offset=0`;
+  const firstResponse = await Client.sklad(firstUrl);
 
-function excelDateToJSDate(serial) {
-  const utcDays = Math.floor(serial - 25569); // 25569 = 1970-01-01
-  return new Date(utcDays * 86400 * 1000);
-}
+  if (!firstResponse.rows || firstResponse.rows.length === 0) {
+    return [];
+  }
 
+  const allRows = [...firstResponse.rows];
+  const totalSize = firstResponse.meta?.size || allRows.length;
 
-function CalcLoad(rows, machines, meters, cuts, name) {
-  let daysNeeded = 0
-  let totalP = meters + (name == 'Криволинейка' ? cuts.v1 * 1.75 + cuts.v2 * 3.50 : 0)
-  console.log(totalP)
-  for(const day of rows){
-    if(totalP > 0){
-      daysNeeded++
-      for(const machine of machines){
-        totalP -= day[machine.name] * machine.norm
-      }
+  const requests = [];
+  for (let offset = limit; offset < totalSize; offset += limit) {
+    const url = `${urlBase}&limit=${limit}&offset=${offset}`;
+    requests.push(Client.sklad(url));
+  }
+
+  const responses = await Promise.all(requests);
+  for (const res of responses) {
+    if (res.rows) {
+      allRows.push(...res.rows);
     }
   }
-  return daysNeeded
+
+  return allRows;
 }
 
-main().catch(console.error);
+export default getOrdersInWork

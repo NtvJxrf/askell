@@ -77,8 +77,6 @@ const getOrdersInWork = async () => {
     const curvedLoad = temp - Math.floor(temp / 7) * 2
     console.log('Загруженность криволинейки в рабочих днях:', curvedLoad)
     const triplexLoad = Math.ceil(total['Триплекс (Без учета резки стекла)'].S / 27)
-    console.log(total['Триплекс (Без учета резки стекла)'].S / 27)
-    console.log(triplexLoad)
     const res = {
       straightLoad,
       curvedLoad,

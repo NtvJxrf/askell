@@ -218,7 +218,9 @@ const formConfigs = {
         { name: 'blank', type: 'inputp0', label: 'Количество пятаков' },
         { name: 'trim', type: 'input', label: '% обрези', description: 'Указывать десятичное число, например 30% обрези = 0.3' },
         { name: 'color', label: 'Цвет', type: 'select' },
-        { name: 'under', label: 'Подстолье', type: 'select' }
+        { name: 'under', label: 'Подстолье', type: 'select' },
+        { name: 'ownWidth', type: 'inputp0', label: 'Своя ширина керамики', description: 'Если поле заполнено, то лист керамики будет считаться с этой шириной' },
+        { name: 'ownHeight', type: 'inputp0', label: 'Своя высота керамики', description: 'Если поле заполнено, то лист керамики будет считаться с этой высотой' },
       ],materialFields: []
     }
   };

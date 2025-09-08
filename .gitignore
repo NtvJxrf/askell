@@ -12,7 +12,7 @@ backend/dist/
 # Docker
 *.pid
 *.sock
-
+backend/schedule-471508-c646e9809860.json
 # OS system files
 .DS_Store
 Thumbs.db

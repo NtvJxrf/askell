@@ -3,7 +3,12 @@ const Calculate = (data, selfcost) => {
     console.log(selfcost)
     console.log(data)
     const { height, width, drills, zenk, cutsv1, cutsv2, cutsv3, tempered, shape, addTape, print, customertype, rounding, color, quantity = 1 } = data
-    const tapes = Object.entries(data).filter(([key]) => key.startsWith('tape')).map(([_, value]) => value);
+    const tapes = Object.entries(data).filter(([key]) => key.startsWith('tape')).map(([_, value]) => value).map( el => {
+        if(el === '-')
+            return undefined
+        else return el
+    });
+    console.log(tapes)
     const materials = Object.entries(data).filter(([key, value]) => key.startsWith('material') && value !== undefined).map(([_, value]) => value);
     addTape && tapes.push(addTape)
     // let name = `Триплекс, ${materials.join(' + ')}, (${height}х${width}${polishing ? ', Полировка' : ''}${tempered ? ', Закаленное' : ''}${cutsv1 ? `, Вырезы 1 кат.: ${cutsv1}` : ''}${cutsv2 ? `, Вырезы 2 кат.: ${cutsv2}` : ''}${cutsv3 ? `, Вырезы 3 кат.: ${cutsv3}` : ''}${drills ? `, Сверление: ${drills}` : ''}${zenk ? `, Зенкование: ${zenk}` : ''}${print ? ', Печать' : ''}, площадь: ${(height * width / 1000000).toFixed(2)})`
@@ -294,7 +299,11 @@ export const constructName = (firstWord, data) => {
     print = false,
     color = false,
     } = data
-    const tapes = Object.entries(data).filter(([key]) => key.startsWith('tape')).map(([_, value]) => value).filter(Boolean)
+    const tapes = Object.entries(data).filter(([key]) => key.startsWith('tape')).map(([_, value]) => value).map( el => {
+        if(el === '-')
+            return undefined
+        else return el
+    });
     const parts = [];
     if(stanok) stanok == 'Прямолинейка' ? parts.push('ПР') : parts.push('КР')
     if (polishing) parts.push('Полировка')

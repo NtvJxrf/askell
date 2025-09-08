@@ -4,11 +4,8 @@ import dotenv from 'dotenv';
 dotenv.config();
 import axios from 'axios';
 import { writeFile, readFile } from 'fs/promises';
-const res = await axios.post('https://api.unisender.com/en/api/triggerBlock/0199194d-82a7-7f39-af5a-f9d9567540cf', {
-  email: 'Artemy.nokhrin@yandex.ru',
-  orderName: `322`
-});
-
+const res = await axios.post('http://localhost:7878/api/sklad/orderCompleted?id=56508553-4474-11f0-0a80-1b74001fc4eb');
+console.log(res)
 async function fetchAllRows(urlBase) {
   const limit = 100;
   const firstUrl = `${urlBase}&limit=${limit}&offset=0`;

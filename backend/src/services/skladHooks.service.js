@@ -34,8 +34,14 @@ export default class SkladHooks{
     static async orderCompleted(id){
         const order = await Client.sklad(`https://api.moysklad.ru/api/remap/1.2/entity/customerorder/${id}?expand=agent`)
         if(!order.agent.email){
-            const res = await Client.sklad(`${order.meta.href.split('?')[0]}/notes`, 'post', {
-                description: `{{employee;${order.owner.id}}} Уведомление о готовности заказа не отправлено, тк у контрагента не указана почта`
+            const task = await Client.sklad('https://api.moysklad.ru/api/remap/1.2/entity/task', 'post', {
+                assignee: {
+                    meta: order.owner.meta,
+                },
+                operation: {
+                    meta: order.meta
+                },
+                description: `Уведомление о готовом заказе не отправлено, тк не указан email`
             })
         }else{
             await axios.post(process.env.UNISENDER_URL, {

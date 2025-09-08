@@ -30,4 +30,7 @@ router
 router
     .route('/pzChanged')
     .post(authorizeRoles, MoySkladController.pzChangedWebhook)
+router
+    .route('/orderCompleted')
+    .post(authorizeRoles, MoySkladController.orderCompleted)
 export default router

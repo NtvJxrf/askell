@@ -1,5 +1,6 @@
 import Client from "../utils/got.js"
 import SkladService from "./sklad.service.js"
+import axios from 'axios'
 export default class SkladHooks{
     static async pzChange(data){
         let document = null
@@ -27,6 +28,19 @@ export default class SkladHooks{
             })
             const res2 = await Client.sklad(`${order.meta.href.split('?')[0]}/notes`, 'post', {
                 description: `{{employee;${order.owner.id}}}Сроки изготовления производственного задания № ${document.name} перенесены на ${date}`
+            })
+        }
+    }
+    static async orderCompleted(id){
+        const order = await Client.sklad(`https://api.moysklad.ru/api/remap/1.2/entity/customerorder/${id}?expand=agent`)
+        if(!order.agent.email){
+            const res = await Client.sklad(`${order.meta.href.split('?')[0]}/notes`, 'post', {
+                description: `{{employee;${order.owner.id}}} Уведомление о готовности заказа не отправлено, тк у контрагента не указана почта`
+            })
+        }else{
+            await axios.post(process.env.UNISENDER_URL, {
+                email: order.agent.email,
+                orderName: order.name
             })
         }
     }

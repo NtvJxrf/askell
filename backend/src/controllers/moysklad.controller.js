@@ -64,4 +64,8 @@ export default class MoySkladController{
         const result = await SkladHooks.pzChange(req.body)
         res.sendStatus(200)
     }
+    static async orderCompleted(req, res){
+        res.sendStatus(200)
+        const result = await SkladHooks.orderCompleted(req.query.id)
+    }
 }

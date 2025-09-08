@@ -12,11 +12,13 @@ for(const pz of res){
     acc[curr.name] = curr
     return acc
   }, {})
-  if(!pz.customerOrders.length){
-    const orderName = attributes['№ заказа покупателя']
-    skippedPz.push(`У производственного задания ${pz.name} нет связанного заказа покупателя${orderName ? `. Зато заполнено поле № заказа покупателя: ${orderName}, какая удача!` : ''}`)
+  if(!pz?.customerOrders?.length){
+    const orderName = attributes?.['№ заказа покупателя']
+    console.log(orderName)
+    skippedPz.push(`У производственного задания ${pz.name} нет связанного заказа покупателя${orderName ? `. Зато заполнено поле № заказа покупателя: ${orderName.value}, какая удача!` : ''}`)
+    continue
   }
-  if(!pz.productionEnd) continue
+  if(!pz?.productionEnd) continue
   newData.push({meta: pz.customerOrders[0].meta, attributes: [{meta: {
       "href" : "https://api.moysklad.ru/api/remap/1.2/entity/customerorder/metadata/attributes/3c649a9d-0f3d-11ee-0a80-0d9c0007730f",
       "type" : "attributemetadata",
@@ -34,14 +36,12 @@ function chunkArray(arr, size) {
 }
 
 const chunks = chunkArray(newData, 900);
-
+const promises = []
 for (const chunk of chunks) {
-  await Client.sklad(
-    'https://api.moysklad.ru/api/remap/1.2/entity/customerorder',
-    'post',
-    chunk
-  );
+  promises.push(Client.sklad('https://api.moysklad.ru/api/remap/1.2/entity/customerorder', 'post', chunk ))
 }
+const result = await Promise.allSettled(promises)
+console.log(result)
 async function fetchAllRows(urlBase) {
   const limit = 100;
   const firstUrl = `${urlBase}&limit=${limit}&offset=0`;

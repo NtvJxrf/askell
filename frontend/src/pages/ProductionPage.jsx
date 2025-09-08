@@ -140,13 +140,13 @@ const OrdersInWorkTables = () => {
   })
   const MachineCards = React.memo(({ data }) => (
   <Row gutter={16}>
-    <Col span={12}>
+    <Col span={8}>
       <MachineCard title="Криволинейка" load={data?.curvedLoad} total={data?.total?.Криволинейка} />
     </Col>
-    <Col span={12}>
+    <Col span={8}>
       <MachineCard title="Прямолинейка" load={data?.straightLoad} total={data?.total?.Прямолинейка} />
     </Col>
-    <Col span={12}>
+    <Col span={8}>
       <MachineCard title="Триплекс" load={data?.triplexLoad} total={data?.total?.['Триплекс (Без учета резки стекла)']} />
     </Col>
   </Row>

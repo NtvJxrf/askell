@@ -22,7 +22,7 @@ const Calculate = (data, selfcost) => {
     let ceraTrim = 0
     let weight = 0
     // let name = `Керагласс, ${materials.join(' + ')}, (${height}х${width}${cutsv1 ? `, Вырезы 1 кат.: ${cutsv1}` : ''}${cutsv2 ? `, Вырезы 2 кат.: ${cutsv2}` : ''}${cutsv3 ? `, Вырезы 3 кат.: ${cutsv3}` : ''}, площадь: ${(height * width / 1000000).toFixed(2)})`
-    let name = constructName(`Керагласс, ${materials.join(' + ')}`, {...data})
+    let name = constructName(`Керагласс, ${materials.join(' + ')}`, {...data, polishing: true})
     color && result.materials.push({
         name: color,
         value: selfcost.colors[color].value * 0.3,

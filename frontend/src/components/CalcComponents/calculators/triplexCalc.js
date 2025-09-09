@@ -303,7 +303,7 @@ export const constructName = (firstWord, data) => {
         if(el === '-')
             return undefined
         else return el
-    });
+    }).filter(Boolean)
     const parts = [];
     if(stanok) stanok == 'Прямолинейка' ? parts.push('ПР') : parts.push('КР')
     if (polishing) parts.push('Полировка')

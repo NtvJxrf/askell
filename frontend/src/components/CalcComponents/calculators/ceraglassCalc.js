@@ -2,7 +2,7 @@ import { constructWorks, constructName } from './triplexCalc.js'
 const Calculate = (data, selfcost) => {
     console.log(data)
     console.log(selfcost)
-    const { height, width, cutsv1, cutsv2, cutsv3, material1, material2, blank, color, under, quantity = 1, trim} = data
+    const { height, width, cutsv1, cutsv2, cutsv3, material1, material2, blank, color, under, quantity = 1, trim, tempered} = data
     const heightsRaw = Object.entries(data).filter(([key]) => /^height\d+$/.test(key)).map(([_, value]) => value);
     const heights = heightsRaw.length > 0 ? heightsRaw : [height];
     const widthsRaw = Object.entries(data).filter(([key]) => /^width\d+$/.test(key)).map(([_, value]) => value)
@@ -21,7 +21,6 @@ const Calculate = (data, selfcost) => {
     }
     let ceraTrim = 0
     let weight = 0
-    // let name = `Керагласс, ${materials.join(' + ')}, (${height}х${width}${cutsv1 ? `, Вырезы 1 кат.: ${cutsv1}` : ''}${cutsv2 ? `, Вырезы 2 кат.: ${cutsv2}` : ''}${cutsv3 ? `, Вырезы 3 кат.: ${cutsv3}` : ''}, площадь: ${(height * width / 1000000).toFixed(2)})`
     let name = constructName(`Керагласс, ${materials.join(' + ')}`, {...data, polishing: true})
     color && result.materials.push({
         name: color,
@@ -62,21 +61,32 @@ const Calculate = (data, selfcost) => {
             const context = { selfcost, result, thickness, stanok };
             constructWorks('cutting1', S, context);
             constructWorks('cutting2', S, context);
-            constructWorks('tempered', S, context);
+            tempered && constructWorks('tempered', S, context);
             constructWorks('curvedProcessing', P, context);
+            continue
+        }
+        constructWorks('cuttingCera', S, context);
+        if(material == 'Керамика клиента'){
+            result.materials.push({
+                name: material,
+                value: 2200 * S,
+                calcValue: 2200 * S,
+                string: `2200 * ${S}`,
+                formula: 'Цена * S'
+            });
             continue
         }
         const sheetWidth = selfcost.materials[material].w, sheetHeight = selfcost.materials[material].l
         const S_cera = sheetHeight * sheetWidth / 1000000
         const parts = widths.map((w, i) => ({
-          w,
-          h: heights[i]
+            w,
+            h: heights[i]
         }));
         let count = countSheets(sheetWidth, sheetHeight, parts)
         ceraTrim = 1 + (trim ?? (1 - S_all / (count * S_cera)))
         if(typeof count === 'string'){
-          result.errors.push(count)
-          count = 999
+            result.errors.push(count)
+            count = 999
         }
         result.materials.push({
             name: material,
@@ -85,7 +95,6 @@ const Calculate = (data, selfcost) => {
             string: `${selfcost.materials[material].value} * ${S} * ${ceraTrim + selfcost.pricesAndCoefs[`Коэффициент брака керамика`]}`,
             formula: 'Цена * S * (Коэффициент обрези керамика + Коэффициент брака керамика)'
         });
-        constructWorks('cuttingCera', S, context);
     }
     constructWorks('curvedProcessing', P_all, context);
     constructWorks('lamination', S_all, context);

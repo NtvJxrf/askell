@@ -210,8 +210,8 @@ const formConfigs = {
           type: 'select',
           rules: [{ required: true, message: 'Fill this field' }]
         },
-        { name: 'width', type: 'input', label: 'Ширина, мм', rules: [{ required: true, message: 'Fill this field' }] },
-        { name: 'height', type: 'input', label: 'Высота, мм', rules: [{ required: true, message: 'Fill this field' }] },
+        { name: 'width', type: 'input', label: 'Ширина изделия, мм', rules: [{ required: true, message: 'Fill this field' }] },
+        { name: 'height', type: 'input', label: 'Высота изделия, мм', rules: [{ required: true, message: 'Fill this field' }] },
         { name: 'cutsv1', type: 'inputp0', label: 'Вырезы 1 кат. шт' },
         { name: 'cutsv2', type: 'inputp0', label: 'Вырезы 2 кат. шт' },
         { name: 'cutsv3', type: 'inputp0', label: 'Вырезы 3 кат. шт' },
@@ -219,8 +219,7 @@ const formConfigs = {
         { name: 'trim', type: 'input', label: '% обрези', description: 'Указывать десятичное число, например 30% обрези = 0.3' },
         { name: 'color', label: 'Цвет', type: 'select' },
         { name: 'under', label: 'Подстолье', type: 'select' },
-        { name: 'ownWidth', type: 'inputp0', label: 'Своя ширина керамики', description: 'Если поле заполнено, то лист керамики будет считаться с этой шириной' },
-        { name: 'ownHeight', type: 'inputp0', label: 'Своя высота керамики', description: 'Если поле заполнено, то лист керамики будет считаться с этой высотой' },
+        { name: 'tempered', label: 'Закаленное', type: 'checkbox', cheched: true },
       ],materialFields: []
     }
   };

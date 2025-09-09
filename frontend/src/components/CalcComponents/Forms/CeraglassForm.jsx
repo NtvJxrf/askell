@@ -12,8 +12,10 @@ const CeraglassForm = () => {
     const colors = useSelector(state => state.selfcost.selfcost?.colors) || []
     const undersArray = Object.keys(unders)
     const colorsArray = Object.keys(colors)
-    const ceraArray = Object.keys(materials).filter(el => ceraExcludedWords.some(word => el.toLowerCase().includes(word))).sort();
-    const materialsArray = Object.keys(materials).filter(el => glassAndCera.some(word => el.toLowerCase().includes(word))).sort();
+    const ceraArray = Object.keys(materials).filter(el => ceraExcludedWords.some(word => el.toLowerCase().includes(word))).sort()
+    ceraArray.push('Керамика клиента');
+    const materialsArray = Object.keys(materials).filter(el => glassAndCera.some(word => el.toLowerCase().includes(word))).sort()
+    materialsArray.push('Керамика клиента');
     const ceraglassFields = useMemo(() => {
         return formConfigs.ceraglassForm.commonFields.map(field => {
         if (field.name === 'material1') return { ...field, options: ceraArray };

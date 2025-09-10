@@ -253,7 +253,7 @@ const triplex = async (data, order, position, createdEntitys) => {
         const responses = await Promise.all(promises)
         const processingprocess = responses[0]
         const product = responses[1]
-        const plan = await makeProcessingPlanGlass(data, position.assortment.name, order, processingprocess, product, true, material, createdEntitys)
+        const plan = await makeProcessingPlan({data, name: position.assortment.name, order, processingprocess, product, isPF: true, material, createdEntitys, mode: 'glass'})
         plan.quantity = position.quantity
         result.selk.push(plan)
         pfs.push(product)
@@ -275,7 +275,8 @@ const triplex = async (data, order, position, createdEntitys) => {
             quantity: tape.count
         })
     }
-    const planViz = await makeProcessingPlanViz(data, position.assortment.name, order, processingprocessViz, position.assortment, false, materialsViz, createdEntitys)
+    const planViz = await makeProcessingPlan({data, name: position.assortment.name, order, processingprocess: processingprocessViz,
+        product: position.assortment, isPF: false, materials: materialsViz, createdEntitys})
     planViz.quantity = position.quantity
     result.viz.push(planViz)
     return result
@@ -314,7 +315,8 @@ const ceraglass = async (data, order, position, createdEntitys) => {
                 const responses = await Promise.all(promises)
                 const processingprocess = responses[0]
                 createdEntitys.product.push(product)
-                const plan = await makeProcessingPlanGlass({initialData: {height: heights[i], width: widths[i]}}, position.assortment.name, order, processingprocess, product, true, material, createdEntitys)
+                const plan = await makeProcessingPlan({data: {initialData: {height: heights[i], width: widths[i]}}, name: position.assortment.name, order,
+                    processingprocess, product, isPF: true, material, createdEntitys, mode: 'glass'})
                 plan.quantity = position.quantity
                 result.selk.push(plan)
                 pfs.push(product)
@@ -340,7 +342,9 @@ const ceraglass = async (data, order, position, createdEntitys) => {
             const processingprocess = responses[0]
             createdEntitys.product.push(product)
             const newData = { ...data, ...{initialData: {height: heights[i], width: widths[i]}, ceraTrim: data.result.other.ceraTrim }}
-            const plan = await makeProcessingPlanGlass(newData, position.assortment.name, order, processingprocess, product, true, material, createdEntitys)
+            const mode = material == 'Керамика клиента' ? 'default' : 'glass'
+            const plan = await makeProcessingPlan({data: newData, name: position.assortment.name, order, processingprocess,
+                product, isPF: true, material, createdEntitys, mode})
             plan.quantity = position.quantity
             result.viz.push(plan)
             pfs.push(product)
@@ -361,7 +365,8 @@ const ceraglass = async (data, order, position, createdEntitys) => {
         quantity: data.result.materials.find(el => el.name == 'Клей кераглас').count
     })
     const processingprocessViz = await makeprocessingprocess(['ОТК'])
-    const planViz = await makeProcessingPlanViz(data, position.assortment.name, order, processingprocessViz, position.assortment, false, materialsViz, createdEntitys)
+    const planViz = await makeProcessingPlan({data, name: position.assortment.name, order, processingprocess: processingprocessViz, product: position.assortment,
+        isPF: false, materials: materialsViz, createdEntitys})
     planViz.quantity = position.quantity
     result.viz.push(planViz)
     return result
@@ -375,7 +380,7 @@ const glass = async (data, order, position, createdEntitys) => {
         const stagesSelk = ['Закалка', 'ОТК']
         const processingprocess = await makeprocessingprocess(stagesSelk)
         const product = position.assortment
-        const plan = await makeProcessingPlanForTempering(position.assortment.name, order, processingprocess, product, createdEntitys)
+        const plan = await makeProcessingPlan({name: position.assortment.name, order, processingprocess, product, createdEntitys})
         plan.quantity = position.quantity
         result.selk.push(plan)
         return result
@@ -388,7 +393,7 @@ const glass = async (data, order, position, createdEntitys) => {
     let product = null
     if(isPF) product = await makeProduct(data, data.initialData.material, isPF, createdEntitys, order)
     else product = position.assortment
-    const plan = await makeProcessingPlanGlass(data, position.assortment.name, order, processingprocess, product, isPF, data.initialData.material, createdEntitys)
+    const plan = await makeProcessingPlan({data, name: position.assortment.name, order, processingprocess, product, isPF, material: data.initialData.material, createdEntitys, mode: 'glass'})
     plan.quantity = position.quantity
     result.selk.push(plan)
     if(isPF){
@@ -398,7 +403,8 @@ const glass = async (data, order, position, createdEntitys) => {
             assortment: { meta: product.meta},
             quantity: 1
         }]
-        const planViz = await makeProcessingPlanViz(data, position.assortment.name, order, processingprocessViz, position.assortment, false, materials, createdEntitys)
+        const planViz = await makeProcessingPlan({data, name: position.assortment.name, order, processingprocess: processingprocessViz, product: position.assortment,
+             isPF: false, materials, createdEntitys})
         planViz.quantity = position.quantity
         result.viz.push(planViz)
     }
@@ -435,10 +441,9 @@ const smd = async (data, order, position, createdEntitys) => {
     const responses = await Promise.all(promises)
     const processingprocess = responses[0]
     const product = responses[1]
-    const plan = await makeProcessingPlanGlass(data, 'Доска стеклянная магнитно-маркерная ASKELL Size', order, processingprocess, product, true, data.initialData.material, createdEntitys)
+    const plan = await makeProcessingPlan({data, name: 'Доска стеклянная магнитно-маркерная ASKELL Size', order, processingprocess, product, isPF: true, material: data.initialData.material, createdEntitys, mode: 'glass'})
     plan.quantity = position.quantity
     result.selk.push(plan)
-
 
     let processingprocessViz = {
         "href" : "https://api.moysklad.ru/api/remap/1.2/entity/processingprocess/43072ea8-17cf-11ef-0a80-178100023cbc",
@@ -447,7 +452,8 @@ const smd = async (data, order, position, createdEntitys) => {
         "mediaType" : "application/json",
         "uuidHref" : "https://online.moysklad.ru/app/#processingprocess/edit?id=43072ea8-17cf-11ef-0a80-178100023cbc"
     }
-    const planViz = await makeProcessingPlanVizSmd(data, 'Доска стеклянная магнитно-маркерная ASKELL Size', order, processingprocessViz, position.assortment, color, product.meta, createdEntitys)
+    const planViz = await makeProcessingPlan({data, name: 'Доска стеклянная магнитно-маркерная ASKELL Size', order, processingprocess: processingprocessViz,
+         product: position.assortment, color, materialMeta: product.meta, createdEntitys, mode: 'smd'})
     const productionRows = [{
                     processingPlan: {
                         meta: planViz.meta
@@ -475,7 +481,7 @@ const packageBox = async (data, order, position, createdEntitys) => {
         }
     })
     console.log(materials)
-    const plan = await makeProcessingPlanPackage(position.assortment.name, order, processingprocess, product, materials, createdEntitys)
+    const plan = await makeProcessingPlan({name: position.assortment.name, order, processingprocess, product, materials, createdEntitys, mode: 'package'})
     plan.quantity = position.quantity
     result.selk.push(plan)
     return result
@@ -616,117 +622,50 @@ const makeProductionTask = async (materialsStore, productsStore, productionRows,
     createdEntitys.task.push(task)
     return task
 }   
-const makeProcessingPlanViz = async (data, name, order, processingprocess, product, isPF, materials, createdEntitys) => {
-    const response = await Client.sklad('https://api.moysklad.ru/api/remap/1.2/entity/processingplan', 'post', {
-        name: `${order.name}, ${isPF ? 'ПФ, ' : ''}${name}`,
-        processingProcess: { meta: processingprocess },
-        materials,
-        products: [{
-            assortment: {
-                meta: product.meta,
-            },
-            quantity: 1
-        }],
-        parent: {
-            meta: {
-                "href" : "https://api.moysklad.ru/api/remap/1.2/entity/processingplanfolder/f699d4ef-7cdb-11f0-0a80-17360009d500",
-                "metadataHref" : "https://api.moysklad.ru/api/remap/1.2/entity/processingplanfolder/metadata",
-                "type" : "processingplanfolder",
-                "mediaType" : "application/json"
-            }
+const makeProcessingPlan = async ({ data, name, order, processingprocess, product, isPF = false, materials = null, material = null,
+    color = null, materialMeta = null, folderId = "f699d4ef-7cdb-11f0-0a80-17360009d500", createdEntitys, mode = "default" // "viz", "package", "tempering", "glass", "smd"
+}) => {
+    let finalMaterials = materials
+    if (mode === "glass") {
+        finalMaterials = [{
+            assortment: { meta: SkladService.selfcost.materials[material].meta },
+            quantity: (data.initialData.width * data.initialData.height) / 1000000 * (data.ceraTrim ? data.ceraTrim : 1.1)
+        }]
+        if (data?.result?.other?.package) {
+            const processingProcessPositions = await Client.sklad(`${processingprocess.href}/positions`)
+            finalMaterials.push({
+                processingProcessPosition: { meta: processingProcessPositions.rows.at(-1).meta },
+                assortment: { meta: SkladService.selfcost.packagingMaterials['Гофролист Т21 1050х2000 мм'].meta },
+                quantity: data.result.other.S * 2
+            })
         }
-    })
-    createdEntitys.plan.push(response)
-    return response
-}
-const makeProcessingPlanPackage = async (name, order, processingprocess, product, materials, createdEntitys) => {
-    const response = await Client.sklad('https://api.moysklad.ru/api/remap/1.2/entity/processingplan', 'post', {
-        name: `${order.name}, ${name}`,
-        processingProcess: { meta: processingprocess },
-        materials,
-        products: [{
-            assortment: {
-                meta: product.meta,
-            },
-            quantity: 1
-        }],
-        parent: {
-            meta: {
-                "href" : "https://api.moysklad.ru/api/remap/1.2/entity/processingplanfolder/f699d4ef-7cdb-11f0-0a80-17360009d500",
-                "metadataHref" : "https://api.moysklad.ru/api/remap/1.2/entity/processingplanfolder/metadata",
-                "type" : "processingplanfolder",
-                "mediaType" : "application/json"
-            }
-        }
-    })
-    createdEntitys.plan.push(response)
-    return response
-}
-const makeProcessingPlanForTempering = async (name, order, processingprocess, product, createdEntitys) => {
-    const response = await Client.sklad('https://api.moysklad.ru/api/remap/1.2/entity/processingplan', 'post', {
-        name: `${order.name}, ${name}`,
-        processingProcess: { meta: processingprocess },
-        products: [{
-            assortment: {
-                meta: product.meta,
-            },
-            quantity: 1
-        }],
-        parent: {
-            meta: {
-                "href" : "https://api.moysklad.ru/api/remap/1.2/entity/processingplanfolder/f699d4ef-7cdb-11f0-0a80-17360009d500",
-                "metadataHref" : "https://api.moysklad.ru/api/remap/1.2/entity/processingplanfolder/metadata",
-                "type" : "processingplanfolder",
-                "mediaType" : "application/json"
-            }
-        }
-    })
-    createdEntitys.plan.push(response)
-    return response
-}
-const makeProcessingPlanGlass = async (data, name, order, processingprocess, product, isPF, material, createdEntitys) => {
-    // const multi = data.ceraTrim ? data.ceraTrim : SkladService.selfcost.pricesAndCoefs['Коэффициент обрези стекло']
-    const materials = [{
-        assortment: {
-            meta: SkladService.selfcost.materials[material].meta
-        },
-        quantity: (data.initialData.width * data.initialData.height) / 1000000 * (data.ceraTrim ? data.ceraTrim : 1.1)
-    }]
-
-    if(data?.result?.other?.package){
-        const processingProcessPositions = await Client.sklad(`${processingprocess.href}/positions`)
-        materials.push({
-            processingProcessPosition: {
-                meta: processingProcessPositions.rows.at(-1).meta
-            },
-            assortment: {
-                meta: SkladService.selfcost.packagingMaterials['Гофролист Т21 1050х2000 мм'].meta
-            },
-            quantity: data.result.other.S * 2
-        })
     }
-    const response = await Client.sklad('https://api.moysklad.ru/api/remap/1.2/entity/processingplan', 'post', {
-        name: `${order.name}, ${isPF ? 'ПФ, ' : ''}${name}`,
-        processingProcess: { meta: processingprocess },
-        materials,
-        products: [{
-            assortment: {
-                meta: product.meta,
-            },
-            quantity: 1
-        }],
-        parent: {
-            meta: {
-                "href" : "https://api.moysklad.ru/api/remap/1.2/entity/processingplanfolder/f699d4ef-7cdb-11f0-0a80-17360009d500",
-                "metadataHref" : "https://api.moysklad.ru/api/remap/1.2/entity/processingplanfolder/metadata",
-                "type" : "processingplanfolder",
-                "mediaType" : "application/json"
+    if (mode === "smd") {
+        finalMaterials = generateSmdMaterials(data, color, materialMeta)
+        folderId = "92522e19-80c1-11f0-0a80-09fe001efbca"
+    }
+    const response = await Client.sklad( 'https://api.moysklad.ru/api/remap/1.2/entity/processingplan', 'post', {
+            name: `${order.name}, ${isPF ? 'ПФ, ' : ''}${name}`,
+            processingProcess: { meta: processingprocess },
+            ...(finalMaterials ? { materials: finalMaterials } : {}),
+            products: [{
+                assortment: { meta: product.meta },
+                quantity: 1
+            }],
+            parent: {
+                meta: {
+                    href: `https://api.moysklad.ru/api/remap/1.2/entity/processingplanfolder/${folderId}`,
+                    metadataHref: "https://api.moysklad.ru/api/remap/1.2/entity/processingplanfolder/metadata",
+                    type: "processingplanfolder",
+                    mediaType: "application/json"
+                }
             }
         }
-    })
+    )
     createdEntitys.plan.push(response)
     return response
 }
+
 const makeProduct = async (data, name, isPF, createdEntitys, order) => {
     const { height, width, polishing, drills, zenk, cutsv1, cutsv2, cutsv3, tempered, color, print } = data.initialData
     const params = {
@@ -840,29 +779,6 @@ const generateProductionTaskAttributes = (order, checkboxes) => {
     }
     return result
 }
-const makeProcessingPlanVizSmd = async (data, name, order, processingprocess, product, color, materialMeta, createdEntitys) => {
-    const response = await Client.sklad('https://api.moysklad.ru/api/remap/1.2/entity/processingplan', 'post', {
-        name: `${order.name}, ${name}`,
-        processingProcess: { meta: processingprocess },
-        materials: generateSmdMaterials(data, color, materialMeta),
-        products: [{
-            assortment: {
-                meta: product.meta,
-            },
-            quantity: 1
-        }],
-        parent: {
-            meta: {
-                "href" : "https://api.moysklad.ru/api/remap/1.2/entity/processingplanfolder/92522e19-80c1-11f0-0a80-09fe001efbca",
-                "metadataHref" : "https://api.moysklad.ru/api/remap/1.2/entity/processingplanfolder/metadata",
-                "type" : "processingplanfolder",
-                "mediaType" : "application/json"
-            }
-        }
-    })
-    createdEntitys.plan.push(response)
-    return response
-}
 const deleteEntitys = async (deletedPositions) => {
     try{
         if(deletedPositions.length > 0){
@@ -874,14 +790,18 @@ const deleteEntitys = async (deletedPositions) => {
                 }
             })
             const recordsToDelete = deletedPositions.filter(el => records.find(rec => rec.productId == el.id))
+            const response = await Client.sklad(`https://api.moysklad.ru/api/remap/1.2/entity/product/delete`, "post", recordsToDelete.map(el => {return {meta: el.meta}})).catch(err => {console.error("Ошибка при удалении", err)});
+
             Details.destroy({
                 where: {
                     productId: {
-                        [Op.in]: recordsToDelete.map(el => el.id)
+                        [Op.in]: response.reduce((acc, curr, index) => {
+                            !curr.errors && acc.push(records[index].id)
+                            return acc
+                        }, [])
                     }
                 }
             });
-            Client.sklad(`https://api.moysklad.ru/api/remap/1.2/entity/product/delete`, "post", recordsToDelete.map(el => {return {meta: el.meta}})).catch(err => {console.error("Ошибка при удалении", err)});
         }
     }catch{
     }

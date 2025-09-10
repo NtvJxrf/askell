@@ -1,5 +1,5 @@
 import ReportsService from '../services/reports.service.js'
-export default class pricesAndCoefsController {
+export default class ReportsController {
     static async create(req, res) {
         const result = await ReportsService.create(req.body)
         res.setHeader(

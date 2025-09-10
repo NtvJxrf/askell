@@ -7,6 +7,7 @@ import { dictionary } from '../services/sklad.service.js'
 import ApiError from './apiError.js'
 import logger from './logger.js'
 import ProcessingPlansSmd from '../databases/models/sklad/processingPlansSmd.js'
+import { sheets } from '../app.js'
 export const getMaterials = async () => {
     let materials = {}
     const promises = []
@@ -129,22 +130,38 @@ export const getPriceTypes = async () => {
     }
 }
 export const getPicesAndCoefs = async () => {
-    const promises = []
-    promises.push(Coefs.findAll())
-    promises.push(Prices.findAll())
-    promises.push(WorkPrices.findAll())
-    const result = await Promise.all(promises)
-    const pricesAndCoefs = {}
-    result[0].forEach( el => {
-        pricesAndCoefs[el.name] = el.value
-    })
-    result[1].forEach( el => {
-        pricesAndCoefs[el.name] = el.value
-    })
-    result[2].forEach( el => {
-        pricesAndCoefs[el.name] = {ratePerHour: el.ratePerHour, costOfWork: el.costOfWork, salary: el.salary, place: el.place}
-    })
-    SkladService.selfcost.pricesAndCoefs = pricesAndCoefs
+    const spreadsheetId = "1bTquFu1q_XTsGeLf2ie3c82YtoKAknrMr2ok49BRTLk";
+    const range = "Цены и коэффициенты!A1:H500";
+
+    const res = await sheets.spreadsheets.values.get({ spreadsheetId, range });
+    const values = res.data.values;
+
+    const [header, , ...rows] = values; 
+
+    const result = {};
+    for (const row of rows) {
+        const obj = Object.fromEntries(
+            header.map((key, i) => {
+            const val = row[i] ?? null;
+            if (val === null) return [key, null];
+            // заменяем запятую на точку и пытаемся преобразовать
+            const num = Number(String(val).replace(',', '.'));
+            return [key, isNaN(num) ? val : num];
+            })
+        );
+        if (!obj.name) continue;
+        if (obj.type === 'Работа') {
+            result[obj.name] = {
+                ratePerHour: obj.ratePerHour,
+                costOfWork: obj.costOfWork,
+                salary: obj.salary,
+                place: obj.place
+                };
+        } else {
+            result[obj.name] = obj.value
+        }
+    }
+    SkladService.selfcost.pricesAndCoefs = result
     SkladService.selfcost.updates['Цены и коэффиценты'] = {
         key: 'pricing',
         date: Date.now()

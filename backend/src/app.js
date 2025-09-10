@@ -9,11 +9,16 @@ import  loggerMiddleware  from "./middlewares/logger.middleware.js"
 import { initQueue } from './utils/rabbitmq.js';
 import { initSkladAdditions } from "./utils/skladAdditions.js"
 import getOrdersInWork from "./utils/getOrdersInWork.js"
-
+import { google } from "googleapis"
 export const version = 1.27
 const promises = []
 await initModels()
 getOrdersInWork().then(() => console.log('Got orders in work'))
+const auth = new google.auth.GoogleAuth({
+  keyFile: "./schedule-471508-c646e9809860.json",
+  scopes: ["https://www.googleapis.com/auth/spreadsheets.readonly"],
+});
+export const sheets = google.sheets({ version: "v4", auth });
 promises.push(initSkladAdditions())
 promises.push(initQueue())
 await Promise.all(promises)

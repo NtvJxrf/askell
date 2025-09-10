@@ -6,7 +6,7 @@ export default class SkladHooks{
         let document = null
         let order = null
         const event = data.events[0]
-        if(event.updatedFields.includes('Отложенная дата производства')){
+        if(event?.updatedFields?.includes('Отложенная дата производства')){
             document ??= await Client.sklad(event.meta.href)
             order ??= await Client.sklad(document.customerOrders[0].meta.href + '?expand=owner')
             const date = document.attributes.find(el => el.name == 'Отложенная дата производства').value

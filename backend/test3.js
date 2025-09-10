@@ -3,11 +3,6 @@ import dotenv from 'dotenv';
 dotenv.config();
 import { google } from "googleapis";
 import { writeFile, readFile } from 'fs/promises';
-const machines = {
-    'Интермак': 15,
-    'Альпа большая': 10,
-    'Джими': 30 
-}
 function toObjects(values) {
     const [header, ...rows] = values;
     return rows.map(row =>

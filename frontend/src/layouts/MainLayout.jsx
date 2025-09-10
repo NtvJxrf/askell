@@ -5,7 +5,6 @@ import { useDispatch } from "react-redux";
 
 import HeaderComponent from "../components/Header";
 import CalcsLayout from "../layouts/CalcsLayout.jsx";
-import PricesAndCoefsPage from "../pages/PricesAndCoefsPage.jsx";
 import Init from "../init.js";
 import Aovam from "../pages/Aovam.jsx"
 import Settings from '../pages/Settings.jsx';
@@ -36,7 +35,6 @@ const MainLayout = () => {
                         <AdminPage />
                     </ProtectedRoute>
                 }/>
-                <Route path="/pricesandcoefs" element={<PricesAndCoefsPage />} />
                 <Route path="/production" element={<ProductionPage />} />
                 <Route path="/aovam" element={<Aovam />} />
                 <Route path="/settings" element={<Settings />} />

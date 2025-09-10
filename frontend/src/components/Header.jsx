@@ -9,7 +9,6 @@ const items = [
     { label: <Link to="/production">Производство</Link>, key: '/production' },
     { label: <Link to="/materials">Материалы</Link>, key: '/materials' },
     { label: <Link to="/settings">Настройки</Link>, key: '/settings' },
-    { label: <Link to="/pricesandcoefs">Цены и коэфиценты</Link>, key: '/pricesandcoefs' },
     { label: <Link to="/admin">Админ</Link>, key: '/admin' },
     { label: <Link to="/reports">Отчеты</Link>, key: '/reports' },
 ];

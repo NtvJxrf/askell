@@ -11,12 +11,6 @@ const accessMap = {
   '/api/sklad/changeStatusByDemand': [],
 
   '/api/reports/create': ['anyone'],//reports
-
-  '/api/pricesAndCoefs/getAll': ['anyone'], // prices
-  '/api/pricesAndCoefs/update': ['accountant'],
-  '/api/pricesAndCoefs/create': ['accountant'],
-  '/api/pricesAndCoefs/delete': [],
-  '/api/pricesAndCoefs/bulk': ['accountant'],
 }
 const authorizeRoles = (req, res, next) => {
   const user = req.user;

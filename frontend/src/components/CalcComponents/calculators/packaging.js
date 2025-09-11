@@ -60,8 +60,8 @@ const packaging = (positions) => {
             })
             result.works.push({
                 name: 'Работы',
-                value: (selfcost.pricesAndCoefs['Зар.плата плотника'] * 1.395 / 168 + selfcost.pricesAndCoefs['Сделка упаковка'] * 1.1) * 0.833,
-                string: `(${selfcost.pricesAndCoefs['Зар.плата плотника'] } * 1.395 / 168 + ${selfcost.pricesAndCoefs['Сделка упаковка']} * 1.1) * 0.833`,
+                value: (selfcost.pricesAndCoefs['Зар.плата плотника'].value * 1.395 / 168 + selfcost.pricesAndCoefs['Сделка упаковка'].value * 1.1) * 0.833,
+                string: `(${selfcost.pricesAndCoefs['Зар.плата плотника'].value } * 1.395 / 168 + ${selfcost.pricesAndCoefs['Сделка упаковка'].value} * 1.1) * 0.833`,
                 formula: `(Зар.плата плотника * 1.395 / 168 + Сделка упаковка * 1.1) * 0.833`
             })
         break
@@ -98,8 +98,8 @@ const packaging = (positions) => {
             })
             result.works.push({
                 name: 'Работы',
-                value: (selfcost.pricesAndCoefs['Зар.плата плотника'] * 1.395 / 168 + selfcost.pricesAndCoefs['Сделка упаковка'] * 1.1) * 0.95,
-                string: `(${selfcost.pricesAndCoefs['Зар.плата плотника'] } * 1.395 / 168 + ${selfcost.pricesAndCoefs['Сделка упаковка'] } * 1.1) * 0.95`,
+                value: (selfcost.pricesAndCoefs['Зар.плата плотника'].value * 1.395 / 168 + selfcost.pricesAndCoefs['Сделка упаковка'].value * 1.1) * 0.95,
+                string: `(${selfcost.pricesAndCoefs['Зар.плата плотника'].value } * 1.395 / 168 + ${selfcost.pricesAndCoefs['Сделка упаковка'].value } * 1.1) * 0.95`,
                 formula: `(Зар.плата плотника * 1.395 / 168 + Сделка упаковка * 1.1) * 0.95`
             })
         break
@@ -137,8 +137,8 @@ const packaging = (positions) => {
             })
             result.works.push({
                 name: 'Работы',
-                value: (selfcost.pricesAndCoefs['Зар.плата плотника'] * 1.395 / 168 + selfcost.pricesAndCoefs['Сделка упаковка'] * 1.1) * 0.95,
-                string: `(${selfcost.pricesAndCoefs['Зар.плата плотника'] } * 1.395 / 168 + ${selfcost.pricesAndCoefs['Сделка упаковка'] } * 1.1) * 0.95`,
+                value: (selfcost.pricesAndCoefs['Зар.плата плотника'].value * 1.395 / 168 + selfcost.pricesAndCoefs['Сделка упаковка'].value * 1.1) * 0.95,
+                string: `(${selfcost.pricesAndCoefs['Зар.плата плотника'].value } * 1.395 / 168 + ${selfcost.pricesAndCoefs['Сделка упаковка'].value } * 1.1) * 0.95`,
                 formula: `(Зар.плата плотника * 1.395 / 168 + Сделка упаковка * 1.1) * 0.95`
             })  
         break   
@@ -175,8 +175,8 @@ const packaging = (positions) => {
             })
             result.works.push({
                 name: 'Работы',
-                value: (selfcost.pricesAndCoefs['Зар.плата плотника'] * 1.395 / 168 + selfcost.pricesAndCoefs['Сделка упаковка'] * 1.1) * 2.117,
-                string: `(${selfcost.pricesAndCoefs['Зар.плата плотника'] } * 1.395 / 168 + ${selfcost.pricesAndCoefs['Сделка упаковка'] } * 1.1) * 2.117`,
+                value: (selfcost.pricesAndCoefs['Зар.плата плотника'].value * 1.395 / 168 + selfcost.pricesAndCoefs['Сделка упаковка'].value * 1.1) * 2.117,
+                string: `(${selfcost.pricesAndCoefs['Зар.плата плотника'].value } * 1.395 / 168 + ${selfcost.pricesAndCoefs['Сделка упаковка'].value } * 1.1) * 2.117`,
                 formula: `(Зар.плата плотника * 1.395 / 168 + Сделка упаковка * 1.1) * 2.117`
             }) 
         break
@@ -186,7 +186,7 @@ const packaging = (positions) => {
         materialsandworks += item.value
     for (const item of Object.values(result.works))
         materialsandworks += item.value
-    const price = materialsandworks * selfcost.pricesAndCoefs[`Коэф-нт прибыли упаковка`]
+    const price = materialsandworks * selfcost.pricesAndCoefs[`Коэф-нт прибыли упаковка`].value
     result.finalPrice = [{
         name: 'Себестоимость',
         value: materialsandworks,
@@ -194,9 +194,9 @@ const packaging = (positions) => {
         formula: `(Материалы и работы) + Расходы`
     },{
         name: 'Наценка',
-        value: selfcost.pricesAndCoefs[`Коэф-нт прибыли упаковка`],
-        string: selfcost.pricesAndCoefs[`Коэф-нт прибыли упаковка`],
-        formula: `Наценка для типа клиента ${selfcost.pricesAndCoefs[`Коэф-нт прибыли упаковка`]}`
+        value: selfcost.pricesAndCoefs[`Коэф-нт прибыли упаковка`].value,
+        string: selfcost.pricesAndCoefs[`Коэф-нт прибыли упаковка`].value,
+        formula: `Наценка для типа клиента ${selfcost.pricesAndCoefs[`Коэф-нт прибыли упаковка`].value}`
     }]
     result.other = {
         type: 'Упаковка',
@@ -216,7 +216,7 @@ const packaging = (positions) => {
         },
         added: false,
         initialData: temp,
-        quantity: Math.ceil(temp.weight / selfcost.pricesAndCoefs[`Вес, входящий в ${name}`]),
+        quantity: Math.ceil(temp.weight / selfcost.pricesAndCoefs[`Вес, входящий в ${name}`].value),
         result,
     }
 }

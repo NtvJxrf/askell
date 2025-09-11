@@ -102,7 +102,6 @@ const Positions = ({form}) => {
     }, [positions]);
     useEffect( () => {
         if(!positions.length) return
-        console.log(positions)
         let S_all = 0, P_all = 0, stanok = 'Криволинейка', additions = false, triplex = false, print = false, totalCutsv1 = 0, totalCutsv2 = 0, totalCutsv3 = 0
         positions.forEach(el => {
             if(!el.result || el.result.other.type === 'СМД' || el.result.other.type === 'Керагласс' || el.result.other.type === 'Стеклопакет') return
@@ -117,17 +116,18 @@ const Positions = ({form}) => {
             cutsv3 && (totalCutsv3 += cutsv3 * el.quantity)
             if(drills || cutsv1 || cutsv2 || cutsv3 || zenk || color) additions = true
         })
-        let loadBeforeThisOrder = (stanok === 'Прямолинейка' ? productionLoad.straightLoad : productionLoad.curvedLoad) || 0
+        let loadBeforeThisOrder = (stanok === 'Прямолинейка' ? productionLoad.straightResult : productionLoad.straightResult) || 0
         if(triplex)
-            loadBeforeThisOrder = Math.max(loadBeforeThisOrder, productionLoad.triplexLoad)
+            loadBeforeThisOrder = Math.max(loadBeforeThisOrder, productionLoad.triplexResult)
         let res = 0
         if(stanok === 'Прямолинейка')
-            res = loadBeforeThisOrder + Math.ceil(P_all / (8 * 48))
-        else(stanok === 'Криволинейка')
+            res = loadBeforeThisOrder + Math.ceil(P_all / (8 * 30))
+        else if(stanok === 'Криволинейка')
             res = loadBeforeThisOrder + Math.ceil((P_all / 14 + totalCutsv1 / 8 + totalCutsv2 / 4 + totalCutsv3 / 2 + positions.length * 0.166) / (12 * 1.25))
         triplex && (res += 1 + Math.ceil(S_all / 27))
         additions && (res += 1)
         print && (res += 7)
+        console.log(res)
         setOrderLoad(res)
     }, [positions])
     const onDragEnd = ({ active, over }) => {
@@ -240,11 +240,19 @@ const Positions = ({form}) => {
                         title={() => {
                             let totalAmount = 0;
                             let totalS = 0
+                            let totalP = 0
                             positions.forEach(({ prices, quantity, result, position}) => {
                                 totalAmount += (prices[priceType] || 0) * quantity;
                                 totalS += (result?.other?.S || position?.assortment?.volume || 0) * quantity
+                                totalP += (result?.other?.P || position?.assortment?.attributes?.find(el => el.name == 'Периметр 1 детали в пог. м')?.value || 0) * quantity
                             });
+                            const calendarDays = orderLoad;
 
+                            const workDays = Math.ceil(calendarDays * 5 / 7);
+
+                            const endDate = new Date();
+                            endDate.setDate(endDate.getDate() + calendarDays);
+                            const formattedDate = endDate.toLocaleDateString();
                             return (
                                 <>
                                     <div style={{
@@ -259,8 +267,16 @@ const Positions = ({form}) => {
                                         flexWrap: 'wrap'
                                     }}>
                                         <span style={{ whiteSpace: 'nowrap' }}>Итого: {totalAmount.toFixed(2)}</span>
-                                        <span style={{ whiteSpace: 'nowrap' }}>~Срок изготовления: {orderLoad.toFixed(2)} рабочих дней</span>
-                                        <span style={{ whiteSpace: 'nowrap' }}>В заказе {totalS.toFixed(2)} м²</span>
+
+                                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                                            <span>Срок (календарные): {calendarDays}</span>
+                                            <span>Срок (рабочие): {workDays}</span>
+                                            <span>~Дата готовности: {formattedDate}</span>
+                                        </div>
+                                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                                            <span>В заказе {totalS.toFixed(2)} м²</span>
+                                            <span>В заказе {totalP.toFixed(2)} м.п</span>
+                                        </div>
                                     </div>
                                 </>
 

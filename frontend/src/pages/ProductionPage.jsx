@@ -7,6 +7,7 @@ const { Title, Text } = Typography;
 
 const OrdersInWorkTables = () => {
   const data = useSelector(state => state.positions.productionLoad);
+  console.log(data)
   const [pagination, setPagination] = useState({ current: 1, pageSize: 10 });
   const columns = [
     { title: "Дата", dataIndex: "created", key: "created", fixed: "left" },
@@ -108,14 +109,19 @@ const OrdersInWorkTables = () => {
       { name: "Пог. м", value: total?.P.toFixed(2) ?? 0 },
       { name: "м²", value: total?.S.toFixed(2) ?? 0 },
     ];
-
+    const workingDays = Math.ceil(load * 5 / 7)
     return (
       <Card title={title}>
         {/* Загрузка в процентах */}
         <Progress
-          percent={Math.min((load / 10) * 100, 100)}
-          format={() => `${load?.toFixed(2) || 0} раб. дней`}
-          strokeColor={load > 15 ? "red" : load > 10 ? "orange" : "green"}
+          percent={Math.min((workingDays / 10) * 100, 100)}
+          format={() => (
+            <div style={{ lineHeight: 1.2 }}>
+              <div>{workingDays || 0} раб. дней</div>
+              <div>{load || 0} календ. дней</div>
+            </div>
+          )}
+          strokeColor={workingDays > 15 ? "red" : workingDays > 10 ? "orange" : "green"}
         />
 
         {/* BarChart */}
@@ -141,13 +147,13 @@ const OrdersInWorkTables = () => {
   const MachineCards = React.memo(({ data }) => (
   <Row gutter={16}>
     <Col span={8}>
-      <MachineCard title="Криволинейка" load={data?.curvedLoad} total={data?.total?.Криволинейка} />
+      <MachineCard title="Криволинейка" load={data?.curvedResult} total={data?.total?.Криволинейка} />
     </Col>
     <Col span={8}>
-      <MachineCard title="Прямолинейка" load={data?.straightLoad} total={data?.total?.Прямолинейка} />
+      <MachineCard title="Прямолинейка" load={data?.straightResult} total={data?.total?.Прямолинейка} />
     </Col>
     <Col span={8}>
-      <MachineCard title="Триплекс" load={data?.triplexLoad} total={data?.total?.['Триплекс (Без учета резки стекла)']} />
+      <MachineCard title="Триплекс" load={data?.triplexResult} total={data?.total?.['Триплекс (Без учета резки стекла)']} />
     </Col>
   </Row>
 ));

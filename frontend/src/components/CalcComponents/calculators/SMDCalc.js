@@ -23,19 +23,19 @@ const Calculate = (data, selfcost) => {
         if(S >= 1.2){
             result.materials.push({
                     name: `Цена для типа клиента ${clientType}`,
-                    value: selfcost.pricesAndCoefs[`${clientType} S >= 1.2`] * S,
-                    string: `${(selfcost.pricesAndCoefs[`${clientType} S >= 1.2`]).toFixed(2)} * ${S.toFixed(2)}`,
+                    value: selfcost.pricesAndCoefs[`${clientType} S >= 1.2`].value * S,
+                    string: `${(selfcost.pricesAndCoefs[`${clientType} S >= 1.2`].value).toFixed(2)} * ${S.toFixed(2)}`,
                     formula: `Цена для типа клиента ${clientType} при S >= 1.2 * S`
                 });
-                temp = selfcost.pricesAndCoefs[`${clientType} S >= 1.2`] * S
+                temp = selfcost.pricesAndCoefs[`${clientType} S >= 1.2`].value * S
         }else{
             result.materials.push({
                     name: 'Цена для типа клиента',
-                    value: selfcost.pricesAndCoefs[`${clientType} S < 1.2`] * S,
-                    string: `${(selfcost.pricesAndCoefs[`${clientType} S < 1.2`]).toFixed(2)} * ${S.toFixed(2)}`,
+                    value: selfcost.pricesAndCoefs[`${clientType} S < 1.2`].value * S,
+                    string: `${(selfcost.pricesAndCoefs[`${clientType} S < 1.2`].value).toFixed(2)} * ${S.toFixed(2)}`,
                     formula: `Цена для типа клиента ${clientType} при S < 1.2 * S`
                 });
-                temp = selfcost.pricesAndCoefs[`${clientType} S < 1.2`] * S
+                temp = selfcost.pricesAndCoefs[`${clientType} S < 1.2`].value * S
         }
         const coef = temp * 0.2  // 20% коэфицент какой то
 
@@ -54,14 +54,14 @@ const Calculate = (data, selfcost) => {
         }))
         cuts && result.works.push({
             name: 'Вырезы СМД',
-            value: selfcost.pricesAndCoefs['Вырезы СМД'] * cuts,
-            string: `${selfcost.pricesAndCoefs['Вырезы СМД']} * ${cuts}`,
+            value: selfcost.pricesAndCoefs['Вырезы СМД'].value * cuts,
+            string: `${selfcost.pricesAndCoefs['Вырезы СМД'].value} * ${cuts}`,
             formula: 'Себестоимость * Количество'
         })
         drillssmd && result.works.push({
             name: 'Сверление СМД',
-            value: selfcost.pricesAndCoefs['Сверление СМД'] * drillssmd,
-            string: `${selfcost.pricesAndCoefs['Сверление СМД']} * ${drillssmd}`,
+            value: selfcost.pricesAndCoefs['Сверление СМД'].value * drillssmd,
+            string: `${selfcost.pricesAndCoefs['Сверление СМД'].value} * ${drillssmd}`,
             formula: 'Себестоимость * Количество'
         })
         switch (material) {
@@ -76,8 +76,8 @@ const Calculate = (data, selfcost) => {
             case 'Стекло осветленное OptiWhite, 4 мм':
                 !notax && result.materials.push({
                     name: material,
-                    value: selfcost.pricesAndCoefs[`Optiwhite SMD`] * S,
-                    string: `${(selfcost.pricesAndCoefs[`Optiwhite SMD`]).toFixed(2)} * ${S.toFixed(2)}`,
+                    value: selfcost.pricesAndCoefs[`Optiwhite SMD`].value * S,
+                    string: `${(selfcost.pricesAndCoefs[`Optiwhite SMD`].value).toFixed(2)} * ${S.toFixed(2)}`,
                     formula: 'Цена за Optiwhite * Площадь'
                 });
                 break

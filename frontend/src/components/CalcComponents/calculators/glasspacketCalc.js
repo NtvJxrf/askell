@@ -79,8 +79,8 @@ const Calculate = (data, selfcost, triplexArray) => {
         weight += 2.5 * S * thickness
         result.materials.push({
             name: material[0],
-            value: selfcost.materials[material[0]].value * S * selfcost.pricesAndCoefs['Коэффициент обрези стекло стеклопакет'],
-            string: `${selfcost.materials[material[0]].value} * ${S.toFixed(2)} * ${selfcost.pricesAndCoefs['Коэффициент обрези стекло стеклопакет']}`,
+            value: selfcost.materials[material[0]].value * S * selfcost.pricesAndCoefs['Коэффициент обрези стекло стеклопакет'].value,
+            string: `${selfcost.materials[material[0]].value} * ${S.toFixed(2)} * ${selfcost.pricesAndCoefs['Коэффициент обрези стекло стеклопакет'].value}`,
             formula: 'Цена за м² * Площадь * Коэффициент обрези стекло стеклопакет'
         });
         const context = { selfcost, result, thickness, spo: true };
@@ -100,8 +100,8 @@ const Calculate = (data, selfcost, triplexArray) => {
         allThickness += thickness
         result.materials.push({
             name: plane,
-            value: selfcost.materials[plane].value * P * selfcost.pricesAndCoefs['Коэффициент обрези рамка'],
-            string: `${selfcost.materials[plane].value} * ${P.toFixed(2)} * ${selfcost.pricesAndCoefs['Коэффициент обрези рамка']}`,
+            value: selfcost.materials[plane].value * P * selfcost.pricesAndCoefs['Коэффициент обрези рамка'].value,
+            string: `${selfcost.materials[plane].value} * ${P.toFixed(2)} * ${selfcost.pricesAndCoefs['Коэффициент обрези рамка'].value}`,
             formula: 'Цена за 1м * Периметр * Коэффициент обрези рамка'
         });
         result.materials.push({
@@ -138,10 +138,10 @@ const Calculate = (data, selfcost, triplexArray) => {
         materialsandworks += item.finalValue
 
     const gostPrice = 0
-    const retailPrice = materialsandworks * selfcost.pricesAndCoefs[`Стеклопакет Розница`]
-    const bulkPrice = materialsandworks * selfcost.pricesAndCoefs[`Стеклопакет Опт`]
-    const dealerPrice = materialsandworks * selfcost.pricesAndCoefs[`Стеклопакет Дилер`]
-    const vipPrice = materialsandworks * selfcost.pricesAndCoefs[`Стеклопакет ВИП`]
+    const retailPrice = materialsandworks * selfcost.pricesAndCoefs[`Стеклопакет Розница`].value
+    const bulkPrice = materialsandworks * selfcost.pricesAndCoefs[`Стеклопакет Опт`].value
+    const dealerPrice = materialsandworks * selfcost.pricesAndCoefs[`Стеклопакет Дилер`].value
+    const vipPrice = materialsandworks * selfcost.pricesAndCoefs[`Стеклопакет ВИП`].value
     result.finalPrice = [{
         name: 'Себестоимость',
         value: materialsandworks,
@@ -150,27 +150,27 @@ const Calculate = (data, selfcost, triplexArray) => {
     },{
         name: 'Цена для Выше госта',
         value: gostPrice,
-        string: `${materialsandworks.toFixed(2)} * ${selfcost.pricesAndCoefs[`Стеклопакет Выше госта`]}`,
+        string: `${materialsandworks.toFixed(2)} * ${selfcost.pricesAndCoefs[`Стеклопакет Выше госта`]?.value}`,
         formula: `Себестоимость калькулятора * Наценка для типа клиента "Выше госта"`
     },{
         name: 'Цена для Розница',
         value: retailPrice,
-        string: `${materialsandworks.toFixed(2)} * ${selfcost.pricesAndCoefs[`Стеклопакет Розница`]}`,
+        string: `${materialsandworks.toFixed(2)} * ${selfcost.pricesAndCoefs[`Стеклопакет Розница`].value}`,
         formula: `Себестоимость калькулятора * Наценка для типа клиента "Розница"`
     },{
         name: 'Цена для Опт',
         value: bulkPrice,
-        string: `${materialsandworks.toFixed(2)} * ${selfcost.pricesAndCoefs[`Стеклопакет Опт`]}`,
+        string: `${materialsandworks.toFixed(2)} * ${selfcost.pricesAndCoefs[`Стеклопакет Опт`].value}`,
         formula: `Себестоимость калькулятора * Наценка для типа клиента "Опт"`
     },{
         name: 'Цена для Дилер',
         value: dealerPrice,
-        string: `${materialsandworks.toFixed(2)} * ${selfcost.pricesAndCoefs[`Стеклопакет Дилер`]}`,
+        string: `${materialsandworks.toFixed(2)} * ${selfcost.pricesAndCoefs[`Стеклопакет Дилер`].value}`,
         formula: `Себестоимость калькулятора * Наценка для типа клиента "Дилер"`
     },{
         name: 'Цена для ВИП',
         value: vipPrice,
-        string: `${materialsandworks.toFixed(2)} * ${selfcost.pricesAndCoefs[`Стеклопакет ВИП`]}`,
+        string: `${materialsandworks.toFixed(2)} * ${selfcost.pricesAndCoefs[`Стеклопакет ВИП`].value}`,
         formula: `Себестоимость калькулятора * Наценка для типа клиента "ВИП"`
     }]
     result.other = {

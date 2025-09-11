@@ -1,8 +1,9 @@
+import store from "../../../store.js"
 import { shortenGlassName } from "./glasspacketCalc.js"
 const Calculate = (data, selfcost) => {
     console.log(selfcost)
     console.log(data)
-    const { height, width, drills, zenk, cutsv1, cutsv2, cutsv3, tempered, shape, addTape, print, customertype, rounding, color, quantity = 1 } = data
+    const { height, width, drills, zenk, cutsv1, cutsv2, cutsv3, tempered, shape, addTape, print, rounding, color, quantity = 1 } = data
     const tapes = Object.entries(data).filter(([key]) => key.startsWith('tape')).map(([_, value]) => value).map( el => {
         if(el === '-')
             return undefined
@@ -111,25 +112,25 @@ const Calculate = (data, selfcost) => {
         tempered && constructWorks('tempered', S_calc, { thickness, result, selfcost})
         result.materials.push({
             name: material,
-            value: selfcost.materials[material].value * S_calc * selfcost.pricesAndCoefs['Коэффициент обрези стекло'],
-            calcValue: (selfcost.materials[material].calcValue * S_calc) * selfcost.pricesAndCoefs['Коэффициент обрези стекло'],
-            string: `${selfcost.materials[material].value} * ${S_calc.toFixed(2)} * ${selfcost.pricesAndCoefs['Коэффициент обрези стекло']}`,
+            value: selfcost.materials[material].value * S_calc * selfcost.pricesAndCoefs['Коэффициент обрези стекло'].value,
+            calcValue: (selfcost.materials[material].calcValue * S_calc) * selfcost.pricesAndCoefs['Коэффициент обрези стекло'].value,
+            string: `${selfcost.materials[material].value} * ${S_calc.toFixed(2)} * ${selfcost.pricesAndCoefs['Коэффициент обрези стекло'].value}`,
             formula: 'Цена за м² * Площадь * Коэффициент обрези стекло'
         });
     }
     switch (print){
         case 'С 1 стороны': result.works.push({
             name: 'Печать',
-            value: selfcost.pricesAndCoefs[`УФ печать`] * S_calc,
-            finalValue: selfcost.pricesAndCoefs[`УФ печать`] * S_calc,
-            string: `${selfcost.pricesAndCoefs[`УФ печать`]} * ${S_calc.toFixed(2)}`,
+            value: selfcost.pricesAndCoefs[`УФ печать`].value * S_calc,
+            finalValue: selfcost.pricesAndCoefs[`УФ печать`].value * S_calc,
+            string: `${selfcost.pricesAndCoefs[`УФ печать`].value} * ${S_calc.toFixed(2)}`,
             formula: 'Себестоимость уф печати * S'
         }); break
         case 'С 2 сторон': result.works.push({
             name: 'Печать',
-            value: selfcost.pricesAndCoefs[`УФ печать`] * S_calc * 2,
-            finalValue: selfcost.pricesAndCoefs[`УФ печать`] * S_calc * 2,
-            string: `${selfcost.pricesAndCoefs[`УФ печать`]} * ${S_calc.toFixed(2)} * 2`,
+            value: selfcost.pricesAndCoefs[`УФ печать`].value * S_calc * 2,
+            finalValue: selfcost.pricesAndCoefs[`УФ печать`].value * S_calc * 2,
+            string: `${selfcost.pricesAndCoefs[`УФ печать`].value} * ${S_calc.toFixed(2)} * 2`,
             formula: 'Себестоимость уф печати * S * 2'
         }); break
     }
@@ -159,13 +160,12 @@ const Calculate = (data, selfcost) => {
         materialsandworks += item.finalValue
         calcmaterialsandworks += item.finalValue
     }
-    const price = calcmaterialsandworks * selfcost.pricesAndCoefs[`Триплекс ${customertype}`]
 
     const gostPrice = 0
-    const retailPrice = calcmaterialsandworks * selfcost.pricesAndCoefs[`Триплекс Розница`]
-    const bulkPrice = calcmaterialsandworks * selfcost.pricesAndCoefs[`Триплекс Опт`]
-    const dealerPrice = calcmaterialsandworks * selfcost.pricesAndCoefs[`Триплекс Дилер`]
-    const vipPrice = calcmaterialsandworks * selfcost.pricesAndCoefs[`Триплекс ВИП`]
+    const retailPrice = calcmaterialsandworks * selfcost.pricesAndCoefs[`Триплекс Розница`].value
+    const bulkPrice = calcmaterialsandworks * selfcost.pricesAndCoefs[`Триплекс Опт`].value
+    const dealerPrice = calcmaterialsandworks * selfcost.pricesAndCoefs[`Триплекс Дилер`].value
+    const vipPrice = calcmaterialsandworks * selfcost.pricesAndCoefs[`Триплекс ВИП`].value
     result.finalPrice = [{
         name: 'Себестоимость',
         value: materialsandworks,
@@ -179,27 +179,27 @@ const Calculate = (data, selfcost) => {
     },{
         name: 'Цена для Выше госта',
         value: gostPrice,
-        string: `${calcmaterialsandworks.toFixed(2)} * ${selfcost.pricesAndCoefs[`Триплекс Выше госта`]}`,
+        string: `${calcmaterialsandworks.toFixed(2)} * ${selfcost.pricesAndCoefs[`Триплекс Выше госта`]?.value}`,
         formula: `Себестоимость калькулятора * Наценка для типа клиента "Выше госта"`
     },{
         name: 'Цена для Розница',
         value: retailPrice,
-        string: `${calcmaterialsandworks.toFixed(2)} * ${selfcost.pricesAndCoefs[`Триплекс Розница`]}`,
+        string: `${calcmaterialsandworks.toFixed(2)} * ${selfcost.pricesAndCoefs[`Триплекс Розница`].value}`,
         formula: `Себестоимость калькулятора * Наценка для типа клиента "Розница"`
     },{
         name: 'Цена для Опт',
         value: bulkPrice,
-        string: `${calcmaterialsandworks.toFixed(2)} * ${selfcost.pricesAndCoefs[`Триплекс Опт`]}`,
+        string: `${calcmaterialsandworks.toFixed(2)} * ${selfcost.pricesAndCoefs[`Триплекс Опт`].value}`,
         formula: `Себестоимость калькулятора * Наценка для типа клиента "Опт"`
     },{
         name: 'Цена для Дилер',
         value: dealerPrice,
-        string: `${calcmaterialsandworks.toFixed(2)} * ${selfcost.pricesAndCoefs[`Триплекс Дилер`]}`,
+        string: `${calcmaterialsandworks.toFixed(2)} * ${selfcost.pricesAndCoefs[`Триплекс Дилер`].value}`,
         formula: `Себестоимость калькулятора * Наценка для типа клиента "Дилер"`
     },{
         name: 'Цена для ВИП',
         value: vipPrice,
-        string: `${calcmaterialsandworks.toFixed(2)} * ${selfcost.pricesAndCoefs[`Триплекс ВИП`]}`,
+        string: `${calcmaterialsandworks.toFixed(2)} * ${selfcost.pricesAndCoefs[`Триплекс ВИП`].value}`,
         formula: `Себестоимость калькулятора * Наценка для типа клиента "ВИП"`
     }]
     result.other = {
@@ -244,11 +244,11 @@ export const constructWorks = (work, quantity, context) => {
     const res = (name, tableName) => {
         const PAC = selfcost.pricesAndCoefs
         const value = (quantity * PAC[tableName || name].costOfWork) 
-        + (PAC[tableName || name].salary / PAC['Среднее количество рабочих часов в месяц'] * quantity / PAC[tableName || name].ratePerHour)
+        + (PAC[tableName || name].salary / PAC['Среднее количество рабочих часов в месяц'].value * quantity / PAC[tableName || name].ratePerHour)
         const place = PAC[name].place
-        const workshopExpenses = value * (spo ? 0.45 : PAC[`% цеховых расходов ${place}`])
-        const commercialExpenses = value * (spo ? 0.45 : name.toLowerCase().includes('триплекс') ? PAC[`% коммерческих расходов Селькоровская`] : PAC[`% коммерческих расходов ${place}`])
-        const householdExpenses = value * (spo ? 0.45 : PAC[`% общехозяйственных расходов ${place}`])
+        const workshopExpenses = value * (spo ? 0.45 : PAC[`% цеховых расходов ${place}`].value)
+        const commercialExpenses = value * (spo ? 0.45 : name.toLowerCase().includes('триплекс') ? PAC[`% коммерческих расходов Селькоровская`].value : PAC[`% коммерческих расходов ${place}`].value)
+        const householdExpenses = value * (spo ? 0.45 : PAC[`% общехозяйственных расходов ${place}`].value)
         result.works.push({
             name,
             finalValue: value + workshopExpenses + commercialExpenses + householdExpenses,
@@ -321,53 +321,8 @@ export const constructName = (firstWord, data) => {
     if(!firstWord.includes('Керагласс')) parts.push(`площадь: ${area}`)
     return `${firstWord}, (${width}х${height}${parts.length > 0 ? ', ' : ''}${parts.join(', ')})`;
 };
-export const constructExpenses = (result, selfcost) => {
-    let materials = 0, worksViz = 0, worksSelk = 0, worksShield = 0
-    for (const item of Object.values(result.materials)) 
-        materials += item.value
-    for (const item of Object.values(result.works)){
-        const place = selfcost.pricesAndCoefs[item.name].place
-        switch(place){
-            case 'Селькоровская': worksSelk += item.value; break
-            case 'ВИЗ': worksViz += item.value; break
-            case 'Горный щит': worksShield += item.value; break
-        }
-    }
-    const workshopExpensesViz = worksViz * selfcost.pricesAndCoefs[`% цеховых расходов ВИЗ`] // % цеховых расходов
-    const workshopExpensesSelk = worksSelk * selfcost.pricesAndCoefs[`% цеховых расходов Селькоровская`] // % цеховых расходов
-    const commercialExpensesViz = worksViz * selfcost.pricesAndCoefs[`% коммерческих расходов ВИЗ`] // % коммерческих расходов
-    const commercialExpensesSelk = worksSelk * selfcost.pricesAndCoefs[`% коммерческих расходов Селькоровская`] // % коммерческих расходов
-    const householdExpenses =  worksViz + worksSelk * selfcost.pricesAndCoefs[`% общехозяйственных расходов Селькоровская`] // % общехозяйственных расходов
-    result.expenses.push({
-        name: 'Цеховые расходы ВИЗ',
-        value: workshopExpensesViz,
-        string: `${(worksViz).toFixed(2)} * ${selfcost.pricesAndCoefs[`% цеховых расходов ВИЗ`]}`,
-        formula: `Работы * % цеховых расходов`
-    })
-    result.expenses.push({
-        name: 'Цеховые расходы Селькоровская',
-        value: workshopExpensesSelk,
-        string: `${(worksSelk).toFixed(2)} * ${selfcost.pricesAndCoefs[`% цеховых расходов Селькоровская`]}`,
-        formula: `Работы * % цеховых расходов`
-    })
-    result.expenses.push({
-        name: 'Коммерческие расходы ВИЗ',
-        value: commercialExpensesViz,
-        string: `(${(worksViz).toFixed(2)} * ${selfcost.pricesAndCoefs[`% коммерческих расходов ВИЗ`]}`,
-        formula: `(Материалы и Работы + Цеховые) * % коммерческих расходов}`
-    })
-    result.expenses.push({
-        name: 'Коммерческие расходы ВИЗ',
-        value: commercialExpensesSelk,
-        string: `(${(worksSelk).toFixed(2)} * ${selfcost.pricesAndCoefs[`% коммерческих расходов Селькоровская`]}`,
-        formula: `(Материалы и Работы + Цеховые) * % коммерческих расходов}`
-    })
-    result.expenses.push({
-        name: 'Общехозяйственные расходы',
-        value: householdExpenses,
-        string: `(${(worksViz + worksSelk).toFixed(2)} * ${selfcost.pricesAndCoefs[`% общехозяйственных расходов Селькоровская`]}`,
-        formula: `Работы * % общехозяйственных расходов`
-    })
-    return [materials + worksViz + worksSelk + worksShield]
+export const getValue = (part, str) => {
+    const selfcost = store.getState().selfcost.selfcost
+    return selfcost[part][str].value
 }
 export default Calculate

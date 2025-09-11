@@ -65,6 +65,7 @@ const PositionsHeader = () => {
                 params: { orderName },
                 withCredentials: true,
             })
+            console.log(res.data)
             dispatch(setOrder(res.data))
             if(!res.data.positions){
                 dispatch(addOrderPositions([]))
@@ -107,6 +108,8 @@ const PositionsHeader = () => {
     const handleResetClick = () => {
         dispatch(setOrder({}))
         dispatch(addOrderPositions([]))
+        messageApi.warning('Установлен тип цен "Розница"')
+        dispatch(setDisplayPrice('retailPrice'))
     }
     const handleSaveOrder = async () => {
         setDisabled(true)

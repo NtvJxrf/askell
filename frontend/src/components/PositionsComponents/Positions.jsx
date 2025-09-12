@@ -277,6 +277,8 @@ const Positions = ({form}) => {
                                             <span>Итого:</span>
                                             <span>Выше госта: {totalGost.toFixed(2)}</span>
                                             <span>Розница: {totalRetail.toFixed(2)}</span>
+                                        </div>
+                                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
                                             <span>Опт: {totalBulk.toFixed(2)}</span>
                                             <span>Дилер: {totalDealer.toFixed(2)}</span>
                                             <span>ВИП: {totalVip.toFixed(2)}</span>

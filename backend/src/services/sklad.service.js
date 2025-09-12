@@ -259,7 +259,7 @@ const triplex = async (data, order, position, createdEntitys) => {
     for(const material of materials){
         const promises = []
         promises.push(makeprocessingprocess(stagesSelk))
-        promises.push(makeProduct(data, material, true, createdEntitys, order))
+        promises.push(makeProduct(data, material, true, createdEntitys, order, 'Стекло'))
         const responses = await Promise.all(promises)
         const processingprocess = responses[0]
         const product = responses[1]
@@ -312,7 +312,7 @@ const ceraglass = async (data, order, position, createdEntitys) => {
                 promises.push(makeprocessingprocess(stagesSelk))
                 const product = await Client.sklad('https://api.moysklad.ru/api/remap/1.2/entity/product', 'post', {
                     name: `${'ПФ'} ${material} (${heights[i]}х${widths[i]}${polishing ? ', Полировка' : ''}${tempered ? ', Закаленное' : ''}${cutsv1 ? `, Вырезы 1 кат.: ${cutsv1}` : ''}${cutsv2 ? `, Вырезы 2 кат.: ${cutsv2}` : ''}${cutsv3 ? `, Вырезы 3 кат.: ${cutsv3}` : ''}${drills ? `, Сверление: ${drills}` : ''}${zenk ? `, Зенкование: ${zenk}` : ''}${print ? ', Печать' : ''}${color ? `, ${color}` : ''})`,
-                    attributes: generateProductAttributes({...data.initialData, ...data.result.other, height: heights[i], width: widths[i], order}),
+                    attributes: generateProductAttributes({...data.initialData, ...data.result.other, height: heights[i], width: widths[i], order, productType: 'Стекло'}),
                     productFolder: {
                         meta: {
                             "href" : "https://api.moysklad.ru/api/remap/1.2/entity/productfolder/7158b3fd-879a-11ef-0a80-0b580038350a",
@@ -338,7 +338,7 @@ const ceraglass = async (data, order, position, createdEntitys) => {
             promises.push(makeprocessingprocess(stagesViz))
             const product = await Client.sklad('https://api.moysklad.ru/api/remap/1.2/entity/product', 'post', {
                 name: `${'ПФ'} ${material} (${heights[i]}х${widths[i]}${cutsv1 ? `, Вырезы 1 кат.: ${cutsv1}` : ''}${cutsv2 ? `, Вырезы 2 кат.: ${cutsv2}` : ''}${cutsv3 ? `, Вырезы 3 кат.: ${cutsv3}` : ''}${zenk ? `, Зенкование: ${zenk}` : ''}${print ? ', Печать' : ''}${color ? `, ${color}` : ''})`,
-                attributes: generateProductAttributes({...data.initialData, ...data.result.other, height: heights[i], width: widths[i], order}),
+                attributes: generateProductAttributes({...data.initialData, ...data.result.other, height: heights[i], width: widths[i], order, productType: 'Керамика'}),
                 productFolder: {
                     meta: {
                         "href" : "https://api.moysklad.ru/api/remap/1.2/entity/productfolder/7158b3fd-879a-11ef-0a80-0b580038350a",
@@ -401,7 +401,7 @@ const glass = async (data, order, position, createdEntitys) => {
     const isPF = data.result.other.viz
     const processingprocess = await makeprocessingprocess(stagesSelk)
     let product = null
-    if(isPF) product = await makeProduct(data, data.initialData.material, isPF, createdEntitys, order)
+    if(isPF) product = await makeProduct(data, data.initialData.material, isPF, createdEntitys, order, 'Стекло')
     else product = position.assortment
     const plan = await makeProcessingPlan({data, name: position.assortment.name, order, processingprocess, product, isPF, material: data.initialData.material, createdEntitys, mode: 'glass'})
     plan.quantity = position.quantity
@@ -447,7 +447,7 @@ const smd = async (data, order, position, createdEntitys) => {
     const stagesSelk = generateStages(data, 'selk')
     const promises = []
     promises.push(makeprocessingprocess(stagesSelk))
-    promises.push(makeProduct(data, data.initialData.material, true, createdEntitys, order))
+    promises.push(makeProduct(data, data.initialData.material, true, createdEntitys, order, 'Стекло'))
     const responses = await Promise.all(promises)
     const processingprocess = responses[0]
     const product = responses[1]
@@ -676,11 +676,13 @@ const makeProcessingPlan = async ({ data, name, order, processingprocess, produc
     return response
 }
 
-const makeProduct = async (data, name, isPF, createdEntitys, order) => {
+const makeProduct = async (data, name, isPF, createdEntitys, order, productType) => {
     const { height, width, polishing, drills, zenk, cutsv1, cutsv2, cutsv3, tempered, color, print } = data.initialData
+    const attrs = {...data.initialData, ...data.result.other, isPF, order}
+    if(productType) attrs.productType = productType
     const params = {
         name: `${isPF ? 'ПФ' : ''} ${name} (${height}х${width}${polishing ? ', Полировка' : ''}${tempered ? ', Закаленное' : ''}${cutsv1 ? `, Вырезы 1 кат.: ${cutsv1}` : ''}${cutsv2 ? `, Вырезы 2 кат.: ${cutsv2}` : ''}${cutsv3 ? `, Вырезы 3 кат.: ${cutsv3}` : ''}${drills ? `, Сверление: ${drills}` : ''}${zenk ? `, Зенкование: ${zenk}` : ''}${print ? ', Печать' : ''}${color ? `, ${color}` : ''}, площадь: ${height * width / 1000000})`,
-        attributes: generateProductAttributes({...data.initialData, ...data.result.other, isPF, order}),
+        attributes: generateProductAttributes(attrs),
         uom: {
             meta: {
                 "href" : "https://api.moysklad.ru/api/remap/1.2/entity/uom/19f1edc0-fc42-4001-94cb-c9ec9c62ec10",

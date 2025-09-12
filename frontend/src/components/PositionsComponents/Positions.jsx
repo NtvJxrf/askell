@@ -11,7 +11,7 @@ import {
 import { CSS } from '@dnd-kit/utilities';
 import { Button, Table, Space, InputNumber } from 'antd';
 import { useDispatch, useSelector } from 'react-redux';
-import { setPositions, setSelectedRowKeys, setPositionAtIndex } from '../../slices/positionsSlice';
+import { setPositions, setSelectedRowKeys, setPositionAtIndex, setPlanDate } from '../../slices/positionsSlice';
 import PositionDetailsModal from './PositionDetailsModal.jsx';
 import EditPositionModal from './EditPositionModal.jsx';
 const RowContext = React.createContext({});
@@ -238,11 +238,15 @@ const Positions = ({form}) => {
                             ),
                         }}
                         title={() => {
-                            let totalAmount = 0;
+                            let totalGost = 0, totalRetail = 0, totalBulk = 0, totalDealer = 0, totalVip = 0
                             let totalS = 0
                             let totalP = 0
                             positions.forEach(({ prices, quantity, result, position}) => {
-                                totalAmount += (prices[priceType] || 0) * quantity;
+                                totalGost += (prices['gostPrice'] || 0) * quantity;
+                                totalRetail += (prices['retailPrice'] || 0) * quantity;
+                                totalBulk += (prices['bulkPrice'] || 0) * quantity;
+                                totalDealer += (prices['dealerPrice'] || 0) * quantity;
+                                totalVip += (prices['vipPrice'] || 0) * quantity;
                                 totalS += (result?.other?.S || position?.assortment?.volume || 0) * quantity
                                 totalP += (result?.other?.P || position?.assortment?.attributes?.find(el => el.name == 'Периметр 1 детали в пог. м')?.value || 0) * quantity
                             });
@@ -252,7 +256,9 @@ const Positions = ({form}) => {
 
                             const endDate = new Date();
                             endDate.setDate(endDate.getDate() + calendarDays);
+                            const apiDate = formatDate(endDate);
                             const formattedDate = endDate.toLocaleDateString();
+                            dispatch(setPlanDate({apiDate, strDays: `${workDays}-${workDays + 3}`}))
                             return (
                                 <>
                                     <div style={{
@@ -266,8 +272,15 @@ const Positions = ({form}) => {
                                         borderRadius: '8px',
                                         flexWrap: 'wrap'
                                     }}>
-                                        <span style={{ whiteSpace: 'nowrap' }}>Итого: {totalAmount.toFixed(2)}</span>
 
+                                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                                            <span>Итого:</span>
+                                            <span>Выше госта: {totalGost.toFixed(2)}</span>
+                                            <span>Розница: {totalRetail.toFixed(2)}</span>
+                                            <span>Опт: {totalBulk.toFixed(2)}</span>
+                                            <span>Дилер: {totalDealer.toFixed(2)}</span>
+                                            <span>ВИП: {totalVip.toFixed(2)}</span>
+                                        </div>
                                         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
                                             <span>Срок (календарные): {calendarDays}</span>
                                             <span>Срок (рабочие): {workDays}</span>
@@ -290,5 +303,16 @@ const Positions = ({form}) => {
         </>
     );
 };
+function formatDate(date) {
+  const pad = (n) => String(n).padStart(2, '0');
 
+  const year = date.getFullYear();
+  const month = pad(date.getMonth() + 1);
+  const day = pad(date.getDate());
+  const hours = pad(date.getHours());
+  const minutes = pad(date.getMinutes());
+  const seconds = pad(date.getSeconds());
+
+  return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+}
 export default React.memo(Positions);

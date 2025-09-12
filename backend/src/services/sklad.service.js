@@ -178,6 +178,7 @@ export default class SkladService {
                 }
             });
         }
+        console.log(data)
         try{
             const params = {
                 positions: data.positions.map((pos) => {
@@ -190,6 +191,15 @@ export default class SkladService {
                         vat: data.order.organization.name === 'ООО "А2"' ? 20 : 0
                     }
                 }),
+                deliveryPlannedMoment: data.planDate.apiDate,
+                attributes: [{
+                    meta: {
+                        "href" : "https://api.moysklad.ru/api/remap/1.2/entity/customerorder/metadata/attributes/99884b94-8f93-11f0-0a80-029a000276da",
+                        "type" : "attributemetadata",
+                        "mediaType" : "application/json"
+                    },
+                    value: data.planDate.strDays
+                }]
             }
             const updateCustomerorderRequest = await Client.sklad(`https://api.moysklad.ru/api/remap/1.2/entity/customerorder/${data.order.id}`, "put", params);
         }catch(error){

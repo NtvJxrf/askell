@@ -4,7 +4,6 @@ import { broadcast } from "./WebSocket.js"
 import { google } from "googleapis";
 const getOrdersInWork = async () => {
     const res = await readSheet()
-    console.log(res)
     SkladService.ordersInWork = res
     broadcast({type: 'ordersInWork', data: res})
 }

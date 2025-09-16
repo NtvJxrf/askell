@@ -53,6 +53,7 @@ const Calculate = (data, selfcost) => {
             added: false,
             quantity,
             initialData: data,
+            type: 'Стекло',
             result
         }
     }
@@ -80,8 +81,8 @@ const Calculate = (data, selfcost) => {
         name: material,
         value: (selfcost.materials[material].value * S_calc) * selfcost.pricesAndCoefs['Коэффициент обрези стекло'].value,
         calcValue: (selfcost.materials[material].calcValue * S_calc) * selfcost.pricesAndCoefs['Коэффициент обрези стекло'].value,
-        string: `(${selfcost.materials[material].value} * ${S_calc.toFixed(2)}) * ${selfcost.pricesAndCoefs['Коэффициент обрези стекло'].value}`,
-        formula: '(Цена за м² * Площадь) * Коэффициент обрези стекло'
+        string: `${selfcost.materials[material].value} * ${S_calc.toFixed(2)} * ${selfcost.pricesAndCoefs['Коэффициент обрези стекло'].value}`,
+        formula: 'Цена за м² * Площадь * Коэффициент обрези стекло'
     });
     color && result.materials.push({
         name: color,

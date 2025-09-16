@@ -62,8 +62,10 @@ async function getLoad() {
             }, {});
             const stanok = attrs['Тип станка'];
             const positionData = {id: pos.id, position: pos.assortment.name, deliveryPlannedMoment: order.deliveryPlannedMoment, name: order.name, created: order.created, quantity: pos.quantity}
-            !stanok && otherArr.push(positionData)
-            if (!stanok) continue;
+            if (!stanok){
+              otherArr.push(positionData)
+              continue;
+            }
             const h = Number(attrs['Длина в мм']) || 0;
             const w = Number(attrs['Ширина в мм']) || 0;
             const pfs = Number(attrs['Кол-во полуфабрикатов']) || 1;

@@ -8,8 +8,7 @@ const Calculate = (data, selfcost) => {
         if(el === '-')
             return undefined
         else return el
-    });
-    console.log(tapes)
+    })
     const materials = Object.entries(data).filter(([key, value]) => key.startsWith('material') && value !== undefined).map(([_, value]) => value);
     addTape && tapes.push(addTape)
     // let name = `Триплекс, ${materials.join(' + ')}, (${height}х${width}${polishing ? ', Полировка' : ''}${tempered ? ', Закаленное' : ''}${cutsv1 ? `, Вырезы 1 кат.: ${cutsv1}` : ''}${cutsv2 ? `, Вырезы 2 кат.: ${cutsv2}` : ''}${cutsv3 ? `, Вырезы 3 кат.: ${cutsv3}` : ''}${drills ? `, Сверление: ${drills}` : ''}${zenk ? `, Зенкование: ${zenk}` : ''}${print ? ', Печать' : ''}, площадь: ${(height * width / 1000000).toFixed(2)})`
@@ -256,10 +255,10 @@ export const constructWorks = (work, quantity, context) => {
             workshopExpenses,
             commercialExpenses,
             householdExpenses,
-            string: `(${quantity} * ${PAC[tableName || name].costOfWork}) + (${PAC[tableName || name].salary} / ${PAC['Среднее количество рабочих часов в месяц']} * ${quantity} / ${PAC[tableName ||name].ratePerHour})`,
+            string: `(${quantity.toFixed(2)} * ${PAC[tableName || name].costOfWork}) + (${PAC[tableName || name].salary} / ${PAC['Среднее количество рабочих часов в месяц'].value} * ${quantity.toFixed(2)} / ${PAC[tableName ||name].ratePerHour})`,
             formula: `(Количество * Сделка + (Оклад / Среднее количество рабочих часов в месяцe * Количество / Норма в час)`
         })
-    } 
+    }
     switch (work) {
         case 'drills': res('Сверление'); break
         case 'zenk': res('Зенковка'); break

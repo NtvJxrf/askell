@@ -67,7 +67,8 @@ const formConfigs = {
           label: 'Округление',
           type: 'select',
           options: ['Округление до 0.3', 'Округление до 0.5', 'Умножить на 2'],
-          rules: [{ required: true, message: 'Fill this field' }]
+          rules: [{ required: true, message: 'Fill this field' }],
+          description: 'Округляет S для расчета по выбранному правилу'
         }
       ]
     },
@@ -101,7 +102,8 @@ const formConfigs = {
           label: 'Округление',
           type: 'select',
           options: ['Округление до 0.3', 'Округление до 0.5', 'Умножить на 2'],
-          rules: [{ required: true, message: 'Fill this field' }]
+          rules: [{ required: true, message: 'Fill this field' }],
+          description: 'Округляет S для расчета по выбранному правилу'
         }
       ],
       materialFields: [

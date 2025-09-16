@@ -128,7 +128,7 @@ const Positions = ({form}) => {
         additions && (res += 1)
         print && (res += 7)
         console.log(res)
-        setOrderLoad(res)
+        setOrderLoad(res || 0)
     }, [positions])
     const onDragEnd = ({ active, over }) => {
         if (active.id !== over?.id) {

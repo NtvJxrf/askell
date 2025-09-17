@@ -46,8 +46,10 @@ export default class SkladHooks{
                     })
                     }else{
                         await Client.request(process.env.UNISENDER_URL, 'post', {
-                            email: order.agent.email,
-                            orderName: order.name
+                            json: { 
+                                email: order.agent.email,
+                                orderName: order.name
+                            }
                         })
                     }
                 break

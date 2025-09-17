@@ -24,6 +24,7 @@ const getOrdersInWork = async () => {
     };
     const curvedArr = [], straightArr = [], otherArr = []
     // Сбор статистики по заказам
+    const cntres = {}
     for (const order of orders) {
         for (const pos of order.positions.rows) {
             const attrs = (pos.assortment?.attributes || []).reduce((a, x) => {
@@ -40,10 +41,14 @@ const getOrdersInWork = async () => {
             totalCutsv1 += Number(attrs['Кол-во вырезов 1 категорий']) || 0;
             totalCutsv2 += Number(attrs['Кол-во вырезов 2 категорий']) || 0;
             totalCutsv3 += Number(attrs['Кол-во вырезов 3 категорий']) || 0;
-
+            const cutsv1 = Number(attrs['Кол-во вырезов 1 категорий']) || 0;
+            const cutsv2 = Number(attrs['Кол-во вырезов 2 категорий']) || 0;
+            const cutsv3 = Number(attrs['Кол-во вырезов 3 категорий']) || 0;
             const P = 2 * (h + w) / 1000;          // пог.м
             const S = h * w / 1_000_000;           // кв.м
             const cnt = pfs * pos.quantity;
+            cntres[order.name] ??= {'Криволинейка': 0, 'Прямолинейка': 0}
+            cntres[order.name][stanok] += pfs * pos.quantity + cutsv1 * 1.86 * cnt + cutsv2 * 3.5 * cnt + cutsv3 * 7 * cnt
             if(pos.assortment.name.toLowerCase().includes('триплекс')){
               total['Триплекс (Без учета резки стекла)'].P += P * pos.quantity;
               total['Триплекс (Без учета резки стекла)'].S += S * pos.quantity;
@@ -59,6 +64,7 @@ const getOrdersInWork = async () => {
             currArr.push(positionData)
         }
     }
+    console.log(cntres)
     console.log(`Total Triplex: ${totalTriplexM2}`)
     console.log('Итого по заказам:', total);
     console.log('Вырезы 1 кат:', totalCutsv1);

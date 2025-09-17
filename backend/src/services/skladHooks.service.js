@@ -38,6 +38,7 @@ export default class SkladHooks{
             order ??= await Client.sklad(`${event.meta.href}?expand=agent,state`)
             switch(order.state.name){
                 case 'Готово':
+                    if(order.owner.meta.href == `https://api.moysklad.ru/api/remap/1.2/entity/employee/03579653-eedf-11e8-9107-50480000f34d`) return
                     if(!order.agent.email){
                     const task = await Client.sklad('https://api.moysklad.ru/api/remap/1.2/entity/task', 'post', {
                         assignee: { meta: order.owner.meta },

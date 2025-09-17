@@ -22,9 +22,15 @@ const orders = await fetchAllRows(
 console.log('ВСЕГО ЗАКАЗОВ', orders.length)
 const productPromises = []
 const productionStagesPromises = []
-for(const task of tasks){
-    productPromises.push(fetchAllRows(`${task.meta.href}/products?expand=assortment`))
-    productionStagesPromises.push(fetchAllRows(`https://api.moysklad.ru/api/remap/1.2/entity/productionstage/?filter=productionTask=${task.meta.href}&expand=stage`))
+for (const task of tasks) {
+    productPromises.push(fetchAllRows(`${task.meta.href}/products?expand=assortment`).then(rows => ({
+        task,
+        products: rows
+    })))
+    productionStagesPromises.push(fetchAllRows(`https://api.moysklad.ru/api/remap/1.2/entity/productionstage/?filter=productionTask=${task.meta.href}&expand=stage`).then(rows => ({
+        task,
+        stages: rows
+    })))
 }
 const products = await Promise.allSettled(productPromises)
 const productionStages = await Promise.allSettled(productionStagesPromises)
@@ -37,15 +43,26 @@ const total = {
     cutsv3: 0,
 }
 const result = {}
-for(const promise of products)
-    for(const product of promise.value)
-        countLoadTasks(product, total, result)
-for (const order of orders)
+const cnt = {}
+for(const { status, value } of products){
+    const { task, products } = value
+    const attrs = (task.attributes || []).reduce((a, x) => {
+        a[x.name] = x.value;
+        return a;
+    }, {});
+    for (const product of products) {
+        countLoadTasks(product, total, result, attrs['№ заказа покупателя'], cnt)
+    }
+}
+for (const order of orders){
+    console.log('Заказ', order.name , 'продукты:', products.length)
     for (const pos of order.positions.rows) 
         countLoadOrders(pos, total)
+}
 console.log(total)
-for(const promise of productionStages){
-    for(const stage of promise.value){
+for(const { status, value} of productionStages){
+    const { task, stages } = value
+    for(const stage of stages){
         const name = stage.stage.name
         if(name != 'Криволинейная обработка' && name != 'Прямолинейная обработка' && name != 'Триплексование') continue
         const key = stage.productionRow.meta.href;
@@ -66,6 +83,7 @@ for(const promise of productionStages){
     }
 }
 console.log(total)
+console.log(cnt)
 async function fetchAllRows(urlBase) {
   const limit = 100;
   const firstUrl = `${urlBase}&limit=${limit}&offset=0`;
@@ -93,7 +111,7 @@ async function fetchAllRows(urlBase) {
 
   return allRows;
 }
-function countLoadTasks(product, total, result){
+function countLoadTasks(product, total, result, name, cnt){
     const attrs = (product.assortment?.attributes || []).reduce((a, x) => {
         a[x.name] = x.value;
         return a;
@@ -114,7 +132,8 @@ function countLoadTasks(product, total, result){
         total[stanok].P += P * Q + cutsv1 * 1.86 * Q + cutsv2 * 3.5 * Q + cutsv3 * 7 * Q
         total[stanok].S += S * Q
         total[stanok].count += Q
-
+        cnt[name] ??= {'Криволинейка': 0, 'Прямолинейка': 0}
+        cnt[name][stanok] += P * Q + cutsv1 * 1.86 * Q + cutsv2 * 3.5 * Q + cutsv3 * 7 * Q
         const key = product.productionRow.meta.href
         result[key] = result[key] || { P: 0, S: 0, count: 0, cutsv1: 0, cutsv2: 0, cutsv3: 0 };
         result[key].P += P * Q

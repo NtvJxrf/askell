@@ -1,8 +1,5 @@
 import Client from './got.js'
 import SkladService from '../services/sklad.service.js'
-import Coefs from '../databases/models/sklad/coefs.model.js'
-import Prices from '../databases/models/sklad/prices.mode.js'
-import WorkPrices from '../databases/models/sklad/workPrices.model.js'
 import { dictionary } from '../services/sklad.service.js'
 import ApiError from './apiError.js'
 import logger from './logger.js'

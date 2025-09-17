@@ -1,6 +1,5 @@
 import Client from "../utils/got.js"
-import SkladService from "./sklad.service.js"
-import axios from 'axios'
+
 export default class SkladHooks{
     static async pzChange(data){
         let document = null
@@ -31,23 +30,27 @@ export default class SkladHooks{
             })
         }
     }
-    static async orderCompleted(id){
-        const order = await Client.sklad(`https://api.moysklad.ru/api/remap/1.2/entity/customerorder/${id}?expand=agent`)
-        if(!order.agent.email){
-            const task = await Client.sklad('https://api.moysklad.ru/api/remap/1.2/entity/task', 'post', {
-                assignee: {
-                    meta: order.owner.meta,
-                },
-                operation: {
-                    meta: order.meta
-                },
-                description: `Уведомление о готовом заказе не отправлено, тк не указан email`
-            })
-        }else{
-            await axios.post(process.env.UNISENDER_URL, {
-                email: order.agent.email,
-                orderName: order.name
-            })
+    static async orderChanged(data){
+        let order = null
+        const event = data.events[0]
+        if(event?.updatedFields?.includes('state')){
+            order ??= await Client.sklad(`${event[0].meta.href}?expand=agent,state`)
+            switch(order.state.name){
+                case 'Готово':
+                    if(!order.agent.email){
+                    const task = await Client.sklad('https://api.moysklad.ru/api/remap/1.2/entity/task', 'post', {
+                        assignee: { meta: order.owner.meta },
+                        operation: { meta: order.meta },
+                        description: `Уведомление о готовом заказе не отправлено, тк не указан email`
+                    })
+                    }else{
+                        await Client.request(process.env.UNISENDER_URL, 'post', {
+                            email: order.agent.email,
+                            orderName: order.name
+                        })
+                    }
+                break
+            }
         }
     }
 }

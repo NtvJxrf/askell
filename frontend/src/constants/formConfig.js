@@ -56,7 +56,7 @@ const formConfigs = {
           name: 'print',
           label: 'Печать',
           type: 'select',
-          options: ['С 1 стороны', 'С 2 сторон'],
+          options: ['С 1 стороны'],
         },
         { name: 'shape', label: 'Прямоугольная форма', type: 'checkbox', cheched: true },
         { name: 'tempered', label: 'Закаленное', type: 'checkbox', cheched: true },

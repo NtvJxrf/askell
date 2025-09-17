@@ -1,18 +1,16 @@
-import XLSX from "xlsx";
 import Client from './src/utils/got.js';
 import dotenv from 'dotenv';
 dotenv.config();
-import axios from 'axios';
-import { google } from "googleapis";
 
 const tasks = await fetchAllRows('https://api.moysklad.ru/api/remap/1.2/entity/productiontask?' +
     'filter=state.name=Новое задание;' + 
-    'state.name=Поставлено в производство;' +
+    'state.name=Поставлен в производство;' +
     'state.name=Ждёт раскрой;' +
-    'state.name=Раскроен' +
+    'state.name=Раскроен;' +
     'state.name=Закалка;' +
     'https://api.moysklad.ru/api/remap/1.2/entity/productiontask/metadata/attributes/8438849b-5b27-11f0-0a80-01dc002fd402=false;'
-)
+)   
+console.log('ВСЕГО ПЗ', tasks.length)
 const orders = await fetchAllRows(
     'https://api.moysklad.ru/api/remap/1.2/entity/customerorder?' +
     'filter=state.name=Подготовить (переделать) чертежи;' +
@@ -21,6 +19,7 @@ const orders = await fetchAllRows(
     'state.name=Проверено технологом' +
     '&expand=positions.assortment'
 )
+console.log('ВСЕГО ЗАКАЗОВ', orders.length)
 const productPromises = []
 const productionStagesPromises = []
 for(const task of tasks){
@@ -103,9 +102,8 @@ function countLoadTasks(product, total, result){
     if (!stanok){
         return
     }
-
-    const h = Number(attrs['Длина в мм']) || 0;
-    const w = Number(attrs['Ширина в мм']) || 0;
+    const h = Number(attrs['Длина в мм'])
+    const w = Number(attrs['Ширина в мм'])
     const cutsv1 = Number(attrs['Кол-во вырезов 1 категорий']) || 0;
     const cutsv2 = Number(attrs['Кол-во вырезов 2 категорий']) || 0;
     const cutsv3 = Number(attrs['Кол-во вырезов 3 категорий']) || 0;
@@ -116,7 +114,6 @@ function countLoadTasks(product, total, result){
         total[stanok].P += P * Q + cutsv1 * 1.86 * Q + cutsv2 * 3.5 * Q + cutsv3 * 7 * Q
         total[stanok].S += S * Q
         total[stanok].count += Q
-        total[stanok].positionsCount += 1;
 
         const key = product.productionRow.meta.href
         result[key] = result[key] || { P: 0, S: 0, count: 0, cutsv1: 0, cutsv2: 0, cutsv3: 0 };
@@ -163,9 +160,7 @@ function countLoadOrders(product, total){
         total['Триплекс (Без учета резки стекла)'].count += product.quantity
         total['Триплекс (Без учета резки стекла)'].positionsCount += 1
     }
-    console.log(`Товар ${product.assortment.name} добавил для ${stanok} ${P * cnt + cutsv1 * 1.86 * cnt + cutsv2 * 3.5 * cnt+ cutsv3 * 7 * cnt} м.п`)
     total[stanok].P += P * cnt + cutsv1 * 1.86 * cnt + cutsv2 * 3.5 * cnt+ cutsv3 * 7 * cnt
     total[stanok].S += S * cnt;
     total[stanok].count += cnt;
-    total[stanok].positionsCount += 1;
 }

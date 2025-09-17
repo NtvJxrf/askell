@@ -18,19 +18,12 @@ const MOYSKLAD_LIMIT = 40;
 
 
 export default class Client {
-    static async request(url, type, args, service) {
-        moyskladParralelRequestCount++;
-        try {
-            console.log(moyskladRequestCount)
-            const response = await gotClient[type](url, args);
-
-            if (response.statusCode >= 200 && response.statusCode < 300) 
-                return JSON.parse(response.body)
-            else 
-                throw new ApiError(response.statusCode, `Ошибка во время запроса к ${url}, ${response.body}`)
-        } finally {
-            moyskladParralelRequestCount--;
-        }
+    static async request(url, type = 'get', args) {
+        const response = await gotClient[type](url, args);
+        if (response.statusCode >= 200 && response.statusCode < 300) 
+            return JSON.parse(response.body)
+        else 
+            throw new ApiError(response.statusCode, `Ошибка во время запроса к ${url}, ${response.body}`)
     }
 
 
@@ -48,6 +41,12 @@ export default class Client {
         setTimeout(() => {
             moyskladRequestCount--
         }, 3_000)
-        return this.request(url, type, args, 'MoySklad');
+        console.log(moyskladRequestCount)
+        moyskladParralelRequestCount++;
+        try {
+            return await this.request(url, type, args);
+        } finally {
+            moyskladParralelRequestCount--;
+        }
     }
 }

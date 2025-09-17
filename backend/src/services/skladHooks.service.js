@@ -32,6 +32,7 @@ export default class SkladHooks{
     }
     static async orderChanged(data){
         let order = null
+        console.log(data)
         const event = data.events[0]
         if(event?.updatedFields?.includes('state')){
             order ??= await Client.sklad(`${event[0].meta.href}?expand=agent,state`)

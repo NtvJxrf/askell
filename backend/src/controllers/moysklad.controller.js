@@ -66,6 +66,6 @@ export default class MoySkladController{
     }
     static async orderChanged(req, res){
         res.sendStatus(200)
-        const result = await SkladHooks.orderChanged(req.query.id)
+        const result = await SkladHooks.orderChanged(req.body)
     }
 }

@@ -191,7 +191,10 @@ const initialDataLabels = {
     under: 'Подстолье',
     smdType: 'Тип СМД',
     quantity: 'Количество',
-    marker: 'Маркер'
+    marker: 'Маркер',
+    lock: 'Дверной замок',
+    doorFrame: 'Дверной короб',
+    hinge: 'Дверные ветли',
 };
 
 const labelPrefixes = [

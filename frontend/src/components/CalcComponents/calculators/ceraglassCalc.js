@@ -2,7 +2,7 @@ import { constructWorks, constructName, checkDetail } from './triplexCalc.js'
 const Calculate = (data, selfcost) => {
     console.log(data)
     console.log(selfcost)
-    const { height, width, cutsv1, cutsv2, cutsv3, material1, material2, blank, color, under, quantity = 1, trim, tempered} = data
+    const { height, width, cutsv1, cutsv2, cutsv3, material1, material2, blank, color, under, quantity = 1, trim, tempered, type, doorFrame, hinge, lock} = data
     const heightsRaw = Object.entries(data).filter(([key]) => /^height\d+$/.test(key)).map(([_, value]) => value);
     const heights = heightsRaw.length > 0 ? heightsRaw : [height];
     const widthsRaw = Object.entries(data).filter(([key]) => /^width\d+$/.test(key)).map(([_, value]) => value)
@@ -21,7 +21,7 @@ const Calculate = (data, selfcost) => {
     }
     let ceraTrim = 0
     let weight = 0
-    let name = constructName(`Керагласс, ${materials.join(' + ')}`, {...data, polishing: true})
+    let name = constructName(`${type} керагласс, ${materials.join(' + ')}`, {...data, polishing: true})
     color && result.materials.push({
         name: color,
         value: selfcost.colors[color].value * 0.3,
@@ -35,6 +35,27 @@ const Calculate = (data, selfcost) => {
         string: `${selfcost.materials[`Клей кераглас`].value} * ${Math.max(0.17 * S_all, 0.5)}`,
         formula: 'Цена * Большее из 0.17 * S или 0.5'
     });
+    if(doorFrame)
+        result.materials.push({
+            name: doorFrame,
+            value: selfcost.materials[doorFrame].value,
+            string: `${selfcost.materials[doorFrame].value}`,
+            formula: 'Цена'
+        });
+    if(hinge)
+        result.materials.push({
+            name: hinge,
+            value: selfcost.materials[hinge].value,
+            string: `${selfcost.materials[hinge].value}`,
+            formula: 'Цена'
+        });
+    if(lock)
+        result.materials.push({
+            name: lock,
+            value: selfcost.materials[lock].value,
+            string: `${selfcost.materials[lock].value}`,
+            formula: 'Цена'
+        });
     if(blank){
         result.materials.push({
             name: 'Пятак капролон черный D32 H11 М8',

@@ -230,7 +230,6 @@ const formConfigs = {
         { name: 'under', label: 'Подстолье', type: 'select' },
         { name: 'doorFrame', label: 'Дверной короб', type: 'select', options: [''] },
         { name: 'lock', label: 'Дверной замок', type: 'select', options: [] },
-        { name: 'handle', label: 'Дверная ручка', type: 'select', options: [] },
         { name: 'hinge', label: 'Дверные петли', type: 'select', options: [] },
         { name: 'tempered', label: 'Закаленное', type: 'checkbox', cheched: true },
       ],materialFields: []

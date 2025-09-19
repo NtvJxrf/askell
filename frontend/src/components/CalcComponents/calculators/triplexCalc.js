@@ -318,7 +318,7 @@ export const constructName = (firstWord, data) => {
     if (color) parts.push(`Окрашивание: ${color}`);
     if (tapes.length > 0) parts.push(`Пленка: ${tapes.join(';').replaceAll('Пленка', '')}`);
     const area = ((height * width) / 1_000_000).toFixed(2);
-    if(!firstWord.includes('Керагласс')) parts.push(`площадь: ${area}`)
+    if(!firstWord.toLowerCase().includes('керагласс')) parts.push(`площадь: ${area}`)
     return `${firstWord}, (${width}х${height}${parts.length > 0 ? ', ' : ''}${parts.join(', ')})`;
 };
 export const checkDetail = ({width, height, tempered, material, stanok, result, thickness}) => {

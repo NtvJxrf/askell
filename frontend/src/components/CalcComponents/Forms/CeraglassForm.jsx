@@ -6,6 +6,9 @@ import { useMemo, useState, useRef } from "react";
 
 const glassAndCera = ['стекло', 'плита'];
 const ceraExcludedWords = ['плита']
+const doorFrameWords = ['короб']
+const lockWords = ['замок']
+const hingeWords = ['петля']
 const CeraglassForm = () => {
     const materials = useSelector(state => state.selfcost.selfcost?.materials) || []
     const unders = useSelector(state => state.selfcost.selfcost?.unders) || []
@@ -13,15 +16,21 @@ const CeraglassForm = () => {
     const undersArray = Object.keys(unders)
     const colorsArray = Object.keys(colors)
     const ceraArray = Object.keys(materials).filter(el => ceraExcludedWords.some(word => el.toLowerCase().includes(word))).sort()
+    const doorFrameArray = Object.keys(materials).filter(el => doorFrameWords.some(word => el.toLowerCase().includes(word))).sort()
+    const lockArray = Object.keys(materials).filter(el => lockWords.some(word => el.toLowerCase().includes(word))).sort()
+    const hingeArray = Object.keys(materials).filter(el => hingeWords.some(word => el.toLowerCase().includes(word))).sort()
     ceraArray.push('Керамика клиента');
     const materialsArray = Object.keys(materials).filter(el => glassAndCera.some(word => el.toLowerCase().includes(word))).sort()
     materialsArray.push('Керамика клиента');
     const ceraglassFields = useMemo(() => {
         return formConfigs.ceraglassForm.commonFields.map(field => {
             if (field.name === 'material1') return { ...field, options: ceraArray };
+            if (field.name === 'material2') return { ...field, options: materialsArray };
             if (field.name === 'color') return { ...field, options: colorsArray };
             if (field.name === 'under') return { ...field, options: undersArray };
-            if (field.name === 'material2') return { ...field, options: materialsArray };
+            if (field.name === 'doorFrame') return { ...field, options: doorFrameArray };
+            if (field.name === 'lock') return { ...field, options: lockArray };
+            if (field.name === 'hinge') return { ...field, options: hingeArray };
             return field;
         });
     }, [materialsArray, colorsArray, undersArray, ceraArray]);

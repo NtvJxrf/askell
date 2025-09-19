@@ -100,12 +100,13 @@ const Calculate = (data, selfcost) => {
 
     }
     for(const material of materials){
-        if(material.toLowerCase().includes('зеркало') && tempered)
-            throw new Error('Зеркало не может быть закаленным')
         const thickness = Number(material.match(/(\d+(?:[.,]\d+)?)\s*мм/i)[1])
+        const currentWeight = 2.5 * ((height * width) / 1000000) * thickness
+        weight += currentWeight
+        const stanok = (shape && !cutsv1 && !cutsv2 && !cutsv3 && !currentWeight > 50) ? 'Прямолинейка' : 'Криволинейка'
+        checkDetail({width, height, weight: currentWeight, tempered, material, stanok, result, thickness})
         shortThickness.push(thickness)
         allThickness += thickness
-        weight += 2.5 * ((height * width) / 1000000) * thickness
         allWeights.push(2.5 * ((height * width) / 1000000) * thickness)
         
         tempered && constructWorks('tempered', S_calc, { thickness, result, selfcost})
@@ -320,8 +321,64 @@ export const constructName = (firstWord, data) => {
     if(!firstWord.includes('Керагласс')) parts.push(`площадь: ${area}`)
     return `${firstWord}, (${width}х${height}${parts.length > 0 ? ', ' : ''}${parts.join(', ')})`;
 };
+export const checkDetail = ({width, height, tempered, material, stanok, result, thickness}) => {
+    const largest = Math.max(height, width);
+    const lowest = Math.min(height, width);
+    if (tempered) {
+        if (largest > 3000 || lowest > 1700)
+            throw new Error(`Размер стекла превышает допустимые значения для закалки. Максимум: 3000x1700, получено: ${width}x${height}`);
+        if (largest < 350 || lowest < 200)
+            throw new Error(`Размер стекла для закалки слишком мал. Минимальные допустимые размеры: 350x200, получено: ${width}x${height}`);
+        if(material.toLowerCase().includes('зеркало'))
+            throw new Error('Зеркало не может быть закаленным')
+        if ([8, 10, 12].includes(thickness) && largest > 1500)
+            result.warnings.push(`Изделия с толщиной ${thickness} мм и большей стороной > 1500 мм на данный момент не могут быть изготовлены без привлечения сторонней закалки`);
+        if ([4, 5, 6].includes(thickness) && largest > 2000)
+            result.warnings.push(`Изделия с толщиной ${thickness} мм и большей стороной > 2000 мм на данный момент не могут быть изготовлены без привлечения сторонней закалки`);
+    }
+    if(stanok == 'Прямолинейка'){
+        if(lowest < 40)
+            throw new Error('Минимальный размер одной из сторон на прямолинейке 40 мм')
+    }
+    if(stanok == 'Криволинейка'){
+        const largest = Math.max(width, height);
+        const lowest = Math.min(width, height);
+        if (largest < 400 || lowest < 250)
+            throw new Error(`Размер стекла для криволинейки слишком мал. Минимальные допустимые размеры: 400x250, получено: ${width}x${height}`);
+
+        const machines = [
+            { name: "Alpa", maxWidth: 3200, maxHeight: 2200 },
+            { name: "Intermac", maxWidth: 3700, maxHeight: 1900 }
+        ]
+        const suitableMachines = machines.filter(machine => 
+            largest <= machine.maxWidth && lowest <= machine.maxHeight
+        );
+
+        if (suitableMachines.length === 0) {
+            throw new Error('Стекло не подходит по максимальным размерам ни к одному станку на криволинейке');
+        }
+    }
+}
 export const getValue = (part, str) => {
     const selfcost = store.getState().selfcost.selfcost
     return selfcost[part][str].value
 }
 export default Calculate
+
+
+// Сделал следующие ограничения для проверки деталей:
+// Для закалки:
+//     Максимальный размер: 3000×1700 мм.
+//     Минимальный размер: 350×200 мм.
+//     Зеркала не могут быть закаленными.
+//     Толщина 8, 10, 12 и большая сторона > 1500(Только предупреждение)
+//     Толщина 4, 5, 6 и большая сторона > 2000(Только предупреждение)
+// Для станка «Прямолинейка»:
+//     Минимальная сторона детали: 40 мм.
+
+// Для станка «Криволинейка»:
+//     Минимальные размеры: 400×250 мм.
+//     Максимальные размеры зависят от станка:
+//      Alpa: 3200×2200 мм
+//      Intermac: 3700×1900 мм
+//      Если деталь превышает размеры всех станков — она не подходит для обработки на криволинейке.

@@ -1,4 +1,4 @@
-import { constructWorks, constructName } from './triplexCalc.js'
+import { constructWorks, constructName, checkDetail } from './triplexCalc.js'
 const Calculate = (data, selfcost) => {
     console.log(data)
     console.log(selfcost)
@@ -58,6 +58,13 @@ const Calculate = (data, selfcost) => {
                 formula: 'Цена * S * Коэффициент обрези стекло'
             });
             const thickness = Number(material.match(/(\d+(?:[.,]\d+)?)\s*мм/i)[1])
+            for (let i = 0; i < heights.length; i++) {
+                const height = Number(heights[i]);
+                const width = Number(widths[i]);
+                const weight = 2.5 * ((height * width) / 1_000_000) * thickness;
+
+                checkDetail({ width, height, weight, tempered, material, stanok, result, thickness });
+            }
             const context = { selfcost, result, thickness, stanok };
             constructWorks('cutting1', S, context);
             constructWorks('cutting2', S, context);

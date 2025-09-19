@@ -1,12 +1,14 @@
-import { constructWorks, constructName } from './triplexCalc'
+import { constructWorks, constructName, checkDetail } from './triplexCalc'
 
 const Calculate = (data, selfcost) => {
     console.log(selfcost)
     console.log(data)
     const { material, height, width, polishing, drills, zenk, cutsv1, cutsv2, cutsv3, tempered, shape, color, print, rounding, quantity = 1, customerSuppliedGlassForTempering = false } = data
     let S = (height * width) / 1000000
+    const P = ((height + width) * 2) / 1000
     const thickness = Number(material.match(/(\d+(?:[.,]\d+)?)\s*мм/i)[1])
     let weight = (height * width) / 1000000 * 2.5 * thickness
+    const stanok = (shape && !cutsv1 && !cutsv2 && !cutsv3 && weight < 50) ? 'Прямолинейка' : 'Криволинейка'
     const result = {
         materials: [],
         calcMaterials: [],
@@ -15,6 +17,7 @@ const Calculate = (data, selfcost) => {
         errors: [],
         warnings: []
     }
+    checkDetail({width, height, tempered, material, stanok, result, thickness})
     if(customerSuppliedGlassForTempering){
         const temperingSelfcost = selfcost.pricesAndCoefs[`Закалка давальческого стекла ${thickness} мм`].value
         const temperingPrice = temperingSelfcost * S
@@ -53,7 +56,7 @@ const Calculate = (data, selfcost) => {
             added: false,
             quantity,
             initialData: data,
-            type: 'Стекло',
+            type: 'Закалка стекла',
             result
         }
     }
@@ -70,12 +73,8 @@ const Calculate = (data, selfcost) => {
                 break
         }
     }
-    const P = ((height + width) * 2) / 1000
-    const stanok = (shape && !cutsv1 && !cutsv2 && !cutsv3 && weight < 50) ? 'Прямолинейка' : 'Криволинейка'
     let name = constructName(material, {...data, stanok})
     // ЧЕ ТО ПРО ВЕС ГОВОРИЛ РУСЛАН, НА НОВОМ ПРОИЗВОДСТВЕ, ЧТО ЕСЛИ ВЕС БОЛЬШОЙ НА КУДА ТО В ДРУГОЙ СТАНОК
-    if(material.toLowerCase().includes('зеркало') && tempered)
-        throw new Error('Зеркало не может быть закаленным')
     
     result.materials.push({
         name: material,

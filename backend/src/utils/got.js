@@ -12,41 +12,74 @@ const gotClient = got.extend({
     },
     throwHttpErrors: false,
 });
-let moyskladRequestCount = 0;
-let moyskladParralelRequestCount = 0
-const MOYSKLAD_LIMIT = 40;
 
+let globalRequestCount = 0;
+const tokenStats = {
+    main: { requestCount: 0, parallel: 0 },
+    second: { requestCount: 0, parallel: 0 },
+};
+
+const GLOBAL_LIMIT = 40;
+const TOKEN_LIMIT = 35;
+const PARALLEL_LIMIT = 5;
+const WINDOW = 3_000;
+
+function getTokenEnv(tokenName) {
+    switch (tokenName) {
+        case 'main':
+            return process.env.SkladAuthToken;
+        case 'second':
+            return process.env.SkladAuthToken2;
+        default:
+            throw new Error(`Неизвестный токен: ${tokenName}`);
+    }
+}
 
 export default class Client {
     static async request(url, type = 'get', args) {
         const response = await gotClient[type](url, args);
-        if (response.statusCode >= 200 && response.statusCode < 300) 
-            return JSON.parse(response.body)
-        else 
-            throw new ApiError(response.statusCode, `Ошибка во время запроса к ${url}, ${response.body}`)
+        if (response.statusCode >= 200 && response.statusCode < 300)
+            return JSON.parse(response.body);
+        else
+            throw new ApiError(
+                response.statusCode,
+                `Ошибка во время запроса к ${url}, ${response.body}`,
+            );
     }
 
+    static async sklad(url, type = 'get', data, token = 'main') {
+        const tokenData = tokenStats[token];
+        if (!tokenData)
+            throw new Error(`Неизвестный токен: ${token}`);
 
-    static async sklad(url, type = 'get', data) {
         const args = {
             headers: {
-                Authorization: `Bearer ${process.env.SkladAuthToken}`,
+                Authorization: `Bearer ${getTokenEnv(token)}`,
             },
             json: data || undefined,
         };
-        while (moyskladRequestCount >= MOYSKLAD_LIMIT || moyskladParralelRequestCount > 3) {
-            await new Promise(resolve => setTimeout(resolve, 100))
+        while (
+            globalRequestCount >= GLOBAL_LIMIT ||
+            tokenData.requestCount >= TOKEN_LIMIT ||
+            tokenData.parallel >= PARALLEL_LIMIT
+        ) {
+            await new Promise(resolve => setTimeout(resolve, 100));
         }
-        moyskladRequestCount++
+
+        globalRequestCount++;
+        tokenData.requestCount++;
+        tokenData.parallel++;
+
         setTimeout(() => {
-            moyskladRequestCount--
-        }, 3_000)
-        console.log(moyskladRequestCount)
-        moyskladParralelRequestCount++;
+            globalRequestCount--;
+            tokenData.requestCount--;
+        }, WINDOW);
+
         try {
+            console.log(globalRequestCount)
             return await this.request(url, type, args);
         } finally {
-            moyskladParralelRequestCount--;
+            tokenData.parallel--;
         }
     }
 }

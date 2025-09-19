@@ -9,8 +9,7 @@ const tasks = await fetchAllRows('https://api.moysklad.ru/api/remap/1.2/entity/p
     'state.name=Раскроен;' +
     'state.name=Закалка;' +
     'https://api.moysklad.ru/api/remap/1.2/entity/productiontask/metadata/attributes/8438849b-5b27-11f0-0a80-01dc002fd402=false;'
-)   
-console.log('ВСЕГО ПЗ', tasks.length)
+)
 const orders = await fetchAllRows(
     'https://api.moysklad.ru/api/remap/1.2/entity/customerorder?' +
     'filter=state.name=Подготовить (переделать) чертежи;' +
@@ -19,7 +18,6 @@ const orders = await fetchAllRows(
     'state.name=Проверено технологом' +
     '&expand=positions.assortment'
 )
-console.log('ВСЕГО ЗАКАЗОВ', orders.length)
 const productPromises = []
 const productionStagesPromises = []
 for (const task of tasks) {
@@ -43,7 +41,6 @@ const total = {
     cutsv3: 0,
 }
 const result = {}
-const cnt = {}
 for(const { status, value } of products){
     const { task, products } = value
     const attrs = (task.attributes || []).reduce((a, x) => {
@@ -55,11 +52,9 @@ for(const { status, value } of products){
     }
 }
 for (const order of orders){
-    console.log('Заказ', order.name , 'продукты:', products.length)
     for (const pos of order.positions.rows) 
         countLoadOrders(pos, total)
 }
-console.log(total)
 for(const { status, value} of productionStages){
     const { task, stages } = value
     for(const stage of stages){
@@ -82,8 +77,6 @@ for(const { status, value} of productionStages){
         }
     }
 }
-console.log(total)
-console.log(cnt)
 async function fetchAllRows(urlBase) {
   const limit = 100;
   const firstUrl = `${urlBase}&limit=${limit}&offset=0`;
@@ -111,7 +104,7 @@ async function fetchAllRows(urlBase) {
 
   return allRows;
 }
-function countLoadTasks(product, total, result, name, cnt){
+function countLoadTasks(product, total, result, name){
     const attrs = (product.assortment?.attributes || []).reduce((a, x) => {
         a[x.name] = x.value;
         return a;
@@ -132,8 +125,11 @@ function countLoadTasks(product, total, result, name, cnt){
         total[stanok].P += P * Q + cutsv1 * 1.86 * Q + cutsv2 * 3.5 * Q + cutsv3 * 7 * Q
         total[stanok].S += S * Q
         total[stanok].count += Q
-        cnt[name] ??= {'Криволинейка': 0, 'Прямолинейка': 0}
-        cnt[name][stanok] += P * Q + cutsv1 * 1.86 * Q + cutsv2 * 3.5 * Q + cutsv3 * 7 * Q
+        total[stanok].positionsCount ++
+        total.cutsv1 += cutsv1 * Q
+        total.cutsv2 += cutsv2 * Q
+        total.cutsv3 += cutsv3 * Q
+
         const key = product.productionRow.meta.href
         result[key] = result[key] || { P: 0, S: 0, count: 0, cutsv1: 0, cutsv2: 0, cutsv3: 0 };
         result[key].P += P * Q

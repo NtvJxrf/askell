@@ -77,8 +77,6 @@ export default class SkladService {
                     priceType: dictionary.priceTypes[mapPrices[key]],
                     currency: dictionary.currencies['руб']
                 })),
-                vat: data.order.organization.name === 'ООО "А2"' ? 20 : 0,
-                vatEnabled: true,
                 weight: Number((product.result.other.weight).toFixed(2)),
                 volume: Number((product.result.other.S).toFixed(2)),
                 productFolder: dictionary.productFolders.glassGuard,
@@ -642,7 +640,7 @@ export const createProductionTask = async (id) =>{
             switch(entity){
                 case 'task':
                     if(createdEntitys[entity].length > 0)
-                    await Client.sklad('https://api.moysklad.ru/api/remap/1.2/entity/productiontask/delete', 'post', createdEntitys[entity].map(el => {return {meta: el.meta}}))
+                        await Client.sklad('https://api.moysklad.ru/api/remap/1.2/entity/productiontask/delete', 'post', createdEntitys[entity].map(el => {return {meta: el.meta}}))
                     break
                 case 'plan':
                     if(createdEntitys[entity].length > 0)
@@ -744,10 +742,10 @@ const makeProcessingPlan = async ({ data, name, order, processingprocess, produc
     createdEntitys.plan.push(response)
     return response
 }
-const makeProduct = async (data, name, isPF, createdEntitys, order, productType) => {
+const makeProduct = async (data, name, isPF, createdEntitys, order, type) => {
     const { height, width, polishing, drills, zenk, cutsv1, cutsv2, cutsv3, tempered, color, print } = data.initialData
     const attrs = {...data.initialData, ...data.result.other, isPF, order}
-    if(productType) attrs.productType = productType
+    if(type) attrs.type = type
     const params = {
         name: `${isPF ? 'ПФ' : ''} ${name} (${height}х${width}${polishing ? ', Полировка' : ''}${tempered ? ', Закаленное' : ''}${cutsv1 ? `, Вырезы 1 кат.: ${cutsv1}` : ''}${cutsv2 ? `, Вырезы 2 кат.: ${cutsv2}` : ''}${cutsv3 ? `, Вырезы 3 кат.: ${cutsv3}` : ''}${drills ? `, Сверление: ${drills}` : ''}${zenk ? `, Зенкование: ${zenk}` : ''}${print ? ', Печать' : ''}${color ? `, ${color}` : ''}, площадь: ${(height * width / 1000000).toFixed(2)})`,
         attributes: generateProductAttributes(attrs),
@@ -902,7 +900,7 @@ const generateStages = (data, place) => {
             result.push('ОТК')
             return result
         case 'viz': 
-            data.initialData.color && stagesresultViz.push('Окраска стекла')
+            data.initialData.color && result.push('Окраска стекла')
             data.result.other.type == 'Триплекс' && result.push('Триплексование')
             data.initialData.print && result.push('УФ (УФ печать)')
             result.push('ОТК')
@@ -1022,6 +1020,6 @@ setInterval(async () => {
         console.error('getOrdersInWork error:', err)
         logger.error('getOrdersInWork error:', err)
     }
-}, 300_000)
+}, 600_000) //10 минут
 startWorker('pzwebhook', createProductionTask)
 startWorker('changeStatusByDemand', changeStatusForPZ)

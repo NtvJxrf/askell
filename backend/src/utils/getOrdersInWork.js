@@ -28,7 +28,6 @@ async function getLoad() {
     'state.name=Поставлен в производство;' +
     'state.name=Ждёт раскрой;' +
     'state.name=Раскроен;' +
-    'state.name=Закалка;' +
     'https://api.moysklad.ru/api/remap/1.2/entity/productiontask/metadata/attributes/8438849b-5b27-11f0-0a80-01dc002fd402=false;'
   )
   const orders = await fetchAllRows(

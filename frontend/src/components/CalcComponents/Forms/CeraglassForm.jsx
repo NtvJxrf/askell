@@ -18,15 +18,13 @@ const CeraglassForm = () => {
     materialsArray.push('Керамика клиента');
     const ceraglassFields = useMemo(() => {
         return formConfigs.ceraglassForm.commonFields.map(field => {
-        if (field.name === 'material1') return { ...field, options: ceraArray };
-        if (field.name === 'color') return { ...field, options: colorsArray };
-        if (field.name === 'under') return { ...field, options: undersArray };
-        if (field.name === 'material2') return { ...field, options: materialsArray };
-        return field;
+            if (field.name === 'material1') return { ...field, options: ceraArray };
+            if (field.name === 'color') return { ...field, options: colorsArray };
+            if (field.name === 'under') return { ...field, options: undersArray };
+            if (field.name === 'material2') return { ...field, options: materialsArray };
+            return field;
         });
     }, [materialsArray, colorsArray, undersArray, ceraArray]);
-
-
 
     const [additionalMaterials, setAdditionalMaterials] = useState([]);
     const materialCount = useRef(0);

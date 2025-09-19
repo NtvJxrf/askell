@@ -201,6 +201,13 @@ const formConfigs = {
     ceraglassForm: {
       commonFields: [
         {
+          name: 'type',
+          label: 'Изделие',
+          type: 'select',
+          options: ['Стол', 'Дверь', 'Столешница'],
+          rules: [{ required: true, message: 'Fill this field' }]
+        },
+        {
           name: 'material1',
           label: 'Материал 1',
           type: 'select',
@@ -221,6 +228,10 @@ const formConfigs = {
         { name: 'trim', type: 'input', label: '% обрези', description: 'Указывать десятичное число, например 30% обрези = 0.3' },
         { name: 'color', label: 'Цвет', type: 'select' },
         { name: 'under', label: 'Подстолье', type: 'select' },
+        { name: 'doorFrame', label: 'Дверной короб', type: 'select', options: [''] },
+        { name: 'lock', label: 'Дверной замок', type: 'select', options: [] },
+        { name: 'handle', label: 'Дверная ручка', type: 'select', options: [] },
+        { name: 'hinge', label: 'Дверные петли', type: 'select', options: [] },
         { name: 'tempered', label: 'Закаленное', type: 'checkbox', cheched: true },
       ],materialFields: []
     }

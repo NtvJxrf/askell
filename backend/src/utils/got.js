@@ -36,7 +36,7 @@ function getTokenEnv(tokenName) {
 }
 
 export default class Client {
-    static async request(url, type = 'get', args) {
+    static async request(url, type = 'get', args = null) {
         const response = await gotClient[type](url, args);
         if (response.statusCode >= 200 && response.statusCode < 300)
             return JSON.parse(response.body);

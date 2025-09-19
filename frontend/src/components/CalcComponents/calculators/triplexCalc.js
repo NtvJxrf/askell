@@ -324,11 +324,14 @@ export const constructName = (firstWord, data) => {
 export const checkDetail = ({width, height, tempered, material, stanok, result, thickness}) => {
     const largest = Math.max(height, width);
     const lowest = Math.min(height, width);
+    const S = (height * width) / 1000000
     if (tempered) {
         if (largest > 3000 || lowest > 1700)
             throw new Error(`Размер стекла превышает допустимые значения для закалки. Максимум: 3000x1700, получено: ${width}x${height}`);
-        if (largest < 350 || lowest < 200)
-            throw new Error(`Размер стекла для закалки слишком мал. Минимальные допустимые размеры: 350x200, получено: ${width}x${height}`);
+        if (S < 0.07)
+            throw new Error(`Размер стекла для закалки слишком мал. Минимальные допустимые размеры: S > 0.07, получено: ${S}`);
+        if (largest < 350)
+            throw new Error(`Большая сторона слишком мала. Минимальные допустимые размеры: 350, получено: ${largest}`);
         if(material.toLowerCase().includes('зеркало'))
             throw new Error('Зеркало не может быть закаленным')
         if ([8, 10, 12].includes(thickness) && largest > 1500)

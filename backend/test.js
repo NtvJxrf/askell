@@ -2,164 +2,190 @@ import SkladService from './src/services/sklad.service.js'
 import Client from './src/utils/got.js';
 import { broadcast } from './src/utils/WebSocket.js';
 import { google } from "googleapis";
+import { writeFile, readFile } from 'fs/promises'
+import * as XLSX from 'xlsx'
 const getOrdersInWork = async () => {
   const res = await readSheet()
-  console.log(res)
   SkladService.ordersInWork = res
   broadcast({type: 'ordersInWork', data: res})
 }
 async function getLoad() {
-  const tasks = await fetchAllRows('https://api.moysklad.ru/api/remap/1.2/entity/productiontask?' +
-    'filter=state.name=Новое задание;' + 
-    'state.name=Поставлен в производство;' +
-    'state.name=Ждёт раскрой;' +
-    'state.name=Раскроен;' +
-    'state.name=Закалка;' +
-    'https://api.moysklad.ru/api/remap/1.2/entity/productiontask/metadata/attributes/8438849b-5b27-11f0-0a80-01dc002fd402=false;'
-  )
-  const orders = await fetchAllRows(
-    'https://api.moysklad.ru/api/remap/1.2/entity/customerorder?' +
-    'filter=state.name=Подготовить (переделать) чертежи;' +
-    'state.name=Чертежи подготовлены, прикреплены;' +
-    'state.name=Проверить чертежи;' +
-    'state.name=Проверено технологом' +
-    '&expand=positions.assortment'
-  )
-  const productPromises = []
-  const productionStagesPromises = []
-  for (const task of tasks) {
-      productPromises.push(fetchAllRows(`${task.meta.href}/products?expand=assortment`).then(rows => ({
-          task,
-          products: rows
-      })))
-      productionStagesPromises.push(fetchAllRows(`https://api.moysklad.ru/api/remap/1.2/entity/productionstage/?filter=productionTask=${task.meta.href}&expand=stage`).then(rows => ({
-          task,
-          stages: rows
-      })))
-  }
-  const products = await Promise.allSettled(productPromises)
-  const productionStages = await Promise.allSettled(productionStagesPromises)
-  const total = {
-      'Криволинейка': { count: 0, positionsCount: 0, S: 0, P: 0 },
-      'Прямолинейка': { count: 0, positionsCount: 0, S: 0, P: 0 },
-      'Триплекс (Без учета резки стекла)': { count: 0, positionsCount: 0, S: 0, P: 0 },
-      cutsv1: 0,
-      cutsv2: 0,
-      cutsv3: 0,
-  }
-  const result = {}
-  for(const { status, value } of products){
-      const { task, products } = value
-      const attrs = (task.attributes || []).reduce((a, x) => {
-          a[x.name] = x.value;
-          return a;
-      }, {});
-      for (const product of products) {
-          countLoadTasks(product, total, result, attrs['№ заказа покупателя'])
-      }
-  }
-  for (const order of orders){
-      for (const pos of order.positions.rows) 
-          countLoadOrders(pos, total)
-  }
-  for(const { status, value} of productionStages){
-      const { task, stages } = value
-      for(const stage of stages){
-          const name = stage.stage.name
-          if(name != 'Криволинейная обработка' && name != 'Прямолинейная обработка' && name != 'Триплексование') continue
-          const key = stage.productionRow.meta.href;
-          if (!result[key]) {
-              console.warn('Нет данных для ключа', key, 'этап', name);
-              continue;
-          }
-          if(name == 'Криволинейная обработка'){
-              total['Криволинейка'].P -= (result[key].P / result[key].count) * stage.completedQuantity
-              total['Криволинейка'].S -= (result[key].S / result[key].count) * stage.completedQuantity
-          }else if(name == 'Прямолинейная обработка'){
-              total['Прямолинейка'].P -= (result[key].P / result[key].count) * stage.completedQuantity
-              total['Прямолинейка'].S -= (result[key].S / result[key].count) * stage.completedQuantity
-          }else{
-              total['Триплекс (Без учета резки стекла)'].P -= (result[key].P / result[key].count) * stage.completedQuantity
-              total['Триплекс (Без учета резки стекла)'].S -= (result[key].S / result[key].count) * stage.completedQuantity
-          }
-      }
-  }
-  function countLoadTasks(product, total, result, name){
-      const attrs = (product.assortment?.attributes || []).reduce((a, x) => {
-          a[x.name] = x.value;
-          return a;
-      }, {});
-      const stanok = attrs['Тип станка'];
-      if (!stanok){
-          return
-      }
-      const h = Number(attrs['Длина в мм'])
-      const w = Number(attrs['Ширина в мм'])
-      const cutsv1 = Number(attrs['Кол-во вырезов 1 категорий']) || 0;
-      const cutsv2 = Number(attrs['Кол-во вырезов 2 категорий']) || 0;
-      const cutsv3 = Number(attrs['Кол-во вырезов 3 категорий']) || 0;
-      const P = 2 * (h + w) / 1000;          // пог.м
-      const S = h * w / 1_000_000;           // кв.м
-      const Q = product.planQuantity
-      if(attrs['Тип изделия'] == 'Стекло'){
-          total[stanok].P += P * Q + cutsv1 * 1.86 * Q + cutsv2 * 3.5 * Q + cutsv3 * 7 * Q
-          total[stanok].S += S * Q
-          total[stanok].count += Q
-          total[stanok].positionsCount ++
-          total.cutsv1 += cutsv1 * Q
-          total.cutsv2 += cutsv2 * Q
-          total.cutsv3 += cutsv3 * Q
+    // const tasks = await fetchAllRows('https://api.moysklad.ru/api/remap/1.2/entity/productiontask?' +
+    //     'filter=state.name=Новое задание;' + 
+    //     'state.name=Поставлен в производство;' +
+    //     'state.name=Ждёт раскрой;' +
+    //     'state.name=Раскроен;' +
+    //     'state.name=Закалка;' +
+    //     'https://api.moysklad.ru/api/remap/1.2/entity/productiontask/metadata/attributes/8438849b-5b27-11f0-0a80-01dc002fd402=false;'
+    // )
+    const orders = await fetchAllRows(
+        'https://api.moysklad.ru/api/remap/1.2/entity/customerorder?' +
+        'filter=state.name=Подготовить (переделать) чертежи;' +
+        'state.name=Чертежи подготовлены, прикреплены;' +
+        'state.name=Проверить чертежи;' +
+        'state.name=Проверено технологом' +
+        '&expand=positions.assortment'
+    )
+    // const productPromises = []
+    // const productionStagesPromises = []
+    // for (const task of tasks) {
+    //     productPromises.push(fetchAllRows(`${task.meta.href}/products?expand=assortment`).then(rows => ({
+    //         task,
+    //         products: rows
+    //     })))
+    //     productionStagesPromises.push(fetchAllRows(`https://api.moysklad.ru/api/remap/1.2/entity/productionstage/?filter=productionTask=${task.meta.href}&expand=stage`).then(rows => ({
+    //         task,
+    //         stages: rows
+    //     })))
+    // }
+    const products = JSON.parse(await readFile('products.json', 'utf-8'))
+    const productionStages = JSON.parse(await readFile('productionStages.json', 'utf-8'))
+    // const products = await Promise.allSettled(productPromises)
+    // const productionStages = await Promise.allSettled(productionStagesPromises)
+    // await writeFile('products.json', JSON.stringify(products, null, 2), 'utf-8')
+    // await writeFile('productionStages.json', JSON.stringify(productionStages, null, 2), 'utf-8')
+    const total = {
+        'Криволинейка': { count: 0, positionsCount: 0, S: 0, P: 0 },
+        'Прямолинейка': { count: 0, positionsCount: 0, S: 0, P: 0 },
+        'Триплекс (Без учета резки стекла)': { count: 0, positionsCount: 0, S: 0, P: 0 },
+        cutsv1: 0,
+        cutsv2: 0,
+        cutsv3: 0,
+    }
+    const group = {}
+    const result = {}
+    for(const { status, value } of products){
+        const { task, products } = value
+        const attrs = (task.attributes || []).reduce((a, x) => {
+            a[x.name] = x.value;
+            return a;
+        }, {});
+        for (const product of products) {
+            countLoadTasks(product, total, result, attrs['№ заказа покупателя'], task.deliveryPlannedMoment)
+        }
+    }
+    for (const order of orders){
+        for (const pos of order.positions.rows) 
+            countLoadOrders(pos, total)
+    }
+    for(const { status, value} of productionStages){
+        const { task, stages } = value
+        for(const stage of stages){
+            const name = stage.stage.name
+            if(name != 'Криволинейная обработка' && name != 'Прямолинейная обработка' && name != 'Триплексование') continue
+            const key = stage.productionRow.meta.href;
+            if (!result[key]) {
+                console.warn('Нет данных для ключа', key, 'этап', name);
+                continue;
+            }
+            if(name == 'Криволинейная обработка'){
+                total['Криволинейка'].P -= (result[key].P / result[key].count) * stage.completedQuantity
+                total['Криволинейка'].S -= (result[key].S / result[key].count) * stage.completedQuantity
+            }else if(name == 'Прямолинейная обработка'){
+                total['Прямолинейка'].P -= (result[key].P / result[key].count) * stage.completedQuantity
+                total['Прямолинейка'].S -= (result[key].S / result[key].count) * stage.completedQuantity
+            }else{
+                total['Триплекс (Без учета резки стекла)'].P -= (result[key].P / result[key].count) * stage.completedQuantity
+                total['Триплекс (Без учета резки стекла)'].S -= (result[key].S / result[key].count) * stage.completedQuantity
+            }
+        }
+    }
+    function countLoadTasks(product, total, result, name, date){
+        const attrs = (product.assortment?.attributes || []).reduce((a, x) => {
+            a[x.name] = x.value;
+            return a;
+        }, {});
+        const stanok = attrs['Тип станка'];
+        if (!stanok){
+            return
+        }
+        const h = Number(attrs['Длина в мм'])
+        const w = Number(attrs['Ширина в мм'])
+        const cutsv1 = Number(attrs['Кол-во вырезов 1 категорий']) || 0;
+        const cutsv2 = Number(attrs['Кол-во вырезов 2 категорий']) || 0;
+        const cutsv3 = Number(attrs['Кол-во вырезов 3 категорий']) || 0;
+        const material = attrs['Материал 1']
+        const P = 2 * (h + w) / 1000;          // пог.м
+        const S = h * w / 1_000_000;           // кв.м
+        const Q = product.planQuantity
+        if(attrs['Тип изделия'] == 'Стекло'){
+            total[stanok].P += P * Q + cutsv1 * 1.86 * Q + cutsv2 * 3.5 * Q + cutsv3 * 7 * Q
+            total[stanok].S += S * Q
+            total[stanok].count += Q
+            total[stanok].positionsCount ++
+            total.cutsv1 += cutsv1 * Q
+            total.cutsv2 += cutsv2 * Q
+            total.cutsv3 += cutsv3 * Q
+            group[material] ??= []
+            group[material].push({name, Q, S, P, cutsv1, cutsv2, cutsv3, h, w, stanok, date})
+            const key = product.productionRow.meta.href
+            result[key] = result[key] || { P: 0, S: 0, count: 0, cutsv1: 0, cutsv2: 0, cutsv3: 0 };
+            result[key].P += P * Q
+            result[key].S += S * Q
+            result[key].count += Q
+            result[key].cutsv1 += cutsv1 * Q
+            result[key].cutsv2 += cutsv2 * Q
+            result[key].cutsv3 += cutsv3 * Q
+        }
+        if(attrs['Тип изделия'] == 'Триплекс'){
+            total['Триплекс (Без учета резки стекла)'].P += P * Q
+            total['Триплекс (Без учета резки стекла)'].S += S * Q
+            total['Триплекс (Без учета резки стекла)'].count += Q
+            total['Триплекс (Без учета резки стекла)'].positionsCount += 1
 
-          const key = product.productionRow.meta.href
-          result[key] = result[key] || { P: 0, S: 0, count: 0, cutsv1: 0, cutsv2: 0, cutsv3: 0 };
-          result[key].P += P * Q
-          result[key].S += S * Q
-          result[key].count += Q
-          result[key].cutsv1 += cutsv1 * Q
-          result[key].cutsv2 += cutsv2 * Q
-          result[key].cutsv3 += cutsv3 * Q
-      }
-      if(attrs['Тип изделия'] == 'Триплекс'){
-          total['Триплекс (Без учета резки стекла)'].P += P * Q
-          total['Триплекс (Без учета резки стекла)'].S += S * Q
-          total['Триплекс (Без учета резки стекла)'].count += Q
-          total['Триплекс (Без учета резки стекла)'].positionsCount += 1
+            const key = product.productionRow.meta.href;
+            result[key] = result[key] || { P: 0, S: 0, count: 0 };
+            result[key].P += P * Q
+            result[key].S += S * Q
+            result[key].count += Q  
+        }
+    }
+    function countLoadOrders(product, total){
+        const attrs = (product.assortment?.attributes || []).reduce((a, x) => {
+            a[x.name] = x.value;
+            return a;
+        }, {});
+        const stanok = attrs['Тип станка'];
+        if (!stanok) return
+        const h = Number(attrs['Длина в мм']) || 0;
+        const w = Number(attrs['Ширина в мм']) || 0;
+        const pfs = Number(attrs['Кол-во полуфабрикатов']) || 1;
+        const cutsv1 = Number(attrs['Кол-во вырезов 1 категорий']) || 0;
+        const cutsv2 = Number(attrs['Кол-во вырезов 2 категорий']) || 0;
+        const cutsv3 = Number(attrs['Кол-во вырезов 3 категорий']) || 0;
 
-          const key = product.productionRow.meta.href;
-          result[key] = result[key] || { P: 0, S: 0, count: 0 };
-          result[key].P += P * Q
-          result[key].S += S * Q
-          result[key].count += Q  
-      }
-  }
-  function countLoadOrders(product, total){
-      const attrs = (product.assortment?.attributes || []).reduce((a, x) => {
-          a[x.name] = x.value;
-          return a;
-      }, {});
-      const stanok = attrs['Тип станка'];
-      if (!stanok) return
-      const h = Number(attrs['Длина в мм']) || 0;
-      const w = Number(attrs['Ширина в мм']) || 0;
-      const pfs = Number(attrs['Кол-во полуфабрикатов']) || 1;
-      const cutsv1 = Number(attrs['Кол-во вырезов 1 категорий']) || 0;
-      const cutsv2 = Number(attrs['Кол-во вырезов 2 категорий']) || 0;
-      const cutsv3 = Number(attrs['Кол-во вырезов 3 категорий']) || 0;
+        const P = 2 * (h + w) / 1000;          // пог.м
+        const S = h * w / 1_000_000;           // кв.м
+        const cnt = pfs * product.quantity;
+        if(product.assortment.name.toLowerCase().includes('триплекс')){
+            total['Триплекс (Без учета резки стекла)'].P += P * product.quantity
+            total['Триплекс (Без учета резки стекла)'].S += S * product.quantity;
+            total['Триплекс (Без учета резки стекла)'].count += product.quantity
+            total['Триплекс (Без учета резки стекла)'].positionsCount += 1
+        }
+        total[stanok].P += P * cnt + cutsv1 * 1.86 * cnt + cutsv2 * 3.5 * cnt+ cutsv3 * 7 * cnt
+        total[stanok].S += S * cnt;
+        total[stanok].count += cnt;
+    }
+    const wb = XLSX.utils.book_new()
 
-      const P = 2 * (h + w) / 1000;          // пог.м
-      const S = h * w / 1_000_000;           // кв.м
-      const cnt = pfs * product.quantity;
-      if(product.assortment.name.toLowerCase().includes('триплекс')){
-          total['Триплекс (Без учета резки стекла)'].P += P * product.quantity
-          total['Триплекс (Без учета резки стекла)'].S += S * product.quantity;
-          total['Триплекс (Без учета резки стекла)'].count += product.quantity
-          total['Триплекс (Без учета резки стекла)'].positionsCount += 1
-      }
-      total[stanok].P += P * cnt + cutsv1 * 1.86 * cnt + cutsv2 * 3.5 * cnt+ cutsv3 * 7 * cnt
-      total[stanok].S += S * cnt;
-      total[stanok].count += cnt;
-  }
-  return total
+    // добавляем поле material к каждой записи
+    const allRows = Object.entries(group).flatMap(([material, rows]) =>
+        rows.map(r => ({ material, ...r }))
+    )
+
+    // сортируем по материалу
+    allRows.sort((a, b) => a.material.localeCompare(b.material, 'ru'))
+
+    // создаём лист
+    const ws = XLSX.utils.json_to_sheet(allRows)
+
+    // добавляем в книгу
+    XLSX.utils.book_append_sheet(wb, ws, 'Materials')
+
+    // сохраняем
+    XLSX.writeFile(wb, 'materials.xlsx')
+    return total
 }
 function toObjects(values) {
     const [header, ...rows] = values;

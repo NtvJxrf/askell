@@ -57,11 +57,11 @@ const renderItem = (item, index) => {
 const renderDetails = (record) => {
     const { result } = record || {};
     if (!result) return null;
-    const { materials = [], works = [], expenses = [], finalPrice = []} = result;
+    const { materials = [], works = [], finalPrice = [], additions = []} = result;
 
     const totalMaterials = materials.reduce((sum, item) => sum + (item.value || 0), 0)
     const totalWorks = works.reduce((sum, item) => sum + (item.finalValue || 0), 0)
-    const totalExpenses = expenses.reduce((sum, item) => sum + (item.value || 0), 0)
+    const totalAdditions = additions.reduce((sum, item) => sum + (item.value || 0), 0)
 
     return (
         <div style={{ display: 'flex', gap: 32 }}>
@@ -80,6 +80,15 @@ const renderDetails = (record) => {
                 <div style={{ marginTop: 8, fontWeight: 'bold' }}>
                     Итого по работам: {totalWorks.toFixed(2)}
                 </div>
+
+                {additions.length > 0 && 
+                <>
+                    <Title level={4}>Комплектующие</Title>
+                    {additions.map(renderItem)}
+                    <div style={{ marginTop: 8, fontWeight: 'bold' }}>
+                        Итого по комплектующим: {totalAdditions.toFixed(2)}
+                    </div>
+                </>}
 
                 <Divider />
 
@@ -178,7 +187,7 @@ const initialDataLabels = {
     addTape: 'Дополнительная плёнка',
     rounding: 'Округление',
     customertype: 'Тип клиента',
-    trim: 'Коэфицент обрези',
+    trim: 'Коэффицент обрези',
     color: 'Цвет',
     material: 'Материал',
     cuts: `Вырезы`,
@@ -195,6 +204,7 @@ const initialDataLabels = {
     lock: 'Дверной замок',
     doorFrame: 'Дверной короб',
     hinge: 'Дверные ветли',
+    hingeCount: 'Количество петель',
 };
 
 const labelPrefixes = [
@@ -218,6 +228,7 @@ const otherLabels = {
     weight: 'Вес, кг',
     type: 'Тип изделия',
     viz: 'Учавствует виз',
+    package: 'Включена упаковка в картон'
 };
 
 export default React.memo(PositionDetailsModal);

@@ -255,7 +255,7 @@ const triplex = async (data, order, position, createdEntitys) => {
     for(const material of materials){
         const promises = []
         promises.push(makeprocessingprocess(stagesSelk))
-        promises.push(makeProduct(data, material, true, createdEntitys, order, 'Стекло'))
+        promises.push(makeProduct(data, material, createdEntitys, order, 'Стекло'))
         const responses = await Promise.all(promises)
         const processingprocess = responses[0]
         const product = responses[1]
@@ -282,7 +282,7 @@ const triplex = async (data, order, position, createdEntitys) => {
         })
     }
     const planViz = await makeProcessingPlan({data, name: position.assortment.name, order, processingprocess: processingprocessViz,
-        product: position.assortment, isPF: false, materials: materialsViz, createdEntitys})
+        product: position.assortment, isPF: false, materials: materialsViz, createdEntitys, viz: true})
     planViz.quantity = position.quantity
     result.viz.push(planViz)
     return result
@@ -301,14 +301,16 @@ const ceraglass = async (data, order, position, createdEntitys) => {
     const stagesSelk = generateStages(data, 'selk')
     const stagesViz = generateStages(data, 'vizCera')
     const { polishing, drills, zenk, cutsv1, cutsv2, cutsv3, tempered, color, print } = data.initialData
+    const { stanok } = data.result.other
     for(const material of materials){
         if(material.toLowerCase().includes('стекло')){
             for(let i = 0; i < heights.length; i++){
                 const promises = []
                 promises.push(makeprocessingprocess(stagesSelk))
+                const attrs = { height: heights[i], width: widths[i], polishing, drills, zenk, cutsv1, cutsv2, cutsv3, tempered, color, print, ifPF: true, order, material, stanok, type: 'Стекло' }
                 const product = await Client.sklad('https://api.moysklad.ru/api/remap/1.2/entity/product', 'post', {
                     name: `${'ПФ'} ${material} (${heights[i]}х${widths[i]}${polishing ? ', Полировка' : ''}${tempered ? ', Закаленное' : ''}${cutsv1 ? `, Вырезы 1 кат.: ${cutsv1}` : ''}${cutsv2 ? `, Вырезы 2 кат.: ${cutsv2}` : ''}${cutsv3 ? `, Вырезы 3 кат.: ${cutsv3}` : ''}${drills ? `, Сверление: ${drills}` : ''}${zenk ? `, Зенкование: ${zenk}` : ''}${print ? ', Печать' : ''}${color ? `, ${color}` : ''})`,
-                    attributes: generateProductAttributes({...data.initialData, ...data.result.other, height: heights[i], width: widths[i], order, productType: 'Стекло'}),
+                    attributes: generateProductAttributes(attrs),
                     productFolder: {
                         meta: {
                             "href" : "https://api.moysklad.ru/api/remap/1.2/entity/productfolder/7158b3fd-879a-11ef-0a80-0b580038350a",
@@ -332,9 +334,10 @@ const ceraglass = async (data, order, position, createdEntitys) => {
         for(let i = 0; i < heights.length; i++){
             const promises = []
             promises.push(makeprocessingprocess(stagesViz))
+            const attrs = { height: heights[i], width: widths[i], polishing, drills, zenk, cutsv1, cutsv2, cutsv3, tempered, color, print, ifPF: true, order, material, stanok, type: 'Керамика' }
             const product = await Client.sklad('https://api.moysklad.ru/api/remap/1.2/entity/product', 'post', {
                 name: `${'ПФ'} ${material} (${heights[i]}х${widths[i]}${cutsv1 ? `, Вырезы 1 кат.: ${cutsv1}` : ''}${cutsv2 ? `, Вырезы 2 кат.: ${cutsv2}` : ''}${cutsv3 ? `, Вырезы 3 кат.: ${cutsv3}` : ''}${zenk ? `, Зенкование: ${zenk}` : ''}${print ? ', Печать' : ''}${color ? `, ${color}` : ''})`,
-                attributes: generateProductAttributes({...data.initialData, ...data.result.other, height: heights[i], width: widths[i], order, productType: 'Керамика'}),
+                attributes: generateProductAttributes(attrs),
                 productFolder: {
                     meta: {
                         "href" : "https://api.moysklad.ru/api/remap/1.2/entity/productfolder/7158b3fd-879a-11ef-0a80-0b580038350a",
@@ -370,9 +373,15 @@ const ceraglass = async (data, order, position, createdEntitys) => {
         assortment: { meta: SkladService.selfcost.materials['Клей кераглас'].meta},
         quantity: data.result.materials.find(el => el.name == 'Клей кераглас').count
     })
+    data.result.additions.forEach( el => {
+        materialsViz.push({
+            assortment: { meta: SkladService.selfcost.materials[el.name].meta},
+            quantity: el.count
+        })
+    })
     const processingprocessViz = await makeprocessingprocess(['ОТК'])
     const planViz = await makeProcessingPlan({data, name: position.assortment.name, order, processingprocess: processingprocessViz, product: position.assortment,
-        isPF: false, materials: materialsViz, createdEntitys})
+        isPF: false, materials: materialsViz, createdEntitys, viz: true})
     planViz.quantity = position.quantity
     result.viz.push(planViz)
     return result
@@ -397,7 +406,7 @@ const glass = async (data, order, position, createdEntitys) => {
     const isPF = data.result.other.viz
     const processingprocess = await makeprocessingprocess(stagesSelk)
     let product = null
-    if(isPF) product = await makeProduct(data, data.initialData.material, isPF, createdEntitys, order, 'Стекло')
+    if(isPF) product = await makeProduct(data, data.initialData.material, createdEntitys, order, 'Стекло')
     else product = position.assortment
     const plan = await makeProcessingPlan({data, name: position.assortment.name, order, processingprocess, product, isPF, material: data.initialData.material, createdEntitys, mode: 'glass'})
     plan.quantity = position.quantity
@@ -410,7 +419,7 @@ const glass = async (data, order, position, createdEntitys) => {
             quantity: 1
         }]
         const planViz = await makeProcessingPlan({data, name: position.assortment.name, order, processingprocess: processingprocessViz, product: position.assortment,
-             isPF: false, materials, createdEntitys})
+            isPF: false, materials, createdEntitys, viz: true})
         planViz.quantity = position.quantity
         result.viz.push(planViz)
     }
@@ -429,7 +438,7 @@ const smd = async (data, order, position, createdEntitys) => {
             acc[curr.name] = curr.value
             return acc
         }, {})
-        const pzViz = await makeProductionTask(`ВИЗ ПФ`, `ВИЗ СГИ`, productionRows, order, {viz: true, smd: true, print, height: attributes['Длина в мм'], width: attributes['Ширина в мм'], colors: [attributes['Цвет доски']?.name]}, 1, createdEntitys)
+        const pzViz = await makeProductionTask(`ВИЗ ПФ`, `ВИЗ СГИ`, productionRows, order, {viz: true, smd: true, print, height: attributes['Длина в мм'], width: attributes['Ширина в мм'], colors: [attributes['Цвет доски']?.name]}, 1, ``, createdEntitys)
         return
     }
     const result = {
@@ -443,7 +452,7 @@ const smd = async (data, order, position, createdEntitys) => {
     const stagesSelk = generateStages(data, 'selk')
     const promises = []
     promises.push(makeprocessingprocess(stagesSelk))
-    promises.push(makeProduct(data, data.initialData.material, true, createdEntitys, order, 'Стекло'))
+    promises.push(makeProduct(data, data.initialData.material, createdEntitys, order, 'Стекло'))
     const responses = await Promise.all(promises)
     const processingprocess = responses[0]
     const product = responses[1]
@@ -459,14 +468,14 @@ const smd = async (data, order, position, createdEntitys) => {
         "uuidHref" : "https://online.moysklad.ru/app/#processingprocess/edit?id=43072ea8-17cf-11ef-0a80-178100023cbc"
     }
     const planViz = await makeProcessingPlan({data, name: 'Доска стеклянная магнитно-маркерная ASKELL Size', order, processingprocess: processingprocessViz,
-         product: position.assortment, color, materialMeta: product.meta, createdEntitys, mode: 'smd'})
+        product: position.assortment, color, materialMeta: product.meta, createdEntitys, mode: 'smd', viz: true })
     const productionRows = [{
                     processingPlan: {
                         meta: planViz.meta
                     },
                     productionVolume: position.quantity
                 }]
-    const pzViz = await makeProductionTask(`ВИЗ ПФ`, `ВИЗ СГИ`, productionRows, order, {viz: true, smd: true, print, height: data.initialData.height, width: data.initialData.width, colors: [color]}, 1, createdEntitys)
+    const pzViz = await makeProductionTask(`ВИЗ ПФ`, `ВИЗ СГИ`, productionRows, order, {viz: true, smd: true, print, height: data.initialData.height, width: data.initialData.width, colors: [color]}, 1, ``, createdEntitys)
     return result
 }
 const glassPacket = async (data, order, position, createdEntitys) => {
@@ -491,7 +500,7 @@ const glassPacket = async (data, order, position, createdEntitys) => {
         const promises = []
         const stagesRsk = generateStages(material, 'glassPolev')
         promises.push(makeprocessingprocess(stagesRsk))
-        promises.push(makeProduct(data, material[0], true, createdEntitys, order, 'Стекло'))
+        promises.push(makeProduct(data, material[0], createdEntitys, order, 'Стекло'))
         const responses = await Promise.all(promises)
         const processingprocess = responses[0]
         const product = responses[1]
@@ -538,7 +547,6 @@ const packageBox = async (data, order, position, createdEntitys) => {
             quantity: el.count
         }
     })
-    console.log(materials)
     const plan = await makeProcessingPlan({name: position.assortment.name, order, processingprocess, product, materials, createdEntitys, mode: 'package'})
     plan.quantity = position.quantity
     result.selk.push(plan)
@@ -549,7 +557,7 @@ export const createProductionTask = async (id) =>{
     const order = await Client.sklad(`https://api.moysklad.ru/api/remap/1.2/entity/customerorder/${id}?expand=positions.assortment,invoicesOut,agent&limit=100`)
     if(!order)
         throw new ApiError(`Заказ покупателя с ${id} не найден`)
-    const debt = await checkDebt(order)
+    const debt = await checkOrderDetails(order)
     if(debt) return
     const map = {
         'Триплекс': triplex,
@@ -565,6 +573,7 @@ export const createProductionTask = async (id) =>{
     let polevResultGlass = []
     let polevResultSp = []
     const results = []
+    let addComment = ''
     try{
         for(const position of order.positions.rows){
             const data = await Details.findOne({where: {productId: position.assortment.id}})
@@ -572,10 +581,12 @@ export const createProductionTask = async (id) =>{
                 results.push(await map[data.result.other.type](data, order, position, createdEntitys))
                 continue
             }
-            const attrs = (position.assortment?.attributes || []).reduce((a, x) => {
+            const attrs = (position?.assortment?.attributes || []).reduce((a, x) => {
                 a[x.name] = x.value;
                 return a;
             }, {});
+            if(position.assortment.name.toLowerCase().includes('упаковка'))
+                addComment += `${position.assortment.name}\n`
             if(!data && (attrs['Тип СМД'] || attrs['Серия'])){
                 await map['СМД'](null, order, position, createdEntitys)
             }
@@ -604,7 +615,7 @@ export const createProductionTask = async (id) =>{
                 })
                 return acc
             }, [])
-            const pzSelk = await makeProductionTask(`Селькоровская материалы/прочее`, `Селькоровская СГИ`, productionRows, order, {}, nonReserved, createdEntitys)
+            const pzSelk = await makeProductionTask(`Селькоровская материалы/прочее`, `Селькоровская СГИ`, productionRows, order, {}, nonReserved, addComment, createdEntitys)
         }
         if(vizResult.length > 0){
             const productionRows = vizResult.reduce((acc, curr) => {
@@ -613,7 +624,7 @@ export const createProductionTask = async (id) =>{
                     })
                     return acc
                 }, [])
-            const pzViz = await makeProductionTask(`ВИЗ ПФ`, `ВИЗ СГИ`, productionRows, order, {viz: true, smd: false, print, triplex, colors, ceraglass}, 1, createdEntitys)
+            const pzViz = await makeProductionTask(`ВИЗ ПФ`, `ВИЗ СГИ`, productionRows, order, {viz: true, smd: false, print, triplex, colors, ceraglass}, 1, addComment, createdEntitys)
         }
         if(polevResultSp.length > 0){
             const productionRows = polevResultSp.reduce((acc, curr) => {
@@ -622,7 +633,7 @@ export const createProductionTask = async (id) =>{
                     })
                     return acc
                 }, [])
-            const pzPolev = await makeProductionTask(`Полеводство материалы/прочее`, `Полеводство СГИ`, productionRows, order, {}, 1, createdEntitys)
+            const pzPolev = await makeProductionTask(`Полеводство материалы/прочее`, `Полеводство СГИ`, productionRows, order, {}, 1, addComment, createdEntitys)
         }
         if(polevResultGlass.length > 0){
             const productionRows = polevResultGlass.reduce((acc, curr) => {
@@ -631,7 +642,7 @@ export const createProductionTask = async (id) =>{
                     })
                     return acc
                 }, [])
-            const pzPolev = await makeProductionTask(`Полеводство материалы/прочее`, `Полеводство СГИ`, productionRows, order, {}, 1, createdEntitys)
+            const pzPolev = await makeProductionTask(`Полеводство материалы/прочее`, `Полеводство СГИ`, productionRows, order, {}, 1, addComment, createdEntitys)
         }
         console.timeEnd('creatingProudctionTask')
     }catch(error){
@@ -672,7 +683,7 @@ export const createProductionTask = async (id) =>{
     }
     
 }
-const makeProductionTask = async (materialsStore, productsStore, productionRows, order, checkboxes, nonReserved, createdEntitys) => {
+const makeProductionTask = async (materialsStore, productsStore, productionRows, order, checkboxes, nonReserved, addComment, createdEntitys) => {
     const stats = {
         materialsStore: { meta: dictionary.stores[materialsStore]},
         productsStore: { meta: dictionary.stores[productsStore]},
@@ -684,7 +695,7 @@ const makeProductionTask = async (materialsStore, productsStore, productionRows,
         customerOrders: [{
             meta: order.meta
         }],
-        description: order.description,
+        description: (order.description || '') + `\n` + addComment,
         state: { meta: {
             "href" : "https://api.moysklad.ru/api/remap/1.2/entity/productiontask/metadata/states/80ac3d11-6c11-11ef-0a80-0c2300044c17",
             "metadataHref" : "https://api.moysklad.ru/api/remap/1.2/entity/productiontask/metadata",
@@ -700,7 +711,7 @@ const makeProductionTask = async (materialsStore, productsStore, productionRows,
     return task
 }   
 const makeProcessingPlan = async ({ data, name, order, processingprocess, product, isPF = false, materials = null, material = null,
-    color = null, materialMeta = null, folderId = "f699d4ef-7cdb-11f0-0a80-17360009d500", createdEntitys, mode = "default" // "viz", "package", "tempering", "glass", "smd"
+    color = null, materialMeta = null, folderId = "f699d4ef-7cdb-11f0-0a80-17360009d500", createdEntitys, mode = "default", viz, //"package", "tempering", "glass", "smd"
 }) => {
     let finalMaterials = materials
     if (mode === "glass") {
@@ -708,18 +719,18 @@ const makeProcessingPlan = async ({ data, name, order, processingprocess, produc
             assortment: { meta: SkladService.selfcost.materials[material].meta },
             quantity: (data.initialData.width * data.initialData.height) / 1000000 * (data.ceraTrim ? data.ceraTrim : 1.1)
         }]
-        if (data?.result?.other?.package) {
-            const processingProcessPositions = await Client.sklad(`${processingprocess.href}/positions`)
-            finalMaterials.push({
-                processingProcessPosition: { meta: processingProcessPositions.rows.at(-1).meta },
-                assortment: { meta: SkladService.selfcost.packagingMaterials['Гофролист Т21 1050х2000 мм'].meta },
-                quantity: data.result.other.S * 2
-            })
-        }
     }
     if (mode === "smd") {
         finalMaterials = generateSmdMaterials(data, color, materialMeta)
         folderId = "92522e19-80c1-11f0-0a80-09fe001efbca"
+    }
+    if (data?.result?.other?.package && !isPF) {
+        const processingProcessPositions = await Client.sklad(`${processingprocess.href}/positions`)
+        finalMaterials.push({
+            processingProcessPosition: { meta: processingProcessPositions.rows.at(-1).meta },
+            assortment: { meta: SkladService.selfcost.packagingMaterials[viz ? `Гофролист Т22 1050х2500 мм` : 'Гофролист Т21 1050х2000 мм'].meta },
+            quantity: data.result.other.S * 2
+        })
     }
     const response = await Client.sklad( 'https://api.moysklad.ru/api/remap/1.2/entity/processingplan', 'post', {
             name: `${order.name}, ${isPF ? 'ПФ, ' : ''}${name}`,
@@ -742,14 +753,14 @@ const makeProcessingPlan = async ({ data, name, order, processingprocess, produc
     createdEntitys.plan.push(response)
     return response
 }
-const makeProduct = async (data, name, isPF, createdEntitys, order, type) => {
+const makeProduct = async (data, material, createdEntitys, order, type) => {
     const { height, width, polishing, drills, zenk, cutsv1, cutsv2, cutsv3, tempered, color, print } = data.initialData
-    const attrs = {...data.initialData, ...data.result.other, isPF, order}
+    const { stanok } = data.result.other
+    const attrs = { height, width, polishing, drills, zenk, cutsv1, cutsv2, cutsv3, tempered, color, print, ifPF: true, order, material, stanok } 
     if(type) attrs.type = type
     const params = {
-        name: `${isPF ? 'ПФ' : ''} ${name} (${height}х${width}${polishing ? ', Полировка' : ''}${tempered ? ', Закаленное' : ''}${cutsv1 ? `, Вырезы 1 кат.: ${cutsv1}` : ''}${cutsv2 ? `, Вырезы 2 кат.: ${cutsv2}` : ''}${cutsv3 ? `, Вырезы 3 кат.: ${cutsv3}` : ''}${drills ? `, Сверление: ${drills}` : ''}${zenk ? `, Зенкование: ${zenk}` : ''}${print ? ', Печать' : ''}${color ? `, ${color}` : ''}, площадь: ${(height * width / 1000000).toFixed(2)})`,
+        name: `ПФ ${material} (${height}х${width}${polishing ? ', Полировка' : ''}${tempered ? ', Закаленное' : ''}${cutsv1 ? `, Вырезы 1 кат.: ${cutsv1}` : ''}${cutsv2 ? `, Вырезы 2 кат.: ${cutsv2}` : ''}${cutsv3 ? `, Вырезы 3 кат.: ${cutsv3}` : ''}${drills ? `, Сверление: ${drills}` : ''}${zenk ? `, Зенкование: ${zenk}` : ''}${print ? ', Печать' : ''}${color ? `, ${color}` : ''}, площадь: ${(height * width / 1000000).toFixed(2)})`,
         attributes: generateProductAttributes(attrs),
-        weight: Number((data.result.other.weight).toFixed(2)),
         volume: Number((data.result.other.S).toFixed(2)),
         uom: {
             meta: {
@@ -808,35 +819,36 @@ const generateProductAttributes = (data) => {
     data?.order?.name && result.push({ meta: dictionary.productAttributes["№ заказа покупателя"], value: data.order.name })
     for(const attribute in data){
         switch(attribute) {
-            case 'height': result.push({ meta: dictionary.productAttributes["Длина в мм"], value: data.height }); break;
-            case 'width': result.push({ meta: dictionary.productAttributes["Ширина в мм"], value: data.width }); break;
-            case 'cutsv1': result.push({ meta: dictionary.productAttributes["Кол-во вырезов 1 категорий"], value: data.cutsv1 }); break;
-            case 'cutsv2': result.push({ meta: dictionary.productAttributes["Кол-во вырезов 2 категорий"], value: data.cutsv2 }); break;
-            case 'cutsv3': result.push({ meta: dictionary.productAttributes["Кол-во вырезов 3 категорий"], value: data.cutsv3 }); break;
-            case 'drills': result.push({ meta: dictionary.productAttributes["Кол-во сверлений"], value: data.drills }); break;
-            case 'zenk': result.push({ meta: dictionary.productAttributes["Кол-во зенкований"], value: data.zenk }); break;
-            case 'material': result.push({ meta: dictionary.productAttributes["Материал 1"], value: data.material }); break;
-            case 'materials': result.push({ meta: dictionary.productAttributes["Кол-во полуфабрикатов"], value: data.materials.length }); break;
-            case 'material1': result.push({ meta: dictionary.productAttributes["Материал 1"], value: data.material1 }); break;
-            case 'material2': result.push({ meta: dictionary.productAttributes["Материал 2"], value: data.material2 }); break;
-            case 'material3': result.push({ meta: dictionary.productAttributes["Материал 3"], value: data.material3 }); break;
-            case 'material4': result.push({ meta: dictionary.productAttributes["Материал 4"], value: data.material4 }); break;
-            case 'tape1': result.push({ meta: dictionary.productAttributes["Пленка 1"], value: {meta: SkladService.selfcost.materials[data.tape1].meta} }); break;
-            case 'tape2': result.push({ meta: dictionary.productAttributes["Пленка 1"], value: {meta: SkladService.selfcost.materials[data.tape2].meta} }); break;
-            case 'tape3': result.push({ meta: dictionary.productAttributes["Пленка 1"], value: {meta: SkladService.selfcost.materials[data.tape3].meta} }); break;
-            case 'color': result.push({ meta: dictionary.productAttributes["Окрашивание"], value: data.color || '' }); break;
-            case 'print': result.push({ meta: dictionary.productAttributes["Печать"], value: true }); break;
-            case 'polishing': result.push({ meta: dictionary.productAttributes["Полировка"], value: true }); break;
-            case 'type': result.push({ meta: dictionary.productAttributes["Тип изделия"], value: data.type }); break;
-            case 'stanok': result.push({ meta: dictionary.productAttributes["Тип станка"], value: data.stanok }); break;
+            case 'height': data.height!=null && result.push({ meta: dictionary.productAttributes["Длина в мм"], value: data.height }); break;
+            case 'width': data.width!=null && result.push({ meta: dictionary.productAttributes["Ширина в мм"], value: data.width }); break;
+            case 'cutsv1': data.cutsv1!=null && result.push({ meta: dictionary.productAttributes["Кол-во вырезов 1 категорий"], value: data.cutsv1 }); break;
+            case 'cutsv2': data.cutsv2!=null && result.push({ meta: dictionary.productAttributes["Кол-во вырезов 2 категорий"], value: data.cutsv2 }); break;
+            case 'cutsv3': data.cutsv3!=null && result.push({ meta: dictionary.productAttributes["Кол-во вырезов 3 категорий"], value: data.cutsv3 }); break;
+            case 'drills': data.drills!=null && result.push({ meta: dictionary.productAttributes["Кол-во сверлений"], value: data.drills }); break;
+            case 'zenk': data.zenk!=null && result.push({ meta: dictionary.productAttributes["Кол-во зенкований"], value: data.zenk }); break;
+            case 'material': data.material!=null && result.push({ meta: dictionary.productAttributes["Материал 1"], value: data.material }); break;
+            case 'materials': data.materials?.length!=null && result.push({ meta: dictionary.productAttributes["Кол-во полуфабрикатов"], value: data.materials.length }); break;
+            case 'material1': data.material1!=null && result.push({ meta: dictionary.productAttributes["Материал 1"], value: data.material1 }); break;
+            case 'material2': data.material2!=null && result.push({ meta: dictionary.productAttributes["Материал 2"], value: data.material2 }); break;
+            case 'material3': data.material3!=null && result.push({ meta: dictionary.productAttributes["Материал 3"], value: data.material3 }); break;
+            case 'material4': data.material4!=null && result.push({ meta: dictionary.productAttributes["Материал 4"], value: data.material4 }); break;
+            case 'tape1': data.tape1!=null && result.push({ meta: dictionary.productAttributes["Пленка 1"], value: {meta: SkladService.selfcost.materials[data.tape1].meta} }); break;
+            case 'tape2': data.tape2!=null && result.push({ meta: dictionary.productAttributes["Пленка 1"], value: {meta: SkladService.selfcost.materials[data.tape2].meta} }); break;
+            case 'tape3': data.tape3!=null && result.push({ meta: dictionary.productAttributes["Пленка 1"], value: {meta: SkladService.selfcost.materials[data.tape3].meta} }); break;
+            case 'color': data.color!=null && result.push({ meta: dictionary.productAttributes["Окрашивание"], value: data.color || '' }); break;
+            case 'print': data.print === true && result.push({ meta: dictionary.productAttributes["Печать"], value: true }); break;
+            case 'polishing': data.polishing === true && result.push({ meta: dictionary.productAttributes["Полировка"], value: true }); break;
+            case 'type': data.type!=null && result.push({ meta: dictionary.productAttributes["Тип изделия"], value: data.type }); break;
+            case 'stanok': data.stanok!=null && result.push({ meta: dictionary.productAttributes["Тип станка"], value: data.stanok }); break;
             case 'productType': result.push({ meta: dictionary.productAttributes["Вид номенклатуры"], value: dictionary.attributesValue["Готовая продукция"] }); break;
-            case 'tempered': result.push({ meta: dictionary.productAttributes["Закалка"], value: true }); break;
-            case 'smdType': result.push({ meta: dictionary.productAttributes["Тип СМД"], value: data.smdType }); break;
-            case 'isPF': result.push({ meta: dictionary.productAttributes["Это полуфабрикат"], value: true }); break;
-            case 'P': result.push({ meta: dictionary.productAttributes["Периметр 1 детали в пог. м"], value: data.P }); break;
+            case 'tempered': data.tempered === true && result.push({ meta: dictionary.productAttributes["Закалка"], value: true }); break;
+            case 'smdType': data.smdType!=null && result.push({ meta: dictionary.productAttributes["Тип СМД"], value: data.smdType }); break;
+            case 'isPF': data.isPF === true && result.push({ meta: dictionary.productAttributes["Это полуфабрикат"], value: true }); break;
+            case 'P': data.P!=null && result.push({ meta: dictionary.productAttributes["Периметр 1 детали в пог. м"], value: data.P }); break;
         }
+
     }
-    return result
+    return result.filter(el => el.value != undefined)
 }
 const generateProductionTaskAttributes = (order, checkboxes) => {
     const result = []
@@ -951,8 +963,8 @@ const generateStages = (data, place) => {
     }
 }
 const changeStatusForPZ = async (id) => {
-    const demand = await Client.sklad(`https://api.moysklad.ru/api/remap/1.2/entity/demand/${id}?expand=invoicesOut.customerOrder.productionTasks,customerOrder.productionTasks&limit=100`)
-    const tasks = demand?.invoicesOut[0]?.customerOrder?.productionTasks || demand?.customerOrder?.productionTasks
+    const order = await Client.sklad(`https://api.moysklad.ru/api/remap/1.2/entity/customerorder/${id}`)
+    const tasks = order?.productionTasks
     if(!tasks) return
     Client.sklad('https://api.moysklad.ru/api/remap/1.2/entity/productiontask', 'post', tasks.map(el => {
         return {
@@ -966,11 +978,8 @@ const changeStatusForPZ = async (id) => {
         }
     }))
 }
-const checkDebt = async order => {
-    const counterpartyReport = await Client.sklad(`https://api.moysklad.ru/api/remap/1.2/report/counterparty/${order.agent.id}`)
-    const debt = counterpartyReport.balance < -1000
-    const attrValue = order.attributes.find(el => el.name === '% обрези из калькулятора')?.value?.toLowerCase()
-    if(debt && attrValue !== 'всевышний, создай пз пожожда'){
+const checkOrderDetails = async order => {
+    const anyIssue = async (message) => {
         const task = await Client.sklad('https://api.moysklad.ru/api/remap/1.2/entity/task', 'post', {
             assignee: {
                 meta: order.owner.meta,
@@ -978,7 +987,7 @@ const checkDebt = async order => {
             operation: {
                 meta: order.meta
             },
-            description: `У контрагента есть долг, создание пз не было выполнено`
+            description: message
         })
         await Client.sklad(`https://api.moysklad.ru/api/remap/1.2/entity/customerorder/${order.id}`, 'put', {
             state: { meta: {
@@ -988,6 +997,16 @@ const checkDebt = async order => {
                 "mediaType" : "application/json"
             }}
         })
+    }
+    if(!order.deliveryPlannedMoment){
+        await anyIssue('Не указана планируемая дата отгрузки, создание пз не было выполнено')
+        return true
+    }
+    const counterpartyReport = await Client.sklad(`https://api.moysklad.ru/api/remap/1.2/report/counterparty/${order.agent.id}`)
+    const debt = counterpartyReport.balance < -1000
+    const attrValue = order.attributes.find(el => el.name === '% обрези из калькулятора')?.value?.toLowerCase()
+    if(debt && attrValue !== 'всевышний, создай пз пожожда'){
+        await anyIssue('У контрагента есть долг, создание пз не было выполнено')
         return true
     }
     return false

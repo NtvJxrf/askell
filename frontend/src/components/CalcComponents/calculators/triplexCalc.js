@@ -99,6 +99,7 @@ const Calculate = (data, selfcost) => {
         }
 
     }
+    let pack = 0
     for(const material of materials){
         const thickness = Number(material.match(/(\d+(?:[.,]\d+)?)\s*мм/i)[1])
         const currentWeight = 2.5 * ((height * width) / 1000000) * thickness
@@ -108,7 +109,7 @@ const Calculate = (data, selfcost) => {
         shortThickness.push(thickness)
         allThickness += thickness
         allWeights.push(2.5 * ((height * width) / 1000000) * thickness)
-        
+        !material.includes('М1') && (pack = S_calc * 2 * 100 + S_calc * 100)
         tempered && constructWorks('tempered', S_calc, { thickness, result, selfcost})
         result.materials.push({
             name: material,
@@ -162,10 +163,10 @@ const Calculate = (data, selfcost) => {
     }
 
     const gostPrice = 0
-    const retailPrice = calcmaterialsandworks * selfcost.pricesAndCoefs[`Триплекс Розница`].value
-    const bulkPrice = calcmaterialsandworks * selfcost.pricesAndCoefs[`Триплекс Опт`].value
-    const dealerPrice = calcmaterialsandworks * selfcost.pricesAndCoefs[`Триплекс Дилер`].value
-    const vipPrice = calcmaterialsandworks * selfcost.pricesAndCoefs[`Триплекс ВИП`].value
+    const retailPrice = calcmaterialsandworks * selfcost.pricesAndCoefs[`Триплекс Розница`].value + pack
+    const bulkPrice = calcmaterialsandworks * selfcost.pricesAndCoefs[`Триплекс Опт`].value + pack
+    const dealerPrice = calcmaterialsandworks * selfcost.pricesAndCoefs[`Триплекс Дилер`].value + pack
+    const vipPrice = calcmaterialsandworks * selfcost.pricesAndCoefs[`Триплекс ВИП`].value + pack
     result.finalPrice = [{
         name: 'Себестоимость',
         value: materialsandworks,
@@ -179,29 +180,35 @@ const Calculate = (data, selfcost) => {
     },{
         name: 'Цена для Выше госта',
         value: gostPrice,
-        string: `${calcmaterialsandworks.toFixed(2)} * ${selfcost.pricesAndCoefs[`Триплекс Выше госта`]?.value}`,
-        formula: `Себестоимость калькулятора * Наценка для типа клиента "Выше госта"`
+        string: `${calcmaterialsandworks.toFixed(2)} * ${selfcost.pricesAndCoefs[`Триплекс Выше госта`]?.value} + ${pack}`,
+        formula: `Себестоимость калькулятора * Наценка для типа клиента "Выше госта" + Упаковка`
     },{
         name: 'Цена для Розница',
         value: retailPrice,
-        string: `${calcmaterialsandworks.toFixed(2)} * ${selfcost.pricesAndCoefs[`Триплекс Розница`].value}`,
-        formula: `Себестоимость калькулятора * Наценка для типа клиента "Розница"`
+        string: `${calcmaterialsandworks.toFixed(2)} * ${selfcost.pricesAndCoefs[`Триплекс Розница`].value} + ${pack}`,
+        formula: `Себестоимость калькулятора * Наценка для типа клиента "Розница" + Упаковка`
     },{
         name: 'Цена для Опт',
         value: bulkPrice,
-        string: `${calcmaterialsandworks.toFixed(2)} * ${selfcost.pricesAndCoefs[`Триплекс Опт`].value}`,
-        formula: `Себестоимость калькулятора * Наценка для типа клиента "Опт"`
+        string: `${calcmaterialsandworks.toFixed(2)} * ${selfcost.pricesAndCoefs[`Триплекс Опт`].value} + ${pack}`,
+        formula: `Себестоимость калькулятора * Наценка для типа клиента "Опт" + Упаковка`
     },{
         name: 'Цена для Дилер',
         value: dealerPrice,
-        string: `${calcmaterialsandworks.toFixed(2)} * ${selfcost.pricesAndCoefs[`Триплекс Дилер`].value}`,
-        formula: `Себестоимость калькулятора * Наценка для типа клиента "Дилер"`
+        string: `${calcmaterialsandworks.toFixed(2)} * ${selfcost.pricesAndCoefs[`Триплекс Дилер`].value} + ${pack}`,
+        formula: `Себестоимость калькулятора * Наценка для типа клиента "Дилер" + Упаковка`
     },{
         name: 'Цена для ВИП',
         value: vipPrice,
-        string: `${calcmaterialsandworks.toFixed(2)} * ${selfcost.pricesAndCoefs[`Триплекс ВИП`].value}`,
-        formula: `Себестоимость калькулятора * Наценка для типа клиента "ВИП"`
+        string: `${calcmaterialsandworks.toFixed(2)} * ${selfcost.pricesAndCoefs[`Триплекс ВИП`].value} + ${pack}`,
+        formula: `Себестоимость калькулятора * Наценка для типа клиента "ВИП" + Упаковка`
     }]
+    pack && result.finalPrice.push({
+        name: 'Упаковка',
+        value: pack,
+        string: `${pack.toFixed(2)}`,
+        formula: `S * 2 * 100 + S * 100`
+    })
     result.other = {
         materialsandworks,
         calcmaterialsandworks,
@@ -219,7 +226,8 @@ const Calculate = (data, selfcost) => {
         spName: materials.reduce((acc, curr) => {
             acc.push(shortenGlassName(curr))
             return acc
-        }, []).join('.') + '.1'
+        }, []).join('.') + '.1',
+        package: pack
     }
     console.log(result)
     return {

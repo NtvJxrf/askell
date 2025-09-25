@@ -14,6 +14,7 @@ import NotFoundPage from "../pages/NotFoundPage.jsx";
 import ActivatePage from "../pages/ActivatePage.jsx";
 import ReportsPage from '../pages/ReportsPage.jsx'
 import ProductionPage from "../pages/ProductionPage.jsx";
+import Manual from "../pages/Manual.jsx";
 import WebSocketHandler from "../ws.jsx";
 const MainLayout = () => {
     const dispatch = useDispatch();
@@ -40,6 +41,7 @@ const MainLayout = () => {
                 <Route path="/settings" element={<Settings />} />
                 <Route path="/activate" element={<ActivatePage />} />
                 <Route path="/reports" element={<ReportsPage />} />
+                <Route path="/manual" element={<Manual />} />
                 {/* fallback */}
                 <Route path="*" element={<NotFoundPage />} />
             </Routes>

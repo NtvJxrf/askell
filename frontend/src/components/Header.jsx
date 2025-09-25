@@ -11,6 +11,7 @@ const items = [
     { label: <Link to="/settings">Настройки</Link>, key: '/settings' },
     { label: <Link to="/admin">Админ</Link>, key: '/admin' },
     { label: <Link to="/reports">Отчеты</Link>, key: '/reports' },
+    // { label: <Link to="/manual">Инструкция</Link>, key: '/manual' },
 ];
 const HeaderComponent = () => {
     const location = useLocation();

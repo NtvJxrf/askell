@@ -91,12 +91,12 @@ const formConfigs = {
         { name: 'shape', label: 'Прямоугольная форма', type: 'checkbox', cheched: true },
         { name: 'tempered', label: 'Закаленное', type: 'checkbox', cheched: true },
         { name: 'polishing', label: 'Полировка', type: 'checkbox' },
-        {
-          name: 'addTape',
-          label: 'Доп пленка',
-          type: 'select',
-          options: ['Пленка EVA Прозрачная 0,38 мм', 'Пленка EVA Прозрачная 0,76 мм'],
-        },
+        // {
+        //   name: 'addTape',
+        //   label: 'Доп пленка',
+        //   type: 'select',
+        //   options: ['Пленка EVA Прозрачная 0,38 мм', 'Пленка EVA Прозрачная 0,76 мм'],
+        // },
         {
           name: 'rounding',
           label: 'Округление',
@@ -231,6 +231,7 @@ const formConfigs = {
         { name: 'doorFrame', label: 'Дверной короб', type: 'select', options: [''] },
         { name: 'lock', label: 'Дверной замок', type: 'select', options: [] },
         { name: 'hinge', label: 'Дверные петли', type: 'select', options: [] },
+        { name: 'hingeCount', type: 'inputp0', label: 'Количество петель' },
         { name: 'tempered', label: 'Закаленное', type: 'checkbox', cheched: true },
       ],materialFields: []
     }

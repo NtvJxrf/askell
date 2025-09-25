@@ -3,100 +3,100 @@ import Client from './got.js';
 import { broadcast } from "./WebSocket.js"
 import { google } from "googleapis";
 const getOrdersInWork = async () => {
-  if(process.env.NODE_ENV == 'development') {
-    const res = {
-      'Криволинейка': { count: 5, positionsCount: 5, S: 5, P: 5 },
-      'Прямолинейка': { count: 5, positionsCount: 5, S: 5, P: 5 },
-      'Триплекс (Без учета резки стекла)': { count: 5, positionsCount: 5, S: 5, P: 5 },
-      cutsv1: 5,
-      cutsv2: 5,
-      cutsv3: 5,
-      curvedResult: 5,
-      straightResult: 5,
-      triplexResult: 5
+    if(process.env.NODE_ENV == 'development') {
+        const res = {
+            'Криволинейка': { count: 5, positionsCount: 5, S: 5, P: 5 },
+            'Прямолинейка': { count: 5, positionsCount: 5, S: 5, P: 5 },
+            'Триплекс (Без учета резки стекла)': { count: 5, positionsCount: 5, S: 5, P: 5 },
+            cutsv1: 5,
+            cutsv2: 5,
+            cutsv3: 5,
+            curvedResult: 5,
+            straightResult: 5,
+            triplexResult: 5
+        }
+        SkladService.ordersInWork = res
+        return
     }
+    const res = await readSheet()
     SkladService.ordersInWork = res
-    return
-  }
-  const res = await readSheet()
-  SkladService.ordersInWork = res
-  broadcast({type: 'ordersInWork', data: res})
+    broadcast({type: 'ordersInWork', data: res})
 }
 async function getLoad() {
-  const tasks = await fetchAllRows('https://api.moysklad.ru/api/remap/1.2/entity/productiontask?' +
-    'filter=state.name=Новое задание;' + 
-    'state.name=Поставлен в производство;' +
-    'state.name=Ждёт раскрой;' +
-    'state.name=Раскроен;' +
-    'https://api.moysklad.ru/api/remap/1.2/entity/productiontask/metadata/attributes/8438849b-5b27-11f0-0a80-01dc002fd402=false;'
-  )
-  const orders = await fetchAllRows(
-    'https://api.moysklad.ru/api/remap/1.2/entity/customerorder?' +
-    'filter=state.name=Подготовить (переделать) чертежи;' +
-    'state.name=Чертежи подготовлены, прикреплены;' +
-    'state.name=Проверить чертежи;' +
-    'state.name=Проверено технологом' +
-    '&expand=positions.assortment'
-  )
-  const productPromises = []
-  const productionStagesPromises = []
-  for (const task of tasks) {
-      productPromises.push(fetchAllRows(`${task.meta.href}/products?expand=assortment`).then(rows => ({
-          task,
-          products: rows
-      })))
-      productionStagesPromises.push(fetchAllRows(`https://api.moysklad.ru/api/remap/1.2/entity/productionstage/?filter=productionTask=${task.meta.href}&expand=stage`).then(rows => ({
-          task,
-          stages: rows
-      })))
-  }
-  const products = await Promise.allSettled(productPromises)
-  const productionStages = await Promise.allSettled(productionStagesPromises)
-  const total = {
-      'Криволинейка': { count: 0, positionsCount: 0, S: 0, P: 0 },
-      'Прямолинейка': { count: 0, positionsCount: 0, S: 0, P: 0 },
-      'Триплекс (Без учета резки стекла)': { count: 0, positionsCount: 0, S: 0, P: 0 },
-      cutsv1: 0,
-      cutsv2: 0,
-      cutsv3: 0,
-  }
-  const result = {}
-  for(const { status, value } of products){
-      const { task, products } = value
-      const attrs = (task.attributes || []).reduce((a, x) => {
-          a[x.name] = x.value;
-          return a;
-      }, {});
-      for (const product of products) {
-          countLoadTasks(product, total, result, attrs['№ заказа покупателя'])
-      }
-  }
-  for (const order of orders){
-      for (const pos of order.positions.rows) 
-          countLoadOrders(pos, total)
-  }
-  for(const { status, value} of productionStages){
-      const { task, stages } = value
-      for(const stage of stages){
-          const name = stage.stage.name
-          if(name != 'Криволинейная обработка' && name != 'Прямолинейная обработка' && name != 'Триплексование') continue
-          const key = stage.productionRow.meta.href;
-          if (!result[key]) {
-              console.warn('Нет данных для ключа', key, 'этап', name);
-              continue;
-          }
-          if(name == 'Криволинейная обработка'){
-              total['Криволинейка'].P -= (result[key].P / result[key].count) * stage.completedQuantity
-              total['Криволинейка'].S -= (result[key].S / result[key].count) * stage.completedQuantity
-          }else if(name == 'Прямолинейная обработка'){
-              total['Прямолинейка'].P -= (result[key].P / result[key].count) * stage.completedQuantity
-              total['Прямолинейка'].S -= (result[key].S / result[key].count) * stage.completedQuantity
-          }else{
-              total['Триплекс (Без учета резки стекла)'].P -= (result[key].P / result[key].count) * stage.completedQuantity
-              total['Триплекс (Без учета резки стекла)'].S -= (result[key].S / result[key].count) * stage.completedQuantity
-          }
-      }
-  }
+    const tasks = await fetchAllRows('https://api.moysklad.ru/api/remap/1.2/entity/productiontask?' +
+        'filter=state.name=Новое задание;' + 
+        'state.name=Поставлен в производство;' +
+        'state.name=Ждёт раскрой;' +
+        'state.name=Раскроен;' +
+        'https://api.moysklad.ru/api/remap/1.2/entity/productiontask/metadata/attributes/8438849b-5b27-11f0-0a80-01dc002fd402=false;'
+    )
+    const orders = await fetchAllRows(
+        'https://api.moysklad.ru/api/remap/1.2/entity/customerorder?' +
+        'filter=state.name=Подготовить (переделать) чертежи;' +
+        'state.name=Чертежи подготовлены, прикреплены;' +
+        'state.name=Проверить чертежи;' +
+        'state.name=Проверено технологом' +
+        '&expand=positions.assortment'
+    )
+    const productPromises = []
+    const productionStagesPromises = []
+    for (const task of tasks) {
+        productPromises.push(fetchAllRows(`${task.meta.href}/products?expand=assortment`).then(rows => ({
+            task,
+            products: rows
+        })))
+        productionStagesPromises.push(fetchAllRows(`https://api.moysklad.ru/api/remap/1.2/entity/productionstage/?filter=productionTask=${task.meta.href}&expand=stage`).then(rows => ({
+            task,
+            stages: rows
+        })))
+    }
+    const products = await Promise.allSettled(productPromises)
+    const productionStages = await Promise.allSettled(productionStagesPromises)
+    const total = {
+        'Криволинейка': { count: 0, positionsCount: 0, S: 0, P: 0 },
+        'Прямолинейка': { count: 0, positionsCount: 0, S: 0, P: 0 },
+        'Триплекс (Без учета резки стекла)': { count: 0, positionsCount: 0, S: 0, P: 0 },
+        cutsv1: 0,
+        cutsv2: 0,
+        cutsv3: 0,
+    }
+    const result = {}
+    for(const { status, value } of products){
+        const { task, products } = value
+        const attrs = (task.attributes || []).reduce((a, x) => {
+            a[x.name] = x.value;
+            return a;
+        }, {});
+        for (const product of products) {
+            countLoadTasks(product, total, result, attrs['№ заказа покупателя'])
+        }
+    }
+    for (const order of orders){
+        for (const pos of order.positions.rows) 
+            countLoadOrders(pos, total)
+    }
+    for(const { status, value} of productionStages){
+        const { task, stages } = value
+        for(const stage of stages){
+            const name = stage.stage.name
+            if(name != 'Криволинейная обработка' && name != 'Прямолинейная обработка' && name != 'Триплексование') continue
+            const key = stage.productionRow.meta.href;
+            if (!result[key]) {
+                console.warn('Нет данных для ключа', key, 'этап', name);
+                continue;
+            }
+            if(name == 'Криволинейная обработка'){
+                total['Криволинейка'].P -= (result[key].P / result[key].count) * stage.completedQuantity
+                total['Криволинейка'].S -= (result[key].S / result[key].count) * stage.completedQuantity
+            }else if(name == 'Прямолинейная обработка'){
+                total['Прямолинейка'].P -= (result[key].P / result[key].count) * stage.completedQuantity
+                total['Прямолинейка'].S -= (result[key].S / result[key].count) * stage.completedQuantity
+            }else{
+                total['Триплекс (Без учета резки стекла)'].P -= (result[key].P / result[key].count) * stage.completedQuantity
+                total['Триплекс (Без учета резки стекла)'].S -= (result[key].S / result[key].count) * stage.completedQuantity
+            }
+        }
+    }
   function countLoadTasks(product, total, result, name){
     const attrs = (product.assortment?.attributes || []).reduce((a, x) => {
         a[x.name] = x.value;

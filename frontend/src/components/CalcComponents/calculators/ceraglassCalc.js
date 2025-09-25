@@ -2,7 +2,7 @@ import { constructWorks, constructName, checkDetail } from './triplexCalc.js'
 const Calculate = (data, selfcost) => {
     console.log(data)
     console.log(selfcost)
-    const { height, width, cutsv1, cutsv2, cutsv3, material1, material2, blank, color, under, quantity = 1, trim, tempered, type, doorFrame, hinge, lock} = data
+    const { height, width, cutsv1, cutsv2, cutsv3, material1, material2, blank, color, under, quantity = 1, trim, tempered, type, doorFrame, hinge, lock, hingeCount = 1} = data
     const heightsRaw = Object.entries(data).filter(([key]) => /^height\d+$/.test(key)).map(([_, value]) => value);
     const heights = heightsRaw.length > 0 ? heightsRaw : [height];
     const widthsRaw = Object.entries(data).filter(([key]) => /^width\d+$/.test(key)).map(([_, value]) => value)
@@ -17,7 +17,8 @@ const Calculate = (data, selfcost) => {
         expenses: [],
         other: {},
         errors: [],
-        warnings: []
+        warnings: [],
+        additions: []
     }
     let ceraTrim = 0
     let weight = 0
@@ -36,24 +37,27 @@ const Calculate = (data, selfcost) => {
         formula: 'Цена * Большее из 0.17 * S или 0.5'
     });
     if(doorFrame)
-        result.materials.push({
+        result.additions.push({
             name: doorFrame,
-            value: selfcost.materials[doorFrame].value,
-            string: `${selfcost.materials[doorFrame].value}`,
+            value: selfcost.materials[doorFrame].calcValue,
+            count: 1,
+            string: `${selfcost.materials[doorFrame].calcValue}`,
             formula: 'Цена'
         });
     if(hinge)
-        result.materials.push({
+        result.additions.push({
             name: hinge,
-            value: selfcost.materials[hinge].value,
-            string: `${selfcost.materials[hinge].value}`,
-            formula: 'Цена'
+            value: selfcost.materials[hinge].calcValue * hingeCount,
+            count: hingeCount,
+            string: `${selfcost.materials[hinge].calcValue} * ${hingeCount}}`,
+            formula: 'Цена * Количество'
         });
     if(lock)
-        result.materials.push({
+        result.additions.push({
             name: lock,
-            value: selfcost.materials[lock].value,
-            string: `${selfcost.materials[lock].value}`,
+            value: selfcost.materials[lock].calcValue,
+            count: 1,
+            string: `${selfcost.materials[lock].calcValue}`,
             formula: 'Цена'
         });
     if(blank){
@@ -145,12 +149,12 @@ const Calculate = (data, selfcost) => {
         calcmaterialsandworks += item.finalValue
     }
     const underPrice = under && selfcost.unders[under].value || 0
-
+    const additions = result.additions.reduce((acc, curr) => acc += curr.value, 0)
     const gostPrice = 0
-    const retailPrice = calcmaterialsandworks * selfcost.pricesAndCoefs[`Керагласс Розница`].value + underPrice
-    const bulkPrice = calcmaterialsandworks * selfcost.pricesAndCoefs[`Керагласс Опт`].value + underPrice
-    const dealerPrice = calcmaterialsandworks * selfcost.pricesAndCoefs[`Керагласс Дилер`].value + underPrice
-    const vipPrice = calcmaterialsandworks * selfcost.pricesAndCoefs[`Керагласс ВИП`].value + underPrice
+    const retailPrice = calcmaterialsandworks * selfcost.pricesAndCoefs[`Керагласс Розница`].value + underPrice + additions
+    const bulkPrice = calcmaterialsandworks * selfcost.pricesAndCoefs[`Керагласс Опт`].value + underPrice + additions
+    const dealerPrice = calcmaterialsandworks * selfcost.pricesAndCoefs[`Керагласс Дилер`].value + underPrice + additions
+    const vipPrice = calcmaterialsandworks * selfcost.pricesAndCoefs[`Керагласс ВИП`].value + underPrice + additions
     result.finalPrice = [{
         name: 'Настоящая себестоимость',
         value: materialsandworks,
@@ -164,28 +168,28 @@ const Calculate = (data, selfcost) => {
     },{
         name: 'Цена для Выше госта',
         value: gostPrice,
-        string: `${calcmaterialsandworks.toFixed(2)} * ${selfcost.pricesAndCoefs[`Керагласс Выше госта`]?.value} + ${underPrice}`,
-        formula: `Себестоимость калькулятора * Наценка для типа клиента "Выше госта" + Подстолье`
+        string: `${calcmaterialsandworks.toFixed(2)} * ${selfcost.pricesAndCoefs[`Керагласс Выше госта`]?.value} + ${underPrice} + ${additions}`,
+        formula: `Себестоимость калькулятора * Наценка для типа клиента "Выше госта" + Подстолье + Комплектующие`
     },{
         name: 'Цена для Розница',
         value: retailPrice,
-        string: `${calcmaterialsandworks.toFixed(2)} * ${selfcost.pricesAndCoefs[`Керагласс Розница`].value} + ${underPrice}`,
-        formula: `Себестоимость калькулятора * Наценка для типа клиента "Розница" + Подстолье`
+        string: `${calcmaterialsandworks.toFixed(2)} * ${selfcost.pricesAndCoefs[`Керагласс Розница`].value} + ${underPrice} + ${additions}`,
+        formula: `Себестоимость калькулятора * Наценка для типа клиента "Розница" + Подстолье + Комплектующие`
     },{
         name: 'Цена для Опт',
         value: bulkPrice,
-        string: `${calcmaterialsandworks.toFixed(2)} * ${selfcost.pricesAndCoefs[`Керагласс Опт`].value} + ${underPrice}`,
-        formula: `Себестоимость калькулятора * Наценка для типа клиента "Опт" + Подстолье`
+        string: `${calcmaterialsandworks.toFixed(2)} * ${selfcost.pricesAndCoefs[`Керагласс Опт`].value} + ${underPrice} + ${additions}`,
+        formula: `Себестоимость калькулятора * Наценка для типа клиента "Опт" + Подстолье + Комплектующие`
     },{
         name: 'Цена для Дилер',
         value: dealerPrice,
-        string: `${calcmaterialsandworks.toFixed(2)} * ${selfcost.pricesAndCoefs[`Керагласс Дилер`].value} + ${underPrice}`,
-        formula: `Себестоимость калькулятора * Наценка для типа клиента "Дилер" + Подстолье`
+        string: `${calcmaterialsandworks.toFixed(2)} * ${selfcost.pricesAndCoefs[`Керагласс Дилер`].value} + ${underPrice} + ${additions}`,
+        formula: `Себестоимость калькулятора * Наценка для типа клиента "Дилер" + Подстолье + Комплектующие`
     },{
         name: 'Цена для ВИП',
         value: vipPrice,
-        string: `${calcmaterialsandworks.toFixed(2)} * ${selfcost.pricesAndCoefs[`Керагласс ВИП`].value} + ${underPrice}`,
-        formula: `Себестоимость калькулятора * Наценка для типа клиента "ВИП" + Подстолье`
+        string: `${calcmaterialsandworks.toFixed(2)} * ${selfcost.pricesAndCoefs[`Керагласс ВИП`].value} + ${underPrice} + ${additions}`,
+        formula: `Себестоимость калькулятора * Наценка для типа клиента "ВИП" + Подстолье + Комплектующие`
     }]
     under && result.finalPrice.push({
         name: 'Подстолье',

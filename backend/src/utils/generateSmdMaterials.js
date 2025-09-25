@@ -301,7 +301,7 @@ const smdMaterials  = {
       "mediaType": "application/json",
       "uuidHref": "https://online.moysklad.ru/app/#good/edit?id=ebd46a1f-cfa7-11ed-0a80-06340009e197"
     },
-    "name": "Гофролист Т22 1050х2500мм"
+    "name": "Гофролист Т22 1050х2500 мм"
   },
   "11111659": {
     "meta": {

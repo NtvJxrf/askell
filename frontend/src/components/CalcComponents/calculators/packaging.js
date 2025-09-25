@@ -197,6 +197,11 @@ const packaging = (positions) => {
         value: selfcost.pricesAndCoefs[`Коэф-нт прибыли упаковка`].value,
         string: selfcost.pricesAndCoefs[`Коэф-нт прибыли упаковка`].value,
         formula: `Наценка для типа клиента ${selfcost.pricesAndCoefs[`Коэф-нт прибыли упаковка`].value}`
+    },{
+        name: 'Цена ',
+        value: price,
+        string: `${materialsandworks.toFixed(2)} * ${selfcost.pricesAndCoefs[`Коэф-нт прибыли упаковка`].value}`,
+        formula: `Себестоимость * Наценка`
     }]
     result.other = {
         type: 'Упаковка',

@@ -197,6 +197,8 @@ export default class SkladService {
                     value: data.planDate.strDays
                 }]
             }
+            if(data.planDate.apiDate)
+                params.deliveryPlannedMoment = data.planDate.apiDate
             const updateCustomerorderRequest = await Client.sklad(`https://api.moysklad.ru/api/remap/1.2/entity/customerorder/${data.order.id}`, "put", params);
         }catch(error){
             logger.error(error, `Ошибка во время добавления позиций в заказ ${data.order.name}`)

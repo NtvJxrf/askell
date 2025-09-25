@@ -256,6 +256,12 @@ const Positions = ({form}) => {
 
                             const endDate = new Date();
                             endDate.setDate(endDate.getDate() + calendarDays);
+                            const dayOfWeek = endDate.getDay();
+                            if (dayOfWeek === 6) {
+                                endDate.setDate(endDate.getDate() + 2);
+                            } else if (dayOfWeek === 0) {
+                                endDate.setDate(endDate.getDate() + 1);
+                            }
                             const apiDate = formatDate(endDate);
                             const formattedDate = endDate.toLocaleDateString();
                             dispatch(setPlanDate({apiDate, strDays: `${workDays}-${workDays + 3}`}))

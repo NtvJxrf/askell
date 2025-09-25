@@ -556,7 +556,7 @@ const packageBox = async (data, order, position, createdEntitys) => {
 }
 export const createProductionTask = async (id) =>{
     console.time('creatingProudctionTask')
-    const order = await Client.sklad(`https://api.moysklad.ru/api/remap/1.2/entity/customerorder/${id}?expand=positions.assortment,invoicesOut,agent&limit=100`)
+    const order = await Client.sklad(`https://api.moysklad.ru/api/remap/1.2/entity/customerorder/${id}?expand=positions.assortment,invoicesOut,agent,state&limit=100`)
     if(!order)
         throw new ApiError(`Заказ покупателя с ${id} не найден`)
     const debt = await checkOrderDetails(order)
@@ -1004,13 +1004,13 @@ const checkOrderDetails = async order => {
         await anyIssue('Не указана планируемая дата отгрузки, создание пз не было выполнено')
         return true
     }
-    const counterpartyReport = await Client.sklad(`https://api.moysklad.ru/api/remap/1.2/report/counterparty/${order.agent.id}`)
-    const debt = counterpartyReport.balance < -1000
-    const attrValue = order.attributes.find(el => el.name === '% обрези из калькулятора')?.value?.toLowerCase()
-    if(debt && attrValue !== 'всевышний, создай пз пожожда'){
-        await anyIssue('У контрагента есть долг, создание пз не было выполнено')
+    if(order.state.name === 'Поставлено в производство (без полной оплаты)') return false
+    if(order.sum > order.payedSum){
+        await anyIssue('Заказ оплаче не полностью, создание пз не было выполнено')
         return true
     }
+    // const counterpartyReport = await Client.sklad(`https://api.moysklad.ru/api/remap/1.2/report/counterparty/${order.agent.id}`)
+    // const debt = counterpartyReport.balance < -1000
     return false
 }
 async function startWorker(name, func) {

@@ -5,5 +5,4 @@ dotenv.config();
 
 // Функция для сбора всех данных
 
-// const res = await Client.request('http://localhost:7878/api/sklad/createPzHook?id=56508553-4474-11f0-0a80-1b74001fc4eb', 'post')
-console.log(`5316911983139663491615228241121378304`.length)
+const res = await Client.request('http://localhost:7878/api/sklad/createPzHook?id=56508553-4474-11f0-0a80-1b74001fc4eb', 'post')

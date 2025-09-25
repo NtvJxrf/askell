@@ -1,5 +1,5 @@
 import Client from "../utils/got.js"
-
+import { getQueueChannel } from '../utils/rabbitmq.js'
 export default class SkladHooks{
     static async pzChange(data){
         let document = null
@@ -52,6 +52,13 @@ export default class SkladHooks{
                             }
                         })
                     }
+                break
+                case 'Поставлено в производство (без полной оплаты)':
+                    const channel = getQueueChannel();
+                    const id = order.id
+                    const success = channel.sendToQueue('pzwebhook', Buffer.from(id), { persistent: true });
+
+                    if (!success) throw new Error('Failed to enqueue task');
                 break
             }
         }

@@ -12,6 +12,7 @@ const CalcMenu = () => {
     { label: <Link to="/calculators/triplex">Триплекс</Link>, key: 'triplex' },
     { label: <Link to="/calculators/ceraglass">Керагласс</Link>, key: 'ceraglass' },
     { label: <Link to="/calculators/glasspacket">Стеклопакет</Link>, key: 'glasspacket' },
+    { label: <Link to="/calculators/ClientGlassTempering">Закалка</Link>, key: 'ClientGlassTempering' },
   ];
 
   // Выделение по текущему пути

@@ -255,10 +255,10 @@ function constructMaterials(context){
         formula: 'Цена за первичный герметик (бутил) * Периметр * 8 * Количество дистанционных рамок / Перевод в кг'
     });
     result.materials.push({
-        name: 'Вторичный герметик',
-        value: selfcost.materials['Вторичный герметик'].value * (P * 12 * allThickness / 1000),
+        name: 'Вторичный герметик силикон (А+В)',
+        value: selfcost.materials['Вторичный герметик силикон (А+В)'].value * (P * 12 * allThickness / 1000),
         count: P * 12 * allThickness / 1000,
-        string: `${selfcost.materials['Вторичный герметик'].value} * (${P.toFixed(2)} * 12 * ${allThickness.toFixed(2)} / 1000)`,
+        string: `${selfcost.materials['Вторичный герметик силикон (А+В)'].value} * (${P.toFixed(2)} * 12 * ${allThickness.toFixed(2)} / 1000)`,
         formula: 'Цена за вторичный герметик * (Периметр * 12 * Толщина стеклопакета / Перевод в кг)'
     });
     // result.materials.push({

@@ -61,7 +61,6 @@ const formConfigs = {
         { name: 'shape', label: 'Прямоугольная форма', type: 'checkbox', cheched: true },
         { name: 'tempered', label: 'Закаленное', type: 'checkbox', cheched: true },
         { name: 'polishing', label: 'Полировка', type: 'checkbox' },
-        { name: 'customerSuppliedGlassForTempering', label: 'Закалка давальческого стекла', type: 'checkbox' },
         {
           name: 'rounding',
           label: 'Округление',
@@ -234,6 +233,21 @@ const formConfigs = {
         { name: 'hingeCount', type: 'inputp0', label: 'Количество петель' },
         { name: 'tempered', label: 'Закаленное', type: 'checkbox', cheched: true },
       ],materialFields: []
+    },
+    ClientGlassTempering: {
+      commonFields: [
+        { name: 'thickness', type: 'select', label: 'Толщина', options: [4, 5, 6, 8, 10, 12], rules: [{ required: true, message: 'Fill this field' }] },
+        { name: 'width', type: 'input', label: 'Ширина, мм', rules: [{ required: true, message: 'Fill this field' }] },
+        { name: 'height', type: 'input', label: 'Высота, мм', rules: [{ required: true, message: 'Fill this field' }] },
+        {
+          name: 'rounding',
+          label: 'Округление',
+          type: 'select',
+          options: ['Округление до 0.3', 'Округление до 0.5', 'Умножить на 2'],
+          rules: [{ required: true, message: 'Fill this field' }],
+          description: 'Округляет S для расчета по выбранному правилу'
+        }
+      ]
     }
   };
 export default formConfigs

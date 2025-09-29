@@ -18,48 +18,6 @@ const Calculate = (data, selfcost) => {
         warnings: []
     }
     checkDetail({width, height, tempered, material, stanok, result, thickness})
-    if(customerSuppliedGlassForTempering){
-        const temperingSelfcost = selfcost.pricesAndCoefs[`Закалка давальческого стекла ${thickness} мм`].value
-        const temperingPrice = temperingSelfcost * S
-        result.other = {    
-            customerSuppliedGlassForTempering,
-            S,
-            weight,
-            type: 'Стекло',
-            productType: true,
-            viz: false,
-        }
-        result.finalPrice = [{
-            name: 'Настоящая себестоимость',
-            value: temperingPrice,
-            string: `${temperingPrice.toFixed(2)}`,
-            formula: `Себестоимость закалки давальческого стекла`
-        },{
-            name: 'Цена для Розница',
-            value: temperingPrice,
-            string: `${temperingPrice}`,
-            formula: `Себестоимость закалки давальческого стекла`
-        }]
-        result.works.push({
-            name: 'Закалка давальческого стекла',
-            value: temperingSelfcost * S,
-            finalValue: temperingSelfcost * S,
-            string: `${temperingSelfcost} * ${S.toFixed(2)}`,
-            formula: 'Себестоимость закалки * S'
-        })
-        return {
-            key: crypto.randomUUID(),
-            name: `Закалка давальческого стекла ${thickness} мм (${width}х${height})`,
-            prices: {
-                retailPrice: temperingPrice
-            },
-            added: false,
-            quantity,
-            initialData: data,
-            type: 'Закалка стекла',
-            result
-        }
-    }
     let S_calc = S
     if (S < 0.3 && rounding == 'Округление до 0.3') {
         S_calc = 0.3

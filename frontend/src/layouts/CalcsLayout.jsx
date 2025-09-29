@@ -11,10 +11,12 @@ const typeMap = {
     triplex: 'TriplexForm',
     ceraglass: 'CeraglassForm',
     glasspacket: 'GlassPacketForm',
+    ClientGlassTempering: 'ClientGlassTemperingForm'
 };
 
 const CalcsLayout = () => {
     const { type } = useParams();
+    console.log(type)
     const selectedKey = typeMap[type] || 'SMDForm';
     const [form] = Form.useForm();
     return (

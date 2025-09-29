@@ -10,25 +10,29 @@ import GlassForm from './glassForm.jsx'
 import TriplexForm from './TriplexForm.jsx'
 import CeraglassForm from "./CeraglassForm.jsx";
 import GlassPacketForm from './GlasspacketForm.jsx'
+import ClientGlassTemperingForm from './ClientGlassTemperingForm.jsx'
 import triplexCalc from '../calculators/triplexCalc.js'
 import ceraglassCalc from '../calculators/ceraglassCalc.js'
 import glassCalc from '../calculators/glassCalc.js'
 import SMDCalc from '../calculators/SMDCalc.js'
 import glasspacketCalc from '../calculators/glasspacketCalc.js'
+import clientGlassTemperingCalc from '../calculators/clientGlassTemperingCalc.js'
 import { addNewPosition } from "../../../slices/positionsSlice.js";
 const calcMap = {
     TriplexForm: triplexCalc,
     CeraglassForm: ceraglassCalc,
     GlassForm: glassCalc,
     SMDForm: SMDCalc,
-    GlassPacketForm: glasspacketCalc
+    GlassPacketForm: glasspacketCalc,
+    ClientGlassTemperingForm: clientGlassTemperingCalc
 }
 const formsMap = {
     SMDForm,
     GlassForm,
     TriplexForm,
     CeraglassForm,
-    GlassPacketForm
+    GlassPacketForm,
+    ClientGlassTemperingForm
 }
 const DynamicForm = ({type, form}) => {
     const [messageApi, contextHolder] = message.useMessage();

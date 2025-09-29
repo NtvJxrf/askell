@@ -88,10 +88,10 @@ const TriplexForm = () => {
         </div>
         <div style={{ marginTop: 16, display: 'flex', gap: 12, flexDirection: 'column' }}>
           <Button onClick={addMaterial} size="medium" shape="round" block>
-            Добавить
+            Добавить ПФ
           </Button>
           <Button onClick={removeMaterial} size="medium" shape="round" block danger>
-            Удалить
+            Удалить ПФ
           </Button>
         </div>
       </Col>

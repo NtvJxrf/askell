@@ -55,7 +55,7 @@ export default class SkladService {
         const positionsToCreate = data.positions.filter((el, index) => {if(!el.added && el.result.other.type){indexes.push(index); return true}});
         const deletedPositions = prevPositions.filter(el => !map[el.id]);
         const productsToCreate = positionsToCreate.map((product, idx) => {
-            const isService = Boolean(product.initialData?.customerSuppliedGlassForTempering);
+            const isService = Boolean(product?.result?.other?.customerSuppliedGlassForTempering);
             const params = {
                 name: product.name,
                 shared: false,

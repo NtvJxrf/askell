@@ -354,11 +354,8 @@ export const checkDetail = ({width, height, tempered, material, stanok, result, 
             throw new Error('Минимальный размер одной из сторон на прямолинейке 40 мм')
     }
     if(stanok == 'Криволинейка'){
-        const largest = Math.max(width, height);
-        const lowest = Math.min(width, height);
-        if (largest < 400 || lowest < 250)
-            throw new Error(`Размер стекла для криволинейки слишком мал. Минимальные допустимые размеры: 400x250, получено: ${width}x${height}`);
-
+        if(lowest < 120)
+            throw new Error(`Меньшая сторона слишком мала. Минимальные допустимые размеры: 120, получено: ${lowest}`);
         const machines = [
             { name: "Alpa", maxWidth: 3200, maxHeight: 2200 },
             { name: "Intermac", maxWidth: 3700, maxHeight: 1900 }

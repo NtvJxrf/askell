@@ -8,7 +8,12 @@ import { sheets } from '../app.js'
 export const getMaterials = async () => {
     let materials = {}
     const promises = []
-    promises.push(fetchAllRows("https://api.moysklad.ru/api/remap/1.2/entity/product?filter=pathName=0 Закупки/0.02.03 Стекло/Материал от поставщиков, Стекло/Матированное стекло (Matelux);pathName=0 Закупки/0.02.03 Стекло/Материал от поставщиков, Стекло/Осветленное стекло;pathName=0 Закупки/0.02.03 Стекло/Материал от поставщиков, Стекло/Простое стекло;pathName=0 Закупки/0.02.03 Стекло/Материал от поставщиков, Стекло/Рифленое стекло;pathName=0 Закупки/0.02.03 Стекло/Материал от поставщиков, Стекло/Стекло Stopsol и Зеркало;pathName=0 Закупки/0.02.03 Стекло/Материал от поставщиков, Стекло/Цветное стекло&expand=buyPrice.currency,salePrices.currency"))
+    const basePath = `pathName=0 Закупки/0.02.03 Стекло/Материал от поставщиков, Стекло/`
+    const paths = [`Матированное стекло (Matelux)`, `Осветленное стекло`, `Простое стекло`, `Рифленое стекло`, `Стекло Stopsol и Зеркало`, `Цветное стекло`, `Энергосберегающее и мультифункциональное стекло`].reduce((acc, curr) => {
+        acc += basePath + curr + ';'
+        return acc
+    }, '')
+    promises.push(fetchAllRows(`https://api.moysklad.ru/api/remap/1.2/entity/product?filter=${paths}&expand=buyPrice.currency,salePrices.currency`))
     promises.push(fetchAllRows("https://api.moysklad.ru/api/remap/1.2/entity/product?filter=pathName=0 Закупки/0.02.04 Пленка EVA/Пленка EVA прозрачная;pathName=0 Закупки/0.02.04 Пленка EVA/Плёнки декоративные и цветные&expand=buyPrice.currency,salePrices.currency"))
     promises.push(fetchAllRows("https://api.moysklad.ru/api/remap/1.2/entity/product?filter=pathName=0 Закупки/0.02.02 Керамика/LAMINAM;pathName=0 Закупки/0.02.02 Керамика/ДЕГОН Стандарт&expand=buyPrice.currency,salePrices.currency"))
     promises.push(fetchAllRows("https://api.moysklad.ru/api/remap/1.2/entity/product?filter=pathName=0 Закупки/Материалы для стеклопакетов&expand=buyPrice.currency,salePrices.currency"))

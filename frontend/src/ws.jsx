@@ -2,7 +2,7 @@ import { useEffect, useRef } from "react";
 import { useDispatch } from "react-redux";
 import { setSelfcost } from "./slices/selfcostSlice";
 import { setProductionLoad } from "./slices/positionsSlice";
-
+import { setUpdate } from "./slices/userSlice";
 export default function WebSocketHandler() {
     const dispatch = useDispatch();
     const wsRef = useRef(null);
@@ -23,11 +23,10 @@ export default function WebSocketHandler() {
         ws.onmessage = (event) => {
             const data = JSON.parse(event.data);
             console.log("📩 Обновление от сервера:", data);
-
             switch (data.type) {
                 case "selfcosts":
                     dispatch(setSelfcost(data.data));
-                    break;
+                break;
                 case "ordersInWork":
                     dispatch(setProductionLoad(data.data || {
                         kriv: [],
@@ -42,7 +41,7 @@ export default function WebSocketHandler() {
                         viz: 0,
                         selk: 0
                     }));
-                    break;
+                break;
             }
         };
 

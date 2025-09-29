@@ -64,7 +64,7 @@ const createPrice = () => {
     }
   }
   const worksheet = XLSX.utils.aoa_to_sheet(res)
-  const works = glassCalc({material: materialsArray[0], height: 1000, width: 1000, tempered: true, shape: true, drills: 1, zenk: 1, cutsv1: 1, cutsv2: 1, cutsv3: 1, print: true}, selfcost)
+  const works = glassCalc({material: materialsArray[20], height: 1000, width: 1000, tempered: true, shape: true, drills: 1, zenk: 1, cutsv1: 1, cutsv2: 1, cutsv3: 1, print: true}, selfcost)
   worksheet['!merges'] = worksheet['!merges'] || [];
   worksheet['!merges'].push(XLSX.utils.decode_range('K2:P10'));
   

@@ -15,10 +15,12 @@ const getOrdersInWork = async () => {
             straightResult: 5,
             triplexResult: 5
         }
+        res.moment = Date.now()
         SkladService.ordersInWork = res
         return
     }
     const res = await readSheet()
+    res.moment = Date.now()
     SkladService.ordersInWork = res
     broadcast({type: 'ordersInWork', data: res})
 }

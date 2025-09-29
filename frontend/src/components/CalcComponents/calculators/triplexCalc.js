@@ -306,6 +306,7 @@ export const constructName = (firstWord, data) => {
     zenk = 0,
     print = false,
     color = false,
+    blank,
     } = data
     const tapes = Object.entries(data).filter(([key]) => key.startsWith('tape')).map(([_, value]) => value).map( el => {
         if(el === '-')
@@ -324,6 +325,7 @@ export const constructName = (firstWord, data) => {
     if (zenk) parts.push(`Зенкование: ${zenk}`);
     if (print) parts.push('УФ Печать');
     if (color) parts.push(`Окрашивание: ${color}`);
+    if (blank) parts.push(`Пятаки: ${blank}`);
     if (tapes.length > 0) parts.push(`Пленка: ${tapes.join(';').replaceAll('Пленка', '')}`);
     const area = ((height * width) / 1_000_000).toFixed(2);
     if(!firstWord.toLowerCase().includes('керагласс')) parts.push(`площадь: ${area}`)

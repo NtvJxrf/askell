@@ -6,8 +6,7 @@ import { BarChart, Bar, XAxis, YAxis, Tooltip as RechartsTooltip, ResponsiveCont
 const { Title, Text } = Typography;
 
 const OrdersInWorkTables = () => {
-  const data = useSelector(state => state.positions.productionLoad);
-  console.log(data)
+  const data = useSelector(state => state.positions.productionLoad)
   const [pagination, setPagination] = useState({ current: 1, pageSize: 10 });
   const columns = [
     { title: "Дата", dataIndex: "created", key: "created", fixed: "left" },
@@ -159,6 +158,7 @@ const OrdersInWorkTables = () => {
 ));
   return (
     <div>
+      <>Последнее обновление: {new Date(data.moment).toLocaleString() || 0}</>
       <MachineCards data={data} />
       <Tabs items={getItems()} defaultActiveKey="kriv" centered />
     </div>

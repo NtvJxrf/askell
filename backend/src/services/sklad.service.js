@@ -49,37 +49,16 @@ export default class SkladService {
     static ordersInWork = {}
     static async addPositionsToOrder(data) {
         const indexes = []
-        const prevPositions = Array.isArray(data?.order?.positions?.rows)
-            ? data.order.positions.rows.map(el => ({
-                id: el.assortment?.id,
-                meta: el.assortment?.meta
-            }))
-            : [];
+        const prevPositions = Array.isArray(data?.order?.positions?.rows) ? data.order.positions.rows.map(el => ({id: el.assortment?.id, meta: el.assortment?.meta})) : [];
         const positions = Array.isArray(data?.positions) ? data.positions : [];
-        const map = positions.reduce((acc, curr) => {
-            if (curr?.key != null) {
-                acc[String(curr.key)] = true;
-            }
-            return acc;
-        }, {});
-        const positionsToCreate = data.positions.filter((el, index) => {
-            if(!el.added && el.result.other.type){
-                indexes.push(index)
-                return true
-            }
-        })
-        const deletedPositions = prevPositions.filter(el => !map[el.id])
-        const productsToCreate = positionsToCreate.map(product => {
+        const map = positions.reduce((acc, curr) => {if (curr?.key != null) acc[String(curr.key)] = true; return acc}, {});
+        const positionsToCreate = data.positions.filter((el, index) => {if(!el.added && el.result.other.type){indexes.push(index); return true}});
+        const deletedPositions = prevPositions.filter(el => !map[el.id]);
+        const productsToCreate = positionsToCreate.map((product, idx) => {
+            const isService = Boolean(product.initialData?.customerSuppliedGlassForTempering);
             const params = {
                 name: product.name,
-                salePrices: Object.entries(product.prices).map(([key, value]) =>({
-                    value: Number((value * 100).toFixed(2)),
-                    priceType: dictionary.priceTypes[mapPrices[key]],
-                    currency: dictionary.currencies['руб']
-                })),
-                weight: Number((product.result.other.weight).toFixed(2)),
-                volume: Number((product.result.other.S).toFixed(2)),
-                productFolder: dictionary.productFolders.glassGuard,
+                shared: false,
                 attributes: generateProductAttributes({...product.initialData, ...product.result.other, order: data.order}),
                 uom: {
                     meta: {
@@ -88,125 +67,74 @@ export default class SkladService {
                         "type" : "uom",
                         "mediaType" : "application/json"
                     }
-                },
-                shared: false,
-                minPrice: {currency: dictionary.currencies['руб'], value: product?.result?.other?.materialsandworks * 100 || 0}
+                }
             }
+            params.salePrices = Object.entries(product.prices).map(([key, value]) => ({value: Number((value * 100).toFixed(2)), priceType: dictionary.priceTypes[mapPrices[key]], currency: dictionary.currencies['руб']}));
+            params.productFolder = dictionary.productFolders.glassGuard;
+            params.minPrice = {currency: dictionary.currencies['руб'], value: product?.result?.other?.materialsandworks * 100 || 0};
             switch (product.result.other.type){
-                case 'Стекло':
-                    params.productFolder = {
-                        meta: {
-                            "href" : "https://api.moysklad.ru/api/remap/1.2/entity/productfolder/20ea16d2-80c3-11f0-0a80-001e001e5b2d",
-                            "metadataHref" : "https://api.moysklad.ru/api/remap/1.2/entity/productfolder/metadata",
-                            "type" : "productfolder",
-                            "mediaType" : "application/json"
-                        }
-                    }
-                break
-                case 'Керагласс':
-                    params.productFolder = {
-                        meta: {
-                            "href" : "https://api.moysklad.ru/api/remap/1.2/entity/productfolder/2c406074-80c3-11f0-0a80-1b2d001e8696",
-                            "metadataHref" : "https://api.moysklad.ru/api/remap/1.2/entity/productfolder/metadata",
-                            "type" : "productfolder",
-                            "mediaType" : "application/json"
-                        }
-                    }
-                break
-                case 'Триплекс':
-                    params.productFolder = {
-                        meta: {
-                            "href" : "https://api.moysklad.ru/api/remap/1.2/entity/productfolder/26ce840f-80c3-11f0-0a80-1530001f634a",
-                            "metadataHref" : "https://api.moysklad.ru/api/remap/1.2/entity/productfolder/metadata",
-                            "type" : "productfolder",
-                            "mediaType" : "application/json"
-                        }
-                    }
-                break
-                case 'СМД':
-                    params.productFolder = {
-                        meta: {
-                            "href" : "https://api.moysklad.ru/api/remap/1.2/entity/productfolder/31909ce4-80c3-11f0-0a80-0f23001e1345",
-                            "metadataHref" : "https://api.moysklad.ru/api/remap/1.2/entity/productfolder/metadata",
-                            "type" : "productfolder",
-                            "mediaType" : "application/json"
-                        }
-                    }
-                break
-                case 'Упаковка':
-                    params.productFolder = {
-                        meta: {
-                            "href" : "https://api.moysklad.ru/api/remap/1.2/entity/productfolder/90bb2da2-88ac-11f0-0a80-09aa000b4e5d",
-                            "metadataHref" : "https://api.moysklad.ru/api/remap/1.2/entity/productfolder/metadata",
-                            "type" : "productfolder",
-                            "mediaType" : "application/json",
-                        }
-                    }
-                break
-                case 'Стеклопакет':
-
-                break
+                case 'Стекло': params.productFolder = {meta: {"href":"https://api.moysklad.ru/api/remap/1.2/entity/productfolder/20ea16d2-80c3-11f0-0a80-001e001e5b2d","metadataHref":"https://api.moysklad.ru/api/remap/1.2/entity/productfolder/metadata","type":"productfolder","mediaType":"application/json"}}; break
+                case 'Керагласс': params.productFolder = {meta: {"href":"https://api.moysklad.ru/api/remap/1.2/entity/productfolder/2c406074-80c3-11f0-0a80-1b2d001e8696","metadataHref":"https://api.moysklad.ru/api/remap/1.2/entity/productfolder/metadata","type":"productfolder","mediaType":"application/json"}}; break
+                case 'Триплекс': params.productFolder = {meta: {"href":"https://api.moysklad.ru/api/remap/1.2/entity/productfolder/26ce840f-80c3-11f0-0a80-1530001f634a","metadataHref":"https://api.moysklad.ru/api/remap/1.2/entity/productfolder/metadata","type":"productfolder","mediaType":"application/json"}}; break
+                case 'СМД': params.productFolder = {meta: {"href":"https://api.moysklad.ru/api/remap/1.2/entity/productfolder/31909ce4-80c3-11f0-0a80-0f23001e1345","metadataHref":"https://api.moysklad.ru/api/remap/1.2/entity/productfolder/metadata","type":"productfolder","mediaType":"application/json"}}; break
+                case 'Упаковка': params.productFolder = {meta: {"href":"https://api.moysklad.ru/api/remap/1.2/entity/productfolder/90bb2da2-88ac-11f0-0a80-09aa000b4e5d","metadataHref":"https://api.moysklad.ru/api/remap/1.2/entity/productfolder/metadata","type":"productfolder","mediaType":"application/json"}}; break
+                case 'Стеклопакет': break
             }
-            return params
-        });
+            if (!isService) {
+                params.weight = Number((product.result.other.weight).toFixed(2));
+                params.volume = Number((product.result.other.S).toFixed(2));
+            } else {
+                params.productFolder = {meta: {"href":"https://api.moysklad.ru/api/remap/1.2/entity/productfolder/9d51821f-9ce8-11f0-0a80-19d50025c39b","metadataHref":"https://api.moysklad.ru/api/remap/1.2/entity/productfolder/metadata","type":"productfolder","mediaType":"application/json"}}
+            }
+            return {params, isService, index: indexes[idx]}
+        })
         let createdProducts = null
         if (productsToCreate.length > 0) {
-            createdProducts = await Client.sklad("https://api.moysklad.ru/api/remap/1.2/entity/product", "post", productsToCreate)
+            const toCreateProducts = productsToCreate.filter(p => !p.isService)
+            const toCreateServices = productsToCreate.filter(p => p.isService)
+            const [createdProductsRes, createdServicesRes] = await Promise.all([
+                toCreateProducts.length > 0 ? Client.sklad("https://api.moysklad.ru/api/remap/1.2/entity/product", "post", toCreateProducts.map(p => p.params)) : [],
+                toCreateServices.length > 0 ? Client.sklad("https://api.moysklad.ru/api/remap/1.2/entity/service", "post", toCreateServices.map(p => p.params)) : []
+            ])
+            createdProducts = []
+            toCreateProducts.forEach((item, i) => {const created = createdProductsRes[i]; data.positions[item.index] = {...data.positions[item.index], position: {assortment: created}}; createdProducts.push(created)})
+            toCreateServices.forEach((item, i) => {const created = createdServicesRes[i]; data.positions[item.index] = {...data.positions[item.index], position: {assortment: created}}; createdProducts.push(created)})
             const promises = []
-            createdProducts.forEach((el, index) => {
-                data.positions[indexes[index]] = {...data.positions[indexes[index]], position: { assortment: el}}
-                const pos = data.positions[indexes[index]]
-                promises.push(Details.create({
-                    productId: pos.position.assortment.id,
-                    initialData: pos.initialData,
-                    selfcost: pos.selfcost,
-                    result: pos.result
-                }))
+            createdProducts.forEach((el, i) => {
+                const pos = data.positions[productsToCreate[i].index]
+                promises.push(Details.create({productId: pos.position.assortment.id, initialData: pos.initialData, selfcost: pos.selfcost, result: pos.result}))
             })
             const detailsResult = await Promise.allSettled(promises)
             detailsResult.forEach((result, i) => {
                 if (result.status !== 'fulfilled') {
-                    const failedPos = data.positions[indexes[i]];
-                    logger.error('Failed to create detail', {
-                        productId: failedPos?.position?.assortment?.id,
-                        error: result.reason,
-                        initialData: failedPos?.initialData,
-                        selfcost: failedPos?.selfcost 
-                    });
+                    const failedPos = data.positions[productsToCreate[i].index];
+                    logger.error('Failed to create detail', {productId: failedPos?.position?.assortment?.id, error: result.reason, initialData: failedPos?.initialData, selfcost: failedPos?.selfcost})
                 }
-            });
+            })
         }
-        try{
+        try {
             const params = {
-                positions: data.positions.map((pos) => {
-                    return{
-                        assortment: {
-                            meta: pos.position.assortment.meta
-                        },
-                        price: pos.added ? pos.position.price : Number(pos.prices[data.displayPrice].toFixed(2) * 100),
-                        quantity: pos.quantity,
-                        vat: data.order.organization.name === 'ООО "А2"' ? 20 : 0
-                    }
-                }),
+                positions: data.positions.map((pos) => ({
+                    assortment: {meta: pos.position.assortment.meta},
+                    price: pos.added ? pos.position.price : Number(pos.prices[data.displayPrice].toFixed(2) * 100),
+                    quantity: pos.quantity,
+                    vat: data.order.organization.name === 'ООО "А2"' ? 20 : 0
+                })),
                 attributes: [{
-                    meta: {
-                        "href" : "https://api.moysklad.ru/api/remap/1.2/entity/customerorder/metadata/attributes/99884b94-8f93-11f0-0a80-029a000276da",
-                        "type" : "attributemetadata",
-                        "mediaType" : "application/json"
-                    },
+                    meta: {"href":"https://api.moysklad.ru/api/remap/1.2/entity/customerorder/metadata/attributes/99884b94-8f93-11f0-0a80-029a000276da","type":"attributemetadata","mediaType":"application/json"},
                     value: data.planDate.strDays
                 }]
             }
-            if(data.planDate.apiDate)
-                params.deliveryPlannedMoment = data.planDate.apiDate
-            const updateCustomerorderRequest = await Client.sklad(`https://api.moysklad.ru/api/remap/1.2/entity/customerorder/${data.order.id}`, "put", params);
-        }catch(error){
+            if(data.planDate.apiDate) params.deliveryPlannedMoment = data.planDate.apiDate
+            await Client.sklad(`https://api.moysklad.ru/api/remap/1.2/entity/customerorder/${data.order.id}`, "put", params)
+        } catch(error) {
             logger.error(error, `Ошибка во время добавления позиций в заказ ${data.order.name}`)
-            createdProducts && Client.sklad(`https://api.moysklad.ru/api/remap/1.2/entity/product/delete`, "post", createdProducts.map(el => {return {meta: el.meta}}));
-        }finally{
+            createdProducts && Client.sklad(`https://api.moysklad.ru/api/remap/1.2/entity/product/delete`, "post", createdProducts.map(el => ({meta: el.meta})))
+        } finally {
             deleteEntitys(deletedPositions)
         }
     }
+
     static async getOrder(name){
         const response = await Client.sklad(`https://api.moysklad.ru/api/remap/1.2/entity/customerorder?filter=name=${name}&expand=positions.assortment,agent,organization&limit=100`)
         const order = response.rows[0]
@@ -579,7 +507,7 @@ export const createProductionTask = async (id) =>{
     try{
         for(const position of order.positions.rows){
             const data = await Details.findOne({where: {productId: position.assortment.id}})
-            if(data){
+            if(data && !data.initialData.customerSuppliedGlassForTempering){
                 results.push(await map[data.result.other.type](data, order, position, createdEntitys))
                 continue
             }
@@ -884,18 +812,34 @@ const deleteEntitys = async (deletedPositions) => {
                 }
             })
             const recordsToDelete = deletedPositions.filter(el => records.find(rec => rec.productId == el.id))
-            const response = await Client.sklad(`https://api.moysklad.ru/api/remap/1.2/entity/product/delete`, "post", recordsToDelete.map(el => {return {meta: el.meta}})).catch(err => {console.error("Ошибка при удалении", err)});
+            if(recordsToDelete.length > 0){
+                const productsToDelete = recordsToDelete.filter(el => el.meta.type === 'product')
+                const servicesToDelete = recordsToDelete.filter(el => el.meta.type === 'service')
 
-            Details.destroy({
-                where: {
-                    productId: {
-                        [Op.in]: response.reduce((acc, curr, index) => {
-                            !curr.errors && acc.push(records[index].id)
-                            return acc
-                        }, [])
-                    }
+                let responseProducts = []
+                let responseServices = []
+
+                if(productsToDelete.length > 0){
+                    responseProducts = await Client.sklad("https://api.moysklad.ru/api/remap/1.2/entity/product/delete", "post", productsToDelete.map(el => ({meta: el.meta}))).catch(err => {console.error("Ошибка при удалении товаров", err); return []})
                 }
-            });
+                if(servicesToDelete.length > 0){
+                    responseServices = await Client.sklad("https://api.moysklad.ru/api/remap/1.2/entity/service/delete", "post", servicesToDelete.map(el => ({meta: el.meta}))).catch(err => {console.error("Ошибка при удалении услуг", err); return []})
+                }
+
+                const responses = [...responseProducts, ...responseServices]
+                const allRecords = [...productsToDelete, ...servicesToDelete]
+
+                await Details.destroy({
+                    where: {
+                        productId: {
+                            [Op.in]: responses.reduce((acc, curr, index) => {
+                                if(!curr.errors) acc.push(allRecords[index].id)
+                                return acc
+                            }, [])
+                        }
+                    }
+                })
+            }
         }
     }catch{
     }

@@ -28,6 +28,7 @@ export default class Init{
         try {
             const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/sklad/ordersInWork`, { withCredentials: true });
             dispatch(setProductionLoad(res.data || { kriv: [], pryam: [], other: [], straightTotal: 0, curvedTotal: 0, drillsTotal: 0, cuttingTotal: 0, temperingTotal: 0, triplexTotal: 0, viz: 0, selk: 0}))
+            console.log(res)
         } catch (err) {
             console.error("Ошибка при загрузке данных:", err);
             dispatch(setProductionLoad({ kriv: [], pryam: [], other: [], straightTotal: 0, curvedTotal: 0, drillsTotal: 0, cuttingTotal: 0, temperingTotal: 0, triplexTotal: 0, viz: 0, selk: 0 }))

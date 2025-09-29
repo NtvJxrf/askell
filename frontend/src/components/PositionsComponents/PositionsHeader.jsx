@@ -1,4 +1,4 @@
-import { Input, Button, Space, Typography, message, Upload, Dropdown, Menu, Tooltip } from 'antd';
+import { Input, Button, Space, Typography, message, Upload, Dropdown, Menu, Tooltip, Popover} from 'antd';
 import React, { useRef, useState } from 'react';
 import { UploadOutlined, DownOutlined, InfoCircleOutlined } from '@ant-design/icons';
 const { Text } = Typography;
@@ -94,7 +94,7 @@ const PositionsHeader = () => {
                 messageApi.success(`Установлен тип цен ${match.priceType.name}`)
             }catch(error){
                 console.error(error)
-                messageApi.error('Не удалось подобрать тип цен, установлено "Розница"')
+                messageApi.warning('Не удалось подобрать тип цен, установлено "Розница"')
                 dispatch(setDisplayPrice('retailPrice'))
             }
             dispatch(addOrderPositions(positions))
@@ -190,14 +190,17 @@ const PositionsHeader = () => {
                     <Button type="default" shape="round" onClick={handleSaveOrder} disabled={disabled}>Сохранить</Button>
                     <Button type="default" shape="round" onClick={handleDeleteSelected} disabled={disabled} danger>Удалить выделенное</Button>
                     <Button type="default" shape="round" onClick={handlePackaging} disabled={disabled}>Упаковка</Button>
-                    <Dropdown menu={{ items: priceItems, onClick: handlePriceSelect }} disabled={disabled} >
-                        <Button type="default" shape="round">
-                            Цены: {reverseMap[priceType]} <DownOutlined />
-                            <Tooltip title={pricesDescription} styles={{ fontSize: '16px', padding: '12px 16px', maxWidth: 800 }}>
-                                <InfoCircleOutlined style={{ color: '#1890ff' }} />
-                            </Tooltip>
-                        </Button>
-                    </Dropdown>
+                    <Popover content={pricesDescription} trigger={'hover'} placement='right'>
+                        <Dropdown menu={{ items: priceItems, onClick: handlePriceSelect }} disabled={disabled} >
+                            
+                                <Button type="default" shape="round">
+                                    Цены: {reverseMap[priceType]} <DownOutlined />
+                                    {/* <Tooltip title={pricesDescription} styles={{ fontSize: '16px', padding: '12px 16px', maxWidth: 800 }}>
+                                        <InfoCircleOutlined style={{ color: '#1890ff' }} />
+                                    </Tooltip> */}
+                                </Button>
+                        </Dropdown>
+                    </Popover>
                     <Upload
                         accept=".xlsx, .xls, .xlsm"
                         showUploadList={false}

@@ -115,7 +115,7 @@ export default function InstructionSteps() {
                   <li>В калькуляторе реализованы ограничения станков, например по минимальным и максимальным размерам, но лучше выучить все их самостоятельно</li>
                 </ul>
               </Paragraph>
-              <Image src="/assets/material_example.png" width={200} style={{ marginBottom: 8 }} />
+              <Image src="/assets/aovam.jpg" width={200} style={{ marginBottom: 8 }} />
               <Alert message="Форма заполняется строго по заявке клиента" type="warning" showIcon />
 
               <Divider />
@@ -145,8 +145,8 @@ export default function InstructionSteps() {
                       <li>3 категория: Большой вырез в изделии, например под раковину</li>
                     </ul>
                   <Space wrap>
-                    <Image src="/assets/drill_example.png" width={120} />
-                    <Image src="/assets/cut_example.png" width={120} />
+                    <Image src="/assets/aovam.jpg" width={120} />
+                    <Image src="/assets/aovam.jpg" width={120} />
                   </Space>
 
                   <Divider />
@@ -162,7 +162,7 @@ export default function InstructionSteps() {
                     <br />• Прямолинейка — углы 90°, до 40 кг
                     <br />• Криволинейка — радиусные формы, нестандартные изделия и вырезы
                   </Paragraph>
-                  <Image src="/assets/form_example.png" width={200} />
+                  <Image src="/assets/aovam.jpg" width={200} />
 
                   <Divider />
 
@@ -175,10 +175,7 @@ export default function InstructionSteps() {
                   <Paragraph>
                     Определяет какой будет вид обработки кромки, если стоит галочка то полировка, иначе шлифовка
                   </Paragraph>
-                  <Image
-                    src="/assets/tempering_polish_example.png"
-                    width={200}
-                  />
+                  <Image src="/assets/aovam.jpg" width={200}/>
 
                   <Divider />
 
@@ -255,7 +252,7 @@ export default function InstructionSteps() {
                 showIcon style={{ marginBottom: 16 }}
               />
 
-              <Image src="/assets/material_example.png" width={200} style={{ marginBottom: 8 }} />
+              <Image src="/assets/aovam.jpg" width={200} style={{ marginBottom: 8 }} />
 
               <Divider />
 
@@ -269,7 +266,7 @@ export default function InstructionSteps() {
                 <li>Сумма в м.п. и м²</li>
               </ul>
 
-              <Image src="/assets/material_example.png" width={200} style={{ marginBottom: 8 }} />
+              <Image src="/assets/aovam.jpg" width={200} style={{ marginBottom: 8 }} />
 
               <Paragraph>
                 Кнопка переключения количества позиций на странице (не рекомендуется больше 100).
@@ -285,7 +282,7 @@ export default function InstructionSteps() {
                 <li>Индикатор <b>«Создано»</b> — показывает, добавлена ли позиция в MoySklad или пока только в калькуляторе.</li>
                 <li>Поле для изменения количества.</li>
               </ul>
-              <Image src="/assets/material_example.png" width={200} style={{ marginBottom: 8 }} />
+              <Image src="/assets/aovam.jpg" width={200} style={{ marginBottom: 8 }} />
             </Card>
           </TabPane>
 

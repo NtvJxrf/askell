@@ -9,7 +9,7 @@ import {
     verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { Button, Table, Space, InputNumber } from 'antd';
+import { Button, Table, Space, InputNumber, Alert } from 'antd';
 import { useDispatch, useSelector } from 'react-redux';
 import { setPositions, setSelectedRowKeys, setPositionAtIndex, setPlanDate } from '../../slices/positionsSlice';
 import PositionDetailsModal from './PositionDetailsModal.jsx';
@@ -241,7 +241,9 @@ const Positions = ({form}) => {
                             let totalGost = 0, totalRetail = 0, totalBulk = 0, totalDealer = 0, totalVip = 0
                             let totalS = 0
                             let totalP = 0
+                            let kr = false, pr = false
                             positions.forEach(({ prices, quantity, result, position}) => {
+                                result.other.stanok == 'Прямолинейка' ? (pr = true) : (kr = true)
                                 totalGost += (prices['gostPrice'] || 0) * quantity;
                                 totalRetail += (prices['retailPrice'] || 0) * quantity;
                                 totalBulk += (prices['bulkPrice'] || 0) * quantity;
@@ -266,7 +268,16 @@ const Positions = ({form}) => {
                             const formattedDate = endDate.toLocaleDateString();
                             dispatch(setPlanDate({apiDate, strDays: `${workDays}-${workDays + 3}`}))
                             return (
-                                <>
+                                <>  
+                                    {(kr && pr) && (
+                                        <Alert
+                                            message="В заказе 2 вида обработки"
+                                            type="warning"
+                                            showIcon
+                                            style={{ marginBottom: 12 }}
+                                        />
+                                    )}
+
                                     <div style={{
                                         display: 'flex',
                                         justifyContent: 'center',
@@ -300,7 +311,6 @@ const Positions = ({form}) => {
                                         </div>
                                     </div>
                                 </>
-
                             );
                         }}
                     />

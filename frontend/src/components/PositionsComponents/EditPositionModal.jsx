@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { Modal, Button, Form } from 'antd';
+import { Modal, Button, Form, message } from 'antd';
 import CeraglassForm from '../CalcComponents/Forms/CeraglassForm.jsx';
 import GlassForm from '../CalcComponents/Forms/glassForm.jsx';
 import GlasspacketForm from '../CalcComponents/Forms/GlasspacketForm.jsx';
@@ -14,6 +14,7 @@ import glasspacketCalc from '../CalcComponents/calculators/glasspacketCalc.js'
 import store from '../../store.js'
 const EditPositionModal = ({ open, onClose, record, onSubmit }) => {
     if(!record || !record.result) return null
+    const [messageApi, contextHolder] = message.useMessage();
     const [form] = Form.useForm();
     useEffect(() => {
         if (record) {
@@ -36,44 +37,51 @@ const EditPositionModal = ({ open, onClose, record, onSubmit }) => {
         'Стеклопакет': glasspacketCalc,
     }
     const onFinish = (res) => {
-        const selfcost = store.getState().selfcost.selfcost
-        const calcRes = calcMap[record.result.other.type]({...res, quantity: record.quantity}, selfcost)
-        form.resetFields();
-        onSubmit(calcRes)
+        try{
+            const selfcost = store.getState().selfcost.selfcost
+            const calcRes = calcMap[record.result.other.type]({...res, quantity: record.quantity}, selfcost)
+            form.resetFields();
+            onSubmit(calcRes)
+        }catch(error){
+            console.error(error)
+            messageApi.error(error.message)
+        }
     }
     const CurrentForm = map[record.result.other.type]
     return (
+        
         <Modal
-        open={open}
-        onCancel={() => {
-            form.resetFields();
-            onClose()
-        }}
-        footer={null}
-        preserve={false}
-        style={{ minWidth: 1000 }}
-        >
-        <Form
-            form={form}
-            layout="horizontal"
-            size='small'
-            onFinish={onFinish}
-            initialValues={record.initialData}
-            key={record.key}
-        >
-            <CurrentForm />
-            <Form.Item style={{ display: 'flex', justifyContent: 'center', marginTop: 16 }}>
-            <Button type="primary" htmlType="submit" size="medium" shape='round'>
-                Сохранить
-            </Button>
-            <Button style={{ marginLeft: 12 }} size="medium" shape='round' onClick={() => {
+            open={open}
+            onCancel={() => {
                 form.resetFields();
                 onClose()
-            }}>
-                Отмена
-            </Button>
-            </Form.Item>
-        </Form>
+            }}
+            footer={null}
+            preserve={false}
+            style={{ minWidth: 1000 }}
+        >
+            {contextHolder}
+            <Form
+                form={form}
+                layout="horizontal"
+                size='small'
+                onFinish={onFinish}
+                initialValues={record.initialData}
+                key={record.key}
+            >
+                <CurrentForm />
+                <Form.Item style={{ display: 'flex', justifyContent: 'center', marginTop: 16 }}>
+                <Button type="primary" htmlType="submit" size="medium" shape='round'>
+                    Сохранить
+                </Button>
+                <Button style={{ marginLeft: 12 }} size="medium" shape='round' onClick={() => {
+                    form.resetFields();
+                    onClose()
+                }}>
+                    Отмена
+                </Button>
+                </Form.Item>
+            </Form>
         </Modal>
     );
 };

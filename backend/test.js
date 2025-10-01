@@ -104,6 +104,9 @@ async function getLoad() {
         const cutsv1 = Number(attrs['Кол-во вырезов 1 категорий']) || 0;
         const cutsv2 = Number(attrs['Кол-во вырезов 2 категорий']) || 0;
         const cutsv3 = Number(attrs['Кол-во вырезов 3 категорий']) || 0;
+        const drills = Number(attrs['Кол-во сверлений']) || 0;
+        const zenk = Number(attrs['Кол-во зенкований']) || 0;
+        const tempered = attrs['Закалка'] || false
         const material = attrs['Материал 1']
         const P = 2 * (h + w) / 1000;          // пог.м
         const S = h * w / 1_000_000;           // кв.м
@@ -117,7 +120,7 @@ async function getLoad() {
             total.cutsv2 += cutsv2 * Q
             total.cutsv3 += cutsv3 * Q
             group[material] ??= []
-            group[material].push({name, Q, S, P, cutsv1, cutsv2, cutsv3, h, w, stanok, date})
+            group[material].push({product: product.assortment.name, name, Q, S, P, cutsv1, cutsv2, cutsv3, drills, zenk, h, w, stanok, tempered, date, totalS: S * Q, totalP: P * Q, totalDrills: drills * Q, totalZenk: zenk * Q})
             const key = product.productionRow.meta.href
             result[key] = result[key] || { P: 0, S: 0, count: 0, cutsv1: 0, cutsv2: 0, cutsv3: 0 };
             result[key].P += P * Q

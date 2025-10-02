@@ -243,7 +243,9 @@ const Positions = ({form}) => {
                             let totalP = 0
                             let kr = false, pr = false
                             positions.forEach(({ prices, quantity, result, position}) => {
-                                result.other.stanok == 'Прямолинейка' ? (pr = true) : (kr = true)
+                                result?.other?.stanok 
+                                ? (result.other.stanok === 'Прямолинейка' ? (pr = true) : (kr = true))
+                                : null;
                                 totalGost += (prices['gostPrice'] || 0) * quantity;
                                 totalRetail += (prices['retailPrice'] || 0) * quantity;
                                 totalBulk += (prices['bulkPrice'] || 0) * quantity;

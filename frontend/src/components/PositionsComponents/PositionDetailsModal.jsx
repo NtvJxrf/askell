@@ -224,7 +224,7 @@ const otherLabels = {
     S_tape: 'Площадь пленки',
     trim: 'Коэфицент обрези',
     stanok: 'Станок',
-    allThickness: 'Общая толщина триплекса, мм',
+    allThickness: 'Общая толщина, мм',
     weight: 'Вес, кг',
     type: 'Тип изделия',
     viz: 'Учавствует виз',

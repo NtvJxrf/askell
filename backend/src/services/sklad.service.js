@@ -507,7 +507,7 @@ export const createProductionTask = async (id) =>{
     try{
         for(const position of order.positions.rows){
             const data = await Details.findOne({where: {productId: position.assortment.id}})
-            if(data && !data.initialData.customerSuppliedGlassForTempering){
+            if(data && !data?.result?.other?.customerSuppliedGlassForTempering){
                 results.push(await map[data.result.other.type](data, order, position, createdEntitys))
                 continue
             }
@@ -573,6 +573,22 @@ export const createProductionTask = async (id) =>{
                     return acc
                 }, [])
             const pzPolev = await makeProductionTask(`Полеводство материалы/прочее`, `Полеводство СГИ`, productionRows, order, {}, 1, addComment, createdEntitys)
+        }
+        if(print){
+            const task = await Client.sklad('https://api.moysklad.ru/api/remap/1.2/entity/task', 'post', {
+                assignee: {
+                    meta: {
+                        "href" : "https://api.moysklad.ru/api/remap/1.2/entity/employee/167c3a00-f3dc-11ed-0a80-13fb000f16e1",
+                        "metadataHref" : "https://api.moysklad.ru/api/remap/1.2/entity/employee/metadata",
+                        "type" : "employee",
+                        "mediaType" : "application/json",
+                        }
+                },
+                operation: {
+                    meta: order.meta
+                },
+                description: `В заказе №${order.name} есть уф печать`
+            })
         }
         console.timeEnd('creatingProudctionTask')
     }catch(error){
@@ -950,7 +966,7 @@ const checkOrderDetails = async order => {
     }
     if(order.state.name === 'Поставлено в производство (без полной оплаты)') return false
     if(order.sum > order.payedSum){
-        await anyIssue('Заказ оплаче не полностью, создание пз не было выполнено')
+        await anyIssue('Заказ оплачен не полностью, создание пз не было выполнено')
         return true
     }
     // const counterpartyReport = await Client.sklad(`https://api.moysklad.ru/api/remap/1.2/report/counterparty/${order.agent.id}`)

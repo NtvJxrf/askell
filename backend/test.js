@@ -5,9 +5,9 @@ import { google } from "googleapis";
 import { writeFile, readFile } from 'fs/promises'
 import * as XLSX from 'xlsx'
 const getOrdersInWork = async () => {
-  const res = await readSheet()
-  SkladService.ordersInWork = res
-  broadcast({type: 'ordersInWork', data: res})
+    const res = await readSheet()
+    SkladService.ordersInWork = res
+    broadcast({ type: 'ordersInWork', data: res })
 }
 async function getLoad() {
     // const tasks = await fetchAllRows('https://api.moysklad.ru/api/remap/1.2/entity/productiontask?' +
@@ -52,51 +52,62 @@ async function getLoad() {
         cutsv2: 0,
         cutsv3: 0,
     }
-    const group = {}
     const result = {}
-    for(const { status, value } of products){
+    for (const { status, value } of products) {
         const { task, products } = value
+        if (task.productionEnd)
+            continue
         const attrs = (task.attributes || []).reduce((a, x) => {
             a[x.name] = x.value;
             return a;
         }, {});
         for (const product of products) {
-            countLoadTasks(product, total, result, attrs['№ заказа покупателя'], task.deliveryPlannedMoment)
+            countLoadTasks(product, total, result, attrs['№ заказа покупателя'], task.deliveryPlannedMoment, task.productionStart)
         }
     }
-    for (const order of orders){
-        for (const pos of order.positions.rows) 
+    for (const order of orders) {
+        for (const pos of order.positions.rows)
             countLoadOrders(pos, total)
     }
-    for(const { status, value} of productionStages){
+    for (const { status, value } of productionStages) {
         const { task, stages } = value
-        for(const stage of stages){
+        for (const stage of stages) {
             const name = stage.stage.name
-            if(name != 'Криволинейная обработка' && name != 'Прямолинейная обработка' && name != 'Триплексование') continue
             const key = stage.productionRow.meta.href;
             if (!result[key]) {
-                console.warn('Нет данных для ключа', key, 'этап', name);
                 continue;
             }
-            if(name == 'Криволинейная обработка'){
-                total['Криволинейка'].P -= (result[key].P / result[key].count) * stage.completedQuantity
-                total['Криволинейка'].S -= (result[key].S / result[key].count) * stage.completedQuantity
-            }else if(name == 'Прямолинейная обработка'){
-                total['Прямолинейка'].P -= (result[key].P / result[key].count) * stage.completedQuantity
-                total['Прямолинейка'].S -= (result[key].S / result[key].count) * stage.completedQuantity
-            }else{
-                total['Триплекс (Без учета резки стекла)'].P -= (result[key].P / result[key].count) * stage.completedQuantity
-                total['Триплекс (Без учета резки стекла)'].S -= (result[key].S / result[key].count) * stage.completedQuantity
+            result[key].cutOutQuantity ??= 0
+            switch (name) {
+                case 'Криволинейная обработка':
+                    total['Криволинейка'].P -= (result[key].P / result[key].count) * stage.completedQuantity
+                    total['Криволинейка'].S -= (result[key].S / result[key].count) * stage.completedQuantity
+                    break
+                case 'Прямолинейная обработка':
+                    total['Прямолинейка'].P -= (result[key].P / result[key].count) * stage.completedQuantity
+                    total['Прямолинейка'].S -= (result[key].S / result[key].count) * stage.completedQuantity
+                    break
+                case 'Триплексование':
+                    total['Триплекс (Без учета резки стекла)'].P -= (result[key].P / result[key].count) * stage.completedQuantity
+                    total['Триплекс (Без учета резки стекла)'].S -= (result[key].S / result[key].count) * stage.completedQuantity
+                    break
+                case 'Раскрой':
+                    result[key].cutOutQuantity = stage.completedQuantity
+                    result[key].otherData.availableQ = result[key].isStarted ? stage.availableQuantity : stage.totalQuantity
+                break
+                case 'ОТК':
+                    stage.skippedQuantity && (result[key].cutOutQuantity += stage.skippedQuantity)
+                break
             }
         }
     }
-    function countLoadTasks(product, total, result, name, date){
+    function countLoadTasks(product, total, result, name, date, isStarted) {
         const attrs = (product.assortment?.attributes || []).reduce((a, x) => {
             a[x.name] = x.value;
             return a;
         }, {});
         const stanok = attrs['Тип станка'];
-        if (!stanok){
+        if (!stanok) {
             return
         }
         const h = Number(attrs['Длина в мм'])
@@ -111,18 +122,40 @@ async function getLoad() {
         const P = 2 * (h + w) / 1000;          // пог.м
         const S = h * w / 1_000_000;           // кв.м
         const Q = product.planQuantity
-        if(attrs['Тип изделия'] == 'Стекло'){
+        if (attrs['Тип изделия'] == 'Стекло') {
             total[stanok].P += P * Q + cutsv1 * 1.86 * Q + cutsv2 * 3.5 * Q + cutsv3 * 7 * Q
             total[stanok].S += S * Q
             total[stanok].count += Q
-            total[stanok].positionsCount ++
+            total[stanok].positionsCount++
             total.cutsv1 += cutsv1 * Q
             total.cutsv2 += cutsv2 * Q
             total.cutsv3 += cutsv3 * Q
-            group[material] ??= []
-            group[material].push({product: product.assortment.name, name, Q, S, P, cutsv1, cutsv2, cutsv3, drills, zenk, h, w, stanok, tempered, date, totalS: S * Q, totalP: P * Q, totalDrills: drills * Q, totalZenk: zenk * Q})
             const key = product.productionRow.meta.href
-            result[key] = result[key] || { P: 0, S: 0, count: 0, cutsv1: 0, cutsv2: 0, cutsv3: 0 };
+            result[key] = result[key] || {
+                P: 0, S: 0, count: 0, cutsv1: 0, cutsv2: 0, cutsv3: 0, isStarted, otherData:{
+                    material,
+                    product: product.assortment.name,
+                    name,
+                    totalQ: Q,
+                    date,
+                    S,
+                    P,
+                    cutsv1,
+                    cutsv2,
+                    cutsv3,
+                    drills,
+                    zenk,
+                    h,
+                    w,
+                    stanok,
+                    tempered,
+                    totalS: S * Q,
+                    totalP: P * Q,
+                    totalDrills: drills * Q,
+                    totalZenk: zenk * Q
+                }
+            };
+            result[key].glass = true
             result[key].P += P * Q
             result[key].S += S * Q
             result[key].count += Q
@@ -130,7 +163,7 @@ async function getLoad() {
             result[key].cutsv2 += cutsv2 * Q
             result[key].cutsv3 += cutsv3 * Q
         }
-        if(attrs['Тип изделия'] == 'Триплекс'){
+        if (attrs['Тип изделия'] == 'Триплекс') {
             total['Триплекс (Без учета резки стекла)'].P += P * Q
             total['Триплекс (Без учета резки стекла)'].S += S * Q
             total['Триплекс (Без учета резки стекла)'].count += Q
@@ -140,10 +173,10 @@ async function getLoad() {
             result[key] = result[key] || { P: 0, S: 0, count: 0 };
             result[key].P += P * Q
             result[key].S += S * Q
-            result[key].count += Q  
+            result[key].count += Q
         }
     }
-    function countLoadOrders(product, total){
+    function countLoadOrders(product, total) {
         const attrs = (product.assortment?.attributes || []).reduce((a, x) => {
             a[x.name] = x.value;
             return a;
@@ -160,33 +193,26 @@ async function getLoad() {
         const P = 2 * (h + w) / 1000;          // пог.м
         const S = h * w / 1_000_000;           // кв.м
         const cnt = pfs * product.quantity;
-        if(product.assortment.name.toLowerCase().includes('триплекс')){
+        if (product.assortment.name.toLowerCase().includes('триплекс')) {
             total['Триплекс (Без учета резки стекла)'].P += P * product.quantity
             total['Триплекс (Без учета резки стекла)'].S += S * product.quantity;
             total['Триплекс (Без учета резки стекла)'].count += product.quantity
             total['Триплекс (Без учета резки стекла)'].positionsCount += 1
         }
-        total[stanok].P += P * cnt + cutsv1 * 1.86 * cnt + cutsv2 * 3.5 * cnt+ cutsv3 * 7 * cnt
+        total[stanok].P += P * cnt + cutsv1 * 1.86 * cnt + cutsv2 * 3.5 * cnt + cutsv3 * 7 * cnt
         total[stanok].S += S * cnt;
         total[stanok].count += cnt;
     }
     const wb = XLSX.utils.book_new()
-
-    // добавляем поле material к каждой записи
-    const allRows = Object.entries(group).flatMap(([material, rows]) =>
-        rows.map(r => ({ material, ...r }))
-    )
-
-    // сортируем по материалу
-    allRows.sort((a, b) => a.material.localeCompare(b.material, 'ru'))
-
-    // создаём лист
+    // берём все значения из result, где есть остаток
+    const allRows = Object.values(result)
+        .filter(v => (v.count - (v.cutOutQuantity || 0)) > 0 && v.glass)
+        .map(v => ({
+            ...v.otherData
+        }))
+    allRows.sort((a, b) => (a.material || '').localeCompare(b.material || '', 'ru'))
     const ws = XLSX.utils.json_to_sheet(allRows)
-
-    // добавляем в книгу
     XLSX.utils.book_append_sheet(wb, ws, 'Materials')
-
-    // сохраняем
     XLSX.writeFile(wb, 'materials.xlsx')
     return total
 }
@@ -197,11 +223,11 @@ function toObjects(values) {
     );
 }
 function todayISO() {
-  const now = new Date();
-  const y = now.getFullYear();
-  const m = String(now.getMonth() + 1).padStart(2, '0');
-  const d = String(now.getDate()).padStart(2, '0');
-  return `${y}.${m}.${d}`;
+    const now = new Date();
+    const y = now.getFullYear();
+    const m = String(now.getMonth() + 1).padStart(2, '0');
+    const d = String(now.getDate()).padStart(2, '0');
+    return `${y}.${m}.${d}`;
 }
 function calcLoad(objects, startIndex, load, columns, toNum) {
     let result = 0;
@@ -245,31 +271,31 @@ async function readSheet() {
     return { ...currentLoad, curvedResult, straightResult, triplexResult }
 }
 async function fetchAllRows(urlBase) {
-  const limit = 100;
-  const firstUrl = `${urlBase}&limit=${limit}&offset=0`;
-  const firstResponse = await Client.sklad(firstUrl);
+    const limit = 100;
+    const firstUrl = `${urlBase}&limit=${limit}&offset=0`;
+    const firstResponse = await Client.sklad(firstUrl);
 
-  if (!firstResponse.rows || firstResponse.rows.length === 0) {
-    return [];
-  }
-
-  const allRows = [...firstResponse.rows];
-  const totalSize = firstResponse.meta?.size || allRows.length;
-
-  const requests = [];
-  for (let offset = limit; offset < totalSize; offset += limit) {
-    const url = `${urlBase}&limit=${limit}&offset=${offset}`;
-    requests.push(Client.sklad(url));
-  }
-
-  const responses = await Promise.all(requests);
-  for (const res of responses) {
-    if (res.rows) {
-      allRows.push(...res.rows);
+    if (!firstResponse.rows || firstResponse.rows.length === 0) {
+        return [];
     }
-  }
 
-  return allRows;
+    const allRows = [...firstResponse.rows];
+    const totalSize = firstResponse.meta?.size || allRows.length;
+
+    const requests = [];
+    for (let offset = limit; offset < totalSize; offset += limit) {
+        const url = `${urlBase}&limit=${limit}&offset=${offset}`;
+        requests.push(Client.sklad(url));
+    }
+
+    const responses = await Promise.all(requests);
+    for (const res of responses) {
+        if (res.rows) {
+            allRows.push(...res.rows);
+        }
+    }
+
+    return allRows;
 }
 getOrdersInWork()
 export default getOrdersInWork

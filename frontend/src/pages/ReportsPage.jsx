@@ -32,6 +32,13 @@ const reportConfigs = [
       },
     ],
     description: `Формирует отчет по стеклу`
+  },
+  {
+    title: 'План на резку',
+    type: 'report6',
+    fields: [
+    ],
+    description: `Формирует таблицу на основе производственных заданий для построения плана раскроя`
   }
 ];
 const createPrice = () => {

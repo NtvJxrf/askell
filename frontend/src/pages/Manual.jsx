@@ -19,8 +19,10 @@ const initialSteps = [
       `Обязательные поля у контрагента: Наименование, телефон, электронный адрес, реквизиты  и расчетный счет, контактные лица`
     ],
     images: [
-      '/assets/aovam.jpg',
-      '/assets/aovam.jpg'
+      '/assets/manual/1.png',
+      '/assets/manual/2.png',
+      '/assets/manual/3.png',
+      '/assets/manual/4.png',
     ],
   },
   {
@@ -29,7 +31,10 @@ const initialSteps = [
     description: 'Сохраните заказ без позиций — это даст номер, который требуется для загрузки в калькулятор.',
     tips: [
       `Номер сгенерируется сам, вписывать не нужно`
-    ]
+    ],
+    images: [
+      '/assets/manual/7.png'
+    ],
   },
   {
     key: 'open_calc',
@@ -37,6 +42,9 @@ const initialSteps = [
     description: 'В калькуляторе введите номер заказа покупателя и нажмите "Найти". (См. раздел "Работа с позициями заказа покупателя")',
     warnings: [
       'Убедитесь, что номер указан корректно — иначе загрузится не тот заказ.',
+    ],
+    images: [
+      '/assets/manual/5.png'
     ],
   },
   {
@@ -121,7 +129,6 @@ export default function InstructionSteps() {
                   <li>В калькуляторе реализованы ограничения станков, например по минимальным и максимальным размерам, но лучше выучить все их самостоятельно</li>
                 </ul>
               </Paragraph>
-              <Image src="/assets/aovam.jpg" width={200} style={{ marginBottom: 8 }} />
               <Alert message="Форма заполняется строго по заявке клиента" type="warning" showIcon />
 
               <Divider />
@@ -151,8 +158,8 @@ export default function InstructionSteps() {
                       <li>3 категория: Большой вырез в изделии, например под раковину</li>
                     </ul>
                   <Space wrap>
-                    <Image src="/assets/aovam.jpg" width={120} />
-                    <Image src="/assets/aovam.jpg" width={120} />
+                    <Image src='/assets/manual/12.png' width={200} />
+                    <Image src="/assets/aovam.jpg" width={200} />
                   </Space>
 
                   <Divider />
@@ -165,10 +172,17 @@ export default function InstructionSteps() {
                   <Title level={5}>Тип обрабатывающего станка</Title>
                   <Paragraph>
                     Прямоугольная форма: Этот чекбокс определит на каком станке (Прямолинейном(ПР) или Криволинейном(КР)) будет обрабатываться стекло.
-                    <br />• Прямолинейка — углы 90°, до 40 кг
-                    <br />• Криволинейка — радиусные формы, нестандартные изделия и вырезы
+                    <br />• Прямолинейка — углы 90°, до 40 кг<br/>
+                    <Space wrap>
+                      <Image src="/assets/aovam.jpg" width={200} />
+                      <Image src="/assets/aovam.jpg" width={200} />
+                    </Space>
+                    <br />• Криволинейка — радиусные формы, нестандартные изделия и вырезы<br/>
+                    <Space wrap>
+                      <Image src='/assets/manual/11.png' width={200} />
+                      <Image src='/assets/manual/13.png' width={200} />
+                    </Space>
                   </Paragraph>
-                  <Image src="/assets/aovam.jpg" width={200} />
 
                   <Divider />
 
@@ -181,7 +195,7 @@ export default function InstructionSteps() {
                   <Paragraph>
                     Определяет какой будет вид обработки кромки, если стоит галочка то полировка, иначе шлифовка
                   </Paragraph>
-                  <Image src="/assets/aovam.jpg" width={200}/>
+                  <Image src='/assets/manual/15.png' width={200}/>
 
                   <Divider />
 
@@ -189,6 +203,9 @@ export default function InstructionSteps() {
                   <Paragraph>
                     Нажмите «Рассчитать» — позиция появится в правой части калькулятора с остальными изделиями.
                   </Paragraph>
+                </Collapse.Panel>
+                <Collapse.Panel header='Как посмотреть остатки стекла в MoySklad' key='4'>
+                  <Image src='/assets/manual/6.png' width={200} style={{ marginBottom: 8 }} />
                 </Collapse.Panel>
                 <Collapse.Panel header='СМД' key='2'>
                 
@@ -247,6 +264,7 @@ export default function InstructionSteps() {
               <Title level={5}>Работа с заказом</Title>
               <ul>
                 <li>Поле для ввода номера заказа + кнопка <b>«Найти»</b> — загружает данные о заказе покупателя и его позиции.</li>
+                <li>Кнопка <b>«Сбросить»</b> — сбросит данные о заказе покупателя, и удалит все его позиции из списка в калькуляторе</li>
                 <li>Кнопка <b>«Сохранить»</b> — перезаписывает позиции в калькуляторе и синхронизирует их с MoySklad.</li>
                 <li>Кнопка <b>«Удалить выделенное»</b> — удаляет выбранные позиции.</li>
                 <li>Кнопка <b>«Упаковка»</b> — добавляет позицию с упаковкой в ящик подходящий под текущие позиции.</li>
@@ -259,7 +277,7 @@ export default function InstructionSteps() {
                 showIcon style={{ marginBottom: 16 }}
               />
 
-              <Image src="/assets/aovam.jpg" width={200} style={{ marginBottom: 8 }} />
+              <Image src='/assets/manual/8.png' width={350} style={{ marginBottom: 8 }} />
 
               <Divider />
 
@@ -273,7 +291,7 @@ export default function InstructionSteps() {
                 <li>Сумма по заказу м.п. и м²</li>
               </ul>
 
-              <Image src="/assets/aovam.jpg" width={200} style={{ marginBottom: 8 }} />
+              <Image src='/assets/manual/9.png' width={350} style={{ marginBottom: 8 }} />
 
               <Paragraph>
                 Кнопка переключения количества позиций на странице (не рекомендуется больше 100).
@@ -290,7 +308,7 @@ export default function InstructionSteps() {
                 <li>Индикатор <b>«Создано»</b> — показывает, добавлена ли позиция в MoySklad или пока только в калькуляторе.</li>
                 <li>Поле для изменения количества.</li>
               </ul>
-              <Image src="/assets/aovam.jpg" width={200} style={{ marginBottom: 8 }} />
+              <Image src='/assets/manual/10.png' width={350} style={{ marginBottom: 8 }} />
 
               <Divider />
 
@@ -300,7 +318,7 @@ export default function InstructionSteps() {
                 У цен на работы, материалы, и финальную стоимость можно подробно посмотреть (наведя на саму цифру) формулы расчета, и какие значения использовались
               </Paragraph>
               
-              <Image src="/assets/aovam.jpg" width={200} style={{ marginBottom: 8 }} />
+              <Image src='/assets/manual/14.png' width={350} style={{ marginBottom: 8 }} />
             </Card>
           </TabPane>
 

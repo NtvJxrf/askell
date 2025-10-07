@@ -960,6 +960,7 @@ const checkOrderDetails = async order => {
             }}
         })
     }
+
     if(!order.deliveryPlannedMoment){
         await anyIssue('Не указана планируемая дата отгрузки, создание пз не было выполнено')
         return true
@@ -967,6 +968,12 @@ const checkOrderDetails = async order => {
     if(order.state.name === 'Поставлено в производство (без полной оплаты)') return false
     if(order.sum > order.payedSum){
         await anyIssue('Заказ оплачен не полностью, создание пз не было выполнено')
+        return true
+    }
+    const missing = ['Город получателя', 'Вид доставки', 'Телефон получателя', 'Адрес получателя', 'Выбор транспортной компании']
+        .filter(k => !(order.attributes||[]).some(a => a.name===k));
+    if(missing.length > 0){
+        await anyIssue(`Заполнены не все обязательные поля, создание пз не было выполнено\nНе заполнено: ${missing.join(',')}`)
         return true
     }
     // const counterpartyReport = await Client.sklad(`https://api.moysklad.ru/api/remap/1.2/report/counterparty/${order.agent.id}`)

@@ -71,6 +71,28 @@ const initialSteps = [
     title: 'Сформировать счёт и отправить клиенту',
     description: 'Формирование и печать счета делается после сохранение заказа',
   },
+  {
+    key: 'make_blueprint',
+    title: 'Тут что то про работу с чертежами',
+    description: 'Тут что то про работу с чертежами',
+  },
+  {
+    key: 'set_to_production',
+    title: 'Постановка заказа в производство',
+    description: 'Для постановки заказа в производство нужно поменять статус на "Поставлено в производство"',
+    warnings: [
+      'Должны быть заполнены следующие поля: Город получателя, Вид доставки, Телефон получателя, Адрес получателя, Выбор транспортной компании',
+      'Заказ должен быть полностью оплачен'
+    ],
+    tips: [
+      'Если что то не заполнено, или не оплачено, то производственное задание не будет создано, и вам будет поставлена задача в MoySklad связанная с этим заказом, и с описанием причины'
+    ]
+  },
+  {
+    key: 'completion',
+    title: 'Сдача заказа клиенту',
+    description: 'Тут что то про сдачу заказа',
+  },
 ];
 
 export default function InstructionSteps() {
@@ -174,7 +196,7 @@ export default function InstructionSteps() {
                     Прямоугольная форма: Этот чекбокс определит на каком станке (Прямолинейном(ПР) или Криволинейном(КР)) будет обрабатываться стекло.
                     <br />• Прямолинейка — углы 90°, до 40 кг<br/>
                     <Space wrap>
-                      <Image src="/assets/aovam.jpg" width={200} />
+                      <Image src="/assets/manual/16.png" width={200} />
                       <Image src="/assets/aovam.jpg" width={200} />
                     </Space>
                     <br />• Криволинейка — радиусные формы, нестандартные изделия и вырезы<br/>
@@ -204,16 +226,16 @@ export default function InstructionSteps() {
                     Нажмите «Рассчитать» — позиция появится в правой части калькулятора с остальными изделиями.
                   </Paragraph>
                 </Collapse.Panel>
-                <Collapse.Panel header='Как посмотреть остатки стекла в MoySklad' key='4'>
+                <Collapse.Panel header='Как посмотреть остатки стекла в MoySklad' key='2'>
                   <Image src='/assets/manual/6.png' width={200} style={{ marginBottom: 8 }} />
                 </Collapse.Panel>
-                <Collapse.Panel header='СМД' key='2'>
+                <Collapse.Panel header='СМД' key='3'>
                 
                 </Collapse.Panel>
-                <Collapse.Panel header='Стекло' key='3'>
+                <Collapse.Panel header='Стекло' key='4'>
                   Заполняем поля формы по заявке клиента
                 </Collapse.Panel>
-                <Collapse.Panel header='Триплекс' key='4'>
+                <Collapse.Panel header='Триплекс' key='5'>
                   <Paragraph>
                     Триплекс состоит из нескольких стекол склеенных между собой пленкой<br/>
                     Сама форма разбита на 2 части, слева — общие данные, которые применяются ко всем полуфабрикатам, справа — выбор стекла и пленки
@@ -226,7 +248,7 @@ export default function InstructionSteps() {
                     type="warning" showIcon />
                   </Paragraph>
                 </Collapse.Panel>
-                <Collapse.Panel header='Керагласс' key='5'>
+                <Collapse.Panel header='Керагласс' key='6'>
                   Во вкладке "Керагласс" можно рассчитать несколько изделий из него<br/>
                   <ul>
                     <li>Стол</li>
@@ -239,10 +261,10 @@ export default function InstructionSteps() {
                   Стол может состоять из нескольких деталей, например угловой стол, такое можно посчитать добавив детали<br/>
                   Изначально доп деталей нет, считается что деталь одна, поля "Ширина изделия" и "Высота изделия" применяются как размеры этой одной детали, но если вы добавите 2 детали то те поля станут общими, и для каждой детали нужно указать свои размеры
                 </Collapse.Panel>
-                <Collapse.Panel header='Стеклопакет' key='6'>
+                <Collapse.Panel header='Стеклопакет' key='7'>
                 
                 </Collapse.Panel>
-                <Collapse.Panel header='Закалка' key='7'>
+                <Collapse.Panel header='Закалка' key='8'>
                   Тут считается закалка давальческого стекла<br/>
                   Вписать размеры стекла клиента, и выбрать толщину
                 </Collapse.Panel>

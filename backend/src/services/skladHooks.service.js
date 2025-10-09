@@ -76,22 +76,6 @@ export default class SkladHooks{
                 break
             }
         }
-        if(event?.updatedFields?.includes('payedSum')){
-            order ??= await Client.sklad(`${event.meta.href}?expand=agent,state`)
-            if(order.payedSum >= order.sum){
-                await Client.sklad(order.meta.href, 'put', {
-                    state: {
-                        meta: {
-                            "href" : "https://api.moysklad.ru/api/remap/1.2/entity/customerorder/metadata/states/9118ca69-9302-11ed-0a80-08e10003a2df",
-                            "metadataHref" : "https://api.moysklad.ru/api/remap/1.2/entity/customerorder/metadata",
-                            "type" : "state",
-                            "mediaType" : "application/json"
-                        }
-                    }
-                })
-                return
-            }
-        }
     }
 }
 

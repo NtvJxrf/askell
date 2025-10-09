@@ -16,7 +16,7 @@ export const scanNonPayedOrders = async () => {
         }
     }
 }
-
+scanNonPayedOrders()
 setInterval(async () => {
     try {
         await scanNonPayedOrders()

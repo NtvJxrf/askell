@@ -1,7 +1,7 @@
 import SkladService from '../services/sklad.service.js'
 import { getQueueChannel } from '../utils/rabbitmq.js';
 import { initSkladAdditions } from '../utils/skladAdditions.js';
-import { getMaterials, getPackagingMaterials, getProcessingStages, getStores, getUnders, getColors, getPicesAndCoefs, getAttributes, getProcessingPlansSmd, getCurrency, getPriceTypes } from '../utils/skladAdditions.js'
+import { getEmployees, getMaterials, getPackagingMaterials, getProcessingStages, getStores, getUnders, getColors, getPicesAndCoefs, getAttributes, getProcessingPlansSmd, getCurrency, getPriceTypes } from '../utils/skladAdditions.js'
 import SkladHooks from '../services/skladHooks.service.js';
 import { broadcast } from '../utils/WebSocket.js';
 export default class MoySkladController{
@@ -50,7 +50,8 @@ export default class MoySkladController{
             attributes: getAttributes,
             smdPlans: getProcessingPlansSmd,
             currencies: getCurrency,
-            priceTypes: getPriceTypes
+            priceTypes: getPriceTypes,
+            employees: getEmployees
         };
         const { key } = req.params;
         const result = await skladUpdaters[key]()

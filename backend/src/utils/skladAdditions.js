@@ -175,6 +175,20 @@ export const getAttributes = async () => {
         date: Date.now()
     }
 }
+export const getEmployees = async () => {
+    const response = await Client.sklad('https://api.moysklad.ru/api/remap/1.2/entity/employee')
+    dictionary.employees = response.rows.reduce(( acc, curr ) => {
+        acc[curr.id] = {
+            meta: curr.meta,
+            name: curr.name,
+        }
+        return acc
+    }, {})
+    SkladService.selfcost.updates['Сотрудники'] = {
+        key: 'employees',
+        date: Date.now()
+    }
+}
 export const getProcessingPlansSmd = async () => {
   const filters = [
     'askell standart',
@@ -239,6 +253,7 @@ export const initSkladAdditions = async () => {
     promises.push(getPackagingMaterials())
     promises.push(getCurrency())
     promises.push(getPriceTypes())
+    promises.push(getEmployees())
     const res = await Promise.allSettled(promises)
     console.log(res)
     console.log('all dependencies loaded')

@@ -37,6 +37,19 @@ export default class SkladHooks{
             order ??= await Client.sklad(`${event.meta.href}?expand=agent,state`)
             switch(order.state.name){
                 case 'Готово':
+                    if(order.payedSum < order.sum){
+                        await Client.sklad(order.meta.href, 'put', {
+                            state: {
+                                meta: {
+                                    "href" : "https://api.moysklad.ru/api/remap/1.2/entity/customerorder/metadata/states/377adb2e-a35d-11f0-0a80-059100098627",
+                                    "metadataHref" : "https://api.moysklad.ru/api/remap/1.2/entity/customerorder/metadata",
+                                    "type" : "state",
+                                    "mediaType" : "application/json"
+                                }
+                            }
+                        })
+                        return
+                    }
                     if(order.owner.meta.href == `https://api.moysklad.ru/api/remap/1.2/entity/employee/03579653-eedf-11e8-9107-50480000f34d`) return
                     if(!order.agent.email){
                     const task = await Client.sklad('https://api.moysklad.ru/api/remap/1.2/entity/task', 'post', {
@@ -60,6 +73,22 @@ export default class SkladHooks{
 
                     if (!success) throw new Error('Failed to enqueue task');
                 break
+            }
+        }
+        if(event?.updatedFields?.includes('payedSum')){
+            order ??= await Client.sklad(`${event.meta.href}?expand=agent,state`)
+            if(order.payedSum >= order.sum){
+                await Client.sklad(order.meta.href, 'put', {
+                    state: {
+                        meta: {
+                            "href" : "https://api.moysklad.ru/api/remap/1.2/entity/customerorder/metadata/states/9118ca69-9302-11ed-0a80-08e10003a2df",
+                            "metadataHref" : "https://api.moysklad.ru/api/remap/1.2/entity/customerorder/metadata",
+                            "type" : "state",
+                            "mediaType" : "application/json"
+                        }
+                    }
+                })
+                return
             }
         }
     }

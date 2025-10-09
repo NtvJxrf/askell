@@ -19,6 +19,7 @@ const updateKeys = [
   { label: "Техкарты для смд", key: "smdPlans" },
   { label: "Валюты", key: "currencies" },
   { label: "Типы цен", key: "priceTypes" },
+  { label: "Сотрудники", key: "employees" },
 ];
 
 const Settings = () => {

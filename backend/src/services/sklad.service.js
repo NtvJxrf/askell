@@ -9,6 +9,7 @@ import amqp from 'amqplib';
 import crypto from 'crypto'
 import {generateSmdMaterials} from '../utils/generateSmdMaterials.js'
 import ProcessingPlansSmd from "../databases/models/sklad/processingPlansSmd.js"
+import { scanNonPayedOrders } from "./skladScaner.service.js"
 export const dictionary = {
     productFolders: {
         glassGuard: {

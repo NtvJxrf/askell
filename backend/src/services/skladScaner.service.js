@@ -1,7 +1,7 @@
-import Client from "../utils/got"
+import Client from '../utils/got.js'
 export const scanNonPayedOrders = async () => {
     const orders = await Client.sklad('https://api.moysklad.ru/api/remap/1.2/entity/customerorder?filter=state.name=Готово, не оплачено')
-    for(const order of orders){
+    for(const order of orders.rows){
         if(order.payedSum >= order.sum){
             await Client.sklad(order.meta.href, 'put', {
                 state: {

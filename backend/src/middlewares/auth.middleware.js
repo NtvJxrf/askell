@@ -12,7 +12,7 @@ const authMiddleware = async (req, res, next) => {
       req.user = { roles: ['system'], username: 'system' };
       return next();
     }
-    if (dictionary[req.body.user.id]) {
+    if (dictionary[req?.body?.user?.id]) {
       req.user = { roles: ['system'], username: 'system' };
       return next();
     }

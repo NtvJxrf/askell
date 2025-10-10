@@ -1,6 +1,7 @@
 import express from "express"
 import UserRouter from './api/user.routes.js'
 import SkladRouter from './api/sklad.routes.js'
+import ExtensionRouter from './api/extension.routes.js'
 import authMiddleware from "../middlewares/auth.middleware.js"
 import UserController from "../controllers/user.controller.js"
 import authorizeRoles from '../middlewares/authorizeRoles.js'
@@ -25,6 +26,7 @@ router
     .post(UserController.activate)
 router.use('/user', authMiddleware, authorizeRoles, UserRouter)
 router.use('/sklad', authMiddleware, SkladRouter)
+router.use('/extension', authMiddleware, ExtensionRouter)
 router.use('/reports', authMiddleware, ReportsRouter)
 router.use((req, res) => {
     res.status(404).json({ message: "Not Found" })

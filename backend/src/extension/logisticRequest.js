@@ -58,7 +58,7 @@ function prepareRow(order, dataFromForm, positionsData, attrs, deliveryType) {
     positionsData.packing,
     positionsText,
     formatDateTime(),
-    dictionary.employees[dataFromForm.requestFrom]?.name || '-',
+    Object.values(dictionary.employees)?.find(el => el.uid == dataFromForm.requestFrom)?.name || '-',
     order.organization.name,
     deliveryType === 'До адреса' ? order.store?.name || '-' : '-',
     deliveryType === 'До терминала' ? '-' : order.store?.name || '-',

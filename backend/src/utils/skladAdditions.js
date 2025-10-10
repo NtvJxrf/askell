@@ -181,6 +181,7 @@ export const getEmployees = async () => {
         acc[curr.id] = {
             meta: curr.meta,
             name: curr.name,
+            uid: curr.uid
         }
         return acc
     }, {})

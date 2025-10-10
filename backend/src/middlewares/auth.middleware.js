@@ -2,21 +2,12 @@ import TokenService from '../services/token.service.js';
 import ApiError from '../utils/apiError.js';
 import logger from '../utils/logger.js';
 import ipRangeCheck from 'ip-range-check';
-import { dictionary } from '../services/sklad.service.js';
 export const trustedIps = ['23.105.238.220', '23.105.239.236', '127.0.0.1', '::1'];
 
 const authMiddleware = async (req, res, next) => {
   try {
     const clientIp = req.ip
-    console.log(req.ip)
-    console.log(req.body)
     if (ipRangeCheck(clientIp, trustedIps)) {
-      req.user = { roles: ['system'], username: 'system' };
-      return next();
-    }
-    if (dictionary.employees[req?.body?.user?.login]) {
-      console.log(req.body.user.login)
-      console.log(dictionary.employees[req.body.user.login])
       req.user = { roles: ['system'], username: 'system' };
       return next();
     }

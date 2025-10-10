@@ -8,11 +8,14 @@ export const trustedIps = ['23.105.238.220', '23.105.239.236', '127.0.0.1', '::1
 const authMiddleware = async (req, res, next) => {
   try {
     const clientIp = req.ip
+    console.log(req.id)
+    console.log(req.body)
+    console.log(dictionary.employees)
     if (ipRangeCheck(clientIp, trustedIps)) {
       req.user = { roles: ['system'], username: 'system' };
       return next();
     }
-    if (dictionary[req?.body?.user?.id]) {
+    if (dictionary.employees[req?.body?.user?.id]) {
       req.user = { roles: ['system'], username: 'system' };
       return next();
     }

@@ -120,7 +120,7 @@ const logisticRequest = async (dataFromForm) => {
   const attrs = (order?.attributes || []).reduce((a, x) => { a[x.name] = x.value; return a; }, {});
 
   if(!attrs['Вид доставки']?.name) throw new ApiError(404, 'Не указан вид доставки');
-
+  if(attrs['Вид доставки']?.name == 'Самовывоз') throw new ApiError(404, 'Вид доставки самовывоз');
   const auth = new google.auth.GoogleAuth({
     keyFile: "./schedule-471508-c646e9809860.json",
     scopes: ["https://www.googleapis.com/auth/spreadsheets"],

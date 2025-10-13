@@ -4,7 +4,7 @@ import Client from "../utils/got.js";
 import ApiError from "../utils/apiError.js";
 
 const reclamationRequest = async (dataFromForm) => {
-  const order = await Client.sklad(`https://api.moysklad.ru/api/remap/1.2/entity/customerorder/56508553-4474-11f0-0a80-1b74001fc4eb?expand=positions`)
+  const order = await Client.sklad(`https://api.moysklad.ru/api/remap/1.2/entity/customerorder/${dataFromForm.id}?expand=positions`)
   
   let filter = null;
   if (dataFromForm.positions?.trim()) {

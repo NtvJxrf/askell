@@ -11,6 +11,8 @@ const accessMap = {
   '/api/sklad/changeStatusByDemand': [],
 
   '/api/reports/create': ['anyone'],//reports
+
+  '/api/extension': ['anyone'],//reports
 }
 const authorizeRoles = (req, res, next) => {
   const user = req.user;

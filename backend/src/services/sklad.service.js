@@ -483,13 +483,12 @@ const packageBox = async (data, order, position, createdEntitys) => {
     result.selk.push(plan)
     return result
 }
-export const createProductionTask = async (id) =>{
+export const createProductionTask = async (id, initiator) =>{
     console.time('creatingProudctionTask')
     const order = await Client.sklad(`https://api.moysklad.ru/api/remap/1.2/entity/customerorder/${id}?expand=positions.assortment,invoicesOut,agent,state&limit=100`)
     if(!order)
         throw new ApiError(`Заказ покупателя с ${id} не найден`)
-    const debt = await checkOrderDetails(order)
-    console.log(debt)
+    const debt = await checkOrderDetails(order, initiator)
     if(debt) return
     const map = {
         'Триплекс': triplex,
@@ -548,6 +547,20 @@ export const createProductionTask = async (id) =>{
                 return acc
             }, [])
             const pzSelk = await makeProductionTask(`Селькоровская материалы/прочее`, `Селькоровская СГИ`, productionRows, order, {}, nonReserved, addComment, createdEntitys)
+            const task = await Client.sklad('https://api.moysklad.ru/api/remap/1.2/entity/task', 'post', {
+                assignee: {
+                    meta: {
+                        "href" : "https://api.moysklad.ru/api/remap/1.2/entity/employee/167c3a00-f3dc-11ed-0a80-13fb000f16e1",
+                        "metadataHref" : "https://api.moysklad.ru/api/remap/1.2/entity/employee/metadata",
+                        "type" : "employee",
+                        "mediaType" : "application/json",
+                        }
+                },
+                operation: {
+                    meta: order.meta
+                },
+                description: `Выполнить заказ покупателя ${order.name}\nКомментарий: ${order?.description || ''}\nПланируемая дата отгрузки: ${order.deliveryPlannedMoment}`
+            })
         }
         if(vizResult.length > 0){
             const productionRows = vizResult.reduce((acc, curr) => {
@@ -942,7 +955,7 @@ const changeStatusForPZ = async (id) => {
         }
     }))
 }
-const checkOrderDetails = async order => {
+const checkOrderDetails = async (order, initiator) => {
     const anyIssue = async (message) => {
         const task = await Client.sklad('https://api.moysklad.ru/api/remap/1.2/entity/task', 'post', {
             assignee: {
@@ -966,7 +979,7 @@ const checkOrderDetails = async order => {
         await anyIssue('Не указана планируемая дата отгрузки, создание пз не было выполнено')
         return true
     }
-    if(order.state.name === 'Поставлено в производство (без полной оплаты)') return false
+    if(initiator === 'zakaz@askell') return false
     const attrs = (order.attributes || []).reduce((a, x) => {
         a[x.name] = x.value;
         return a;
@@ -998,9 +1011,11 @@ async function startWorker(name, func) {
 
     channel.consume(QUEUE_NAME, async (msg) => {
         if (msg !== null) {
-            const id = msg.content.toString()
+            const obj = JSON.parse(msg.content.toString())
+            const id = obj.id
+            const initiator = obj.initiator
             try {
-                await func(id)
+                await func(id, initiator)
                 channel.ack(msg);
             } catch (error) {
                 logger.error(`Ошибка при работе воркера ${name} с id ${id}`, {error: error?.message || error});

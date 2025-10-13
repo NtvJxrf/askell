@@ -102,12 +102,12 @@ const Positions = ({form}) => {
     }, [positions]);
     useEffect( () => {
         if(!positions.length) return
-        let S_all = 0, P_all = 0, stanok = 'Криволинейка', additions = false, triplex = false, print = false, totalCutsv1 = 0, totalCutsv2 = 0, totalCutsv3 = 0
+        let S_all = 0, P_all = 0, stanok = 'Прямолинейка', additions = false, triplex = false, print = false, totalCutsv1 = 0, totalCutsv2 = 0, totalCutsv3 = 0
         positions.forEach(el => {
             if(!el.result || el.result.other.type === 'СМД' || el.result.other.type === 'Керагласс' || el.result.other.type === 'Стеклопакет') return
             S_all += el.result.other.S * el.quantity
             P_all += el.result.other.P * el.quantity
-            el.result.other.stanok === 'Прямолинейка' && (stanok = 'Прямолинейка')
+            el.result.other.stanok === 'Криволинейка' && (stanok = 'Криволинейка')
             el.result.other.type === 'Триплекс' && (triplex = true)
             el.initialData.print && (print = true)
             const {drills, cutsv1, cutsv2, cutsv3, zenk, color} = el.initialData
@@ -116,7 +116,7 @@ const Positions = ({form}) => {
             cutsv3 && (totalCutsv3 += cutsv3 * el.quantity)
             if(drills || cutsv1 || cutsv2 || cutsv3 || zenk || color) additions = true
         })
-        let loadBeforeThisOrder = (stanok === 'Прямолинейка' ? productionLoad.straightResult : productionLoad.straightResult) || 0
+        let loadBeforeThisOrder = (stanok === 'Прямолинейка' ? productionLoad.straightResult : productionLoad.curvedResult) || 0
         if(triplex)
             loadBeforeThisOrder = Math.max(loadBeforeThisOrder, productionLoad.triplexResult)
         let res = 0

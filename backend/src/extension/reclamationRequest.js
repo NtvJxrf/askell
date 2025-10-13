@@ -43,7 +43,7 @@ const reclamationRequest = async (dataFromForm) => {
     attributes: []
   }
   dataFromForm.copyAttrs && (params.attributes = order.attributes)
-  dataFromForm.copyDescription && (params.description += `\n ${order?.description}` || '')
+  dataFromForm.copyDescription && (params.description += `\n${order?.description}` || '')
   params.attributes.push({
     meta: {
       "href" : "https://api.moysklad.ru/api/remap/1.2/entity/customerorder/metadata/attributes/7eaf36bf-a80f-11f0-0a80-163f002be9f9",

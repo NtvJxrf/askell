@@ -33,7 +33,6 @@ export default class SkladHooks{
     static async orderChanged(data){
         let order = null
         const event = data.events[0]
-        console.log(event?.updatedFields)
         if(event?.updatedFields?.includes('state')){
             order ??= await Client.sklad(`${event.meta.href}?expand=agent,state`)
             switch(order.state.name){
@@ -67,18 +66,27 @@ export default class SkladHooks{
                         })
                     }
                 break
-                case 'Поставлено в производство (без полной оплаты)':
-                    const channel = getQueueChannel();
-                    const id = order.id
-                    const success = channel.sendToQueue('pzwebhook', Buffer.from(id), { persistent: true });
-
-                    if (!success) throw new Error('Failed to enqueue task');
+                case 'Поставлено в производство (без полной оплаты)':{
+                    sendToQueue({id: order.id, initiator: data.auditContext.uid})
+                }
+                break
+                case 'Поставлено в производство':{
+                    sendToQueue({id: order.id, initiator: data.auditContext.uid})
+                }
+                break
+                case 'Поставлено в производство ВИЗ':{
+                    sendToQueue({id: order.id, initiator: data.auditContext.uid})
+                }
                 break
             }
         }
     }
 }
-
+const sendToQueue = (payload) => {
+    const channel = getQueueChannel();
+    const success = channel.sendToQueue('pzwebhook', Buffer.from(JSON.stringify(payload)), { persistent: true });
+    if (!success) throw new Error('Failed to enqueue task');
+}
 // {
 //   auditContext: {
 //     meta: {

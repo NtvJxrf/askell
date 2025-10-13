@@ -8,14 +8,14 @@ const getOrdersInWork = async () => {
     if(process.env.NODE_ENV == 'development') {
         const res = {
             'Криволинейка': { count: 5, positionsCount: 5, S: 5, P: 5 },
-            'Прямолинейка': { count: 5, positionsCount: 5, S: 5, P: 5 },
+            'Прямолинейка': { count: 10, positionsCount: 10, S: 10, P: 10 },
             'Триплекс (Без учета резки стекла)': { count: 5, positionsCount: 5, S: 5, P: 5 },
             cutsv1: 5,
             cutsv2: 5,
             cutsv3: 5,
-            curvedResult: 5,
+            curvedResult: 10,
             straightResult: 5,
-            triplexResult: 5
+            triplexResult: 15
         }
         res.moment = Date.now()
         SkladService.ordersInWork = res

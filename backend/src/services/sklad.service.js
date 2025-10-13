@@ -550,11 +550,11 @@ export const createProductionTask = async (id, initiator) =>{
             const task = await Client.sklad('https://api.moysklad.ru/api/remap/1.2/entity/task', 'post', {
                 assignee: {
                     meta: {
-                        "href" : "https://api.moysklad.ru/api/remap/1.2/entity/employee/167c3a00-f3dc-11ed-0a80-13fb000f16e1",
+                        "href" : "https://api.moysklad.ru/api/remap/1.2/entity/employee/8424e55c-b720-11ed-0a80-05db0004212f",
                         "metadataHref" : "https://api.moysklad.ru/api/remap/1.2/entity/employee/metadata",
                         "type" : "employee",
                         "mediaType" : "application/json",
-                        }
+                    }
                 },
                 operation: {
                     meta: order.meta

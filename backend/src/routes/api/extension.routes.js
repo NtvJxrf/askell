@@ -6,4 +6,7 @@ const router = express.Router()
 router
     .route('/logisticRequest')
     .post(authorizeRoles, ExtensionController.logisticRequest)
+router
+    .route('/reclamationRequest')
+    .post(authorizeRoles, ExtensionController.reclamationRequest)
 export default router

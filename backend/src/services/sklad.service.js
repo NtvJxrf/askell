@@ -967,14 +967,14 @@ const checkOrderDetails = async order => {
         return true
     }
     if(order.state.name === 'Поставлено в производство (без полной оплаты)') return false
-    if(order.sum > order.payedSum){
-        await anyIssue('Заказ оплачен не полностью, создание пз не было выполнено')
-        return true
-    }
     const attrs = (order.attributes || []).reduce((a, x) => {
         a[x.name] = x.value;
         return a;
     }, {});
+    if((order.sum > order.payedSum) && !attrs['Рекламация']){
+        await anyIssue('Заказ оплачен не полностью, создание пз не было выполнено')
+        return true
+    }
     if(!(attrs['Вид доставки']?.name == 'Самовывоз')){
         const missing = ['Город получателя', 'Вид доставки', 'Телефон получателя', 'Адрес получателя', 'Выбор транспортной компании']
             .filter(k => !(order.attributes||[]).some(a => a.name===k));

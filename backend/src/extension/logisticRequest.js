@@ -111,7 +111,6 @@ function calcPositions(order, filter) {
 
     const weight = (position.assortment?.weight * quantity) || 0
     totalWeight += weight;
-    console.log(totalWeight)
     if (position.assortment.weight > heaviest) heaviest = position.assortment.weight;
 
     if (!largerPosition || position.assortment.volume > largerPosition.volume) {

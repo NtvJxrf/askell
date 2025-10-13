@@ -485,7 +485,7 @@ const packageBox = async (data, order, position, createdEntitys) => {
 }
 export const createProductionTask = async (id, initiator) =>{
     console.time('creatingProudctionTask')
-    const order = await Client.sklad(`https://api.moysklad.ru/api/remap/1.2/entity/customerorder/${id}?expand=positions.assortment,invoicesOut,agent,state&limit=100`)
+    const order = await Client.sklad(`https://api.moysklad.ru/api/remap/1.2/entity/customerorder/${id}?expand=positions.assortment,invoicesOut,agent,state,owner&limit=100`)
     if(!order)
         throw new ApiError(`Заказ покупателя с ${id} не найден`)
     const debt = await checkOrderDetails(order, initiator)
@@ -959,7 +959,7 @@ const checkOrderDetails = async (order, initiator) => {
     const anyIssue = async (message) => {
         const task = await Client.sklad('https://api.moysklad.ru/api/remap/1.2/entity/task', 'post', {
             assignee: {
-                meta: order.owner.meta,
+                meta: order?.owner?.meta,
             },
             operation: {
                 meta: order.meta
@@ -975,6 +975,7 @@ const checkOrderDetails = async (order, initiator) => {
             }}
         })
     }
+    if(order.owner.name == 'ООО "ИНТЕРНЕТ РЕШЕНИЯ".') return false
     if(!order.deliveryPlannedMoment){
         await anyIssue('Не указана планируемая дата отгрузки, создание пз не было выполнено')
         return true
@@ -984,7 +985,7 @@ const checkOrderDetails = async (order, initiator) => {
         a[x.name] = x.value;
         return a;
     }, {});
-    if((order.sum > order.payedSum) && !attrs['Рекламация']){
+    if((order.sum > order.payedSum) && !attrs['Рекламация'] ){
         await anyIssue('Заказ оплачен не полностью, создание пз не было выполнено')
         return true
     }

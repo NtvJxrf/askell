@@ -8,7 +8,7 @@ const HEADERS = [
   '№ Заказа покупателя', 'Диапазон доставки, в днях', 'Вес груза', 
   'Вес самого большого места', 'Размер самого большого места', 'Груз упакован в', 'Позиции', 
   'Дата размещения заявки', 'Заявка от', 'Отправитель', 'Плательщик', 'Получатель', 
-  'Отгрузка из', 'Адрес', 'Телефон', 'Время работы', 'Обед'
+  'Отгрузка из', 'Адрес', 'Телефон', 'Время работы', 'Обед', 'Название ТК'
 ];
 
 async function createSheetIfNotExists(sheets, title) {
@@ -43,11 +43,22 @@ async function createSheetIfNotExists(sheets, title) {
 
 function formatDateTime() {
   const now = new Date();
-  const pad = n => String(n).padStart(2, '0');
-  return `${pad(now.getDate())}.${pad(now.getMonth() + 1)}.${now.getFullYear()} ${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
+  const options = {
+    timeZone: 'Asia/Yekaterinburg',
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hour12: false
+  };
+
+  const formatter = new Intl.DateTimeFormat('ru-RU', options);
+  return formatter.format(now).replace(',', '');
 }
 
-function prepareRow(order, dataFromForm, positionsData, attrs, deliveryType) {
+function prepareRow(order, dataFromForm, positionsData, attrs) {
   const positionsText = dataFromForm.positions?.trim() ? dataFromForm.positions : "Все позиции";
   return [
     order.name,
@@ -66,7 +77,8 @@ function prepareRow(order, dataFromForm, positionsData, attrs, deliveryType) {
     attrs['Адрес получателя'],
     attrs['Телефон получателя'],
     dataFromForm.availableHours,
-    dataFromForm.lunchBreak
+    dataFromForm.lunchBreak,
+    attrs['Выбор транспортной компании']
   ];
 }
 async function appendRowToSheet(sheets, title, row) {
@@ -90,17 +102,16 @@ function calcPositions(order, filter) {
       name.includes('ящик') && (packing['Ящик'] = true);
       name.includes('короб') && (packing['Короб'] = true);
     }
-
+    let quantity = position.quantity
     if (filter) {
       const match = filter.find(f => f.index === i);
       if (!match) continue;
-      var quantity = match.quantity || position.quantity;
-    } else {
-      var quantity = position.quantity;
+      quantity = match.quantity;
     }
 
-    const weight = position.assortment.weight * quantity;
+    const weight = (position.assortment?.weight * quantity) || 0
     totalWeight += weight;
+    console.log(totalWeight)
     if (position.assortment.weight > heaviest) heaviest = position.assortment.weight;
 
     if (!largerPosition || position.assortment.volume > largerPosition.volume) {

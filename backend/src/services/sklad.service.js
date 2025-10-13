@@ -489,6 +489,7 @@ export const createProductionTask = async (id) =>{
     if(!order)
         throw new ApiError(`Заказ покупателя с ${id} не найден`)
     const debt = await checkOrderDetails(order)
+    console.log(debt)
     if(debt) return
     const map = {
         'Триплекс': triplex,

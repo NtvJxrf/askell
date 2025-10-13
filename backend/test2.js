@@ -6,7 +6,7 @@ const res = await Client.request('http://localhost:7878/api/extension/logisticRe
         dataFromForm: {
             deliveryDays: 1,
             targetDate: '08.10.2025',
-            id: '56508553-4474-11f0-0a80-1b74001fc4eb',
+            id: '5f3e87dd-a44e-11f0-0a80-0ce70026913c',
             requestFrom: '1c@askell'
         },
         user: {

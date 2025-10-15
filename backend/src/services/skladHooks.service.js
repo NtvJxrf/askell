@@ -71,7 +71,7 @@ export default class SkladHooks{
                     sendToQueue({id: order.id, initiator: data.auditContext.uid})
                     const task = await Client.sklad('https://api.moysklad.ru/api/remap/1.2/entity/task', 'post', {
                         assignee: {
-                            meta: dictionary.employees['8424e55c-b720-11ed-0a80-05db0004212f'] //Самойлова
+                            meta: dictionary.employees['8424e55c-b720-11ed-0a80-05db0004212f'].meta //Самойлова
                         },
                         operation: {
                             meta: order.meta

@@ -19,7 +19,7 @@ const res = await Client.request('http://localhost:7878/api/sklad/orderChanged',
             {
             meta: {
                 type: 'customerorder',
-                href: 'https://api.moysklad.ru/api/remap/1.2/entity/customerorder/b7591dda-a82c-11f0-0a80-0fd9011d206a'
+                href: 'https://api.moysklad.ru/api/remap/1.2/entity/customerorder/ee387e9d-a906-11f0-0a80-099201130ef3'
             },
             updatedFields: ['state'],
             action: 'UPDATE',

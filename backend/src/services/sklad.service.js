@@ -172,17 +172,16 @@ console.log(`Загружено ${records.length} техкарт из БД в di
 const triplex = async (data, order, position, createdEntitys) => {
     const result = {
         viz: [],
-        selk: []
+        selk: [],
     }
     data.initialData.print && (result.print = true)
     data.initialData.color && (result.color = data.initialData.color)
     result.triplex = true
     const pfs = []
     const materials = Object.entries(data.initialData).filter(([key, value]) => key.startsWith('material') && value !== undefined).map(([_, value]) => value);
-
+    result.triplexS = data.result.other.S * position.quantity
+    return result
     const stagesSelk = generateStages(data, 'selk')
-
-
     for(const material of materials){
         const promises = []
         promises.push(makeprocessingprocess(stagesSelk))
@@ -489,6 +488,7 @@ export const createProductionTask = async (id, initiator) =>{
     if(!order)
         throw new ApiError(`Заказ покупателя с ${id} не найден`)
     const debt = await checkOrderDetails(order, initiator)
+
     if(debt) return
     const map = {
         'Триплекс': triplex,
@@ -523,11 +523,7 @@ export const createProductionTask = async (id, initiator) =>{
             }
         }
         if(results.length < 1) return
-        let print = false
-        let triplex = false
-        let ceraglass = false
-        let colors = []
-        let nonReserved = 0
+        let print = false, triplex = false, ceraglass = false, colors = [], nonReserved = 0, totalTriplexS = 0
         results.forEach( el => {
             el.selk && (selkResult = selkResult.concat(el.selk))
             el.viz && (vizResult = vizResult.concat(el.viz))
@@ -537,7 +533,13 @@ export const createProductionTask = async (id, initiator) =>{
             el.triplex && (triplex = true)
             el.ceraglass && (ceraglass = true)
             el.color && (colors.push(el.color))
+            el.triplexS && (totalTriplexS += el.triplexS)
         })
+        console.log(totalTriplexS)
+        const vizWorkTime = Math.ceil(totalTriplexS / 19.2) * 5 + totalTriplexS / 2.88
+        // const selkWorkTime = (data.result.other.P * materials.length) / 13
+        console.log('VREMYA', vizWorkTime)
+        return
         if(selkResult.length > 0){
             const productionRows = selkResult.reduce((acc, curr) => {
                 nonReserved += curr.materials.meta.size
@@ -547,20 +549,6 @@ export const createProductionTask = async (id, initiator) =>{
                 return acc
             }, [])
             const pzSelk = await makeProductionTask(`Селькоровская материалы/прочее`, `Селькоровская СГИ`, productionRows, order, {}, nonReserved, addComment, createdEntitys)
-            const task = await Client.sklad('https://api.moysklad.ru/api/remap/1.2/entity/task', 'post', {
-                assignee: {
-                    meta: {
-                        "href" : "https://api.moysklad.ru/api/remap/1.2/entity/employee/8424e55c-b720-11ed-0a80-05db0004212f",
-                        "metadataHref" : "https://api.moysklad.ru/api/remap/1.2/entity/employee/metadata",
-                        "type" : "employee",
-                        "mediaType" : "application/json",
-                    }
-                },
-                operation: {
-                    meta: order.meta
-                },
-                description: `Выполнить заказ покупателя ${order.name}\nКомментарий: ${order?.description || ''}\nПланируемая дата отгрузки: ${order.deliveryPlannedMoment}`
-            })
         }
         if(vizResult.length > 0){
             const productionRows = vizResult.reduce((acc, curr) => {
@@ -975,7 +963,7 @@ const checkOrderDetails = async (order, initiator) => {
             }}
         })
     }
-    if(order.owner.name == 'ООО "ИНТЕРНЕТ РЕШЕНИЯ".') return false
+    if(order.agent.name == 'ООО "ИНТЕРНЕТ РЕШЕНИЯ".') return false
     if(!order.deliveryPlannedMoment){
         await anyIssue('Не указана планируемая дата отгрузки, создание пз не было выполнено')
         return true
@@ -989,7 +977,7 @@ const checkOrderDetails = async (order, initiator) => {
         await anyIssue('Заказ оплачен не полностью, создание пз не было выполнено')
         return true
     }
-    if(!(attrs['Вид доставки']?.name == 'Самовывоз')){
+    if((attrs['Вид доставки']?.name != 'Самовывоз')){
         const missing = ['Город получателя', 'Вид доставки', 'Телефон получателя', 'Адрес получателя', 'Выбор транспортной компании']
             .filter(k => !(order.attributes||[]).some(a => a.name===k));
         if(missing.length > 0){

@@ -1,5 +1,6 @@
 import Client from "../utils/got.js"
 import { getQueueChannel } from '../utils/rabbitmq.js'
+import { dictionary } from "./sklad.service.js"
 export default class SkladHooks{
     static async pzChange(data){
         let document = null
@@ -66,17 +67,20 @@ export default class SkladHooks{
                         })
                     }
                 break
-                case 'Поставлено в производство (без полной оплаты)':{
+                case 'Поставлено в производство':
                     sendToQueue({id: order.id, initiator: data.auditContext.uid})
-                }
+                    const task = await Client.sklad('https://api.moysklad.ru/api/remap/1.2/entity/task', 'post', {
+                        assignee: {
+                            meta: dictionary.employees['8424e55c-b720-11ed-0a80-05db0004212f'] //Самойлова
+                        },
+                        operation: {
+                            meta: order.meta
+                        },
+                        description: `Выполнить заказ покупателя ${order.name}\nКомментарий: ${order?.description || ''}\nПланируемая дата отгрузки: ${order.deliveryPlannedMoment}`
+                    })
                 break
-                case 'Поставлено в производство':{
+                case 'Поставлено в производство ВИЗ':
                     sendToQueue({id: order.id, initiator: data.auditContext.uid})
-                }
-                break
-                case 'Поставлено в производство ВИЗ':{
-                    sendToQueue({id: order.id, initiator: data.auditContext.uid})
-                }
                 break
             }
         }

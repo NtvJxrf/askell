@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "test": "node test.js",
+    "test": "node test3.js",
     "dev": "nodemon src/server.js --ignore test.js",
     "lint": "eslint src --fix"
   },

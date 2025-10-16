@@ -36,9 +36,13 @@ export default class SkladHooks{
         const event = data.events[0]
         if(event?.updatedFields?.includes('state')){
             order ??= await Client.sklad(`${event.meta.href}?expand=agent,state`)
+            const attrs = (order.attributes || []).reduce((a, x) => {
+                a[x.name] = x.value;
+                return a;
+            }, {});
             switch(order.state.name){
                 case 'Готово':
-                    if(order.payedSum < order.sum){
+                    if(order.payedSum < order.sum && !attrs['Рекламация']){
                         await Client.sklad(order.meta.href, 'put', {
                             state: {
                                 meta: {

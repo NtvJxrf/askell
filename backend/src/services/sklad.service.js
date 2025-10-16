@@ -173,16 +173,31 @@ const triplex = async (data, order, position, createdEntitys) => {
     const result = {
         viz: [],
         selk: [],
+        triplex: {
+            quantity: position.quantity,
+            maxThickness: 0,
+            S: data.result.other.S * position.quantity,
+            exist: true
+        },
+        color: {
+            S: 0
+        },
+        ceraglass: {
+            S: 0
+        }
     }
     data.initialData.print && (result.print = true)
-    data.initialData.color && (result.color = data.initialData.color)
-    result.triplex = true
+    if(data.initialData.color){
+        result.color.data = data.initialData.color
+        result.color.exist = true
+        result.color.S = data.result.other.S * position.quantity
+    }
     const pfs = []
     const materials = Object.entries(data.initialData).filter(([key, value]) => key.startsWith('material') && value !== undefined).map(([_, value]) => value);
-    result.triplexS = data.result.other.S * position.quantity
-    return result
     const stagesSelk = generateStages(data, 'selk')
     for(const material of materials){
+        const thickness = Number(material.match(/(\d+(?:[.,]\d+)?)\s*мм/i)[1])
+        result.triplex.maxThickness < thickness && (result.triplex.maxThickness = thickness)
         const promises = []
         promises.push(makeprocessingprocess(stagesSelk))
         promises.push(makeProduct(data, material, createdEntitys, order, 'Стекло'))
@@ -194,7 +209,6 @@ const triplex = async (data, order, position, createdEntitys) => {
         result.selk.push(plan)
         pfs.push(product)
     }
-
     const stagesViz = generateStages(data, 'viz')
 
     const processingprocessViz = await makeprocessingprocess(stagesViz)
@@ -488,7 +502,6 @@ export const createProductionTask = async (id, initiator) =>{
     if(!order)
         throw new ApiError(`Заказ покупателя с ${id} не найден`)
     const debt = await checkOrderDetails(order, initiator)
-
     if(debt) return
     const map = {
         'Триплекс': triplex,
@@ -523,23 +536,40 @@ export const createProductionTask = async (id, initiator) =>{
             }
         }
         if(results.length < 1) return
-        let print = false, triplex = false, ceraglass = false, colors = [], nonReserved = 0, totalTriplexS = 0
+        let print = false, triplex = false, ceraglass = false, colors = [], nonReserved = 0
+        const positionsData = {
+            triplex: {
+                maxThickness: 0,
+                quantity: 0,
+                S: 0
+            },
+            color: {
+                S: 0
+            },
+            ceraglass: {
+                maxThickness: 0,
+                quantity: 0,
+                S: 0
+            }
+        }
         results.forEach( el => {
             el.selk && (selkResult = selkResult.concat(el.selk))
             el.viz && (vizResult = vizResult.concat(el.viz))
             el.polevSP && (polevResultSp = polevResultSp.concat(el.polevSP))
             el.polevGlass && (polevResultGlass = polevResultGlass.concat(el.polevGlass))
             el.print && (print = true)
-            el.triplex && (triplex = true)
-            el.ceraglass && (ceraglass = true)
-            el.color && (colors.push(el.color))
-            el.triplexS && (totalTriplexS += el.triplexS)
+            el.triplex.exist && (triplex = true)
+            el.ceraglass.exist && (ceraglass = true)
+            el.color.exist && (colors.push(el.color.data))
+            positionsData.triplex.S += el.triplex.S
+            el.triplex.maxThickness > positionsData.triplex.maxThickness && (positionsData.triplex.maxThickness = el.triplex.maxThickness)
+            positionsData.triplex.quantity += el.triplex.quantity
+            positionsData.color.S += el.color.S
         })
-        console.log(totalTriplexS)
-        const vizWorkTime = Math.ceil(totalTriplexS / 19.2) * 5 + totalTriplexS / 2.88
-        // const selkWorkTime = (data.result.other.P * materials.length) / 13
-        console.log('VREMYA', vizWorkTime)
-        return
+        // const triplexWorkTime = Math.ceil(positionsData.triplex.S / 19.2) * (positionsData.triplex.maxThickness >= 8 ? 6 : 5) + positionsData.triplex.S / 2.88 + 0.25 * positionsData.triplex.quantity
+        // const colorWorkTime = positionsData.color.S / 2.5
+        // const ceraglassWorkTime = Math.ceil(positionsData.ceraglass.S / 19.2) * (positionsData.ceraglass.maxThickness >= 8 ? 6 : 5) + positionsData.ceraglass.S / 2.88 + 0.25 * positionsData.ceraglass.quantity
+        // const vizWorkTime = triplexWorkTime + colorWorkTime + ceraglassWorkTime
         if(selkResult.length > 0){
             const productionRows = selkResult.reduce((acc, curr) => {
                 nonReserved += curr.materials.meta.size

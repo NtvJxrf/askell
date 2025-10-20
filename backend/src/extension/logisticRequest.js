@@ -106,9 +106,8 @@ function calcPositions(order, filter) {
     if (filter) {
       const match = filter.find(f => f.index === i);
       if (!match) continue;
-      quantity = match.quantity;
+      quantity = match.quantity == null ? position.quantity : match.quantity;
     }
-
     const weight = (position.assortment?.weight * quantity) || 0
     totalWeight += weight;
     if (position.assortment.weight > heaviest) heaviest = position.assortment.weight;
@@ -117,7 +116,7 @@ function calcPositions(order, filter) {
       largerPosition = position.assortment;
     }
   }
-
+  console.log(totalWeight)
   const attrs = (largerPosition?.attributes || []).reduce((a, x) => {
     a[x.name] = x.value; return a;
   }, {});
@@ -132,7 +131,7 @@ const logisticRequest = async (dataFromForm) => {
   if(!attrs['Вид доставки']?.name) throw new ApiError(404, 'Не указан вид доставки');
   if(attrs['Вид доставки']?.name == 'Самовывоз') throw new ApiError(404, 'Вид доставки самовывоз');
   const auth = new google.auth.GoogleAuth({
-    keyFile: "./schedule-471508-c646e9809860.json",
+    keyFile: "../schedule-471508-c646e9809860.json",
     scopes: ["https://www.googleapis.com/auth/spreadsheets"],
   });
   const sheets = google.sheets({ version: "v4", auth });

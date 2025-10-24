@@ -86,6 +86,9 @@ export default class SkladHooks{
                 case 'Поставлено в производство ВИЗ':
                     sendToQueue({id: order.id, initiator: data.auditContext.uid})
                 break
+                case 'Тест':
+                    sendToQueue({id: order.id, initiator: data.auditContext.uid})
+                break
             }
         }
     }

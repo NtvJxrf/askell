@@ -116,7 +116,6 @@ function calcPositions(order, filter) {
       largerPosition = position.assortment;
     }
   }
-  console.log(totalWeight)
   const attrs = (largerPosition?.attributes || []).reduce((a, x) => {
     a[x.name] = x.value; return a;
   }, {});

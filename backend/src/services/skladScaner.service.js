@@ -21,7 +21,6 @@ setInterval(async () => {
     try {
         await scanNonPayedOrders()
     } catch (err) {
-        console.error('scanNonPayedOrders error:', err)
         logger.error('scanNonPayedOrders error:', err)
     }
 }, 300_000)//Каждые 5 минут

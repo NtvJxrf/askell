@@ -135,7 +135,6 @@ export default class SkladService {
             deleteEntitys(deletedPositions)
         }
     }
-
     static async getOrder(name){
         const response = await Client.sklad(`https://api.moysklad.ru/api/remap/1.2/entity/customerorder?filter=name=${name}&expand=positions.assortment,agent,organization&limit=100`)
         const order = response.rows[0]
@@ -169,18 +168,24 @@ SkladService.selfcost.updates['Техкарты для смд'] = {
     date: Date.now(),
 };
 console.log(`Загружено ${records.length} техкарт из БД в dictionary`);
-const triplex = async (data, order, position, createdEntitys) => {
+const triplex = async (data, order, position, createdEntitys, pd) => {
     const result = {
         viz: [],
-        selk: [],
+        selk: []
     }
     data.initialData.print && (result.print = true)
-    data.initialData.color && (result.color = data.initialData.color)
-    result.triplex = true
+    if(data.initialData.color){
+        result.color = data.initialData.color
+        pd.color.S += data.result.other.S * position.quantity
+    }
+    pd.triplex.quantity += position.quantity
+    pd.triplex.S += data.result.other.S * position.quantity
     const pfs = []
     const materials = Object.entries(data.initialData).filter(([key, value]) => key.startsWith('material') && value !== undefined).map(([_, value]) => value);
     const stagesSelk = generateStages(data, 'selk')
     for(const material of materials){
+        const thickness = Number(material.match(/(\d+(?:[.,]\d+)?)\s*мм/i)[1])
+        pd.triplex.maxThickness < thickness && (pd.triplex.maxThickness = thickness)
         const promises = []
         promises.push(makeprocessingprocess(stagesSelk))
         promises.push(makeProduct(data, material, createdEntitys, order, 'Стекло'))
@@ -192,7 +197,6 @@ const triplex = async (data, order, position, createdEntitys) => {
         result.selk.push(plan)
         pfs.push(product)
     }
-
     const stagesViz = generateStages(data, 'viz')
 
     const processingprocessViz = await makeprocessingprocess(stagesViz)
@@ -215,13 +219,18 @@ const triplex = async (data, order, position, createdEntitys) => {
     result.viz.push(planViz)
     return result
 }
-const ceraglass = async (data, order, position, createdEntitys) => {
+const ceraglass = async (data, order, position, createdEntitys, pd) => {
     const result = {
         viz: [],
         selk: []
     }
-    data.initialData.color && (result.color = data.initialData.color)
+    if (data.initialData.color){
+        result.color = data.initialData.color
+        pd.color.S += data.result.other.S * position.quantity
+    }
     result.ceraglass = true
+    pd.ceraglass.quantity += position.quantity
+    pd.ceraglass.S += data.result.other.S * position.quantity
     const pfs = []
     const materials = [data.initialData.material1, data.initialData.material2]
     const heights = data.result.other.heights
@@ -234,6 +243,8 @@ const ceraglass = async (data, order, position, createdEntitys) => {
         if(material.toLowerCase().includes('стекло')){
             for(let i = 0; i < heights.length; i++){
                 const promises = []
+                const thickness = Number(material.match(/(\d+(?:[.,]\d+)?)\s*мм/i)[1])
+                pd.ceraglass.maxThickness < thickness && (pd.ceraglass.maxThickness = thickness)
                 promises.push(makeprocessingprocess(stagesSelk))
                 const attrs = { height: heights[i], width: widths[i], polishing, drills, zenk, cutsv1, cutsv2, cutsv3, tempered, color, print, ifPF: true, order, material, stanok, type: 'Стекло' }
                 const product = await Client.sklad('https://api.moysklad.ru/api/remap/1.2/entity/product', 'post', {
@@ -314,7 +325,7 @@ const ceraglass = async (data, order, position, createdEntitys) => {
     result.viz.push(planViz)
     return result
 }
-const glass = async (data, order, position, createdEntitys) => {
+const glass = async (data, order, position, createdEntitys, pd) => {
     const result = {
         viz: [],
         selk: []
@@ -329,7 +340,10 @@ const glass = async (data, order, position, createdEntitys) => {
         return result
     }
     data.initialData.print && (result.print = true)
-    data.initialData.color && (result.color = data.initialData.color)
+    if (data.initialData.color){
+        result.color = data.initialData.color
+        pd.color.S += data.result.other.S * position.quantity
+    }
     const stagesSelk = generateStages(data, 'selk')
     const isPF = data.result.other.viz
     const processingprocess = await makeprocessingprocess(stagesSelk)
@@ -353,7 +367,7 @@ const glass = async (data, order, position, createdEntitys) => {
     }
     return result
 }
-const smd = async (data, order, position, createdEntitys) => {
+const smd = async (data, order, position, createdEntitys, pd) => {
     if(!data){
         const productionRows = [{
                     processingPlan: {
@@ -406,7 +420,7 @@ const smd = async (data, order, position, createdEntitys) => {
     const pzViz = await makeProductionTask(`ВИЗ ПФ`, `ВИЗ СГИ`, productionRows, order, {viz: true, smd: true, print, height: data.initialData.height, width: data.initialData.width, colors: [color]}, 1, ``, createdEntitys)
     return result
 }
-const glassPacket = async (data, order, position, createdEntitys) => {
+const glassPacket = async (data, order, position, createdEntitys, pd) => {
     const result = {
         viz: [],
         selk: [],
@@ -486,7 +500,6 @@ export const createProductionTask = async (id, initiator) =>{
     if(!order)
         throw new ApiError(`Заказ покупателя с ${id} не найден`)
     const debt = await checkOrderDetails(order, initiator)
-
     if(debt) return
     const map = {
         'Триплекс': triplex,
@@ -503,11 +516,26 @@ export const createProductionTask = async (id, initiator) =>{
     let polevResultSp = []
     const results = []
     let addComment = ''
+    const positionsData = {
+        triplex: {
+            maxThickness: 0,
+            quantity: 0,
+            S: 0
+        },
+        color: {
+            S: 0
+        },
+        ceraglass: {
+            maxThickness: 0,
+            quantity: 0,
+            S: 0
+        }
+    }
     try{
         for(const position of order.positions.rows){
             const data = await Details.findOne({where: {productId: position.assortment.id}})
             if(data && !data?.result?.other?.customerSuppliedGlassForTempering){
-                results.push(await map[data.result.other.type](data, order, position, createdEntitys))
+                results.push(await map[data.result.other.type](data, order, position, createdEntitys, positionsData))
                 continue
             }
             const attrs = (position?.assortment?.attributes || []).reduce((a, x) => {
@@ -521,7 +549,7 @@ export const createProductionTask = async (id, initiator) =>{
             }
         }
         if(results.length < 1) return
-        let print = false, triplex = false, ceraglass = false, colors = [], nonReserved = 0, totalTriplexS = 0
+        let print = false, triplex = false, ceraglass = false, colors = [], nonReserved = 0
         results.forEach( el => {
             el.selk && (selkResult = selkResult.concat(el.selk))
             el.viz && (vizResult = vizResult.concat(el.viz))
@@ -531,8 +559,21 @@ export const createProductionTask = async (id, initiator) =>{
             el.triplex && (triplex = true)
             el.ceraglass && (ceraglass = true)
             el.color && (colors.push(el.color))
-            el.triplexS && (totalTriplexS += el.triplexS)
         })
+        console.log(positionsData)
+        let vizDays = 0
+        const triplexWorkTime = Math.ceil(positionsData.triplex.S / 19.2) * (positionsData.triplex.maxThickness >= 8 ? 6 : 5) + positionsData.triplex.S / 2.88 + 0.16 * positionsData.triplex.quantity
+        const colorWorkTime = positionsData.color.S / 2.5
+        const ceraglassWorkTime = Math.ceil(positionsData.ceraglass.S / 19.2) * (positionsData.ceraglass.maxThickness >= 8 ? 6 : 5) + positionsData.ceraglass.S / 2.88 + 0.16 * positionsData.ceraglass.quantity
+        const vizWorkTime = triplexWorkTime + colorWorkTime + ceraglassWorkTime
+        if(vizWorkTime > 0){
+            vizDays = Math.ceil(vizWorkTime / 8) + 1 + (ceraglassWorkTime > 0 ? 1 : 0)
+        }
+        const date = new Date(order.deliveryPlannedMoment)
+        const tmpDate = new Date(date)
+        tmpDate.setDate(date.getDate() - vizDays)
+        const selkPlanDate = formatDateTime(tmpDate)
+        console.log(selkPlanDate, vizDays)
         if(selkResult.length > 0){
             const productionRows = selkResult.reduce((acc, curr) => {
                 nonReserved += curr.materials.meta.size
@@ -541,7 +582,7 @@ export const createProductionTask = async (id, initiator) =>{
                 })
                 return acc
             }, [])
-            const pzSelk = await makeProductionTask(`Селькоровская материалы/прочее`, `Селькоровская СГИ`, productionRows, order, {}, nonReserved, addComment, createdEntitys)
+            const pzSelk = await makeProductionTask(`Селькоровская материалы/прочее`, `Селькоровская СГИ`, productionRows, order, {}, nonReserved, addComment, createdEntitys, selkPlanDate)
         }
         if(vizResult.length > 0){
             const productionRows = vizResult.reduce((acc, curr) => {
@@ -625,7 +666,17 @@ export const createProductionTask = async (id, initiator) =>{
     }
     
 }
-const makeProductionTask = async (materialsStore, productsStore, productionRows, order, checkboxes, nonReserved, addComment, createdEntitys) => {
+function formatDateTime(date) {
+  const pad = (n) => String(n).padStart(2, '0')
+  const year = date.getFullYear()
+  const month = pad(date.getMonth() + 1)
+  const day = pad(date.getDate())
+  const hours = pad(date.getHours())
+  const minutes = pad(date.getMinutes())
+  const seconds = pad(date.getSeconds())
+  return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`
+}
+const makeProductionTask = async (materialsStore, productsStore, productionRows, order, checkboxes, nonReserved, addComment, createdEntitys, planDate) => {
     const stats = {
         materialsStore: { meta: dictionary.stores[materialsStore]},
         productsStore: { meta: dictionary.stores[productsStore]},
@@ -646,7 +697,10 @@ const makeProductionTask = async (materialsStore, productsStore, productionRows,
         }}
     }
     order?.owner?.meta && (stats.owner = { meta: order.owner.meta})
-    order?.deliveryPlannedMoment && (stats.deliveryPlannedMoment = order.deliveryPlannedMoment)
+    if(planDate)
+        stats.deliveryPlannedMoment = planDate
+    else
+        order?.deliveryPlannedMoment && (stats.deliveryPlannedMoment = order.deliveryPlannedMoment)
 
     const task = await Client.sklad(`https://api.moysklad.ru/api/remap/1.2/entity/productiontask`, 'post', stats)
     createdEntitys.task.push(task)

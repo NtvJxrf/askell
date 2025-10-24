@@ -1,7 +1,6 @@
 import SkladService from '../services/sklad.service.js'
 
-const getMeta = (code, color) =>
-    code ? smdMaterials[code]?.meta : SkladService.selfcost.colors[color]?.meta
+const getMeta = (code, color) => code ? smdMaterials[code]?.meta : SkladService.selfcost.colors[color]?.meta
 
 export const generateSmdMaterials = (data, color, material) => {
     const materials = []
@@ -80,7 +79,6 @@ export const generateSmdMaterials = (data, color, material) => {
     add('Сборка СМД', qty, 1061563)                                                // Шайба М6
     return materials
 }
-
 const processPositionsMap = {
     "ОКР (окрашивание стекла)" : {
         "meta": {

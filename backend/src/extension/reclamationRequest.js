@@ -1,7 +1,4 @@
-import { google } from "googleapis";
-import { dictionary } from "../services/sklad.service.js";
 import Client from "../utils/got.js";
-import ApiError from "../utils/apiError.js";
 
 const reclamationRequest = async (dataFromForm) => {
   const order = await Client.sklad(`https://api.moysklad.ru/api/remap/1.2/entity/customerorder/${dataFromForm.id}?expand=positions`)
@@ -43,7 +40,7 @@ const reclamationRequest = async (dataFromForm) => {
     attributes: []
   }
   dataFromForm.copyAttrs && (params.attributes = order.attributes.filter(el => el.meta.href != 'https://api.moysklad.ru/api/remap/1.2/entity/customerorder/metadata/attributes/7eaf36bf-a80f-11f0-0a80-163f002be9f9'))
-  dataFromForm.copyDescription && (params.description += `\n${order?.description}` || '')
+  dataFromForm.copyDescription && (params.description += order?.description ? `\n${order.description}` : '')
   params.attributes.push({
     meta: {
       "href" : "https://api.moysklad.ru/api/remap/1.2/entity/customerorder/metadata/attributes/7eaf36bf-a80f-11f0-0a80-163f002be9f9",

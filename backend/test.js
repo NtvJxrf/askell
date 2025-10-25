@@ -14,9 +14,10 @@ function chunkArray(array, size) {
   }
   return chunks;
 }
-
+console.log('Всего записей: ', details.length)
 const chunks = chunkArray(details, 900);
 const promises = []
+console.log('Всего будет запросов: ', promises.length)
 for (const [index, chunk] of chunks.entries()) {
   console.log(`Отправляем партию ${index + 1} из ${chunks.length}...`);
 
@@ -49,4 +50,4 @@ for (const [index, chunk] of chunks.entries()) {
   }
 }
 const res = await Promise.allSettled(promises)
-console.log(res);
+console.log(res.length);

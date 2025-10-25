@@ -22,7 +22,7 @@ for (const [index, chunk] of chunks.entries()) {
 
   const payload = chunk.map(el => ({
     meta: {
-      href: `https://api.moysklad.ru/api/remap/1.2/entity/product/${el.productId}`,
+      href: `https://api.moysklad.ru/api/remap/1.2/entity/service/${el.productId}`,
       metadataHref: "https://api.moysklad.ru/api/remap/1.2/entity/product/metadata",
       type: "product",
       mediaType: "application/json"

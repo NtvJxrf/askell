@@ -17,7 +17,6 @@ function chunkArray(array, size) {
 console.log('Всего записей: ', details.length)
 const chunks = chunkArray(details, 900);
 const promises = []
-console.log('Всего будет запросов: ', promises.length)
 for (const [index, chunk] of chunks.entries()) {
   console.log(`Отправляем партию ${index + 1} из ${chunks.length}...`);
 
@@ -44,10 +43,11 @@ for (const [index, chunk] of chunks.entries()) {
   }));
 
   try {
-    promises.push(Client.sklad('https://api.moysklad.ru/api/remap/1.2/entity/product', 'post', payload ))
+    promises.push(Client.sklad('https://api.moysklad.ru/api/remap/1.2/entity/service', 'post', payload ))
   } catch (err) {
     console.error(`❌ Ошибка при отправке партии ${index + 1}:`, err.message);
   }
 }
+console.log('Всего будет запросов: ', promises.length)
 const res = await Promise.allSettled(promises)
 console.log(res.length);

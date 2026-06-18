@@ -1,0 +1,30 @@
+version: "3.8"
+
+services:
+  nats:
+    image: nats:latest
+    container_name: nats
+    command: ["-c", "/etc/nats/nats.conf"]
+    volumes:
+      - ./nats.conf:/etc/nats/nats.conf:ro
+    ports:
+      - "127.0.0.1:4222:4222"
+  valkey:
+    image: valkey/valkey:latest
+    container_name: valkey
+    ports:
+      - "127.0.0.1:6379:6379"
+  postgres:
+    image: postgres:17
+    container_name: postgres
+    environment:
+      POSTGRES_USER: askell
+      POSTGRES_PASSWORD: askell
+      POSTGRES_DB: askell
+    ports:
+      - "127.0.0.1:5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+volumes:
+  pgdata:

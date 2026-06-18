@@ -1,0 +1,22 @@
+{
+  "name": "askell",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "dependencies": {
+    "bcrypt": "^6.0.0",
+    "got": "^15.0.5",
+    "iovalkey": "^0.3.3"
+  },
+  "scripts": {
+    "dev": "pm2 start ecosystem.config.cjs",
+    "db:generate": "pnpm --filter @askell/shared db:generate",
+    "db:migrate": "pnpm --filter @askell/shared db:migrate",
+    "db:push": "pnpm --filter @askell/shared db:push",
+    "db:studio": "pnpm --filter @askell/shared db:studio",
+    "seed": "node apps/backend/scripts/seed-admin.js",
+    "test": "node ./apps/backend/test.js"
+  }
+}

@@ -4,7 +4,8 @@
 schedule-471508-c646e9809860.json
 
 # dependencies
-/node_modules
+.next/
+**/node_modules/
 /.pnp
 .pnp.*
 .yarn/*

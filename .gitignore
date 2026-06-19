@@ -1,5 +1,8 @@
 # See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
+
+schedule-471508-c646e9809860.json
+
 # dependencies
 /node_modules
 /.pnp

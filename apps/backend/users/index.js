@@ -8,7 +8,7 @@ import {
   signRefreshToken,
   verifyRefreshToken,
   accessTokenTtlSeconds,
-} from '../lib/auth.js';
+} from './lib/auth.js';
 
 const { MoleculerClientError } = Errors;
 

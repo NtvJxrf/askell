@@ -2,6 +2,8 @@ import { ServiceBroker } from "moleculer";
 import { ROLES } from "@askell/shared/roles";
 import { getProcessingStages, getPackagingMaterials, getStores, getUnders, getColors, getPicesAndCoefs,
   getCurrency, getPriceTypes, getAttributes, getEmployees, getStates, getProcessingPlansSmd, getMaterials } from "./utils/skladEntitys.js";
+import { updateHeaps } from "./utils/productionload.js";
+import { updateSchedule } from "./utils/schedule.js";
 import { valkey } from "@askell/shared";
 export const broker = new ServiceBroker({
   nodeID: "data-refresher",
@@ -25,8 +27,8 @@ const map = {
   getMaterials
 }
 let selfcost = {
-    updates: {}
-  };
+  updates: {}
+};
 broker.createService({
   name: "data-refresher",
 
@@ -92,7 +94,33 @@ broker.createService({
           await this.actions.updateAllEntities();
         return selfcost;
       }
-    }
+    },
+    updateHeaps: {
+      rest: "GET /updateHeaps",
+      async handler() {
+        await updateHeaps();
+        return true
+      }
+    },
+    updateSchedule: {
+      rest: "GET /updateSchedule",
+      async handler() {
+        await updateSchedule();
+        return true;
+      }
+    },
+    getSchedule: {
+      rest: "GET /getSchedule",
+      async handler() {
+        return JSON.parse(await valkey.get('schedule'))
+      }
+    },
+    getHeaps: {
+      rest: "GET /getHeaps",
+      async handler() {
+        return JSON.parse(await valkey.get('heaps')) || null;
+      }
+    },
   }     
 });
 

@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { ICONS, UserIcon, PanelLeftIcon } from '@/components/icons';
 import { ThemeToggle } from '@/components/theme-toggle';
+import { Button } from '@/components/Button';
 
 const STORAGE_KEY = 'sidebar:collapsed';
 const COLLAPSE_EVENT = 'sidebar:collapsed-change';
@@ -48,15 +49,15 @@ export function Sidebar({ user, items }) {
     >
       {/* Top: collapse button + logo slot + company name */}
       <div className="flex h-14 items-center gap-1.5 border-b border-black/[.06] px-2 dark:border-white/[.06]">
-        <button
-          type="button"
+        <Button
+          variant="ghost"
+          iconOnly
           onClick={() => setCollapsedStored(!collapsed)}
           aria-label={collapsed ? 'Развернуть меню' : 'Свернуть меню'}
           title={collapsed ? 'Развернуть' : 'Свернуть'}
-          className="grid size-8 shrink-0 place-items-center rounded-md text-zinc-500 transition-colors hover:bg-black/[.04] hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-white/[.06] dark:hover:text-zinc-100"
         >
           <PanelLeftIcon className="size-[18px]" />
-        </button>
+        </Button>
 
         {!collapsed && (
           <Link href="/" className="flex min-w-0 items-center gap-2">

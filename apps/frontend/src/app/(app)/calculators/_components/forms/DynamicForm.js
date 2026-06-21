@@ -10,6 +10,7 @@
 // «Очистить» resets the current form.
 import { useDispatch, useSelector } from 'react-redux';
 import { InfoIcon, ZapIcon } from '@/components/icons';
+import { Button } from '@/components/Button';
 import { setFormValue, setGroupCount, clearForm } from '@/lib/slice';
 
 const controlClass =
@@ -127,9 +128,6 @@ function FieldGroup({ field, count, onCountChange, getValue, setValue }) {
   const min = field.min ?? 1;
   const rows = buildGroupRows(field, count);
 
-  const groupBtn =
-    'rounded-md border border-black/[.12] px-4 py-2 text-[13px] font-medium transition-colors hover:bg-black/[.04] disabled:cursor-not-allowed disabled:opacity-40 dark:border-white/[.18] dark:hover:bg-white/[.06]';
-
   return (
     <div className="space-y-3">
       <div className="max-h-72 space-y-3 overflow-y-auto pr-1">
@@ -144,19 +142,15 @@ function FieldGroup({ field, count, onCountChange, getValue, setValue }) {
       </div>
       <div className="flex flex-wrap justify-center gap-2">
         {field.addLabel && (
-          <button type="button" onClick={() => onCountChange(count + 1)} className={groupBtn}>
-            {field.addLabel}
-          </button>
+          <Button onClick={() => onCountChange(count + 1)}>{field.addLabel}</Button>
         )}
         {field.removeLabel && (
-          <button
-            type="button"
+          <Button
             onClick={() => onCountChange(Math.max(min, count - 1))}
             disabled={count <= min}
-            className={groupBtn}
           >
             {field.removeLabel}
-          </button>
+          </Button>
         )}
       </div>
     </div>
@@ -191,29 +185,17 @@ function FormButton({ button, onClick }) {
 
   if (Icon && !button.label) {
     return (
-      <button
-        type="button"
-        onClick={onClick}
-        aria-label={button.name}
-        className="rounded-full border border-black/[.12] p-2 transition-colors hover:bg-black/[.04] dark:border-white/[.18] dark:hover:bg-white/[.06]"
-      >
+      <Button variant="ghost" iconOnly onClick={onClick} aria-label={button.name}>
         <Icon className="size-4" />
-      </button>
+      </Button>
     );
   }
 
-  const base =
-    'inline-flex items-center gap-1.5 rounded-full px-4 py-1.5 text-[13px] font-medium transition-colors';
-  const variant =
-    button.variant === 'primary'
-      ? 'bg-violet-600 text-white hover:bg-violet-700'
-      : 'border border-black/[.12] hover:bg-black/[.04] dark:border-white/[.18] dark:hover:bg-white/[.06]';
-
   return (
-    <button type="button" onClick={onClick} className={`${base} ${variant}`}>
+    <Button variant={button.variant === 'primary' ? 'primary' : 'secondary'} onClick={onClick}>
       {Icon && <Icon className="size-4" />}
       {button.label}
-    </button>
+    </Button>
   );
 }
 

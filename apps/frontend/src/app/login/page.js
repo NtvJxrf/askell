@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { signIn } from 'next-auth/react';
+import { Button } from '@/components/Button';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -79,13 +80,9 @@ export default function LoginPage() {
           </p>
         )}
 
-        <button
-          type="submit"
-          disabled={pending}
-          className="w-full rounded-full bg-foreground px-4 py-2 text-sm font-medium text-background transition-colors hover:bg-[#383838] disabled:opacity-60 dark:hover:bg-[#ccc]"
-        >
+        <Button type="submit" variant="primary" disabled={pending} className="w-full py-2">
           {pending ? 'Вход…' : 'Войти'}
-        </button>
+        </Button>
       </form>
     </div>
   );

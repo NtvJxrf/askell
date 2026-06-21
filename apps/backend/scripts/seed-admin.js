@@ -5,7 +5,7 @@
 //
 import { db, users, eq, client } from '@askell/shared/db';
 import { ROLES } from '@askell/shared/roles';
-import { hashPassword } from '../lib/auth.js';
+import { hashPassword } from '../users/lib/auth.js';
 
 async function main() {
   const username = process.env.ADMIN_USERNAME;

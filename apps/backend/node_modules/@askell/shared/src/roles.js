@@ -6,6 +6,7 @@ export const ROLES = Object.freeze({
   ADMIN: 'admin',
   MANAGER: 'manager',
   USER: 'user',
+  PRODUCTION: 'production',
 });
 
 // All known roles as an array (handy for validation and UI dropdowns).

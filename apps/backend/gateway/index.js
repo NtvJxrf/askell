@@ -1,6 +1,6 @@
 import ApiGateway from "moleculer-web";
 import { ServiceBroker } from "moleculer";
-import { verifyAccessToken } from "../lib/auth.js";
+import { verifyAccessToken } from "../users/lib/auth.js";
 import { hasRole } from "@askell/shared/roles";
 
 const { UnAuthorizedError, ForbiddenError, ERR_NO_TOKEN, ERR_INVALID_TOKEN } =
@@ -17,6 +17,12 @@ broker.createService({
 
   settings: {
     port: 6789,
+    cors: {
+      origin: ["http://localhost:3000"],
+      methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+      allowedHeaders: ["Content-Type", "Authorization"],
+      credentials: true
+    },
     routes: [
       {
         path: "/api",
@@ -25,7 +31,7 @@ broker.createService({
         autoAliases: true,
         // Only expose our own services (keeps moleculer-web internals like
         // `api.listAliases` and `$node.*` off the public surface).
-        whitelist: ["users.*", "proxy.*", "data-refresher.*"],
+        whitelist: ["users.*", "proxy.*", "data-refresher.*", "orders.*", "productionCompletion.*"],
         authentication: true,
         authorization: true,
         bodyParsers: { json: true }

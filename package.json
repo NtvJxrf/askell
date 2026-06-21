@@ -13,6 +13,7 @@
   },
   "scripts": {
     "dev": "pm2 start ecosystem.config.cjs",
+    "front": "cd apps/frontend && npm run dev",
     "db:generate": "pnpm --filter @askell/shared db:generate",
     "db:migrate": "pnpm --filter @askell/shared db:migrate",
     "db:push": "pnpm --filter @askell/shared db:push",

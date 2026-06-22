@@ -1,9 +1,10 @@
+import { cookies } from 'next/headers';
 import { auth } from '@/auth';
 import { hasRole } from '@askell/shared/roles';
 import { Sidebar } from '@/components/sidebar/Sidebar';
 import { NAV_ITEMS } from '@/components/sidebar/nav-config';
-import { StoreProvider } from '@/lib/StoreProvider';
-
+import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
+import { TooltipProvider } from '@/components/ui/tooltip';
 // Shell for all authenticated pages: collapsible sidebar + main work area.
 // (The /login route lives OUTSIDE this group, so it has no sidebar.)
 export default async function AppLayout({ children }) {
@@ -19,12 +20,16 @@ export default async function AppLayout({ children }) {
     .filter((item) => hasRole(user, item.roles))
     .map(({ href, label, icon }) => ({ href, label, icon }));
 
+  // Restore the persisted expanded/collapsed state (set by SidebarProvider).
+  const cookieStore = await cookies();
+  const defaultOpen = cookieStore.get('sidebar_state')?.value !== 'false';
+
   return (
-    <div className="flex h-dvh overflow-hidden">
-      <StoreProvider>
+    <TooltipProvider>
+      <SidebarProvider defaultOpen={defaultOpen} className="h-svh overflow-hidden">
         <Sidebar user={safeUser} items={items} />
-        <main className="flex-1 overflow-y-auto">{children}</main>
-      </StoreProvider>
-    </div>
+        <SidebarInset className="overflow-y-auto">{children}</SidebarInset>
+      </SidebarProvider>
+    </TooltipProvider>
   );
 }

@@ -13,6 +13,12 @@ import {
   Moon,
   Info,
   Zap,
+  ChevronRight,
+  GripVertical,
+  Trash2,
+  Pencil,
+  Check,
+  X,
 } from 'lucide-react';
 
 export {
@@ -26,6 +32,12 @@ export {
   Moon as MoonIcon,
   Info as InfoIcon,
   Zap as ZapIcon,
+  ChevronRight as ChevronRightIcon,
+  GripVertical as GripIcon,
+  Trash2 as TrashIcon,
+  Pencil as EditIcon,
+  Check as CheckIcon,
+  X as CrossIcon,
 };
 
 // Map nav-config `icon` string keys -> components.

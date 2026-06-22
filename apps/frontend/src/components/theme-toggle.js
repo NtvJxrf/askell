@@ -3,7 +3,7 @@
 import { useSyncExternalStore } from 'react';
 import { useTheme } from 'next-themes';
 import { SunIcon, MoonIcon } from '@/components/icons';
-import { Button } from '@/components/Button';
+import { Button } from '@/components/ui/button';
 
 const emptySubscribe = () => () => {};
 
@@ -23,7 +23,7 @@ export function ThemeToggle({ className = '' }) {
   return (
     <Button
       variant="ghost"
-      iconOnly
+      size="icon"
       onClick={() => setTheme(isDark ? 'light' : 'dark')}
       aria-label="Переключить тему"
       title={isDark ? 'Светлая тема' : 'Тёмная тема'}

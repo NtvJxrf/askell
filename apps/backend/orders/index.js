@@ -7,6 +7,22 @@ const broker = new ServiceBroker({
   logger: true
 });
 
+const priceItems = [
+    { key: 'gostPrice', label: 'Выше госта' },
+    { key: 'retailPrice', label: 'Розница' },
+    { key: 'bulkPrice', label: 'Опт' },
+    { key: 'dealerPrice', label: 'Дилер' },
+    { key: 'vipPrice', label: 'ВИП' },
+];
+const priceMap = priceItems.reduce((acc, { key, label }) => {
+    acc[label] = key;
+    return acc;
+}, {});
+const reverseMap = priceItems.reduce((acc, { key, label }) => {
+    acc[key] = label;
+    return acc;
+}, {});
+
 broker.createService({
     name: "orders",
     actions: {
@@ -21,25 +37,38 @@ broker.createService({
                     const rightTime = new Date(right?.moment || 0).getTime()
                     return rightTime - leftTime
                 })[0]
-                for(const position of order?.positions?.rows){
-                    const attrs = (position?.assortment?.attributes || []).reduce((a, x) => {
+                const positions = order.positions?.rows.map(p => {
+                    const attrs = (p?.assortment?.attributes || []).reduce((a, x) => {
                         a[x.name] = x.value;
                         return a;
                     }, {});
+                    const res = {
+                        key: p.id,
+                        name: p.assortment.name,
+                        prices: p.assortment.salePrices.reduce((acc, curr) => {
+                            acc[priceMap[curr.priceType.name]] = curr.value / 100
+                            return acc
+                        }, {}),
+                        added: true,
+                        quantity: p.quantity,
+                    }
                     if(attrs['Детали']){
                         const details = JSON.parse(attrs['Детали'])
-                        position.result = details.result
-                        position.initialData = details.initialData
+                        res.details = details.result
+                        res.initialData = details.initialData
                     }
-                }
+                    return res
+                }) 
                 const response = {
-                    meta: order.meta,
-                    id: order.id,
-                    positions: order.positions.rows,
-                    agent: order.agent.name,
-                    organization: order.organization.name,
-                    name: order.name,
-                    moment: order.moment,
+                    order: {
+                        meta: order.meta,
+                        id: order.id,
+                        agent: order.agent.name,
+                        organization: order.organization.name,
+                        name: order.name,
+                        moment: order.moment,
+                    },
+                    positions
                 }
                 return response
             }

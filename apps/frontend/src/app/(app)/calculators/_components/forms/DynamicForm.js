@@ -10,27 +10,35 @@
 // «Очистить» resets the current form.
 import { useDispatch, useSelector } from 'react-redux';
 import { InfoIcon, ZapIcon } from '@/components/icons';
-import { Button } from '@/components/Button';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Checkbox } from '@/components/ui/checkbox';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+  SelectGroup
+} from '@/components/ui/select';
 import { setFormValue, setGroupCount, clearForm } from '@/lib/slice';
-
-const controlClass =
-  'w-full rounded-md border border-black/[.12] bg-transparent px-3 py-1 text-[13px] outline-none transition-colors focus:border-violet-500 dark:border-white/[.18] dark:focus:border-violet-400';
 
 // Label cell: left-aligned label text, an optional red asterisk, then an optional ⓘ tooltip.
 function FieldLabel({ field, htmlFor }) {
   return (
-    <label
+    <Label
       htmlFor={htmlFor}
-      className="flex min-w-0 items-center gap-1 text-[13px] leading-tight text-zinc-600 dark:text-zinc-400"
+      className="min-w-0 gap-1 text-[13px] leading-tight font-normal text-muted-foreground"
     >
       <span>{field.label}</span>
-      {field.required && <span className="text-red-500">*</span>}
+      {field.required && <span className="text-destructive">*</span>}
       {field.info && (
         <span title={field.info} className="inline-flex">
-          <InfoIcon className="size-3.5 shrink-0 cursor-help text-zinc-400" />
+          <InfoIcon className="size-3.5 shrink-0 cursor-help text-muted-foreground" />
         </span>
       )}
-    </label>
+    </Label>
   );
 }
 
@@ -41,45 +49,43 @@ function FieldControl({ field, value, onChange }) {
 
   if (field.type === 'select') {
     return (
-      <select
-        id={id}
-        name={field.name}
-        value={value ?? ''}
-        onChange={(e) => onChange(e.target.value)}
-        className={controlClass}
-      >
-        <option value="" />
-        {(field.options ?? []).map((opt) => (
-          <option key={opt} value={opt}>
-            {opt}
-          </option>
-        ))}
-      </select>
+      <Select value={value ?? ''} onValueChange={(v) => onChange(v)} className="w-full">
+          <SelectTrigger>
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent position="popper">
+            <SelectGroup>
+              {(field.options ?? []).map((opt) => (
+                <SelectItem key={opt} value={opt}>
+                  {opt}
+                </SelectItem>
+              ))}
+            </SelectGroup>
+          </SelectContent>
+        </Select>
     );
   }
 
   if (field.type === 'checkbox') {
     return (
-      <input
+      <Checkbox
         id={id}
         name={field.name}
-        type="checkbox"
         checked={Boolean(value)}
-        onChange={(e) => onChange(e.target.checked)}
-        className="size-4 rounded border-black/[.25] text-violet-600 focus:ring-violet-500 dark:border-white/[.25]"
+        onCheckedChange={(checked) => onChange(checked === true)}
       />
     );
   }
 
   // text | number
   return (
-    <input
+    <Input
       id={id}
       name={field.name}
       type={field.type === 'number' ? 'number' : 'text'}
       value={value ?? ''}
       onChange={(e) => onChange(e.target.value)}
-      className={controlClass}
+      className="text-[13px]"
     />
   );
 }
@@ -142,10 +148,11 @@ function FieldGroup({ field, count, onCountChange, getValue, setValue }) {
       </div>
       <div className="flex flex-wrap justify-center gap-2">
         {field.addLabel && (
-          <Button onClick={() => onCountChange(count + 1)}>{field.addLabel}</Button>
+          <Button variant="outline" onClick={() => onCountChange(count + 1)}>{field.addLabel}</Button>
         )}
         {field.removeLabel && (
           <Button
+            variant="outline"
             onClick={() => onCountChange(Math.max(min, count - 1))}
             disabled={count <= min}
           >
@@ -185,14 +192,14 @@ function FormButton({ button, onClick }) {
 
   if (Icon && !button.label) {
     return (
-      <Button variant="ghost" iconOnly onClick={onClick} aria-label={button.name}>
+      <Button variant="ghost" size="icon" onClick={onClick} aria-label={button.name}>
         <Icon className="size-4" />
       </Button>
     );
   }
 
   return (
-    <Button variant={button.variant === 'primary' ? 'primary' : 'secondary'} onClick={onClick}>
+    <Button variant={button.variant === 'primary' ? 'default' : 'outline'} onClick={onClick}>
       {Icon && <Icon className="size-4" />}
       {button.label}
     </Button>
@@ -260,12 +267,12 @@ export function DynamicForm({ config, formId }) {
   );
 
   return (
-    <form className="flex h-full flex-col" onSubmit={(e) => e.preventDefault()}>
-      <div className={`flex-1 ${hasRight ? 'flex flex-col gap-6 lg:flex-row' : ''}`}>
+    <form className="flex h-full min-h-0 flex-col" onSubmit={(e) => e.preventDefault()}>
+      <div className={`min-h-0 flex-1 overflow-y-auto ${hasRight ? 'flex flex-col gap-6 lg:flex-row' : ''}`}>
         {/* Left column */}
         <div className={`space-y-3 ${hasRight ? 'lg:flex-1' : ''}`}>
           {leftFields.length === 0 ? (
-            <p className="text-sm text-zinc-400 dark:text-zinc-500">
+            <p className="text-sm text-muted-foreground">
               Поля ещё не добавлены
             </p>
           ) : (
@@ -281,7 +288,7 @@ export function DynamicForm({ config, formId }) {
 
       {/* Button row */}
       {buttons.length > 0 && (
-        <div className="mt-6 flex flex-wrap items-center justify-center gap-2">
+        <div className="mt-4 flex flex-wrap items-center justify-center gap-2 border-t border-border pt-4">
           {buttons.map((button) => (
             <FormButton
               key={button.name}

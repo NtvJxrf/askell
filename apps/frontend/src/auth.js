@@ -1,6 +1,6 @@
 import NextAuth from 'next-auth';
 import Credentials from 'next-auth/providers/credentials';
-import { hasRole, ROLES } from '@askell/shared/roles';
+import { hasRole, ROLES } from '@askell/shared';
 
 // The Moleculer gateway base. API_URL is e.g. http://localhost:6789; routes
 // live under /api.

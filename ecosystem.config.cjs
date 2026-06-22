@@ -6,5 +6,6 @@ module.exports = {
     { name: 'data-refresher', script: './apps/backend/data-refresher/index.js' },
     { name: 'orders', script: './apps/backend/orders/index.js' },
     { name: 'productionCompletion', script: './apps/backend/productionCompletion/index.js' },
+    { name: 'websocket', script: './apps/backend/ws/index.js' },
   ]
 };

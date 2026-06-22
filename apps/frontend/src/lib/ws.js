@@ -1,3 +1,4 @@
+'use client';
 import { useEffect, useRef } from "react";
 import { useDispatch } from "react-redux";
 export default function WebSocketHandler() {
@@ -6,7 +7,7 @@ export default function WebSocketHandler() {
     const reconnectTimeoutRef = useRef(null);
 
     const connect = () => {
-        const ws = new WebSocket(process.env.ws_url || "ws://localhost:8080");
+        const ws = new WebSocket(process.env.WS_URL || "ws://localhost:8080");
         wsRef.current = ws;
 
         ws.onopen = () => {

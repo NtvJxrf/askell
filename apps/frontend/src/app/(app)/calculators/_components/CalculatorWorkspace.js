@@ -4,8 +4,8 @@ import { useState } from 'react';
 import { CALCULATOR_TABS } from './calc-config';
 import { CalculatorForm } from './forms';
 import { PositionsPanel } from './PositionsPanel';
-import { Divider } from '@/components/Divider';
-import { Button } from '@/components/Button';
+import { Separator } from '@/components/ui/separator';
+import { Button } from '@/components/ui/button';
 
 // Calculators workspace: split into a left forms column (~40%) and a right
 // positions-management column (~60%), separated by a thin divider. The left
@@ -18,14 +18,14 @@ export function CalculatorWorkspace() {
       {/* Left: forms (~40%) */}
       <section className="flex min-h-0 flex-col lg:w-2/5">
         {/* Tab switcher */}
-        <div className="flex items-center gap-1 overflow-x-auto border-b border-black/[.06] px-2 py-1.5 dark:border-white/[.06]">
+        <div className="flex items-center gap-1.5 overflow-x-auto border-b border-black/[.06] px-3 py-2 dark:border-white/[.06]">
           {CALCULATOR_TABS.map((tab) => {
             const active = tab.id === activeTab;
             return (
               <Button
                 key={tab.id}
-                variant="ghost"
-                active={active}
+                variant={active ? 'secondary' : 'ghost'}
+                size="xs"
                 onClick={() => setActiveTab(tab.id)}
                 aria-current={active ? 'true' : undefined}
                 className={tab.align === 'right' ? 'ml-auto' : ''}
@@ -42,8 +42,8 @@ export function CalculatorWorkspace() {
         </div>
       </section>
 
-      {/* Divider between forms and positions */}
-      <Divider />
+      {/* Separator between forms and positions */}
+      <Separator orientation="vertical" />
 
       {/* Right: positions management (~60%) */}
       <section className="flex min-h-0 flex-1 flex-col pl-4 pr-0 pb-0 pt-2.5">

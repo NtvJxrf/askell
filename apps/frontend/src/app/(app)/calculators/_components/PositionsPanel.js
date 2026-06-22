@@ -1,73 +1,91 @@
 'use client';
 
-import { Button } from '@/components/Button';
-import { Divider } from '@/components/Divider';
-import { useState } from 'react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { useState, useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { backend } from '@/lib/backend';
+import { setOrder } from '@/lib/slice';
+import { PositionsTable } from './PositionsTable';
+import { store, setPositions } from '@/lib/slice';
+import { toast } from 'sonner';
 // Right-side panel (~60%): order/positions management. Currently a structural
 // scaffold — search bar, order meta, an action button row, a positions info
-// block and an empty positions table. Handlers are stubs to be wired later.
+// block and the positions table. Handlers are stubs to be wired later.
 
-const TABLE_COLUMNS = ['№', 'Название', 'Цена', 'Создано', 'Кол-во'];
-
-// Shared column template so the header and (future) rows line up.
-const TABLE_GRID = 'grid grid-cols-[3rem_minmax(0,1fr)_6rem_9rem_5rem]';
-
-const ACTION_BUTTONS = Array.from({ length: 8 }, (_, i) => ({
-  id: `action-${i + 1}`,
-  label: `Кнопка ${i + 1}`,
-}));
 
 export function PositionsPanel() {
-  const handleSearch = async () => {
-    const order = await backend('/orders/order', { params: { name: 'test' } });
+  const orderNameRef = useRef(null);
+  const dispatch = useDispatch();
+  const order = useSelector((state) => state.app.currentOrder);
+  const [disabled, setDisabled] = useState(false);
 
-    console.log(order);
+  const handleSearch = async () => {
+    const name = orderNameRef.current;
+    if (!name) return;
+    setDisabled(true);
+    try{
+      const { order, positions } = await backend(`/orders/order?name=${name}`);
+      dispatch(setOrder(order));
+      dispatch(setPositions(positions));
+    } finally {
+      toast.success(`Заказ ${name} загружен`);
+      setDisabled(false); 
+    }
   };
 
   const handleReset = () => {
-    console.log('reset search');
+    dispatch(setOrder(null));
   };
 
-  const handleAction = (id) => {
-    console.log('action', id);
-  };
-
-  const inputClass = 'rounded-md border border-black/[.12] bg-transparent px-3 py-0.5 text-[13px] outline-none transition-colors focus:border-violet-500 dark:border-white/[.18] dark:focus:border-violet-400';
+  const handleSave = () => {
+    if (!order) return;
+    console.log('saving', order);
+  }
+  const handleDeleteSelected = () => {
+    const unselectedPositions  = store.getState().app.positions.filter((p) => !p.selected);
+    if (unselectedPositions .length === 0) return;
+    dispatch(setPositions(unselectedPositions ));
+  }
+  const ACTION_BUTTONS = [
+    { id: 'save', label: 'Сохранить', action: handleSave },
+    { id: 'deleteSelected', label: 'Удалить выделенное', action: handleDeleteSelected },
+  ];
+  console.log('render positions')
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-4">
       {/* Search bar */}
       <div className="flex items-center gap-2">
-        <input
+        <Input
           type="text"
-          size={8}
           placeholder="№ заказа"
-          className={inputClass}
+          className="w-32"
+          onChange={(e) => { orderNameRef.current = e.target.value }}
+          onKeyDown={(e) => { if (e.key === 'Enter') handleSearch() }}
         />
-        <Button variant="primary" onClick={handleSearch}>
+        <Button onClick={handleSearch} disabled={disabled}>
           Найти
         </Button>
-        <Button onClick={handleReset}>Сбросить</Button>
+        <Button variant="outline" onClick={handleReset} disabled={disabled}>Сбросить</Button>
       </div>
 
       {/* Order meta (single row) */}
       <div className="flex flex-wrap items-center gap-x-6 gap-y-1 text-[13px] text-zinc-600 dark:text-zinc-400">
         <span>
-          Номер заказа: <span className="text-zinc-900 dark:text-zinc-100">—</span>
+          Номер заказа: <span className="text-zinc-900 dark:text-zinc-100">{order?.name ?? '—'}</span>
         </span>
         <span>
-          Контрагент: <span className="text-zinc-900 dark:text-zinc-100">—</span>
+          Контрагент: <span className="text-zinc-900 dark:text-zinc-100">{order?.agent ?? '—'}</span>
         </span>
         <span>
-          Создано: <span className="text-zinc-900 dark:text-zinc-100">—</span>
+          Создано: <span className="text-zinc-900 dark:text-zinc-100">{order?.moment ? new Date(order.moment).toLocaleDateString() : '—'}</span>
         </span>
       </div>
 
       {/* Action buttons */}
       <div className="flex flex-wrap gap-2">
         {ACTION_BUTTONS.map((btn) => (
-          <Button key={btn.id} onClick={() => handleAction(btn.id)}>
+          <Button key={btn.id} variant="outline" onClick={() => btn.action?.()} disabled={disabled}>
             {btn.label}
           </Button>
         ))}
@@ -79,25 +97,7 @@ export function PositionsPanel() {
       </div>
 
       {/* Positions table */}
-      <div className="min-h-0 flex-1 overflow-auto">
-        {/* Column headers, centered, with a vertical Divider between each */}
-        <div className={`${TABLE_GRID} text-[13px] font-medium text-zinc-500 dark:text-zinc-400`}>
-          {TABLE_COLUMNS.map((col, i) => (
-            <div key={col} className="relative flex items-center justify-center py-2 text-center">
-              {i > 0 && <Divider className="absolute inset-y-0 left-0" />}
-              {col}
-            </div>
-          ))}
-        </div>
-
-        {/* Big divider between the headers and the table content */}
-        <Divider orientation="horizontal" />
-
-        {/* Body placeholder */}
-        <div className="px-3 py-6 text-center text-[13px] text-zinc-400 dark:text-zinc-500">
-          Нет позиций
-        </div>
-      </div>
+      <PositionsTable />
     </div>
   );
 }

@@ -2,7 +2,7 @@ import { configureStore } from "@reduxjs/toolkit";
 import { createSlice } from "@reduxjs/toolkit";
 
 const initialState = {
-    positions: [],
+    positions: [{name: 'test'}, {name: 'test2'}, {name: 'test3'}],
     planDate: {
       apiDate: null,
       strDate: null
@@ -46,10 +46,72 @@ const appSlice = createSlice({
       const { formId } = action.payload;
       state.forms[formId] = { values: {}, groups: {} };
     },
+    setOrder(state, action) {
+      state.currentOrder = action.payload;
+    },
+    // Remove one position from the table by its index in the array.
+    removePosition(state, action) {
+      const index = action.payload;
+      if (index >= 0 && index < state.positions.length) {
+        state.positions.splice(index, 1);
+      }
+    },
+    // Move a position from one index to another (drag-and-drop reordering).
+    reorderPositions(state, action) {
+      const { from, to } = action.payload;
+      const list = state.positions;
+      if (
+        from === to ||
+        from < 0 || from >= list.length ||
+        to < 0 || to >= list.length
+      ) {
+        return;
+      }
+      const [moved] = list.splice(from, 1);
+      list.splice(to, 0, moved);
+    },
+    setPositions(state, action) {
+      state.positions = action.payload;
+    },
+    // Toggle the `selected` flag of one position (kept on the position object
+    // so selection travels with it through reordering / deletion).
+    togglePositionSelected(state, action) {
+      const position = state.positions[action.payload];
+      if (position) {
+        position.selected = !position.selected;
+      }
+    },
+    // Set the quantity for one position by its index. `quantity` may be a number
+    // or null (empty input).
+    setPositionQuantity(state, action) {
+      const { index, quantity } = action.payload;
+      const position = state.positions[index];
+      if (position) {
+        position.quantity = quantity;
+      }
+    },
+    // Select or deselect every position at once (header checkbox).
+    setAllPositionsSelected(state, action) {
+      const value = action.payload;
+      for (const position of state.positions) {
+        position.selected = value;
+      }
+    },
   },
 });
 
-export const { setFormValue, setGroupCount, clearForm } = appSlice.actions;
+export const {
+  setFormValue,
+  setGroupCount,
+  clearForm,
+  setOrder,
+  removePosition,
+  reorderPositions,
+  togglePositionSelected,
+  setAllPositionsSelected,
+  setPositions,
+  setPositionQuantity,
+} = appSlice.actions;
 const appReducer = appSlice.reducer;
 export const store = configureStore({
   reducer: {

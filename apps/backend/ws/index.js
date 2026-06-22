@@ -11,7 +11,7 @@ broker.createService({
     name: "websocket",
 
     async started() {
-        this.wss = new WebSocketServer({ port: 3000 });
+        this.wss = new WebSocketServer({ port: 8080 });
     },
 
     async stopped() {

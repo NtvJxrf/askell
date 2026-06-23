@@ -19,6 +19,12 @@ import {
   Pencil,
   Check,
   X,
+  Factory,
+  Slice,
+  SquareChartGantt,
+  Logs,
+  Settings,
+  FileChartColumn
 } from 'lucide-react';
 
 export {
@@ -27,6 +33,7 @@ export {
   Mail as ContactIcon,
   ShieldCheck as ShieldIcon,
   User as UserIcon,
+  Factory as FactoryIcon,
   PanelLeft as PanelLeftIcon,
   Sun as SunIcon,
   Moon as MoonIcon,
@@ -38,6 +45,11 @@ export {
   Pencil as EditIcon,
   Check as CheckIcon,
   X as CrossIcon,
+  Slice as SliceIcon,
+  SquareChartGantt as SquareChartGanttIcon,
+  Logs as LogsIcon,
+  Settings as SettingsIcon,
+  FileChartColumn as FileChartColumnIcon
 };
 
 // Map nav-config `icon` string keys -> components.
@@ -47,4 +59,10 @@ export const ICONS = {
   contact: Mail,
   shield: ShieldCheck,
   user: User,
+  factory: Factory,
+  slice: Slice,
+  'square-chart-gantt': SquareChartGantt,
+  logs: Logs,
+  settings: Settings,
+  'file-chart-column': FileChartColumn
 };

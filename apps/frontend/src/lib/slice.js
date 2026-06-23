@@ -16,6 +16,10 @@ const initialState = {
     // between product types.
     forms: {},
     selfcost: null,
+    schedule: null,
+    heaps: [],
+    user: {},
+    settings: {}
 };
 
 // Make sure a form bucket exists before writing to it (Immer-friendly).
@@ -97,7 +101,22 @@ const appSlice = createSlice({
         position.selected = value;
       }
     },
-  },
+    setSelfcost(state, action) {
+      state.selfcost = action.payload;
+    },
+    setSchedule(state, action) {
+      state.schedule = action.payload;
+    },
+    setHeaps(state, action) {
+      state.heaps = action.payload;
+    },
+    setUser(state, action) {
+      state.user = action.payload;
+    },
+    setSettings(state, action) {
+      state.settings = action.payload;
+    }
+  }
 });
 
 export const {
@@ -111,6 +130,11 @@ export const {
   setAllPositionsSelected,
   setPositions,
   setPositionQuantity,
+  setSelfcost,
+  setSchedule,
+  setHeaps,
+  setUser,
+  setSettings
 } = appSlice.actions;
 const appReducer = appSlice.reducer;
 export const store = configureStore({

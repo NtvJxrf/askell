@@ -319,7 +319,7 @@ export class AreaMachine extends SingleItemMachine {
 
 export class TrashMachine extends SingleItemMachine {
     _calculateTime(item, norma) {
-        return 10; // 10 минут на "обработку" (выбрасывание) каждой детали
+        return 1; // 10 минут на "обработку" (выбрасывание) каждой детали
     }
 }
 

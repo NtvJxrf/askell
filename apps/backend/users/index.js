@@ -115,7 +115,7 @@ broker.createService({
      * AUTHENTICATED. Return the current user (fresh from the database).
      */
     me: {
-      rest: 'GET /auth/me',
+      rest: 'GET /me',
       async handler(ctx) {
         const current = ctx.meta.user;
         if (!current) {

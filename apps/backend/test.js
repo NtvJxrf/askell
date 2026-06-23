@@ -69,8 +69,8 @@ async function main() {
   const client = authed(accessToken);
 
   // 3) /auth/me with the token
-  const me = await client.get('api/auth/me');
-  check('GET /api/auth/me -> 200', me.statusCode === 200, me.statusCode);
+  const me = await client.get('api/me');
+  check('GET /api/me -> 200', me.statusCode === 200, me.statusCode);
   check('me is the admin', me.body?.username === process.env.ADMIN_USERNAME);
 
   // 4) admin-only list

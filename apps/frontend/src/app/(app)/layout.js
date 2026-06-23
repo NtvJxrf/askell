@@ -5,6 +5,7 @@ import { Sidebar } from '@/components/sidebar/Sidebar';
 import { NAV_ITEMS } from '@/components/sidebar/nav-config';
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
 import { TooltipProvider } from '@/components/ui/tooltip';
+import Init from '@/lib/init';
 // Shell for all authenticated pages: collapsible sidebar + main work area.
 // (The /login route lives OUTSIDE this group, so it has no sidebar.)
 export default async function AppLayout({ children }) {
@@ -29,6 +30,7 @@ export default async function AppLayout({ children }) {
       <SidebarProvider defaultOpen={defaultOpen} className="h-svh overflow-hidden">
         <Sidebar user={safeUser} items={items} />
         <SidebarInset className="overflow-y-auto">{children}</SidebarInset>
+        <Init />
       </SidebarProvider>
     </TooltipProvider>
   );

@@ -4,7 +4,7 @@ import { getProcessingStages, getPackagingMaterials, getStores, getUnders, getCo
   getCurrency, getPriceTypes, getAttributes, getEmployees, getStates, getProcessingPlansSmd, getMaterials } from "./utils/skladEntitys.js";
 import { updateHeaps } from "./utils/productionload.js";
 import { updateSchedule } from "./utils/schedule.js";
-import { valkey } from "@askell/shared";
+import { valkey, settingsSchema } from "@askell/shared";
 export const broker = new ServiceBroker({
   nodeID: "data-refresher",
   transporter: "nats://localhost:4222",
@@ -40,7 +40,9 @@ broker.createService({
       roles: [ROLES.MANAGER],
       async handler(ctx) {
         await map[ctx.params.entity]();
-        return true;
+        await updateSelfcost();
+        await broker.call("websocket.broadcast", { type: 'selfcost', selfcost });
+        return true
       }
     },
     updateAllEntities: {
@@ -52,39 +54,19 @@ broker.createService({
           promises.push(map[entity]());
         }
         await Promise.all(promises);
-
-        const DATA_KEYS = ['colors', 'unders', 'materials', 'packaging', 'pricesAndCoefs']
-        const updateKeys = await valkey.keys('sklad:updates:*')
-
-        const [dataValues, updateValues] = await Promise.all([
-          DATA_KEYS.length ? valkey.mget(DATA_KEYS.map(k => `sklad:data:${k}`)) : [],
-          updateKeys.length ? valkey.mget(updateKeys) : []
-        ])
-
-        for (let i = 0; i < DATA_KEYS.length; i++) {
-          const key = DATA_KEYS[i]
-          try {
-            const parsed = dataValues[i] ? JSON.parse(dataValues[i]) : {}
-            const filtered = Object.fromEntries(
-              Object.entries(parsed).map(([itemName, itemValue]) => {
-                const { meta, ...rest } = itemValue
-                return [itemName, rest]
-              })
-            )
-            selfcost[key] = filtered
-          } catch(error) {
-            console.error(`Error parsing sklad:data:${key}:`, error)
-            selfcost[key] = {}
-          }
-        }
-        for (let i = 0; i < updateKeys.length; i++) {
-          const fullKey = updateKeys[i]
-          const shortKey = fullKey.replace('sklad:updates:', '')
-          const update = updateValues[i] ? JSON.parse(updateValues[i]) : null
-          if (update) {
-            selfcost.updates[shortKey] = update
-          }
-        }
+        await updateSelfcost();
+        await broker.call("websocket.broadcast", { type: 'selfcost', selfcost });
+        return true
+      }
+    },
+    setSettings: {
+      rest: "POST /setSettings",
+      roles: [ROLES.ADMIN],
+      async handler(ctx) {
+        const settings = JSON.parse(await valkey.get('settings'));
+        const { key, item } = ctx.params;
+        await valkey.set('settings', JSON.stringify({ ...settings, [key]: item.value }));
+        return true
       }
     },
     selfcost: {
@@ -121,11 +103,67 @@ broker.createService({
         return JSON.parse(await valkey.get('heaps')) || null;
       }
     },
+    getSimulationResult: {
+      rest: "GET /getSimulationResult",
+      async handler() {
+        return JSON.parse(await valkey.get('simulationResult')) || null;
+      }
+    },
+    getSettings: {
+      rest: "GET /getSettings",
+      async handler() {
+        const schema = settingsSchema;
+        const settings = JSON.parse(await valkey.get('settings'))
+        const mixSettings = {}
+        for(const [key, value] of Object.entries(settingsSchema)) {
+          mixSettings[key] = {
+            ...value,
+            editor: settings?.[key]?.editor || null,
+            value: settings?.[key]?.value || null,
+          }
+        }
+        return mixSettings;
+      }
+    }
   }     
 });
 
 broker.start();
 
+const updateSelfcost = async () => {
+  const DATA_KEYS = ['colors', 'unders', 'materials', 'packaging', 'pricesAndCoefs']
+  const updateKeys = await valkey.keys('sklad:updates:*')
+
+  const [dataValues, updateValues] = await Promise.all([
+    DATA_KEYS.length ? valkey.mget(DATA_KEYS.map(k => `sklad:data:${k}`)) : [],
+    updateKeys.length ? valkey.mget(updateKeys) : []
+  ])
+
+  for (let i = 0; i < DATA_KEYS.length; i++) {
+    const key = DATA_KEYS[i]
+    try {
+      const parsed = dataValues[i] ? JSON.parse(dataValues[i]) : {}
+      const filtered = Object.fromEntries(
+        Object.entries(parsed).map(([itemName, itemValue]) => {
+          const { meta, ...rest } = itemValue
+          return [itemName, rest]
+        })
+      )
+      selfcost[key] = filtered
+    } catch(error) {
+      console.error(`Error parsing sklad:data:${key}:`, error)
+      selfcost[key] = {}
+    }
+  }
+  for (let i = 0; i < updateKeys.length; i++) {
+    const fullKey = updateKeys[i]
+    const shortKey = fullKey.replace('sklad:updates:', '')
+    const update = updateValues[i] ? JSON.parse(updateValues[i]) : null
+    if (update) {
+      selfcost.updates[shortKey] = update
+    }
+  }
+}
 // broker.createService({
 //   name: "data-refresher",
 

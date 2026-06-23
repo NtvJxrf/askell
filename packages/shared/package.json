@@ -16,6 +16,9 @@
     },
     "./roles": {
       "import": "./src/roles.js"
+    },
+    "./settings": {
+      "import": "./src/settings.js"
     }
   },
   "scripts": {
@@ -27,7 +30,8 @@
   "dependencies": {
     "dotenv": "^17.2.3",
     "drizzle-orm": "^0.44.1",
-    "postgres": "^3.4.5"
+    "postgres": "^3.4.5",
+    "zod": "^4.4.3"
   },
   "devDependencies": {
     "drizzle-kit": "^0.31.1"

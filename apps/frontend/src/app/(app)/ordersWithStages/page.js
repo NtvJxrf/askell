@@ -1,10 +1,197 @@
-export default function OrdersWithStagesPage() {
+'use client'
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table"
+import { Input } from "@/components/ui/input"
+import { useSelector } from "react-redux"
+import { useMemo, useState } from "react"
+export default function ProductionPage() {
+  const heaps = useSelector(state => state.app.heaps) || [];
+  const [filters, setFilters] = useState({
+    order: "",
+    productiontask: "",
+    stage: "",
+    productName: "",
+  });
+  const groupedHeaps = useMemo(() => {
+    if (!heaps) return [];
+
+    const flatItems = Object.entries(heaps).flatMap(([stage, items]) =>
+      items.map(item => ({
+        ...item,
+        stage,
+      }))
+    );
+
+    const ordersMap = new Map();
+
+    for (const item of flatItems) {
+      if(filters.productiontask &&!item.taskName.includes(filters.productiontask)) continue
+      if(filters.stage && !item.stage.toLowerCase().includes(filters.stage.toLowerCase())) continue
+      if(filters.order && !item.taskAttrs?.["№ заказа покупателя"]?.includes(filters.order)) continue
+      if(filters.productName && !item.name.toLowerCase().includes(filters.productName.toLowerCase())) continue
+
+      const orderId = item?.taskAttrs?.["№ заказа покупателя"]?.trim() || "UNKNOWN";
+
+      const key = item.productionRowId;
+
+      if (!ordersMap.has(orderId)) {
+        ordersMap.set(orderId, new Map());
+      }
+
+      const itemsMap = ordersMap.get(orderId);
+
+      if (!itemsMap.has(key)) {
+        itemsMap.set(key, {
+          ...item,
+          quantity: 1,
+        });
+      } else {
+        itemsMap.get(key).quantity += 1;
+      }
+    }
+
+    return Array.from(ordersMap.entries())
+      .map(([orderId, itemsMap]) => {
+        const items = Array.from(itemsMap.values()).sort(
+          (a, b) =>
+            new Date(a.deliveryPlannedMoment) -
+            new Date(b.deliveryPlannedMoment)
+        );
+
+        return {
+          orderId,
+          items,
+          minDate: new Date(items[0].deliveryPlannedMoment),
+        };
+      })
+      .sort((a, b) => a.minDate - b.minDate);
+  }, [heaps, filters]);
   return (
-    <div className="p-8">
-      <h1 className="text-xl font-semibold tracking-tight">Заказы с этапами</h1>
-      <p className="mt-2 text-sm text-zinc-500 dark:text-zinc-400">
-        Здесь будут заказы с этапами
-      </p>
-    </div>
+    <>
+      <div className="flex gap-2 p-2 border-b items-center">
+        <Input
+          className="max-w-[200px]"
+          placeholder="Номер заказа"
+          value={filters.order}
+          onChange={(e) =>
+            setFilters((prev) => ({
+              ...prev,
+              order: e.target.value,
+            }))
+          }
+        />
+        <Input
+          className="max-w-[200px]"
+          placeholder="Номер ПЗ"
+          value={filters.productiontask}
+          onChange={(e) =>
+            setFilters((prev) => ({
+              ...prev,
+              productiontask: e.target.value,
+            }))
+          }
+        />
+        <Input
+          className="max-w-[200px]"
+          placeholder="Этап"
+          value={filters.stage}
+          onChange={(e) =>
+            setFilters((prev) => ({
+              ...prev,
+              stage: e.target.value,
+            }))
+          }
+        />
+        <Input
+          className="max-w-[200px]"
+          placeholder="Название товара"
+          value={filters.productName}
+          onChange={(e) =>
+            setFilters((prev) => ({
+              ...prev,
+              productName: e.target.value,
+            }))
+          }
+        />
+      </div>
+      <OrdersTable groups={groupedHeaps} />
+    </>
   );
 }
+
+export function OrdersTable({ groups }) {
+  return (
+    <Table className="table-fixed w-full">
+      <TableHeader className="text-[14px]">
+        <TableRow>
+          <TableHead className="w-[80px] text-center border-r">№ заказа</TableHead>
+          <TableHead className="border-r">Товар</TableHead>
+          <TableHead className="w-[150px] text-center border-r">Этап</TableHead>
+          <TableHead className="w-[60px] text-center border-r">Кол-во</TableHead>
+          <TableHead className="w-[80px] text-center border-r">№ ПЗ</TableHead>
+          <TableHead className="w-[140px] text-center border-r">
+            Дата отгрузки
+          </TableHead>
+          <TableHead className="w-[100px] text-center border-r">
+            Просрочен
+          </TableHead>
+        </TableRow>
+      </TableHeader>
+
+      <TableBody>
+        {groups.map(group =>
+          group.items.map((item, index) => {
+            const isOverdue = overdue(item);
+            return (
+              <TableRow key={item.productionRowId}>
+              {index === 0 && (
+                <TableCell
+                  rowSpan={group.items.length}
+                  className="text-center align-middle font-bold border-r"
+                >
+                  {group.orderId}
+                </TableCell>
+              )}
+
+              <TableCell className="truncate border-r"><span title={item.name}>{item.name}</span></TableCell>
+
+              <TableCell className="truncate  border-r"><span title={item.stage}>{item.stage}</span></TableCell>
+
+              <TableCell className="text-center border-r">
+                {item.quantity}
+              </TableCell>
+
+              <TableCell className="text-center border-r">
+                {item.taskName}
+              </TableCell>
+
+              <TableCell className="text-center border-r">
+                {new Date(
+                  item.deliveryPlannedMoment
+                ).toLocaleDateString()}
+              </TableCell>
+
+              <TableCell className={`text-center border-r ${isOverdue ? "text-red-500 dark:text-red-400" : ""}`}>
+                {isOverdue ? "Да" : "Нет"}
+              </TableCell>
+            </TableRow>
+            )
+          })
+        )}
+      </TableBody>
+    </Table>
+  );
+}
+const overdue = (item) => {
+  const today = new Date();
+  today.setHours(23, 59, 59, 999);
+  const itemDate = new Date(item.deliveryPlannedMoment);
+
+  return itemDate < today;
+};

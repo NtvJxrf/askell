@@ -64,7 +64,7 @@ export default function ItemDialog({ item, open, onOpenChange }) {
     }
 
     e.target.value = value;
-    };
+  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -74,7 +74,7 @@ export default function ItemDialog({ item, open, onOpenChange }) {
             {item?.name}
           </DialogTitle>
         </DialogHeader>
-
+        <Separator />
         <div className="space-y-4 text-sm">
           <div className="space-y-1">
             <div>

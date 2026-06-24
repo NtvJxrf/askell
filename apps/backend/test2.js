@@ -25,18 +25,19 @@ await broker.waitForServices(['users', 'proxy']);
     // }
 // })
 // console.log(test.body)
-const res = await broker.call("data-refresher.selfcost");
-// const heaps = await broker.call("data-refresher.getHeaps");
-// const {schedule, index} = await broker.call("data-refresher.getSchedule");
-// const pricesAndCoefs = JSON.parse(await valkey.get('sklad:data:pricesAndCoefs'));
-// const stages = JSON.parse(await valkey.get('sklad:data:processingStages'));
-// const res = await simulation({
-//   heaps,
-//   schedule: schedule,
-//   startIndex: index,
-//   pricesAndCoefs,
-//   stages
-// })
-// await valkey.set('simulationResult', JSON.stringify(res))
-console.log(res.updates)
+// const res = await broker.call("data-refresher.updateHeaps");
+const heaps = await broker.call("data-refresher.getHeaps");
+const {schedule, index} = await broker.call("data-refresher.getSchedule");
+const pricesAndCoefs = JSON.parse(await valkey.get('sklad:data:pricesAndCoefs'));
+const stages = JSON.parse(await valkey.get('sklad:data:processingStages'));
+const res = await simulation({
+  heaps,
+  schedule: schedule,
+  startIndex: index,
+  pricesAndCoefs,
+  stages
+})
+await valkey.set('simulationResult', JSON.stringify(res))
+// const res = JSON.parse(await valkey.get('settings'));
+// console.log(res)
 await broker.stop();

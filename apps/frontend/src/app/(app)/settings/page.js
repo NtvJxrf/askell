@@ -8,14 +8,12 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
 import { RefreshCw } from "lucide-react";
 import { useSelector } from "react-redux";
 import { backend } from "@/lib/backend";
-import { settingsSchema } from "@askell/shared/settings";
-import { ArrowRight } from "lucide-react";
+import SettingsRow from "./settingsRow";
 const updateKeys = [
   { label: "Материалы", key: "materials", function: "getMaterials" },
   { label: "Упаковочные материалы", key: "packaging", function: "getPackagingMaterials" },
@@ -51,9 +49,6 @@ export default function SettingsPage() {
     setLoadingId(null);
   };
 
-  const handleUpdateSettings = async (key, item) => { 
-    console.log(key, item)
-  }
   return (
     <div className="flex h-screen overflow-x-auto overflow-y-hidden text-sm">
       <div className="flex-1 min-w-0 p-6">
@@ -111,32 +106,7 @@ export default function SettingsPage() {
           </TableHeader>
           <TableBody>
             {Object.entries(settings).map(([key, item]) => (
-              <TableRow key={key}>
-                <TableCell className="font-medium">
-                  <Button variant="ghost" onClick={() => handleUpdateSettings(key, item)}>
-                    <ArrowRight/>
-                  </Button>
-                </TableCell>
-                <TableCell className="font-medium">
-                  {key}
-                </TableCell>
-                <TableCell>
-                  <Input
-                    className="w-full"
-                    type="number"
-                    value={item.value}
-                  />
-                </TableCell>
-                <TableCell>
-                  {item.default}
-                </TableCell>
-                <TableCell>
-                  {item.description}
-                </TableCell>
-                <TableCell>
-                  {item.editor}
-                </TableCell>
-              </TableRow>
+              <SettingsRow key={key} skey={key} item={item}/>
             ))}
           </TableBody>
         </Table>

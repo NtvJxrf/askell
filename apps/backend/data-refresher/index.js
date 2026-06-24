@@ -64,8 +64,14 @@ broker.createService({
       roles: [ROLES.ADMIN],
       async handler(ctx) {
         const settings = JSON.parse(await valkey.get('settings'));
-        const { key, item } = ctx.params;
-        await valkey.set('settings', JSON.stringify({ ...settings, [key]: item.value }));
+        const { key, value, editor } = ctx.params;
+        const valid = settingsSchema[key].schema.safeParse(value)
+        if(!valid.success) {
+          throw new Error("Некорректное значение");
+        }
+        await valkey.set('settings', JSON.stringify({ ...settings, [key]: { value, editor } }));
+        const settingsUpdated = await broker.call("data-refresher.getSettings");
+        broker.call("websocket.broadcast", { type: 'settings', settings: settingsUpdated });
         return true
       }
     },
@@ -118,8 +124,8 @@ broker.createService({
         for(const [key, value] of Object.entries(settingsSchema)) {
           mixSettings[key] = {
             ...value,
-            editor: settings?.[key]?.editor || null,
-            value: settings?.[key]?.value || null,
+            editor: settings?.[key]?.editor ?? null,
+            value: settings?.[key]?.value ?? null,
           }
         }
         return mixSettings;

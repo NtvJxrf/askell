@@ -50,7 +50,7 @@ function FieldControl({ field, value, onChange }) {
   if (field.type === 'select') {
     return (
       <Select value={value ?? ''} onValueChange={(v) => onChange(v)} className="w-full">
-          <SelectTrigger>
+          <SelectTrigger className="w-full">
             <SelectValue />
           </SelectTrigger>
           <SelectContent position="popper">

@@ -28,79 +28,33 @@ export default function ProductionPage() {
     };
     fetchData();
   }, []);
-  console.log(sortedMachines)
   return (
     <TableDemo data={sortedMachines} />
   );
 }
 
-const invoices = [
-  {
-    invoice: "INV001",
-    paymentStatus: "Paid",
-    totalAmount: "$250.00",
-    paymentMethod: "Credit Card",
-  },
-  {
-    invoice: "INV002",
-    paymentStatus: "Pending",
-    totalAmount: "$150.00",
-    paymentMethod: "PayPal",
-  },
-  {
-    invoice: "INV003",
-    paymentStatus: "Unpaid",
-    totalAmount: "$350.00",
-    paymentMethod: "Bank Transfer",
-  },
-  {
-    invoice: "INV004",
-    paymentStatus: "Paid",
-    totalAmount: "$450.00",
-    paymentMethod: "Credit Card",
-  },
-  {
-    invoice: "INV005",
-    paymentStatus: "Paid",
-    totalAmount: "$550.00",
-    paymentMethod: "PayPal",
-  },
-  {
-    invoice: "INV006",
-    paymentStatus: "Pending",
-    totalAmount: "$200.00",
-    paymentMethod: "Bank Transfer",
-  },
-  {
-    invoice: "INV007",
-    paymentStatus: "Unpaid",
-    totalAmount: "$300.00",
-    paymentMethod: "Credit Card",
-  },
-]
-
 export function TableDemo({ data }) {
   return (
-    <Table>
-      <TableHeader>
+    <Table className="table-fixed w-full">
+      <TableHeader className="text-[14px]">
         <TableRow>
-          <TableHead className="w-[100px]">Станок</TableHead>
-          <TableHead>Освободится</TableHead>
-          <TableHead>Всего м²</TableHead>
-          <TableHead>Всего м.п.</TableHead>
-          <TableHead className="text-right">Всего занят минут</TableHead>
-          <TableHead className="text-right">Всего выполнено задач</TableHead>
+          <TableHead className="w-[150px] border-r">Станок</TableHead>
+          <TableHead className="w-[25px] text-center border-r">Освободится</TableHead>
+          <TableHead className="w-[20px] text-center border-r">Всего м²</TableHead>
+          <TableHead className="w-[20px] text-center border-r">Всего м.п.</TableHead>
+          <TableHead className="w-[30px] text-center border-r">Всего занят минут</TableHead>
+          <TableHead className="w-[30px] text-center border-r">Всего выполнено задач</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
         {data?.map((machine) => (
           <TableRow key={machine.name}>
-            <TableCell className="font-medium">{machine.name.replace('Trash ', '')}</TableCell>
-            <TableCell>{machine._lastEndTime ? calcDayDifference(machine._lastEndTime) : '-'}</TableCell>
-            <TableCell>{machine.totalM2.toFixed(2)}</TableCell>
-            <TableCell>{machine.totalMP.toFixed(2)}</TableCell>
-            <TableCell className="text-right">{machine._busyMinutes}</TableCell>
-            <TableCell className="text-right">{machine._totalCompleted}</TableCell>
+            <TableCell className="font-medium border-r">{machine.name.replace('Trash ', '')}</TableCell>
+            <TableCell className="text-center border-r">{machine._lastEndTime ? calcDayDifference(machine._lastEndTime) : '-'}</TableCell>
+            <TableCell className="text-center border-r">{machine.totalM2.toFixed(2)}</TableCell>
+            <TableCell className="text-center border-r">{machine.totalMP.toFixed(2)}</TableCell>
+            <TableCell className="text-center border-r">{machine._busyMinutes}</TableCell>
+            <TableCell className="text-center border-r">{machine._totalCompleted}</TableCell>
           </TableRow>
         ))}
       </TableBody>

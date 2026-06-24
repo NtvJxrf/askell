@@ -48,7 +48,7 @@ export function Sidebar({ user, items }) {
       <SidebarContent>
         <SidebarGroup>
           <SidebarGroupContent>
-            <SidebarMenu>
+            <SidebarMenu className="gap-0.5">
               {items.map((item) => {
                 const Icon = ICONS[item.icon] ?? UserIcon;
                 const active =
@@ -59,6 +59,7 @@ export function Sidebar({ user, items }) {
                       isActive={active}
                       tooltip={item.label}
                       render={<Link href={item.href} />}
+                      className={`${active ? 'bg-sidebar-accent text-foreground ring-1 ring-primary/10' : ''}`}
                     >
                       <Icon />
                       <span>{item.label}</span>

@@ -59,7 +59,7 @@ export function Sidebar({ user, items }) {
                       isActive={active}
                       tooltip={item.label}
                       render={<Link href={item.href} />}
-                      className={`${active ? 'bg-sidebar-accent text-foreground ring-1 ring-primary/10' : ''}`}
+                      className={`hover:bg-transparent ${active ? 'underline underline-offset-4' : ''}`}
                     >
                       <Icon />
                       <span>{item.label}</span>

@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button"
 import RenderField from "./RenderField"
 import { useSelector } from "react-redux"
 import { useMemo } from "react"
-
+import BottomButtons from "./BottomButtons"
 const filterWords = ['стекло', 'зеркало']
 
 export default function GlassForm() {
@@ -77,8 +77,7 @@ export default function GlassForm() {
                 {formFields.map((field) => (
                     <RenderField key={field.name} data={{ ...field, control: form.control }} />
                 ))}
-                <Button type="submit" size="sm">Рассчитать</Button>
-                <Button size="sm" onClick={() => form.reset()}>Сбросить форму</Button>
+                <BottomButtons form={form} />
             </form>
         </div>
     )

@@ -7,7 +7,7 @@ export default function Init() {
     const dispatch = useDispatch();
     useEffect(() => {
         const fetchData = async () => {
-            const selfcost = await backend('/data-refresher/selfCost');
+            const selfcost = await backend('/data-refresher/selfcost');
             const heaps = await backend('/data-refresher/getHeaps');
             const schedule = await backend('/data-refresher/getSchedule');
             const user = await backend('/me');

@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button"
 import RenderField from "./RenderField"
 import { useSelector } from "react-redux"
 import { useMemo, useState, useRef } from "react"
+import BottomButtons from "./BottomButtons"
 
 const filterWords = ['стекло', 'зеркало']
 const tapesWords = ['пленка']
@@ -136,10 +137,7 @@ export default function TriplexForm() {
                         </div>
                     </div>
                 </div>
-                <div className="flex gap-2 justify-center mt-10">
-                    <Button type="submit" size="sm">Рассчитать</Button>
-                    <Button size="sm" onClick={() => form.reset()}>Сбросить форму</Button>
-                </div>
+                <BottomButtons form={form} />
             </form>
         </div>
     )

@@ -26,11 +26,21 @@ export function ThemeToggle({ className = '' }) {
       size="icon"
       onClick={() => setTheme(isDark ? 'light' : 'dark')}
       aria-label="Переключить тему"
-      title={isDark ? 'Светлая тема' : 'Тёмная тема'}
+      title={
+        !hydrated
+          ? 'Переключить тему'
+          : isDark
+            ? 'Светлая тема'
+            : 'Тёмная тема'
+      }
       className={className}
     >
       {hydrated ? (
-        isDark ? <SunIcon className="size-[18px]" /> : <MoonIcon className="size-[18px]" />
+        isDark ? (
+          <SunIcon className="size-[18px]" />
+        ) : (
+          <MoonIcon className="size-[18px]" />
+        )
       ) : (
         <span className="size-[18px]" />
       )}

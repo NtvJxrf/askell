@@ -266,7 +266,7 @@ export default function WhatToDoPage() {
           return (
             <div key={stage} className="w-60 shrink-0 border-r border-border">
               {/* header */}
-              <div className="sticky top-0 z-10 flex items-center gap-2 border-b bg-background p-3">
+              <div className="sticky top-0 z-10 flex items-center gap-2 border-b bg-background p-1">
                 <h2 className="flex-1 truncate text-sm font-semibold">
                   {stage}
                 </h2>

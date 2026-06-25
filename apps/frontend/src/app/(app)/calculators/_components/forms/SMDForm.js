@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button"
 import RenderField from "./RenderField"
 import { useSelector } from "react-redux"
 import { useMemo } from "react"
+import BottomButtons from "./BottomButtons"
 
 export default function SMDForm() {
     const form = useForm({
@@ -62,8 +63,7 @@ export default function SMDForm() {
                 {formFields.map((field) => (
                     <RenderField key={field.name} data={{ ...field, control: form.control }} />
                 ))}
-                <Button type="submit" size="sm">Рассчитать</Button>
-                <Button size="sm" onClick={() => form.reset()}>Сбросить форму</Button>
+                <BottomButtons form={form} />
             </form>
         </div>
     )

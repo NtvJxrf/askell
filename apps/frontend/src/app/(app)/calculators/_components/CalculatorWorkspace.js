@@ -1,54 +1,65 @@
 'use client';
 
 import { useState } from 'react';
-import { CALCULATOR_TABS } from './calc-config';
-import { CalculatorForm } from './forms';
 import { PositionsPanel } from './PositionsPanel';
 import { Separator } from '@/components/ui/separator';
-import { Button } from '@/components/ui/button';
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import {
+  ResizableHandle,
+  ResizablePanel,
+  ResizablePanelGroup,
+} from "@/components/ui/resizable"
+import GlassForm from './forms/GlassForm';
+import SMDForm from './forms/SMDForm';
+import TriplexForm from './forms/TriplexForm';
 
-// Calculators workspace: split into a left forms column (~40%) and a right
-// positions-management column (~60%), separated by a thin divider. The left
-// column has a tab switcher that selects which calculator form is shown.
+export const CALCULATOR_TABS = [
+  { id: 'smd', label: 'СМД', form: SMDForm },
+  { id: 'glass', label: 'Стекло', form: GlassForm },
+  { id: 'triplex', label: 'Триплекс', form: TriplexForm },
+  { id: 'keraglass', label: 'Керагласс', form: GlassForm },
+  { id: 'glasspacket', label: 'Стеклопакет', form: GlassForm },
+  { id: 'tempering', label: 'Закалка', form: GlassForm },
+];
+
 export function CalculatorWorkspace() {
-  const [activeTab, setActiveTab] = useState(CALCULATOR_TABS[0].id);
+  const [activeTab, setActiveTab] = useState(CALCULATOR_TABS[0]);
+  const ActiveForm = activeTab.form;
 
   return (
-    <div className="flex h-full min-h-0 flex-col lg:flex-row">
-      {/* Left: forms (~40%) */}
-      <section className="flex min-h-0 flex-col lg:w-2/5">
-        {/* Tab switcher */}
-        <div className="flex items-center gap-1.5 overflow-x-auto border-b border-black/[.06] px-3 py-2 dark:border-white/[.06]">
-          {CALCULATOR_TABS.map((tab) => {
-            const active = tab.id === activeTab;
-            return (
-              <Button
-                key={tab.id}
-                variant={active ? 'secondary' : 'ghost'}
-                size="xs"
-                onClick={() => setActiveTab(tab.id)}
-                aria-current={active ? 'true' : undefined}
-                className={tab.align === 'right' ? 'ml-auto' : ''}
-              >
-                {tab.label}
-              </Button>
-            );
-          })}
-        </div>
+    <ResizablePanelGroup direction="horizontal" className="h-full min-h-0">
+      <ResizablePanel defaultSize="40%" minSize="300px" className="flex h-full min-h-0 flex-col">
+        <Tabs defaultValue="smd">
+          <div className="overflow-x-auto">
+            <TabsList variant="line" className="flex whitespace-nowrap w-max">
+              {CALCULATOR_TABS.map((tab) => (
+                <TabsTrigger
+                  key={tab.id}
+                  value={tab.id}
+                  onClick={() => setActiveTab(tab)}
+                >
+                  {tab.label}
+                </TabsTrigger>
+              ))}
+            </TabsList>
+          </div>
+        </Tabs>
 
-        {/* Active form */}
+        <Separator orientation="horizontal" />
+
         <div className="min-h-0 flex-1 overflow-y-auto p-4">
-          <CalculatorForm tabId={activeTab} />
+          {ActiveForm && <ActiveForm />}
         </div>
-      </section>
+      </ResizablePanel>
 
-      {/* Separator between forms and positions */}
-      <Separator orientation="vertical" />
+      <ResizableHandle withHandle/>
 
-      {/* Right: positions management (~60%) */}
-      <section className="flex min-h-0 flex-1 flex-col pl-4 pr-0 pb-0 pt-2.5">
-        <PositionsPanel />
-      </section>
-    </div>
+      <ResizablePanel defaultSize="60%" minSize="300px">
+        <div className="h-full min-h-0 flex flex-col pl-4 pt-2.5">
+          <PositionsPanel />
+        </div>
+      </ResizablePanel>
+
+    </ResizablePanelGroup>
   );
 }

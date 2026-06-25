@@ -1,47 +1,114 @@
-import {
-  Combobox,
-  ComboboxContent,
-  ComboboxEmpty,
-  ComboboxInput,
-  ComboboxItem,
-  ComboboxList,
-} from "@/components/ui/combobox"
+'use client'
+import { Controller } from "react-hook-form"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Select, SelectTrigger, SelectContent, SelectValue, SelectItem } from "@/components/ui/select"
+import { Checkbox } from "@/components/ui/checkbox"
+import { Combobox, ComboboxInput, ComboboxPopover, ComboboxList, ComboboxOption } from "@/components/ui/combobox"
+export default function RenderField({ data }) {
+    switch (data.type) {
+        case "input":
+            return (
+                <FieldController
+                    data={data}
+                    render={({ field }) => (
+                        <Input
+                            {...field}
+                            type="number"
+                            step={0.0001}
+                            inputMode="numeric"
+                            min={0}
+                            className="w-full"
+                        />
+                    )}
+                />
+            )
 
-const frameworks = ["Next.js", "SvelteKit", "Nuxt.js", "Remix", "Astro"]
+        case "inputp0":
+            return (
+                <FieldController
+                    data={data}
+                    render={({ field }) => (
+                        <Input
+                            {...field}
+                            type="number"
+                            step={0}
+                            inputMode="numeric"
+                            min={0}
+                            className="w-full"
+                        />
+                    )}
+                />
+            )
 
-export default function RenderField({ field }) {
-    if (field.type === "combobox") {
-        return (
-                <Combobox items={frameworks}>
-                    <ComboboxInput placeholder="Select a framework" />
-                    <ComboboxContent>
-                        <ComboboxEmpty>No items found.</ComboboxEmpty>
-                        <ComboboxList>
-                        {(item) => (
-                            <ComboboxItem key={item} value={item}>
-                            {item}
-                            </ComboboxItem>
-                        )}
-                        </ComboboxList>
-                    </ComboboxContent>
-                </Combobox>
-        )
-    }
+        case "select":
+            return (
+                <FieldController
+                    data={data}
+                    render={({ field, fieldState }) => (
+                        <Select value={field.value} onValueChange={field.onChange}>
+                            <SelectTrigger className="w-full min-w-0">
+                                <SelectValue />
+                            </SelectTrigger>
+
+                            <SelectContent className="w-auto min-w-[200px]">
+                                {data.options.map((option) => (
+                                <SelectItem key={option} value={option}>
+                                    {option}
+                                </SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                    )}
+                />
+            )
+
+        case "checkbox":
+            return (
+                <FieldController
+                    data={data}
+                    render={({ field }) => (
+                        <Checkbox
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                        />
+                    )}
+                />
+            )
+
+        default:
+            return null
+  }
 }
-export function ComboboxExample() {
+
+function FieldLabel({ label, required }) {
   return (
-    <Combobox items={frameworks}>
-      <ComboboxInput placeholder="Select a framework" />
-      <ComboboxContent>
-        <ComboboxEmpty>No items found.</ComboboxEmpty>
-        <ComboboxList>
-          {(item) => (
-            <ComboboxItem key={item} value={item}>
-              {item}
-            </ComboboxItem>
-          )}
-        </ComboboxList>
-      </ComboboxContent>
-    </Combobox>
+    <Label className="flex items-center gap-1 whitespace-nowrap">
+      {required && (
+        <span className="text-destructive text-lg font-light leading-none">
+          *
+        </span>
+      )}
+      {label}:
+    </Label>
+  )
+}
+
+function FieldController({ data, render }) {
+  return (
+    <Controller
+      name={data.name}
+      control={data.control}
+      rules={{
+        required: data.required ? "Это поле обязательно" : false,
+      }}
+      render={({ field, fieldState }) => (
+        <div className="flex items-center gap-3">
+          <FieldLabel label={data.label} required={data.required} />
+          {render({ field, fieldState })}
+        </div>
+      )}
+    />
   )
 }

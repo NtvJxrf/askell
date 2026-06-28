@@ -29,6 +29,7 @@ const map = {
 let selfcost = {
   updates: {}
 };
+let lastUpdateHeaps = 0
 broker.createService({
   name: "data-refresher",
 
@@ -86,7 +87,10 @@ broker.createService({
     updateHeaps: {
       rest: "GET /updateHeaps",
       async handler() {
+        if (lastUpdateHeaps !== 0 && Date.now() - lastUpdateHeaps < 300_000) throw new Error(404, 'Only one update per 5 minutes')
+        lastUpdateHeaps = Date.now()
         await updateHeaps();
+        broker.call("websocket.broadcast", { type: 'heaps', heaps: JSON.parse(await valkey.get('heaps')) || null });
         return true
       }
     },
@@ -94,6 +98,7 @@ broker.createService({
       rest: "GET /updateSchedule",
       async handler() {
         await updateSchedule();
+        broker.call("websocket.broadcast", { type: 'schedule', schedule: JSON.parse(await valkey.get('schedule')) || null });
         return true;
       }
     },
@@ -170,45 +175,3 @@ const updateSelfcost = async () => {
     }
   }
 }
-// broker.createService({
-//   name: "data-refresher",
-
-//   actions: {
-//     // Просто функция — доступна только внутри через broker.call()
-//     // Снаружи через HTTP недоступна
-//     internalAction(ctx) {
-//       return "только для других сервисов";
-//     },
-
-//     // Объект с handler — то же самое, но можно добавить rest, params, middleware и т.д.
-//     updateEntity: {
-//       rest: "POST /updateEntity",   // HTTP маршрут: POST /api/data-refresher/updateEntity
-      
-//       // Валидация входных параметров (опционально)
-//       params: {
-//         entity: "string"
-//       },
-
-//       async handler(ctx) {
-//         await map[ctx.params.entity]();
-//         return true;
-//       }
-//     },
-
-//     // GET запрос
-//     getStatus: {
-//       rest: "GET /status",          // GET /api/data-refresher/status
-//       handler(ctx) {
-//         return { ok: true };
-//       }
-//     },
-
-//     // С параметром в URL
-//     getById: {
-//       rest: "GET /item/:id",        // GET /api/data-refresher/item/123
-//       handler(ctx) {
-//         return { id: ctx.params.id };
-//       }
-//     }
-//   }
-// });

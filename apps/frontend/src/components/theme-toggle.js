@@ -2,7 +2,10 @@
 
 import { useSyncExternalStore } from 'react';
 import { useTheme } from 'next-themes';
-import { SunIcon, MoonIcon } from '@/components/icons';
+import {
+  Sun,
+  Moon
+} from 'lucide-react'
 import { Button } from '@/components/ui/button';
 
 const emptySubscribe = () => () => {};
@@ -37,9 +40,9 @@ export function ThemeToggle({ className = '' }) {
     >
       {hydrated ? (
         isDark ? (
-          <SunIcon className="size-[18px]" />
+          <Sun className="size-[18px]" />
         ) : (
-          <MoonIcon className="size-[18px]" />
+          <Moon className="size-[18px]" />
         )
       ) : (
         <span className="size-[18px]" />

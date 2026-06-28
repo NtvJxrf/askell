@@ -1,7 +1,7 @@
 'use client';
 import { useEffect, useRef } from "react";
 import { useDispatch } from "react-redux";
-import { setSelfcost, setHeaps, setSettings } from "@/lib/slice";
+import { setSelfcost, setHeaps, setSettings, setSchedule } from "@/lib/slice";
 export default function WebSocketHandler() {
     const dispatch = useDispatch();
     const wsRef = useRef(null);
@@ -35,6 +35,9 @@ export default function WebSocketHandler() {
                     break;
                     case "settings":
                         dispatch(setSettings(data.settings));
+                    break;
+                    case "schedule":
+                        dispatch(setSchedule(data.schedule));
                     break;
                 }
             };

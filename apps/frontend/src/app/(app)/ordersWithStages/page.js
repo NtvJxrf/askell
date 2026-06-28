@@ -11,7 +11,15 @@ import { Input } from "@/components/ui/input"
 import { useSelector } from "react-redux"
 import { useMemo, useState } from "react"
 export default function ProductionPage() {
-  const heaps = useSelector(state => state.app.heaps) || [];
+  const heapsRaw = useSelector((state) => state.app.heaps)
+  const heaps = useMemo(() => {
+    if (!heapsRaw) return null;
+    const result = {};
+    for (const [stage, items] of Object.entries(heapsRaw)) {
+      result[stage] = items.filter(item => item.tier < 2);
+    }
+    return result;
+  }, [heapsRaw]);
   const [filters, setFilters] = useState({
     order: "",
     productiontask: "",

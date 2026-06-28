@@ -45,7 +45,6 @@ export default function SettingsPage() {
       method: "POST",
       body: { entity: item.function },
     });
-    console.log(res)
     setLoadingId(null);
   };
 

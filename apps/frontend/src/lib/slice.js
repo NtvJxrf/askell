@@ -8,12 +8,6 @@ const initialState = {
       strDate: null
     },
     currentOrder: null,
-    // Per-calculator form state, keyed by tab id (formId). Each entry looks like
-    //   { values: { [fieldName]: any }, groups: { [groupName]: number } }
-    // Entries are created lazily on first interaction. Because `store` is a
-    // module singleton, this state survives client-side navigation between pages
-    // — so each calculator keeps its own values independently and nothing leaks
-    // between product types.
     forms: {},
     selfcost: null,
     schedule: null,

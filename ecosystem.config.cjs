@@ -7,5 +7,7 @@ module.exports = {
     { name: 'orders', script: './apps/backend/orders/index.js' },
     { name: 'productionCompletion', script: './apps/backend/productionCompletion/index.js' },
     { name: 'websocket', script: './apps/backend/ws/index.js' },
+    { name: 'reports', script: './apps/backend/reports/index.js' },
+    { name: 'extension', script: './apps/backend/extension/index.js' },
   ]
 };

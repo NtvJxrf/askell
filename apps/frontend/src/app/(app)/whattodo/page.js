@@ -28,7 +28,15 @@ const RU_TO_EN_KEYBOARD_MAP = {
 
 const localStorageKey = 'whattodo_visible_keys'
 export default function WhatToDoPage() {
-  const heaps = useSelector((state) => state.app.heaps);
+  const heapsRaw = useSelector((state) => state.app.heaps)
+  const heaps = useMemo(() => {
+    if (!heapsRaw) return null;
+    const result = {};
+    for (const [stage, items] of Object.entries(heapsRaw)) {
+      result[stage] = items.filter(item => item.tier < 2);
+    }
+    return result;
+  }, [heapsRaw]);
   const settings = useSelector((state) => state.app.settings);
   const [selectedItem, setSelectedItem] = useState(null);
   const productionRowIdRef = useRef('')

@@ -19,6 +19,9 @@
     },
     "./settings": {
       "import": "./src/settings.js"
+    },
+    "./calc": {
+      "import": "./src/calculators/"
     }
   },
   "scripts": {

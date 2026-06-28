@@ -2,7 +2,18 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { ICONS, UserIcon } from '@/components/icons';
+import { ROLES, hasRole } from '@askell/shared/roles';
+import {
+  Calculator,
+  Factory,
+  Slice,
+  SquareChartGantt,
+  Logs,
+  Settings,
+  FileChartColumn,
+  ShieldCheck,
+  User
+} from 'lucide-react'
 import { ThemeToggle } from '@/components/theme-toggle';
 import {
   Sidebar as SidebarRoot,
@@ -22,9 +33,21 @@ import {
 // Receives an already role-filtered `items` list and a plain `user` object
 // from the server layout. Collapse/expand state is owned by SidebarProvider
 // (see (app)/layout.js) and persisted via cookie.
-export function Sidebar({ user, items }) {
+export const NAV_ITEMS = [
+  { href: '/calculators', label: 'Калькуляторы', icon: Calculator },
+  { href: '/production', label: 'Производство', icon: Factory },
+  { href: '/cuttingLayouts', label: 'Раскрой', icon: Slice },
+  { href: '/whattodo', label: 'Что брать в работу', icon: SquareChartGantt },
+  { href: '/ordersWithStages', label: 'Заказы с этапами', icon: Logs },
+  { href: '/settings', label: 'Настройки', icon: Settings },
+  { href: '/reports', label: 'Отчеты', icon: FileChartColumn },
+  { href: '/admin', label: 'Админка', icon: ShieldCheck, roles: [ROLES.ADMIN] },
+];
+export function Sidebar({ user }) {
   const pathname = usePathname();
-
+  const items = NAV_ITEMS
+    .filter((item) => hasRole(user, item.roles))
+    .map(({ href, label, icon }) => ({ href, label, icon }));
   return (
     <SidebarRoot collapsible="icon">
       {/* Top: logo slot + company name + collapse trigger */}
@@ -50,7 +73,7 @@ export function Sidebar({ user, items }) {
           <SidebarGroupContent>
             <SidebarMenu className="gap-0.5">
               {items.map((item) => {
-                const Icon = ICONS[item.icon] ?? UserIcon;
+                const Icon = item.icon ?? User;
                 const active =
                   pathname === item.href || pathname.startsWith(`${item.href}/`);
                 return (
@@ -74,31 +97,35 @@ export function Sidebar({ user, items }) {
 
       {/* Footer: theme toggle + user/profile button */}
       <SidebarFooter>
-        <div className="flex justify-end px-1 group-data-[collapsible=icon]:justify-center">
+        <div className="flex items-center justify-between">
+          <SidebarMenu className="flex-1">
+            <SidebarMenuItem>
+              <SidebarMenuButton
+                size="lg"
+                tooltip={user?.fullname ?? 'Профиль'}
+                render={<Link href="/profile" />}
+              >
+                <span className="grid size-8 shrink-0 place-items-center rounded-full bg-sidebar-accent text-sidebar-accent-foreground">
+                  <User className="size-[18px]" />
+                </span>
+
+                <span className="flex min-w-0 flex-col text-left">
+                  <span className="truncate font-medium">
+                    {user?.fullname ?? 'Профиль'}
+                  </span>
+
+                  {user?.username && (
+                    <span className="truncate text-[11px] text-sidebar-foreground/60">
+                      {user.username}
+                    </span>
+                  )}
+                </span>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          </SidebarMenu>
+
           <ThemeToggle />
         </div>
-
-        <SidebarMenu>
-          <SidebarMenuItem>
-            <SidebarMenuButton
-              size="lg"
-              tooltip={user?.fullname ?? 'Профиль'}
-              render={<Link href="/profile" />}
-            >
-              <span className="grid size-8 shrink-0 place-items-center rounded-full bg-sidebar-accent text-sidebar-accent-foreground">
-                <UserIcon className="size-[18px]" />
-              </span>
-              <span className="flex min-w-0 flex-col text-left">
-                <span className="truncate font-medium">{user?.fullname ?? 'Профиль'}</span>
-                {user?.username && (
-                  <span className="truncate text-[11px] text-sidebar-foreground/60">
-                    {user.username}
-                  </span>
-                )}
-              </span>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-        </SidebarMenu>
       </SidebarFooter>
 
       <SidebarRail />

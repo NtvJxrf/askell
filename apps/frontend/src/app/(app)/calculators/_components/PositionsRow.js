@@ -3,14 +3,14 @@
 import { useEffect, useState } from 'react';
 import { useDispatch } from 'react-redux';
 import {
-  ChevronRightIcon,
-  GripIcon,
-  TrashIcon,
-  EditIcon,
-  InfoIcon,
-  CheckIcon,
-  CrossIcon,
-} from '@/components/icons';
+    ChevronRight,
+    GripVertical,
+    Trash2,
+    Pencil,
+    Info,
+    Check,
+    X
+} from 'lucide-react';
 import {
   removePosition,
   reorderPositions,
@@ -94,19 +94,19 @@ export function PositionsRow({
                         aria-label="Действия"
                         className="flex size-5 items-center justify-center rounded text-muted-foreground outline-none transition-colors hover:bg-accent hover:text-foreground data-popup-open:bg-accent data-popup-open:text-foreground"
                     >
-                        <ChevronRightIcon className="size-3.5" />
+                        <ChevronRight className="size-3.5" />
                     </DropdownMenuTrigger>
                     <DropdownMenuContent side="bottom" align="start" sideOffset={6} className="min-w-40">
                         <DropdownMenuItem onClick={handleEditing}>
-                            <EditIcon className="size-3.5" />
+                            <Pencil className="size-3.5" />
                             Редактировать
                         </DropdownMenuItem>
                         <DropdownMenuItem onClick={handleDetails}>
-                            <InfoIcon className="size-3.5" />
+                            <Info className="size-3.5" />
                             Подробнее
                         </DropdownMenuItem>
                         <DropdownMenuItem variant="destructive" onClick={handleDelete}>
-                            <TrashIcon className="size-3.5" />
+                            <Trash2 className="size-3.5" />
                             Удалить
                         </DropdownMenuItem>
                     </DropdownMenuContent>
@@ -134,7 +134,7 @@ export function PositionsRow({
                 onMouseUp={() => setDragEnabled(false)}
                 className="inline-flex size-5 cursor-grab items-center justify-center rounded text-muted-foreground/60 transition-colors hover:text-foreground active:cursor-grabbing"
             >
-                <GripIcon className="size-3.5" />
+                <GripVertical className="size-3.5" />
             </button>
         </TableCell>
 
@@ -155,9 +155,9 @@ export function PositionsRow({
         <TableCell className="p-1.5">
             <div className="flex items-center justify-center">
                 {position?.added ? (
-                    <CheckIcon className="size-4 text-emerald-500" />
+                    <Check className="size-4 text-emerald-500" />
                 ) : (
-                    <CrossIcon className="size-4 text-red-500" />
+                    <X className="size-4 text-red-500" />
                 )}
             </div>
         </TableCell>

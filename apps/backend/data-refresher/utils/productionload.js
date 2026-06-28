@@ -86,7 +86,88 @@ export const updateHeaps = async () => {
                             }
                         }),
                         orderingPosition: pstage.orderingPosition,
+                        tier: 1
                     })
+                }
+            }
+        }
+    }
+        const orders = await broker.call('proxy.fetchAllRows', { url: `https://api.moysklad.ru/api/remap/1.2/entity/customerorder?filter=`
+        +`state.name=Подготовить (переделать) чертежи`
+        +`;state.name=Чертежи подготовлены, прикреплены`
+        +`;state.name=Проверить чертежи`
+        +`;state.name=Проверено технологом`
+        +`&expand=positions.assortment`
+    })
+    for(const order of orders){
+        for(const pos of order.positions.rows){
+            const assortment = pos.assortment
+            const attrs = (assortment?.attributes || []).reduce((a, x) => {
+                if (assortmentReqAttrs.includes(x.name)) {
+                    a[x.name] = x.value;
+                }
+                return a;
+            }, {});
+            const posType = attrs['Тип изделия']
+            console.log('posType', posType, 'assortment', assortment?.name)
+            if(posType == 'Стекло'){
+                for (let i = 0; i < pos.quantity; i++) {
+                    heapsRaw?.['https://api.moysklad.ru/api/remap/1.2/entity/processingstage/d94b1d68-59e2-11ed-0a80-03cd0012392b']?.heap.push({ //Раскрой
+                        name: assortment?.name,
+                        attributes: attrs,
+                        deliveryPlannedMoment: order.deliveryPlannedMoment,
+                        productionPath: buildGlassPath(attrs),
+                        orderingPosition: 0,
+                        tier: 2
+                    });
+                }
+            }
+            if(posType == 'Триплекс'){
+                for (let i = 0; i < pos.quantity; i++) {
+                    heapsRaw?.['https://api.moysklad.ru/api/remap/1.2/entity/processingstage/2f32cd1b-63ed-11ed-0a80-022c00494587']?.heap.push({ //Триплексование
+                        name: assortment?.name,
+                        attributes: attrs,
+                        deliveryPlannedMoment: order.deliveryPlannedMoment,
+                        productionPath: [{stageName: 'Триплексование', orderingPosition: 0}, {stageName: 'ОТК', orderingPosition: 1}],
+                        orderingPosition: 0,
+                        tier: 2
+                    });
+                    for(let i = 0; i < (attrs['Кол-во полуфабрикатов'] || 2); i++) {
+                        heapsRaw?.['https://api.moysklad.ru/api/remap/1.2/entity/processingstage/d94b1d68-59e2-11ed-0a80-03cd0012392b']?.heap.push({//Раскрой
+                            name: `Стекло для ${assortment?.name}`,
+                            attributes: attrs,
+                            deliveryPlannedMoment: order.deliveryPlannedMoment,
+                            productionPath: buildGlassPath(attrs),
+                            orderingPosition: 0,
+                            tier: 2
+                        });
+                    }
+                }
+            }
+            if(posType == 'Стеклопакет'){
+                for (let i = 0; i < pos.quantity; i++) {
+                    heapsRaw?.['https://api.moysklad.ru/api/remap/1.2/entity/processingstage/b4389fb6-9213-11f0-0a80-0717002f0375']?.heap.push({//Изготовление рамки
+                        name: assortment?.name,
+                        attributes: attrs,
+                        deliveryPlannedMoment: order.deliveryPlannedMoment,
+                        productionPath: [
+                            {stageName: 'Изготовление рамки', orderingPosition: 0},
+                            {stageName: 'Сборка стеклопакета', orderingPosition: 1},
+                            {stageName: 'Вторичная герметизация', orderingPosition: 2}
+                        ],
+                        orderingPosition: 0,
+                        tier: 2
+                    });
+                    for(let i = 0; i < (attrs['Кол-во полуфабрикатов'] || 2); i++) {
+                        heapsRaw?.['https://api.moysklad.ru/api/remap/1.2/entity/processingstage/d94b1d68-59e2-11ed-0a80-03cd0012392b']?.heap.push({//Раскрой
+                            name: `Стекло для ${assortment?.name}`,
+                            attributes: attrs,
+                            deliveryPlannedMoment: order.deliveryPlannedMoment,
+                            productionPath: buildGlassPath(attrs),
+                            orderingPosition: 0,
+                            tier: 2
+                        });
+                    }
                 }
             }
         }
@@ -98,4 +179,25 @@ export const updateHeaps = async () => {
     await valkey.set('heaps', JSON.stringify(heaps))
     console.timeEnd('get-heaps-total')
     return true
+}
+
+
+const buildGlassPath = (attrs) => {
+    const path = ['Раскрой']
+    if(attrs['Вид обработки'] === 'Притупка') path.push('ПР Притупка')
+    if(attrs['Вид обработки'] === 'Полировка' && attrs['Тип станка'] == 'Прямолинейка') path.push('ПР Полировка')
+    if(attrs['Вид обработки'] === 'Шлифовка' && attrs['Тип станка'] == 'Прямолинейка') path.push('ПР Шлифовка')
+    if(attrs['Вид обработки'] === 'Полировка' && attrs['Тип станка'] == 'Криволинейка') path.push('ПР Полировка')
+    if(attrs['Вид обработки'] === 'Шлифовка' && attrs['Тип станка'] == 'Криволинейка') path.push('ПР Шлифовка')
+    if(attrs['Кол-во сверлений']) path.push('Сверление')
+    if(attrs['Кол-во зенкований']) path.push('Зенковка')
+    if(attrs['Закалка']) path.push('Закалка')
+    path.push('ОТК')
+    const res = path.map((stageName, index) => {
+        return {
+            stageName,
+            orderingPosition: index + 1
+        }
+    })
+    return res
 }

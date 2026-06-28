@@ -28,11 +28,9 @@ async function forward(request, { params }) {
     cache: 'no-store',
   });
 
-  // Pass the backend response (status + body) straight through.
-  const body = await res.text();
-  return new NextResponse(body, {
+  return new NextResponse(res.body, {
     status: res.status,
-    headers: { 'Content-Type': res.headers.get('content-type') || 'application/json' },
+    headers: new Headers(res.headers),
   });
 }
 

@@ -72,7 +72,7 @@ export function PositionsPanel() {
       {/* Order meta (single row) */}
       <div className="flex flex-wrap items-center gap-x-6 gap-y-1 text-[13px] text-zinc-600 dark:text-zinc-400">
         <span>
-          Номер заказа: <span className="text-zinc-900 dark:text-zinc-100">{order?.name ?? '—'}</span>
+          № заказа: <span className="text-zinc-900 dark:text-zinc-100">{order?.name ?? '—'}</span>
         </span>
         <span>
           Контрагент: <span className="text-zinc-900 dark:text-zinc-100">{order?.agent ?? '—'}</span>

@@ -71,6 +71,9 @@ const appSlice = createSlice({
     setPositions(state, action) {
       state.positions = action.payload;
     },
+    addPosition(state, action) {
+      state.positions.push(action.payload);
+    },
     // Toggle the `selected` flag of one position (kept on the position object
     // so selection travels with it through reordering / deletion).
     togglePositionSelected(state, action) {
@@ -128,7 +131,8 @@ export const {
   setSchedule,
   setHeaps,
   setUser,
-  setSettings
+  setSettings,
+  addPosition
 } = appSlice.actions;
 const appReducer = appSlice.reducer;
 export const store = configureStore({

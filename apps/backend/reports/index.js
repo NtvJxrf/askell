@@ -8,7 +8,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 import report1 from "./src/report1.js";
 import report2 from "./src/report2.js";
-
+import report3 from "./src/report3.js";
 const broker = new ServiceBroker({
   nodeID: "reports",
   transporter: "nats://localhost:4222",

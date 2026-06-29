@@ -20,6 +20,10 @@ export default function RenderField({ data }) {
                             inputMode="numeric"
                             min={0}
                             className="w-full"
+                            onChange={(e) =>
+                                field.onChange(
+                                e.target.value === "" ? "" : e.target.valueAsNumber
+                            )}
                         />
                     )}
                 />
@@ -37,6 +41,10 @@ export default function RenderField({ data }) {
                             inputMode="numeric"
                             min={0}
                             className="w-full"
+                            onChange={(e) =>
+                            field.onChange(
+                                e.target.value === "" ? "" : e.target.valueAsNumber
+                            )}
                         />
                     )}
                 />

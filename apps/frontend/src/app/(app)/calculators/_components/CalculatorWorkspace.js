@@ -34,7 +34,7 @@ export function CalculatorWorkspace() {
 
   return (
     <ResizablePanelGroup direction="horizontal" className="h-full min-h-0">
-      <ResizablePanel defaultSize="40%" minSize="300px" className="flex h-full min-h-0 flex-col">
+      <ResizablePanel defaultSize="40%" minSize="150px" className="flex h-full min-h-0 flex-col">
         <Tabs defaultValue="smd">
           <div className="flex w-full items-center">
             <div className="overflow-x-auto flex-1">
@@ -103,7 +103,7 @@ export function CalculatorWorkspace() {
 
       <ResizableHandle withHandle/>
 
-      <ResizablePanel defaultSize="60%" minSize="300px">
+      <ResizablePanel defaultSize="60%" minSize="150px">
         <div className="h-full min-h-0 flex flex-col pl-4 pt-2.5">
           <PositionsPanel />
         </div>

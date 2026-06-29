@@ -20,8 +20,14 @@
     "./settings": {
       "import": "./src/settings.js"
     },
-    "./calc": {
-      "import": "./src/calculators/"
+    "./calc/glass": {
+      "import": "./src/calculators/glass.js"
+    },
+    "./calc/smd": {
+      "import": "./src/calculators/smd.js"
+    },
+    "./calc/triplex": {
+      "import": "./src/calculators/triplex.js"
     }
   },
   "scripts": {

@@ -1,4 +1,3 @@
-import * as XLSX from 'xlsx';
 function getAttr(assortment, attrName) {
   if(attrName == 'Серия') return assortment?.attributes?.find(a => a.name === attrName)?.value?.name;
   return assortment?.attributes?.find(a => a.name === attrName)?.value;

@@ -1,34 +1,38 @@
 'use client';
 import { useForm } from "react-hook-form"
-import { Button } from "@/components/ui/button"
 import RenderField from "./RenderField"
-import { useSelector } from "react-redux"
+import { useSelector, useDispatch } from "react-redux"
 import { useMemo } from "react"
 import BottomButtons from "./BottomButtons"
+import calculate from "@askell/shared/calc/glass"
+import { addPosition } from "@/lib/slice"
+import { toast } from 'sonner'
 const filterWords = ['стекло', 'зеркало']
 
 export default function GlassForm() {
     const form = useForm({
         defaultValues: {
             material: '',
-            width: '',
-            height: '',
+            width: undefined,
+            height: undefined,
             processing: '',
-            drills: '',
-            zenk: '',
-            cutsv1: '',
-            cutsv2: '',
-            cutsv3: '',
+            drills: undefined,
+            zenk: undefined,
+            cutsv1: undefined,
+            cutsv2: undefined,
+            cutsv3: undefined,
             color: '',
-            print: '',
+            print: undefined,
             shape: true,
             tempered: true,
-            quantity: '',
+            quantity: undefined,
             rounding: 'Округление до 0.5',
         }
     })
-    const materials = useSelector((state) => state.app?.selfcost?.materials)
-    const colors = useSelector(state => state.app?.selfcost?.colors)
+    const selfcost = useSelector((state) => state.app?.selfcost)
+    const dispatch = useDispatch()
+    const materials = selfcost?.materials
+    const colors = selfcost?.colors
 
     const materialsArray = useMemo(() => {
         if (!materials || materials.length === 0) return []
@@ -68,7 +72,14 @@ export default function GlassForm() {
     ]
 
     function onSubmit(values) {
-        console.log(values)
+        try{
+            const res = calculate({...values, width: Number(values.width), height: Number(values.height)}, selfcost)
+            console.log(res)
+            dispatch(addPosition(res))
+        }catch(e){
+            toast.error(e.message || 'Ошибка при расчете позиции')
+            console.error(e)
+        }
     }
 
     return (

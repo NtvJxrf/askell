@@ -26,25 +26,26 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-
 // Format a kopeck price into a tidy "1 234,56 ₽" string.
 function formatPrice(price) {
   if (price == null) return '—';
-  return `${(price / 100).toLocaleString('ru-RU', {
+  return `${(price).toLocaleString('ru-RU', {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   })} ₽`;
 }
 
 export function PositionsRow({
-  position,
-  index,
-  isDragging,
-  isOver,
-  onDragStart,
-  onDragEnter,
-  dragIndex,
-  onDragEnd,
+    position,
+    index,
+    isDragging,
+    isOver,
+    onDragStart,
+    onDragEnter,
+    dragIndex,
+    onDragEnd,
+    currentPrice,
+    setDetailsItem
 }) {
     const dispatch = useDispatch();
     // Dragging is only enabled while the user holds the grip handle, so plain
@@ -58,8 +59,6 @@ export function PositionsRow({
     const handleEditing = () => {
         console.log('editing', position);
     };
-
-    const handleDetails = () => {};
     return (
         <TableRow
         draggable={dragEnabled}
@@ -101,7 +100,7 @@ export function PositionsRow({
                             <Pencil className="size-3.5" />
                             Редактировать
                         </DropdownMenuItem>
-                        <DropdownMenuItem onClick={handleDetails}>
+                        <DropdownMenuItem onClick={() => setDetailsItem(position)}>
                             <Info className="size-3.5" />
                             Подробнее
                         </DropdownMenuItem>
@@ -149,7 +148,7 @@ export function PositionsRow({
         </TableCell>
 
         {/* Цена */}
-        <TableCell className="p-1.5 text-center">{formatPrice(position?.price)}</TableCell>
+        <TableCell className="p-1.5 text-center">{formatPrice(position.prices?.[currentPrice] || 'Неизвестно')}</TableCell>
 
         {/* Создано */}
         <TableCell className="p-1.5">
@@ -206,7 +205,7 @@ function QuantityCell({ index, value }) {
                     if (e.key === 'Enter') e.currentTarget.blur();
                 }}
                 aria-label="Количество"
-                className="mx-auto h-7 w-14 px-1.5 text-center text-[13px]"
+                className="mx-auto h-7 w-15 px-1.5 text-center text-[13px]"
             />
         </TableCell>
     );

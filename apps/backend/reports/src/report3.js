@@ -1,4 +1,3 @@
-import * as XLSX from 'xlsx';
 //Отчет по счетам покупателей, с суммой за ГОД, группами, первая/последняя продажа, город, отсортирован по последнему году
 export default async function createReport ({filters, broker}) {
   const { startDate, endDate } = filters

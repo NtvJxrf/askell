@@ -13,7 +13,7 @@ import {
 import { Checkbox } from '@/components/ui/checkbox';
 import { setAllPositionsSelected } from '@/lib/slice';
 import { PositionsRow } from './PositionsRow';
-
+import DetailsDialog from './DetailsDialog.js';
 // Data column labels (the leading control columns — actions / select / drag —
 // are intentionally label-less).
 const TABLE_COLUMNS = ['№', 'Название', 'Цена', 'Создано', 'Кол-во'];
@@ -24,6 +24,7 @@ const keyOf = (position, index) => position?.id ?? index;
 export function PositionsTable() {
   const dispatch = useDispatch();
   const positions = useSelector((state) => state.app.positions);
+  const [detailsItem, setDetailsItem] = useState(null);
   // Drag-and-drop tracking: source row and the row currently hovered over.
   const [dragIndex, setDragIndex] = useState(null);
   const [overIndex, setOverIndex] = useState(null);
@@ -106,12 +107,15 @@ export function PositionsTable() {
                   onDragEnter={handleDragEnter}
                   dragIndex={dragIndex}
                   onDragEnd={resetDrag}
+                  currentPrice={'retailPrice'}
+                  setDetailsItem={setDetailsItem}
                 />
               );
             })
           )}
         </TableBody>
       </Table>
+      <DetailsDialog item={detailsItem} open={Boolean(detailsItem)} onOpenChange={(open) => !open && setDetailsItem(null)}/>
     </div>
   );
 }

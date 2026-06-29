@@ -2,34 +2,38 @@
 import { useForm } from "react-hook-form"
 import { Button } from "@/components/ui/button"
 import RenderField from "./RenderField"
-import { useSelector } from "react-redux"
+import { useSelector, useDispatch } from "react-redux"
 import { useMemo, useState, useRef } from "react"
 import BottomButtons from "./BottomButtons"
+import calculate from "@askell/shared/calc/triplex"
+import { addPosition } from "@/lib/slice"
 
 const filterWords = ['стекло', 'зеркало']
 const tapesWords = ['пленка']
 export default function TriplexForm() {
     const form = useForm({
         defaultValues: {
-           width: '',
-           height: '',
+            width: undefined,
+            height: undefined,
             processing: '',
-            drills: '',
-            zenk: '',
-            cutsv1: '',
-            cutsv2: '',
-            cutsv3: '',
+            drills: undefined,
+            zenk: undefined,
+            cutsv1: undefined,
+            cutsv2: undefined,
+            cutsv3: undefined,
             color: '',
-            print: '',
+            print: undefined,
             shape: true,
             tempered: true,
-            quantity: '',
+            quantity: undefined,
             addTape: '',
             rounding: 'Округление до 0.5',
         }
     })
-    const materials = useSelector((state) => state.app?.selfcost?.materials)
-    const colors = useSelector(state => state.app?.selfcost?.colors)
+    const dispatch = useDispatch()
+    const selfcost = useSelector((state) => state.app?.selfcost)
+    const materials = selfcost?.materials
+    const colors = selfcost?.colors
 
     const [additionalMaterials, setAdditionalMaterials] = useState([]);
     const materialCount = useRef(3);
@@ -79,17 +83,19 @@ export default function TriplexForm() {
     ]
     const formMaterialsField = [
         { name: 'material1', type: 'select', label: 'Материал 1', options: materialsArray, required: true },
-        { name: 'tape1', type: 'select', label: 'Пленка 1', options: tapesArray, required: true },
+        { name: 'tape1', type: 'select', label: 'Пленка 1', options: tapesArray },
         { name: 'material2', type: 'select', label: 'Материал 2', options: materialsArray, required: true },
     ]
     function onSubmit(values) {
-        console.log(values)
+        const res = calculate(values, selfcost)
+        console.log(res)
+        dispatch(addPosition(res))
     }
     const handleAddMaterial = () => {
         setAdditionalMaterials(prev => [
             ...prev,
             { id: `tape${materialCount.current - 1}`, name: `tape${materialCount.current - 1}`, type: 'select', label: `Пленка ${materialCount.current - 1}`, options: tapesArray },
-            { id: `material${materialCount.current}`, name: `material${materialCount.current}`, type: 'select', label: `Материал ${materialCount.current}`, options: materialsArray, rules: [{ required: true, message: 'Заполните поле' }] },
+            { id: `material${materialCount.current}`, name: `material${materialCount.current}`, type: 'select', label: `Материал ${materialCount.current}`, options: materialsArray },
         ]);
         materialCount.current++;
     }
@@ -104,7 +110,7 @@ export default function TriplexForm() {
     }
     return (
         <div className="flex justify-center">
-            <form id="GlassForm" onSubmit={form.handleSubmit(onSubmit)} className="space-y-1.5 w-full">
+            <form id="TriplexForm" onSubmit={form.handleSubmit(onSubmit)} className="space-y-1.5 w-full">
                 <div className="flex gap-4">
                     <div className="flex-1 space-y-2 ">
                         {formFields.map((field) => (

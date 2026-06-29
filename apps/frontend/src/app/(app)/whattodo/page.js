@@ -285,7 +285,7 @@ export default function WhatToDoPage() {
               </div>
 
               {/* items */}
-              <div className="overflow-y-auto max-h-[calc(100vh-56px)] scrollbar-thin scrollbar-thumb-border">
+              <div className="overflow-y-auto scrollbar-none max-h-[calc(100vh-56px)] scrollbar-thumb-border">
                 {items.map((item, index) => (
                   <div key={item.productionRowId}>
                     <div

@@ -28,6 +28,12 @@
     },
     "./calc/triplex": {
       "import": "./src/calculators/triplex.js"
+    },
+    "./calc/ceraglass": {
+      "import": "./src/calculators/ceraglass.js"
+    },
+    "./calc/glasspacket": {
+      "import": "./src/calculators/glasspacket.js"
     }
   },
   "scripts": {

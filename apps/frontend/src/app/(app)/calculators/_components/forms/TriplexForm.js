@@ -12,21 +12,10 @@ const filterWords = ['стекло', 'зеркало']
 const tapesWords = ['пленка']
 export default function TriplexForm() {
     const form = useForm({
+        shouldUnregister: true,
         defaultValues: {
-            width: undefined,
-            height: undefined,
-            processing: '',
-            drills: undefined,
-            zenk: undefined,
-            cutsv1: undefined,
-            cutsv2: undefined,
-            cutsv3: undefined,
-            color: '',
-            print: undefined,
             shape: true,
             tempered: true,
-            quantity: undefined,
-            addTape: '',
             rounding: 'Округление до 0.5',
         }
     })

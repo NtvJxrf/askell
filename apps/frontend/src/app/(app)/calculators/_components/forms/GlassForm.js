@@ -11,21 +11,10 @@ const filterWords = ['стекло', 'зеркало']
 
 export default function GlassForm() {
     const form = useForm({
+        shouldUnregister: true,
         defaultValues: {
-            material: '',
-            width: undefined,
-            height: undefined,
-            processing: '',
-            drills: undefined,
-            zenk: undefined,
-            cutsv1: undefined,
-            cutsv2: undefined,
-            cutsv3: undefined,
-            color: '',
-            print: undefined,
             shape: true,
             tempered: true,
-            quantity: undefined,
             rounding: 'Округление до 0.5',
         }
     })

@@ -9,20 +9,10 @@ import calculate from "@askell/shared/calc/smd"
 import { addPosition } from "@/lib/slice"
 export default function SMDForm() {
     const form = useForm({
+        shouldUnregister: true,
         defaultValues: {
-            smdType: '',
-            material: '',
-            width: undefined,
-            height: undefined,
-            marker: '',
-            magnets: undefined,
-            color: '',
-            drillssmd: undefined,
-            cuts: undefined,
-            rounds: undefined,
             print: false,
             notax: false,
-            quantity: undefined,
         }
     })
     const dispatch = useDispatch()

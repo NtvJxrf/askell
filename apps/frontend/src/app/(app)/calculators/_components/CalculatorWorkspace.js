@@ -12,6 +12,8 @@ import {
 import GlassForm from './forms/GlassForm';
 import SMDForm from './forms/SMDForm';
 import TriplexForm from './forms/TriplexForm';
+import CeraglassForm from './forms/CeraglassForm';
+import GlasspacketForm from './forms/GlasspacketForm';
 import {
   Popover,
   PopoverContent,
@@ -23,8 +25,8 @@ export const CALCULATOR_TABS = [
   { id: 'smd', label: 'СМД', form: SMDForm },
   { id: 'glass', label: 'Стекло', form: GlassForm },
   { id: 'triplex', label: 'Триплекс', form: TriplexForm },
-  { id: 'keraglass', label: 'Керагласс', form: GlassForm },
-  { id: 'glasspacket', label: 'Стеклопакет', form: GlassForm },
+  { id: 'ceraglass', label: 'Керагласс', form: CeraglassForm },
+  { id: 'glasspacket', label: 'Стеклопакет', form: GlasspacketForm },
   { id: 'tempering', label: 'Закалка', form: GlassForm },
 ];
 

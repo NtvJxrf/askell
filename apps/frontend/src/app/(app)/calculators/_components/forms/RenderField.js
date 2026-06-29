@@ -112,7 +112,7 @@ function FieldController({ data, render }) {
         required: data.required ? "Это поле обязательно" : false,
       }}
       render={({ field, fieldState }) => (
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-1.5">
           <FieldLabel label={data.label} required={data.required} />
           {render({ field, fieldState })}
         </div>

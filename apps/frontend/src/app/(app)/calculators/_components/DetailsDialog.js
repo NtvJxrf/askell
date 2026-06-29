@@ -8,6 +8,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import { Separator } from "@/components/ui/separator";
 import { Label } from "@/components/ui/label";
 export default function ItemDialog({ item, open, onOpenChange }) {
+    console.log(item)
     const materials = item?.result?.materials
     const works = item?.result?.works
     const finalPrice = item?.result?.finalPrice
@@ -172,10 +173,16 @@ export default function ItemDialog({ item, open, onOpenChange }) {
                             Исходные данные
                         </Label>
                         {Object.entries(item?.initialData || {}).map(([key, value]) => (
-                            key && value && (
+                            value !== undefined && value !== null && (
                                 <div key={key} className="flex items-center pb-0.5 gap-1">
-                                    <span className="text-sm whitespace-nowrap">{initialDataLabels[key] || key}:</span>
-                                    <span className="text-sm">{typeof value == 'boolean' ? (value ? 'Да' : 'Нет') : value}</span>
+                                    <span className="text-sm whitespace-nowrap">
+                                        {getInitialDataLabel(key)}:
+                                    </span>
+                                    <span className="text-sm">
+                                        {typeof value === 'boolean'
+                                            ? (value ? 'Да' : 'Нет')
+                                            : value}
+                                    </span>
                                 </div>
                             )
                         ))}
@@ -185,6 +192,17 @@ export default function ItemDialog({ item, open, onOpenChange }) {
         </Dialog>
     );
 }
+
+const getInitialDataLabel = (key) => {
+    const match = key.match(/^([a-zA-Z_]+)(\d+)$/);
+
+    if (match) {
+        const [, baseKey, index] = match;
+        return `${initialDataLabels[baseKey] || baseKey} ${index}`;
+    }
+
+    return initialDataLabels[key] || key;
+};
 
 const initialDataLabels = {
     height: 'Высота',

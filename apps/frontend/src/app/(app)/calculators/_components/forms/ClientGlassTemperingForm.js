@@ -10,10 +10,11 @@ import { toast } from 'sonner'
 export default function ClientGlassTemperingForm({ dv = null }) {
     const form = useForm({
         shouldUnregister: true,
-        defaultValues: dv || {
+        defaultValues: {
             shape: true,
             tempered: true,
             rounding: 'Округление до 0.5',
+            ...dv
         }
     })
     const dispatch = useDispatch()

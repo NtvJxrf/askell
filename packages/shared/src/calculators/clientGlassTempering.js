@@ -32,7 +32,8 @@ const Calculate = (data, selfcost) => {
     ignoreRestricts || checkDetail({width, height, tempered: true, thickness, clientTempering: true, material: 'Стекло' })
     const temperingSelfcost = selfcost.pricesAndCoefs[`Закалка давальческого стекла ${thickness} мм`].value
     const temperingPrice = temperingSelfcost * S_calc
-    result.other = {    
+    result.other = {
+        calcMaterialAndWorks: temperingSelfcost * S_calc,
         customerSuppliedGlassForTempering: true,
         S,
         weight,

@@ -14,10 +14,10 @@ const filterWords = ['стекло', 'зеркало']
 export default function GlasspacketForm({ dv = null }) {
     const form = useForm({
         shouldUnregister: false,
-        defaultValues: dv || {
+        defaultValues: {
             shape: true,
-            tempered: true,
             rounding: 'Округление до 0.5',
+            ...dv
         }
     })
     const values = form.watch();
@@ -56,10 +56,10 @@ export default function GlasspacketForm({ dv = null }) {
         { name: 'quantity', type: 'inputp0', label: 'Количество, шт' },
     ]
     const materialFields = [
-        { name: 'material', type: 'select', label: 'Материал', options: materialsArray, required: true },
+        { name: 'material', type: 'combobox', label: 'Материал', options: materialsArray, required: true },
         { name: 'processing', type: 'select', label: 'Вид обработки', options: ['Притупка', 'Шлифовка', 'Без обработки'], required: true },
         { name: 'tempered', type: 'checkbox', label: 'Закаленное'},
-        { name: 'color', type: 'select', label: 'Цвет', options: colorsArray },
+        { name: 'color', type: 'combobox', label: 'Цвет', options: colorsArray },
     ]
     function onSubmit(values) {
         const res = calculate(values, selfcost, triplexArray)
@@ -187,7 +187,7 @@ export default function GlasspacketForm({ dv = null }) {
                             Добавить триплекс для стеклопакетов
                         </DialogTitle>
                     </DialogHeader>
-                    <TriplexForm handleAddTriplex={true} dv={values} />
+                    <TriplexForm handleAddTriplex={true} dv={{height: values.height, width: values.width}} />
                 </DialogContent>
             </Dialog>
             <Dialog open={editingItem} onOpenChange={() => setEditingItem(null)}>

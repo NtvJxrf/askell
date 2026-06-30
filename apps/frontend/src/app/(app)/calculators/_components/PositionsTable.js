@@ -40,7 +40,7 @@ export function PositionsTable() {
     setDragIndex(null);
     setOverIndex(null);
   };
-
+  console.log(positions)
   return (
     <div className="min-h-0 flex-1 overflow-auto">
       {/* Fixed layout so header and rows share identical column widths. The
@@ -52,7 +52,7 @@ export function PositionsTable() {
           <col className="w-8" />
           <col className="w-8" />
           <col className="w-12" />
-          <col />
+          <col className="min-w-24"/>
           <col className="w-24" />
           <col className="w-[4.5rem]" />
           <col className="w-20" />

@@ -56,34 +56,39 @@ export function PositionsRow({
 
     const handleDelete = () => dispatch(removePosition(index));
 
+    const price = position.prices?.[currentPrice] ?? 0;
+    const discount = position.discount ?? 0;
+    const cost = position?.result?.other?.calcmaterialsandworks ?? 0;
+
+    const finalPrice = price * (1 - discount / 100);
+    const profit = finalPrice - cost;
+
+    const profitPercent = cost > 0 ? (profit / cost) * 100 : 0;
+
     const handleEditing = () => {
         console.log('editing', position);
     };
     return (
         <TableRow
-        draggable={dragEnabled}
-        data-state={position?.selected ? 'selected' : undefined}
-        onDragStart={() => onDragStart(index)}
-        onDragEnter={() => onDragEnter(index)}
-        onDragOver={(e) => e.preventDefault()}
-        onDrop={(e) => {
-            e.preventDefault();
-            if (dragIndex != null && dragIndex !== index) {
-            dispatch(reorderPositions({ from: dragIndex, to: index }));
-            }
-            onDragEnd();
-        }}
-        onDragEnd={() => {
-            setDragEnabled(false);
-            onDragEnd();
-        }}
-        className={[
-            'text-[13px]',
-            isDragging ? 'opacity-40' : '',
-            isOver ? 'shadow-[inset_0_2px_0_0_#8b5cf6]' : '',
-        ]
-            .filter(Boolean)
-            .join(' ')}
+            draggable={dragEnabled}
+            data-state={position?.selected ? 'selected' : undefined}
+            onDragStart={() => onDragStart(index)}
+            onDragEnter={() => onDragEnter(index)}
+            onDragOver={(e) => e.preventDefault()}
+            onDrop={(e) => {
+                e.preventDefault();
+                if (dragIndex != null && dragIndex !== index) {
+                dispatch(reorderPositions({ from: dragIndex, to: index }));
+                }
+                onDragEnd();
+            }}
+            onDragEnd={() => {
+                setDragEnabled(false);
+                onDragEnd();
+            }}
+            className={['text-[13px]', isDragging ? 'opacity-40' : '', isOver ? 'shadow-[inset_0_2px_0_0_#8b5cf6]' : '',]
+                .filter(Boolean)
+                .join(' ')}
         >
         {/* Actions: click the chevron to open the row menu */}
         <TableCell className="p-1">
@@ -148,7 +153,22 @@ export function PositionsRow({
         </TableCell>
 
         {/* Цена */}
-        <TableCell className="p-1.5 text-center">{formatPrice(position.prices?.[currentPrice] || 'Неизвестно')}</TableCell>
+        <TableCell className="relative text-center">
+            <span>
+                {formatPrice(finalPrice || 0)}
+            </span>
+
+            {discount > 0 && (
+                <span className="absolute right-0 top-0 text-[10px] font-semibold text-orange-400" title={`Скидка: ${discount}%`}>
+                    -{discount}%
+                </span>
+            )}
+
+            <span className="absolute left-0 bottom-0 text-[10px] font-semibold text-green-600" title={`Прибыль: ${profitPercent.toFixed(1)}%`}>
+                {profit > 0 ? "+" : ""}
+                {formatPrice(profit)} ({profitPercent.toFixed(1)}%)
+            </span>
+        </TableCell>
 
         {/* Создано */}
         <TableCell className="p-1.5">

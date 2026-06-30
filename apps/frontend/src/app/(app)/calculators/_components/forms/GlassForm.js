@@ -12,10 +12,11 @@ const filterWords = ['стекло', 'зеркало']
 export default function GlassForm({ dv = null }) {
     const form = useForm({
         shouldUnregister: true,
-        defaultValues: dv || {
+        defaultValues: {
             shape: true,
             tempered: true,
             rounding: 'Округление до 0.5',
+            ...dv
         }
     })
     const selfcost = useSelector((state) => state.app?.selfcost)
@@ -43,7 +44,7 @@ export default function GlassForm({ dv = null }) {
         )
     }
     const formFields = [
-        { name: 'material', type: 'select', label: 'Материал', options: materialsArray, required: true },
+        { name: 'material', type: 'combobox', label: 'Материал', options: materialsArray, required: true },
         { name: 'width', type: 'input', label: 'Ширина, мм', required: true },
         { name: 'height', type: 'input', label: 'Высота, мм', required: true },
         { name: 'processing', type: 'select', label: 'Вид обработки', options: ['Притупка', 'Шлифовка', 'Полировка'], required: true },
@@ -52,7 +53,7 @@ export default function GlassForm({ dv = null }) {
         { name: 'cutsv1', type: 'inputp0', label: 'Вырезы 1 кат. шт' },
         { name: 'cutsv2', type: 'inputp0', label: 'Вырезы 2 кат. шт' },
         { name: 'cutsv3', type: 'inputp0', label: 'Вырезы 3 кат. шт' },
-        { name: 'color', type: 'select', label: 'Цвет', options: colorsArray },
+        { name: 'color', type: 'combobox', label: 'Цвет', options: colorsArray },
         { name: 'print', type: 'input', label: 'Печать, м2'},
         { name: 'shape', type: 'checkbox', label: 'Прямоугольная форма'},
         { name: 'tempered', type: 'checkbox', label: 'Закаленное'},

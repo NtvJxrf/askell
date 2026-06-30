@@ -70,7 +70,7 @@ broker.createService({
                     }
                     if(attrs['Детали']){
                         const details = JSON.parse(attrs['Детали'])
-                        res.details = details.result
+                        res.result = details.result
                         res.initialData = details.initialData
                     }
                     return res

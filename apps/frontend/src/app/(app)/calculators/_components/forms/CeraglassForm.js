@@ -16,11 +16,11 @@ const hingeWords = ['петля']
 export default function CeraglassForm({ dv = null }) {
     const form = useForm({
         shouldUnregister: true,
-        defaultValues: dv || {
+        defaultValues: {
             shape: true,
             tempered: true,
-            addTape: '',
             rounding: 'Округление до 0.5',
+            ...dv
         }
     })
     const dispatch = useDispatch()
@@ -70,8 +70,8 @@ export default function CeraglassForm({ dv = null }) {
     }
     const formFields = [
         { name: 'type', type: 'select', label: 'Изделие', options: ['Стол', 'Дверь', 'Столешница', 'Керамика'], required: true },
-        { name: 'material1', type: 'select', label: 'Материал 1', options: ceraArray, required: true },
-        { name: 'material2', type: 'select', label: 'Материал 2', options: materialsArray },
+        { name: 'material1', type: 'combobox', label: 'Материал 1', options: ceraArray, required: true },
+        { name: 'material2', type: 'combobox', label: 'Материал 2', options: materialsArray },
         { name: 'width', type: 'input', label: 'Ширина изделия, мм', required: true },
         { name: 'height', type: 'input', label: 'Высота изделия, мм', required: true },
         { name: 'cutsv1', type: 'inputp0', label: 'Вырезы 1 кат. шт' },
@@ -79,11 +79,11 @@ export default function CeraglassForm({ dv = null }) {
         { name: 'cutsv3', type: 'inputp0', label: 'Вырезы 3 кат. шт' },
         { name: 'blank', type: 'inputp0', label: 'Количество пятаков', required: true } ,
         { name: 'trim', type: 'input', label: '% обрези', description: 'Указывать десятичное число, например 30% обрези = 0.3' },
-        { name: 'color', type: 'select', label: 'Цвет', options: colorsArray },
-        { name: 'under', type: 'select', label: 'Подстолье', options: undersArray },
-        { name: 'doorFrame', type: 'select', label: 'Дверной короб', options: doorFrameArray },
-        { name: 'lock', type: 'select', label: 'Дверной замок', options: lockArray },
-        { name: 'hinge', type: 'select', label: 'Дверные петли', options: hingeArray },
+        { name: 'color', type: 'combobox', label: 'Цвет', options: colorsArray },
+        { name: 'under', type: 'combobox', label: 'Подстолье', options: undersArray },
+        { name: 'doorFrame', type: 'combobox', label: 'Дверной короб', options: doorFrameArray },
+        { name: 'lock', type: 'combobox', label: 'Дверной замок', options: lockArray },
+        { name: 'hinge', type: 'combobox', label: 'Дверные петли', options: hingeArray },
         { name: 'hingeCount', type: 'inputp0', label: 'Количество петель' },
         { name: 'tempered', type: 'checkbox', label: 'Закаленное', cheched: true },
         { name: 'quantity', type: 'inputp0', label: 'Количество, шт' },

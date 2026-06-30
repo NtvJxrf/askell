@@ -5,16 +5,17 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectTrigger, SelectContent, SelectValue, SelectItem } from "@/components/ui/select"
 import { Checkbox } from "@/components/ui/checkbox"
-import { Combobox, ComboboxInput, ComboboxPopover, ComboboxList, ComboboxOption } from "@/components/ui/combobox"
+import { Combobox, ComboboxInput, ComboboxPopover, ComboboxList, ComboboxOption, ComboboxContent, ComboboxItem } from "@/components/ui/combobox"
 export default function RenderField({ data }) {
     switch (data.type) {
         case "input":
             return (
                 <FieldController
                     data={data}
-                    render={({ field }) => (
+                    render={({ field, fieldState }) => (
                         <Input
                             {...field}
+                            aria-invalid={fieldState.invalid}
                             type="number"
                             step={0.0001}
                             inputMode="numeric"
@@ -33,9 +34,10 @@ export default function RenderField({ data }) {
             return (
                 <FieldController
                     data={data}
-                    render={({ field }) => (
+                    render={({ field, fieldState }) => (
                         <Input
                             {...field}
+                            aria-invalid={fieldState.invalid}
                             type="number"
                             step={0}
                             inputMode="numeric"
@@ -55,8 +57,8 @@ export default function RenderField({ data }) {
                 <FieldController
                     data={data}
                     render={({ field, fieldState }) => (
-                        <Select value={field.value} onValueChange={field.onChange}>
-                            <SelectTrigger className="w-full min-w-0">
+                        <Select value={field.value} onValueChange={field.onChange} >
+                            <SelectTrigger className="w-full min-w-0" aria-invalid={fieldState.invalid}>
                                 <SelectValue />
                             </SelectTrigger>
 
@@ -76,15 +78,39 @@ export default function RenderField({ data }) {
             return (
                 <FieldController
                     data={data}
-                    render={({ field }) => (
+                    render={({ field, fieldState }) => (
                         <Checkbox
                             checked={field.value}
                             onCheckedChange={field.onChange}
+                            aria-invalid={fieldState.invalid}
                         />
                     )}
                 />
             )
-
+        case "combobox":
+            return (
+                <FieldController
+                    data={data}
+                    render={({ field, fieldState }) => (
+                        <Combobox
+                            items={data.options}
+                            value={field.value}
+                            onValueChange={field.onChange}
+                        >
+                            <ComboboxInput showClear aria-invalid={fieldState.invalid} className="h-6 w-full min-w-0 overflow-hidden"/>
+                            <ComboboxContent className="w-auto min-w-0">
+                                <ComboboxList className="max-h-(--available-height) overflow-y-auto scrollbar-none">
+                                    {(item) => (
+                                        <ComboboxItem key={item} value={item}>
+                                            {item}
+                                        </ComboboxItem>
+                                    )}
+                                </ComboboxList>
+                            </ComboboxContent>
+                        </Combobox>
+                    )}
+                />
+            )
         default:
             return null
   }
@@ -109,7 +135,7 @@ function FieldController({ data, render }) {
       name={data.name}
       control={data.control}
       rules={{
-        required: data.required ? "Это поле обязательно" : false,
+        required: data.required ? true : false,
       }}
       render={({ field, fieldState }) => (
         <div className="flex items-center gap-1.5">

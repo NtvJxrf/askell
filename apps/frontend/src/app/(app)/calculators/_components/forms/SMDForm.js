@@ -10,9 +10,10 @@ import { addPosition } from "@/lib/slice"
 export default function SMDForm({ dv = null }) {
     const form = useForm({
         shouldUnregister: true,
-        defaultValues: dv || {
+        defaultValues: {
             print: false,
             notax: false,
+            ...dv
         }
     })
     const dispatch = useDispatch()
@@ -37,7 +38,7 @@ export default function SMDForm({ dv = null }) {
         { name: 'height', type: 'input', label: 'Высота, мм', required: true },
         { name: 'marker', type: 'select', label: 'Маркер', options: ['Белый', 'Черный'], required: true },
         { name: 'magnets', type: 'inputp0', label: 'Магниты, шт' },
-        { name: 'color', type: 'select', label: 'Цвет', options: colorsArray },
+        { name: 'color', type: 'combobox', label: 'Цвет', options: colorsArray },
         { name: 'drillssmd', type: 'inputp0', label: 'Сверление, шт' },
         { name: 'cuts', type: 'inputp0', label: 'Вырезы, шт' },
         { name: 'rounds', type: 'inputp0', label: 'Скругления, шт' },

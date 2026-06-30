@@ -7,16 +7,18 @@ import { useMemo, useState, useRef } from "react"
 import BottomButtons from "./BottomButtons"
 import calculate from "@askell/shared/calc/triplex"
 import { addPosition, addTriplexPosition } from "@/lib/slice"
+import { toast } from 'sonner'
 
 const filterWords = ['стекло', 'зеркало']
 const tapesWords = ['пленка']
 export default function TriplexForm({handleAddTriplex = false, dv = null, handleReplaceTriplex = null, index = null}) {
     const form = useForm({
         shouldUnregister: true,
-        defaultValues: dv || {
+        defaultValues: {
             shape: true,
             tempered: true,
             rounding: 'Округление до 0.5',
+            ...dv
         }
     })
     const dispatch = useDispatch()
@@ -56,7 +58,7 @@ export default function TriplexForm({handleAddTriplex = false, dv = null, handle
         { name: 'cutsv1', type: 'inputp0', label: 'Вырезы 1 кат. шт' },
         { name: 'cutsv2', type: 'inputp0', label: 'Вырезы 2 кат. шт' },
         { name: 'cutsv3', type: 'inputp0', label: 'Вырезы 3 кат. шт' },
-        { name: 'color', type: 'select', label: 'Цвет', options: colorsArray },
+        { name: 'color', type: 'combobox', label: 'Цвет', options: colorsArray },
         { name: 'print', type: 'input', label: 'Печать, м2'},
         { name: 'shape', type: 'checkbox', label: 'Прямоугольная форма' },
         { name: 'tempered', type: 'checkbox', label: 'Закаленное' },
@@ -65,28 +67,33 @@ export default function TriplexForm({handleAddTriplex = false, dv = null, handle
         { name: 'rounding', type: 'select', label: 'Округление', options: ['Округление до 0.3', 'Округление до 0.5', 'Умножить на 2'], required: true },
     ]
     const formMaterialsField = [
-        { name: 'material1', type: 'select', label: 'Материал 1', options: materialsArray, required: true },
-        { name: 'tape1', type: 'select', label: 'Пленка 1', options: tapesArray },
-        { name: 'material2', type: 'select', label: 'Материал 2', options: materialsArray, required: true },
+        { name: 'material1', type: 'combobox', label: 'Материал 1', options: materialsArray, required: true },
+        { name: 'tape1', type: 'combobox', label: 'Пленка 1', options: tapesArray },
+        { name: 'material2', type: 'combobox', label: 'Материал 2', options: materialsArray, required: true },
     ]
     function onSubmit(values) {
-        const res = calculate(values, selfcost)
-        console.log(res)
-        if(handleReplaceTriplex) {
-            handleReplaceTriplex(res, index)
-            return
+        try{
+            const res = calculate(values, selfcost)
+            console.log(res)
+            if(handleReplaceTriplex) {
+                handleReplaceTriplex(res, index)
+                return
+            }
+            if(handleAddTriplex) {
+                dispatch(addTriplexPosition(res))
+                return
+            }
+            dispatch(addPosition(res))
+        }catch(e){
+            toast.error(e.message || 'Ошибка при расчете позиции')
+            console.error(e)
         }
-        if(handleAddTriplex) {
-            dispatch(addTriplexPosition(res))
-            return
-        }
-        dispatch(addPosition(res))
     }
     const handleAddMaterial = () => {
         setAdditionalMaterials(prev => [
             ...prev,
-            { id: `tape${materialCount.current - 1}`, name: `tape${materialCount.current - 1}`, type: 'select', label: `Пленка ${materialCount.current - 1}`, options: tapesArray },
-            { id: `material${materialCount.current}`, name: `material${materialCount.current}`, type: 'select', label: `Материал ${materialCount.current}`, options: materialsArray },
+            { id: `tape${materialCount.current - 1}`, name: `tape${materialCount.current - 1}`, type: 'combobox', label: `Пленка ${materialCount.current - 1}`, options: tapesArray },
+            { id: `material${materialCount.current}`, name: `material${materialCount.current}`, type: 'combobox', label: `Материал ${materialCount.current}`, options: materialsArray },
         ]);
         materialCount.current++;
     }

@@ -222,6 +222,7 @@ const Calculate = (data, selfcost) => {
     })
     result.other = {
         materialsandworks,
+        calcmaterialsandworks,
         S: S_all,
         P : P_all,
         productType: true,

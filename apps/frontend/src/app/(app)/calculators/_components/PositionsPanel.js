@@ -36,6 +36,7 @@ export function PositionsPanel() {
 
   const handleReset = () => {
     dispatch(setOrder(null));
+    dispatch(setPositions([]));
   };
 
   const handleSave = async () => {

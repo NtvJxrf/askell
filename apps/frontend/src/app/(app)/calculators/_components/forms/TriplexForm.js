@@ -6,14 +6,14 @@ import { useSelector, useDispatch } from "react-redux"
 import { useMemo, useState, useRef } from "react"
 import BottomButtons from "./BottomButtons"
 import calculate from "@askell/shared/calc/triplex"
-import { addPosition } from "@/lib/slice"
+import { addPosition, addTriplexPosition } from "@/lib/slice"
 
 const filterWords = ['стекло', 'зеркало']
 const tapesWords = ['пленка']
-export default function TriplexForm() {
+export default function TriplexForm({handleAddTriplex = false, dv = null, handleReplaceTriplex = null, index = null}) {
     const form = useForm({
         shouldUnregister: true,
-        defaultValues: {
+        defaultValues: dv || {
             shape: true,
             tempered: true,
             rounding: 'Округление до 0.5',
@@ -21,32 +21,26 @@ export default function TriplexForm() {
     })
     const dispatch = useDispatch()
     const selfcost = useSelector((state) => state.app?.selfcost)
-    const materials = selfcost?.materials
-    const colors = selfcost?.colors
+    const materials = selfcost?.materials || {}
+    const colors = selfcost?.colors || {}
 
     const [additionalMaterials, setAdditionalMaterials] = useState([]);
     const materialCount = useRef(3);
 
     const materialsArray = useMemo(() => {
-        if (!materials || materials.length === 0) return []
-
-        return Object.keys(materials)
-            .filter(el => filterWords.some(word => el.toLowerCase().includes(word)))
-            .sort()
+        if (!materials) return []
+        return Object.keys(materials).filter(el => filterWords.some(word => el.toLowerCase().includes(word))).sort()
     }, [materials])
     const tapesArray = useMemo(() => {
-        if( !materials || materials.length === 0) return []
-
-        return Object.keys(materials)
-            .filter(el => tapesWords.some(word => el.toLowerCase().includes(word)))
-            .sort();
+        if( !materials) return []
+        return Object.keys(materials).filter(el => tapesWords.some(word => el.toLowerCase().includes(word))).sort();
     }, [materials]);
     const colorsArray = useMemo(() => {
-        if (!colors || colors.length === 0) return []
+        if (!colors) return []
         return Object.keys(colors).sort()
     }, [colors]);
 
-    if(!materials || materials.length === 0 || !colors || colors.length === 0) {
+    if(!materials || !colors) {
         return (
             <div className="flex justify-center">
                 <p className="text-muted-foreground">Материалы не загружены</p>
@@ -78,6 +72,14 @@ export default function TriplexForm() {
     function onSubmit(values) {
         const res = calculate(values, selfcost)
         console.log(res)
+        if(handleReplaceTriplex) {
+            handleReplaceTriplex(res, index)
+            return
+        }
+        if(handleAddTriplex) {
+            dispatch(addTriplexPosition(res))
+            return
+        }
         dispatch(addPosition(res))
     }
     const handleAddMaterial = () => {

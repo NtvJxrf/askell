@@ -9,11 +9,12 @@ const initialState = {
     },
     currentOrder: null,
     forms: {},
-    selfcost: null,
+    selfcost: {},
     schedule: null,
     heaps: [],
     user: {},
-    settings: {}
+    settings: {},
+    triplexArray: []
 };
 
 // Make sure a form bucket exists before writing to it (Immer-friendly).
@@ -54,6 +55,28 @@ const appSlice = createSlice({
         state.positions.splice(index, 1);
       }
     },
+    setPositions(state, action) {
+      state.positions = action.payload;
+    },
+    addPosition(state, action) {
+      state.positions.push(action.payload);
+    },
+    removeTriplexPosition(state, action) {
+      const index = action.payload;
+      if (index >= 0 && index < state.triplexArray.length) {
+        state.triplexArray.splice(index, 1);
+      }
+    },
+    setTriplexPositions(state, action) {
+      state.triplexArray = action.payload;
+    },
+    addTriplexPosition(state, action) {
+      state.triplexArray.push(action.payload);
+    },
+    replaceTriplexPositions(state, action) {
+      const { index, item } = action.payload;
+      state.triplexArray[index] = item;
+    },
     // Move a position from one index to another (drag-and-drop reordering).
     reorderPositions(state, action) {
       const { from, to } = action.payload;
@@ -67,12 +90,6 @@ const appSlice = createSlice({
       }
       const [moved] = list.splice(from, 1);
       list.splice(to, 0, moved);
-    },
-    setPositions(state, action) {
-      state.positions = action.payload;
-    },
-    addPosition(state, action) {
-      state.positions.push(action.payload);
     },
     // Toggle the `selected` flag of one position (kept on the position object
     // so selection travels with it through reordering / deletion).
@@ -132,7 +149,11 @@ export const {
   setHeaps,
   setUser,
   setSettings,
-  addPosition
+  addPosition,
+  removeTriplexPosition,
+  setTriplexPositions,
+  addTriplexPosition,
+  replaceTriplexPositions
 } = appSlice.actions;
 const appReducer = appSlice.reducer;
 export const store = configureStore({

@@ -13,10 +13,10 @@ const ceraExcludedWords = ['плита']
 const doorFrameWords = ['короб']
 const lockWords = ['замок']
 const hingeWords = ['петля']
-export default function CeraglassForm() {
+export default function CeraglassForm({ dv = null }) {
     const form = useForm({
         shouldUnregister: true,
-        defaultValues: {
+        defaultValues: dv || {
             shape: true,
             tempered: true,
             addTape: '',
@@ -25,9 +25,9 @@ export default function CeraglassForm() {
     })
     const dispatch = useDispatch()
     const selfcost = useSelector((state) => state.app?.selfcost)
-    const materials = selfcost?.materials
-    const colors = selfcost?.colors
-    const unders = selfcost?.unders
+    const materials = selfcost?.materials || {}
+    const colors = selfcost?.colors || {}
+    const unders = selfcost?.unders || {}
 
     const [additionalMaterials, setAdditionalMaterials] = useState([]);
     const materialCount = useRef(1);
@@ -130,7 +130,7 @@ const handleAddMaterial = () => {
         <div className="flex justify-center">
             <form id="CeraglassForm" onSubmit={form.handleSubmit(onSubmit)} className="space-y-1.5 w-full">
                 <div className="flex gap-4">
-                    <div className="flex-1 min-w-0 space-y-2">
+                    <div className="flex-1 min-w-[150px] space-y-2">
                         {formFields.map((field) => (
                             <RenderField
                                 key={field.name}
@@ -139,7 +139,7 @@ const handleAddMaterial = () => {
                         ))}
                     </div>
 
-                    <div className="flex-1 flex flex-col">
+                    <div className="flex-1 flex flex-col min-w-[150px]">
                         <div className="space-y-2 overflow-y-auto max-h-[530px]">
                             {additionalMaterials.map((field) => (
                                 <RenderField

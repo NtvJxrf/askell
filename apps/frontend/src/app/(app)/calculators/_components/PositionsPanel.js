@@ -38,9 +38,15 @@ export function PositionsPanel() {
     dispatch(setOrder(null));
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
+    const positions = store.getState().app.positions;
+    const order = store.getState().app.currentOrder;
     if (!order) return;
-    console.log('saving', order);
+    const response = await backend(`/orders/saveOrder`, {
+      method: 'POST',
+      body: {positions, order, displayPrice: 'retailPrice', planDate: { workingDays: 12}}
+    });
+    console.log(response)
   }
   const handleDeleteSelected = () => {
     const unselectedPositions  = store.getState().app.positions.filter((p) => !p.selected);

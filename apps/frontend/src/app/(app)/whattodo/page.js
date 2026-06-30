@@ -75,24 +75,15 @@ export default function WhatToDoPage() {
 
     for (const [stage, items] of Object.entries(heaps || {})) {
       counts[stage] = items.filter(item => {
-        if (
-          filters.orderNumber &&
-          !item.taskAttrs?.["№ заказа покупателя"]?.includes(filters.orderNumber)
-        ) {
+        if (filters.orderNumber && !item.taskAttrs?.["№ заказа покупателя"]?.includes(filters.orderNumber)) {
           return false;
         }
 
-        if (
-          filters.productionOrder &&
-          !item.taskName?.includes(filters.productionOrder)
-        ) {
+        if (filters.productionOrder && !item.taskName?.includes(filters.productionOrder)) {
           return false;
         }
 
-        if (
-          filters.productionRowId &&
-          !item.productionRowId?.includes(filters.productionRowId)
-        ) {
+        if (filters.productionRowId && !item.productionRowId?.includes(filters.productionRowId)) {
           return false;
         }
 
@@ -112,9 +103,9 @@ export default function WhatToDoPage() {
         continue;
       }
       for (const item of items) {
-        if(filters.orderNumber && !item.taskAttrs?.["№ заказа покупателя"]?.includes(filters.orderNumber)) continue
-        if(filters.productionOrder && !item.taskName?.includes(filters.productionOrder)) continue
-        if(filters.productionRowId && !item.productionRowId?.includes(filters.productionRowId)) continue
+        if (filters.orderNumber && !item.taskAttrs?.["№ заказа покупателя"]?.includes(filters.orderNumber)) continue
+        if (filters.productionOrder && !item.taskName?.includes(filters.productionOrder)) continue
+        if (filters.productionRowId && !item.productionRowId?.includes(filters.productionRowId)) continue
         const key = item.productionRowId;
 
         if (!map.has(key)) {

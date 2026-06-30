@@ -9,10 +9,10 @@ import { addPosition } from "@/lib/slice"
 import { toast } from 'sonner'
 const filterWords = ['стекло', 'зеркало']
 
-export default function GlassForm() {
+export default function GlassForm({ dv = null }) {
     const form = useForm({
         shouldUnregister: true,
-        defaultValues: {
+        defaultValues: dv || {
             shape: true,
             tempered: true,
             rounding: 'Округление до 0.5',
@@ -20,8 +20,8 @@ export default function GlassForm() {
     })
     const selfcost = useSelector((state) => state.app?.selfcost)
     const dispatch = useDispatch()
-    const materials = selfcost?.materials
-    const colors = selfcost?.colors
+    const materials = selfcost?.materials || {}
+    const colors = selfcost?.colors || {}
 
     const materialsArray = useMemo(() => {
         if (!materials || materials.length === 0) return []
@@ -72,7 +72,7 @@ export default function GlassForm() {
     }
 
     return (
-        <div className="flex justify-center">
+        <div className="flex justify-center min-w-[200px]">
             <form id="GlassForm" onSubmit={form.handleSubmit(onSubmit)} className="space-y-2 max-w-sm w-full">
                 {formFields.map((field) => (
                     <RenderField key={field.name} data={{ ...field, control: form.control }} />

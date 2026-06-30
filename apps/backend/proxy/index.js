@@ -114,6 +114,9 @@ broker.createService({
                 try{
                     console.log(`Making ${type.toUpperCase()} request to ${url} with token ${token}. Current state:`, state);
                     const response = await gotClient[type](url, { ...args });
+                    if(response.statusCode >= 400){
+                        throw new Error(`Ошибка при запросе к ${url}: ${response.statusCode} - ${response.body}`);
+                    }
                     try{
                         const body = JSON.parse(response.body);
                         return body
@@ -124,7 +127,7 @@ broker.createService({
                 }
                 catch(err){
                     console.error(`Error in request to ${url} with token ${token}:`, err);
-                    throw err;
+                    throw new Error(`Ошибка при запросе к ${url}: ${err.message}`, { error: err });
                 }
                 finally{
                     state[token]--;

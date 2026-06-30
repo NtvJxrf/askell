@@ -35,12 +35,12 @@ export default function ItemDialog({ item, open, onOpenChange }) {
                                 </Label>
                                 {materials.map((material, index) => (
                                     <div key={index} className="flex items-center pb-0.5 gap-1">
-                                        <span className="text-sm whitespace-nowrap">{material.name}:</span>
+                                        <span className="text-sm max-w-[500px] truncate" title={material.name}>{material.name}:</span>
                                         <Tooltip>
                                             <TooltipTrigger>
                                                 <span className="text-sm border-b border-dotted border-black">{material?.value?.toFixed(2)}</span>
                                             </TooltipTrigger>
-                                            <TooltipContent>
+                                            <TooltipContent className="min-w-max whitespace-nowrap">
                                                 <div className="flex flex-col gap-1">
                                                     {material.formula && (
                                                         <div><strong>Формула:</strong> {material.formula}</div>
@@ -85,7 +85,7 @@ export default function ItemDialog({ item, open, onOpenChange }) {
                                             <TooltipTrigger>
                                                 <span className="text-sm border-b border-dotted border-black">{work?.value?.toFixed(2) || 'Неизвестно'}</span>
                                             </TooltipTrigger>
-                                            <TooltipContent>
+                                            <TooltipContent className="min-w-max whitespace-nowrap">
                                                 <div className="flex flex-col gap-1">
                                                     {work.formula && (
                                                         <div><strong>Формула:</strong> {work.formula}</div>
@@ -178,7 +178,7 @@ export default function ItemDialog({ item, open, onOpenChange }) {
                                     <span className="text-sm whitespace-nowrap">
                                         {getInitialDataLabel(key)}:
                                     </span>
-                                    <span className="text-sm">
+                                    <span className="text-sm max-w-[500px] truncate" title={value}>
                                         {typeof value === 'boolean'
                                             ? (value ? 'Да' : 'Нет')
                                             : value}
@@ -205,6 +205,7 @@ const getInitialDataLabel = (key) => {
 };
 
 const initialDataLabels = {
+    plane: 'Рамка',
     height: 'Высота',
     width: 'Ширина',
     drills: 'Сверление',

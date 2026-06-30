@@ -55,6 +55,8 @@ export default function constructWorks(work, quantity, context, multiplier) {
 
         case 'cutting1': res('Резка (Управление)'); break
         case 'cutting2': res('Резка (Помощь)'); break
+        case 'cutting1sp': res('Резка (Управление) СП'); break
+        case 'cutting2sp': res('Резка (Помощь) СП'); break
         case 'washing1': res('Мойка 1'); break
 
         case 'polishingCurved': res('КР Полировка'); break

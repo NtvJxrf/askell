@@ -7,40 +7,39 @@ import { useMemo, useState, useRef } from "react"
 import BottomButtons from "./BottomButtons"
 import calculate from "@askell/shared/calc/glasspacket"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
-import { addPosition } from "@/lib/slice"
-
+import { addPosition, removeTriplexPosition, replaceTriplexPositions } from "@/lib/slice"
+import TriplexForm from "./TriplexForm"
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 const filterWords = ['стекло', 'зеркало']
-const tapesWords = ['пленка']
-export default function GlasspacketForm() {
+export default function GlasspacketForm({ dv = null }) {
     const form = useForm({
-        shouldUnregister: true,
-        defaultValues: {
+        shouldUnregister: false,
+        defaultValues: dv || {
             shape: true,
             tempered: true,
             rounding: 'Округление до 0.5',
         }
     })
+    const values = form.watch();
+    const [openAddTriplex, setOpenAddTriplex] = useState(false)
+    const [editingItem, setEditingItem] = useState(null)
     const dispatch = useDispatch()
     const selfcost = useSelector((state) => state.app?.selfcost)
-    const materials = selfcost?.materials
-    const colors = selfcost?.colors
-
-    const [additionalMaterials, setAdditionalMaterials] = useState([]);
-
+    const materials = selfcost?.materials || {}
+    const colors = selfcost?.colors || {}
+    const triplexArray = useSelector((state) => state.app?.triplexArray)
     const materialsArray = useMemo(() => {
-        if (!materials || materials.length === 0) return []
-
-        return Object.keys(materials).filter(el => filterWords.some(word => el.toLowerCase().includes(word))).sort()
-    }, [materials])
+        if (!materials ) return []
+        return Object.keys(materials).filter(el => filterWords.some(word => el.toLowerCase().includes(word))).sort().concat(triplexArray.map(el => el.name))
+    }, [materials, triplexArray])
     const planeArray = useMemo(() => {
         return Object.keys(materials).filter(el => el.toLowerCase().includes('рамка')).sort();
     }, [materials]);
     const colorsArray = useMemo(() => {
-        if (!colors || colors.length === 0) return []
+        if (!colors) return []
         return Object.keys(colors).sort()
     }, [colors]);
-
-    if(!materials || materials.length === 0 || !colors || colors.length === 0) {
+    if(!materials || !colors || colors.length === 0) {
         return (
             <div className="flex justify-center">
                 <p className="text-muted-foreground">Материалы не загружены</p>
@@ -63,114 +62,144 @@ export default function GlasspacketForm() {
         { name: 'color', type: 'select', label: 'Цвет', options: colorsArray },
     ]
     function onSubmit(values) {
-        const res = calculate(values, selfcost)
+        const res = calculate(values, selfcost, triplexArray)
         console.log(res)
         dispatch(addPosition(res))
     }
-    const handleAddTriplex = () => {
-
-    }
-    const handleDeleteTriplex = () => {
-
+    const handleEditTriplex = (item, index) => {
+        console.log('handleEditTriplex', item, index)
+        dispatch(replaceTriplexPositions({index, item}))
+        setEditingItem(null)
     }
     return (
-        <div className="flex justify-center">
-            <form id="GlasspacketForm" onSubmit={form.handleSubmit(onSubmit)} className="space-y-1.5 w-full">
-                <div className="flex gap-4">
-                    <div className="flex-1 space-y-2">
-                        {formFields.map((field) => (
+        <>
+            <div className="flex justify-center">
+                <form id="GlasspacketForm" onSubmit={form.handleSubmit(onSubmit)} className="space-y-1.5 w-full">
+                    <div className="flex gap-4">
+                        <div className="flex-1 space-y-2">
+                            {formFields.map((field) => (
+                                <RenderField
+                                    key={field.name}
+                                    data={{ ...field, control: form.control }}
+                                />
+                            ))}
+                        </div>
+
+                        <div className="flex-1 flex flex-col min-w-[150px]">
+                            <div className="space-y-2 overflow-y-auto max-h-[180px]">
+                                {triplexArray.map((triplex, index) => (
+                                    <div key={index} className="flex gap-2 items-center">
+                                        <span className="flex-1 truncate text-[14px]" title={triplex.name} onClick={() => setEditingItem({item: triplex, index: index})}>
+                                            {triplex.name}
+                                        </span>
+                                        <Button variant="destructive" onClick={() => dispatch(removeTriplexPosition(index))}>
+                                            X
+                                        </Button>
+                                    </div>
+                                ))}
+                            </div>
+
+                            <div className="mt-auto flex gap-2 justify-center">
+                                <Button variant="outline" onClick={() => setOpenAddTriplex(true)}>Добавить триплекс</Button>
+                            </div>
+                        </div>
+                    </div>
+                    <div className="flex flex-wrap gap-2 w-full min-w-0 pt-6">
+                        <Popover className="flex-1 min-w-0">
+                            <PopoverTrigger render={
+                                <Button variant="outline" className="text-left font-normal">
+                                    Стекло 1
+                                </Button>
+                            }/>
+                            <PopoverContent align="start">
+                                <div className="flex-1 space-y-2">
+                                    {materialFields.map((field) => (
+                                        <RenderField
+                                            key={field.name}
+                                            data={{ ...field, name: `${field.name}1`, control: form.control }}
+                                        />
+                                    ))}
+                                </div>
+                            </PopoverContent>
+                        </Popover>
+                        <div className='flex-1 min-w-[150px]'>
                             <RenderField
-                                key={field.name}
-                                data={{ ...field, control: form.control }}
+                                key={'Рамка 1'}
+                                data={{ name: 'plane1', type: 'select', label: 'Рамка 1', options: planeArray,required: true, control: form.control }}
                             />
-                        ))}
-                    </div>
-
-                    <div className="flex-1 flex flex-col">
-                        <div className="space-y-2 overflow-y-auto max-h-[408px]">
-                            123
                         </div>
+                        <Popover className="flex-1 min-w-0">
+                            <PopoverTrigger render={
+                                <Button
+                                variant="outline"
+                                className="text-left font-normal"
+                                >
+                                    Стекло 2
+                                </Button>
+                            }/>
 
-                        <div className="mt-auto flex gap-2 justify-center">
-                            <Button variant="outline" onClick={handleAddTriplex}>Добавить триплекс</Button>
+                            <PopoverContent align="start">
+                                <div className="flex-1 space-y-2">
+                                    {materialFields.map((field) => (
+                                        <RenderField
+                                            key={field.name}
+                                            data={{ ...field, name: `${field.name}2`, control: form.control }}
+                                        />
+                                    ))}
+                                </div>
+                            </PopoverContent>
+                        </Popover>
+                        <div className='flex-1 min-w-[150px]'>
+                            <RenderField
+                                key={'Рамка 2'}
+                                data={{ name: 'plane2', type: 'select', label: 'Рамка 2', options: planeArray, control: form.control }}
+                            />
                         </div>
-                    </div>
-                </div>
-                <div className="flex flex-wrap gap-2 w-full min-w-0 pt-6">
-                    <Popover className="flex-1 min-w-0">
-                        <PopoverTrigger render={
-                            <Button variant="outline" className="text-left font-normal">
-                                Стекло 1
-                            </Button>
-                        }/>
-                        <PopoverContent align="start">
-                            <div className="flex-1 space-y-2">
-                                {materialFields.map((field) => (
-                                    <RenderField
-                                        key={field.name}
-                                        data={{ ...field, name: `${field.name}1`, control: form.control }}
-                                    />
-                                ))}
-                            </div>
-                        </PopoverContent>
-                    </Popover>
-                    <div className='flex-1 min-w-[150px]'>
-                        <RenderField
-                            key={'Рамка 1'}
-                            data={{ name: 'plane1', type: 'select', label: 'Рамка 1', options: planeArray,required: true, control: form.control }}
-                        />
-                    </div>
-                    <Popover className="flex-1 min-w-0">
-                        <PopoverTrigger render={
-                            <Button
-                            variant="outline"
-                            className="text-left font-normal"
-                            >
-                                Стекло 2
-                            </Button>
-                        }/>
+                        <Popover className="flex-1 min-w-0">
+                            <PopoverTrigger render={
+                                <Button
+                                variant="outline"
+                                className="text-left font-normal"
+                                >
+                                    Стекло 3
+                                </Button>
+                            }/>
 
-                        <PopoverContent align="start">
-                            <div className="flex-1 space-y-2">
-                                {materialFields.map((field) => (
-                                    <RenderField
-                                        key={field.name}
-                                        data={{ ...field, name: `${field.name}2`, control: form.control }}
-                                    />
-                                ))}
-                            </div>
-                        </PopoverContent>
-                    </Popover>
-                    <div className='flex-1 min-w-[150px]'>
-                        <RenderField
-                            key={'Рамка 2'}
-                            data={{ name: 'plane2', type: 'select', label: 'Рамка 2', options: planeArray,required: true, control: form.control }}
-                        />
+                            <PopoverContent align="start">
+                                <div className="flex-1 space-y-2">
+                                    {materialFields.map((field) => (
+                                        <RenderField
+                                            key={field.name}
+                                            data={{ ...field, name: `${field.name}3`, required: false, control: form.control }}
+                                        />
+                                    ))}
+                                </div>
+                            </PopoverContent>
+                        </Popover>
                     </div>
-                    <Popover className="flex-1 min-w-0">
-                        <PopoverTrigger render={
-                            <Button
-                            variant="outline"
-                            className="text-left font-normal"
-                            >
-                                Стекло 3
-                            </Button>
-                        }/>
-
-                        <PopoverContent align="start">
-                            <div className="flex-1 space-y-2">
-                                {materialFields.map((field) => (
-                                    <RenderField
-                                        key={field.name}
-                                        data={{ ...field, name: `${field.name}3`, control: form.control }}
-                                    />
-                                ))}
-                            </div>
-                        </PopoverContent>
-                    </Popover>
-                </div>
-                <BottomButtons form={form} />
-            </form>
-        </div>
+                    <BottomButtons form={form} />
+                </form>
+            </div>
+            <Dialog open={openAddTriplex} onOpenChange={() => setOpenAddTriplex(!openAddTriplex)}>
+                <DialogContent className="min-w-max gap-0">
+                    <DialogHeader>
+                        <DialogTitle className="text-base mb-5 items-center justify-center flex gap-2">
+                            Добавить триплекс для стеклопакетов
+                        </DialogTitle>
+                    </DialogHeader>
+                    <TriplexForm handleAddTriplex={true} dv={values} />
+                </DialogContent>
+            </Dialog>
+            <Dialog open={editingItem} onOpenChange={() => setEditingItem(null)}>
+                <DialogContent className="min-w-max gap-0">
+                    <DialogHeader>
+                        <DialogTitle className="text-base mb-5 items-center justify-center flex gap-2">
+                            Редактирование триплекса для стеклопакетов
+                        </DialogTitle>
+                    </DialogHeader>
+                    <TriplexForm handleReplaceTriplex={handleEditTriplex} dv={editingItem?.item?.initialData} index={editingItem?.index} />
+                </DialogContent>
+            </Dialog>
+        </>
     )
 }

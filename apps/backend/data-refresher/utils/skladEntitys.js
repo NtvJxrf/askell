@@ -35,7 +35,7 @@ export const getMaterials = async () => {
     }
     await valkey.set('sklad:data:materials', JSON.stringify(materials))
     await valkey.set('sklad:updates:materials', Date.now());
-    await valkey.publish('sklad:data:materials', 'updated')
+    await broker.emit('dataUpdated', 'materials')
 }
 export const getProcessingStages = async () => {
     const response = await broker.call('proxy.sklad', {url: 'https://api.moysklad.ru/api/remap/1.2/entity/processingstage'})
@@ -48,7 +48,7 @@ export const getProcessingStages = async () => {
     }, {})
     await valkey.set('sklad:data:processingStages', JSON.stringify(result))
     await valkey.set('sklad:updates:processingStages', Date.now());
-    await valkey.publish('sklad:data:processingStages', 'updated')
+    await broker.emit('dataUpdated', 'processingStages')
 }
 export const getPackagingMaterials = async () => {
     const response = await broker.call('proxy.sklad', {url: 'https://api.moysklad.ru/api/remap/1.2/entity/product?filter=pathName=0 Закупки/0.02.09 Упаковка&expand=buyPrice.currency'})
@@ -62,7 +62,7 @@ export const getPackagingMaterials = async () => {
     }, {})
     await valkey.set('sklad:data:packaging', JSON.stringify(result))
     await valkey.set('sklad:updates:packaging', Date.now());
-    await valkey.publish('sklad:data:packaging', 'updated')
+    await broker.emit('dataUpdated', 'packaging')
 }
 export const getStores = async () => {
     const response = await broker.call('proxy.sklad', {url: 'https://api.moysklad.ru/api/remap/1.2/entity/store'})
@@ -75,7 +75,7 @@ export const getStores = async () => {
     }, {})
     await valkey.set('sklad:data:stores', JSON.stringify(result))
     await valkey.set('sklad:updates:stores', Date.now());
-    await valkey.publish('sklad:data:stores', 'updated')
+    await broker.emit('dataUpdated', 'stores')
 }
 export const getUnders = async () => {
     const response = await broker.call('proxy.sklad', {url: 'https://api.moysklad.ru/api/remap/1.2/entity/product?filter=pathName=Керагласс товары и полуфабрикаты/Подстолья&expand=buyPrice.currency'})
@@ -89,7 +89,7 @@ export const getUnders = async () => {
     }, {})
     await valkey.set('sklad:data:unders', JSON.stringify(result))
     await valkey.set('sklad:updates:unders', Date.now());
-    await valkey.publish('sklad:data:unders', 'updated')
+    await broker.emit('dataUpdated', 'unders')
 }
 export const getColors = async () => {
     const response = await broker.call('proxy.sklad', {url: 'https://api.moysklad.ru/api/remap/1.2/entity/product?filter=pathName=ТЕСТ/Цвета RAL (Только для продажи)&expand=buyPrice.currency'})
@@ -103,7 +103,7 @@ export const getColors = async () => {
     }, {})
     await valkey.set('sklad:data:colors', JSON.stringify(result))
     await valkey.set('sklad:updates:colors', Date.now());
-    await valkey.publish('sklad:data:colors', 'updated')
+    await broker.emit('dataUpdated', 'colors')
 }
 export const getCurrency = async () => {
     const response = await broker.call('proxy.sklad', {url: 'https://api.moysklad.ru/api/remap/1.2/entity/currency/'})
@@ -116,7 +116,7 @@ export const getCurrency = async () => {
     }, {})
     await valkey.set('sklad:data:currencies', JSON.stringify(result))
     await valkey.set('sklad:updates:currencies', Date.now());
-    await valkey.publish('sklad:data:currencies', 'updated')
+    await broker.emit('dataUpdated', 'currencies')
 }
 export const getPriceTypes = async () => {
     const response = await broker.call('proxy.sklad', {url: 'https://api.moysklad.ru/api/remap/1.2/context/companysettings/pricetype'})
@@ -129,7 +129,7 @@ export const getPriceTypes = async () => {
     }, {})
     await valkey.set('sklad:data:priceTypes', JSON.stringify(result))
     await valkey.set('sklad:updates:priceTypes', Date.now());
-    await valkey.publish('sklad:data:priceTypes', 'updated')
+    await broker.emit('dataUpdated', 'priceTypes')
 }
 export const getPicesAndCoefs = async () => {
     const res = await broker.call('proxy.sklad', {url: 'https://api.moysklad.ru/api/remap/1.2/entity/customentity/e4579b8f-8e43-11f0-0a80-0049002566f8'})
@@ -159,7 +159,7 @@ export const getPicesAndCoefs = async () => {
     }, {});
     await valkey.set('sklad:data:pricesAndCoefs', JSON.stringify(result))
     await valkey.set('sklad:updates:pricesAndCoefs', Date.now());
-    await valkey.publish('sklad:data:pricesAndCoefs', 'updated')
+    await broker.emit('dataUpdated', 'pricesAndCoefs')
 }
 export const getAttributes = async () => {
     const promises = []
@@ -180,7 +180,7 @@ export const getAttributes = async () => {
     }
     await valkey.set('sklad:data:attributes', JSON.stringify(result))
     await valkey.set('sklad:updates:attributes', Date.now());
-    await valkey.publish('sklad:data:attributes', 'updated')
+    await broker.emit('dataUpdated', 'attributes')
 }
 export const getEmployees = async () => {
     const response = await broker.call('proxy.sklad', {url: 'https://api.moysklad.ru/api/remap/1.2/entity/employee?filter=archived=true;archived=false'})
@@ -194,7 +194,7 @@ export const getEmployees = async () => {
     }, {})
     await valkey.set('sklad:data:employees', JSON.stringify(result))
     await valkey.set('sklad:updates:employees', Date.now());
-    await valkey.publish('sklad:data:employees', 'updated')
+    await broker.emit('dataUpdated', 'employees')
 }
 export const getStates = async () => {
     const promises = []
@@ -211,7 +211,7 @@ export const getStates = async () => {
     }
     await valkey.set('sklad:data:states', JSON.stringify(result))
     await valkey.set('sklad:updates:states', Date.now());
-    await valkey.publish('sklad:data:states', 'updated')
+    await broker.emit('dataUpdated', 'states')
 }
 export const getProcessingPlansSmd = async () => {
     const filters = [
@@ -257,7 +257,7 @@ export const getProcessingPlansSmd = async () => {
     );
     await valkey.set('sklad:data:smdPlans', JSON.stringify(result))
     await valkey.set('sklad:updates:smdPlans', Date.now());
-    await valkey.publish('sklad:data:smdPlans', 'updated')
+    await broker.emit('dataUpdated', 'smdPlans')
 };
 const convertPrice = price => {
     return +(price.value / 100 * price.currency.rate).toFixed(2) || 0

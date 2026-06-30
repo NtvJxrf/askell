@@ -7,23 +7,23 @@ import { useMemo } from "react"
 import BottomButtons from "./BottomButtons"
 import calculate from "@askell/shared/calc/smd"
 import { addPosition } from "@/lib/slice"
-export default function SMDForm() {
+export default function SMDForm({ dv = null }) {
     const form = useForm({
         shouldUnregister: true,
-        defaultValues: {
+        defaultValues: dv || {
             print: false,
             notax: false,
         }
     })
     const dispatch = useDispatch()
     const selfcost = useSelector((state) => state.app?.selfcost)
-    const colors = selfcost?.colors
+    const colors = selfcost?.colors || {}
     const colorsArray = useMemo(() => {
-        if (!colors || colors.length === 0) return []
+        if (!colors) return []
         return Object.keys(colors).sort()
     }, [colors]);
 
-    if(!colors || colors.length === 0) {
+    if(!colors) {
         return (
             <div className="flex justify-center">
                 <p className="text-muted-foreground">Материалы не загружены</p>
@@ -53,7 +53,7 @@ export default function SMDForm() {
     }
 
     return (
-        <div className="flex justify-center">
+        <div className="flex justify-center min-w-[200px]">
             <form id="SMDForm" onSubmit={form.handleSubmit(onSubmit)} className="space-y-2 max-w-sm w-full">
                 {formFields.map((field) => (
                     <RenderField key={field.name} data={{ ...field, control: form.control }} />

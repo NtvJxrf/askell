@@ -2,7 +2,7 @@ import triplexcalulator from './triplex.js'
 import checkDetail from './checkDetails.js'
 import constructWorks from './constructWorks.js'
 // import sailEffectLimits from '../../../constants/sailEffectLimits.js'
-const Calculate = (data, selfcost, triplexArray, messageApi) => {
+const Calculate = (data, selfcost, triplexArray) => {
     const {
         material1, material2, material3, 
         tempered1, tempered2, tempered3,
@@ -29,7 +29,9 @@ const Calculate = (data, selfcost, triplexArray, messageApi) => {
     const allWorks = {
         color: 0,
         cutting1: 0,
+        cutting1sp: 0,
         cutting2: 0,
+        cutting2sp: 0,
         polishingStraight: 0,
         grindingStraight: 0,
         bluntingStraight: 0,
@@ -56,51 +58,50 @@ const Calculate = (data, selfcost, triplexArray, messageApi) => {
     }
     const triplexShortNames = {}
     let viz = false
-    const triplexDataForSend = []
-    const sailEffectIsOk = (glassThickness, area, triplex = false) => {
-        let planeThickness = Number(planes[0].match(/(\d+(?:[.,]\d+)?)\s*мм/i)[1])
-        planeThickness > 18 && (planeThickness = 18)
-        if(glassThickness > 6) return
-        // const key = `${planeThickness}|${glassThickness}|${ triplex ? 'false' : materials[0][1]}`;
-        // if (!(key in sailEffectLimits)) {
-        //     result.warnings.push(`Нет данных для парусности ${key}`)
-        //     return
-        // }
-        // const maxArea =  sailEffectLimits[key];
-        const res = area <= maxArea
-        if(!res){
-            result.other.sailEffect = false
-            result.warnings.push(`Парусность выше нормы, площадь стекла: ${area}, максимально допустимая: ${maxArea}`)
-        }
-    }
+    // const sailEffectIsOk = (glassThickness, area, triplex = false) => {
+    //     let planeThickness = Number(planes[0].match(/(\d+(?:[.,]\d+)?)\s*мм/i)[1])
+    //     planeThickness > 18 && (planeThickness = 18)
+    //     if(glassThickness > 6) return
+    //     const key = `${planeThickness}|${glassThickness}|${ triplex ? 'false' : materials[0][1]}`;
+    //     if (!(key in sailEffectLimits)) {
+    //         result.warnings.push(`Нет данных для парусности ${key}`)
+    //         return
+    //     }
+    //     const maxArea =  sailEffectLimits[key];
+    //     const res = area <= maxArea
+    //     if(!res){
+    //         result.other.sailEffect = false
+    //         result.warnings.push(`Парусность выше нормы, площадь стекла: ${area}, максимально допустимая: ${maxArea}`)
+    //     }
+    // }
     let sailEffect = false
+    const usedTriplex = []
     for(const material of materials){
         if(material[0].toLowerCase().includes('триплекс')){
             viz = true
             const triplexObject = triplexArray.find(el => el.name == material[0])
-            triplexDataForSend.push(triplexObject)
-            const triplexcalc = triplexcalulator(triplexObject.values, selfcost)
-            triplexShortNames[material[0]] = triplexcalc.result.other.spName
+            usedTriplex.push(triplexObject)
+            triplexShortNames[material[0]] = triplexObject.result.other.spName
             result.materials.push({
-                name: triplexcalc.name,
-                value: triplexcalc.result.other.materialsandworks,
+                name: triplexObject.name,
+                value: triplexObject.result.other.materialsandworks,
                 string: `Себестоимость материалов и работ триплекса`,
                 formula: 'Себестоимость материалов и работ триплекса'
             });
-            if(!sailEffect){
-                sailEffectIsOk(triplexcalc.result.other.shortThickness.join('+'), S_calc, true)
-                sailEffect = true
-            }
-            allThickness += triplexcalc.result.other.allThickness
-            weight +=triplexcalc.result.other.weight
+            // if(!sailEffect){
+            //     sailEffectIsOk(triplexcalc.result.other.shortThickness.join('+'), S_calc, true)
+            //     sailEffect = true
+            // }
+            allThickness += triplexObject.result.other.allThickness
+            weight +=triplexObject.result.other.weight
             continue
         }
         const thickness = Number(material[0].match(/(\d+(?:[.,]\d+)?)\s*мм/i)[1])
-        if(!sailEffect){
-            sailEffectIsOk(thickness, S_calc)
-            sailEffect = true
-        }
-        ignoreRestricts || checkDetail({...data, stanok, processing: material[2], type: 'Стеклопакет', selfcost, material: material[0]}, messageApi)
+        // if(!sailEffect){
+        //     sailEffectIsOk(thickness, S_calc)
+        //     sailEffect = true
+        // }
+        ignoreRestricts || checkDetail({...data, stanok, processing: material[2], type: 'Стеклопакет', selfcost, material: material[0]})
         allThickness += thickness
         weight += 2.5 * S_calc * thickness
         let trimCoef = 999
@@ -118,8 +119,8 @@ const Calculate = (data, selfcost, triplexArray, messageApi) => {
             string: `${selfcost.materials[material[0]].value} * ${S_calc.toFixed(2)} * ${trimCoef}`,
             formula: 'Цена за м² * Площадь * Коэффициент обрези стекло стеклопакет'
         });
-        allWorks['cutting1'] += S_calc
-        allWorks['cutting2'] += S_calc
+        allWorks['cutting1sp'] += S_calc
+        allWorks['cutting2sp'] += S_calc
         if(material[3]){
             allWorks.color += S_calc
             result.materials.push({
@@ -280,7 +281,8 @@ const Calculate = (data, selfcost, triplexArray, messageApi) => {
         viz,
         materials,
         stanok,
-        trims
+        trims,
+        usedTriplex,
     }
     return {
         key: crypto.randomUUID(),

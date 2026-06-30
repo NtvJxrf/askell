@@ -4,6 +4,7 @@
 schedule-471508-c646e9809860.json
 
 # dependencies
+temporal/*
 .next/
 **/node_modules/
 /.pnp

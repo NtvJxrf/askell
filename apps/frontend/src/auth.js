@@ -1,6 +1,6 @@
 import NextAuth from 'next-auth';
 import Credentials from 'next-auth/providers/credentials';
-import { hasRole, ROLES } from '@askell/shared';
+import { hasPermission } from '@askell/shared';
 
 // The Moleculer gateway base. API_URL is e.g. http://localhost:6789; routes
 // live under /api.
@@ -10,16 +10,17 @@ const API_BASE = `${process.env.API_URL || 'http://localhost:6789'}/api`;
 const SESSION_MAX_AGE = 60 * 60 * 24 * 30;
 
 // Route access rules, checked by the `authorized` callback (runs in the Proxy
-// before a page renders). Uses the SAME role helper as the backend gateway.
-//   - PUBLIC_ROUTES : reachable without signing in.
-//   - ROLE_ROUTES   : require sign-in AND one of the listed roles (admin always
-//                     passes). Longest matching prefix wins.
+// before a page renders). Uses the SAME permission helper as the backend
+// gateway.
+//   - PUBLIC_ROUTES       : reachable without signing in.
+//   - PERMISSION_ROUTES   : require sign-in AND one of the listed permissions
+//                           (admin always passes). Longest matching prefix wins.
 // Anything not listed here just requires being signed in.
 const PUBLIC_ROUTES = ['/login'];
 
-const ROLE_ROUTES = [
-  // Example: only managers (and admins) can open the calculators section.
-  { prefix: '/calculators', roles: [ROLES.MANAGER] },
+const PERMISSION_ROUTES = [
+  { prefix: '/calculators', permissions: ['Калькулятор'] },
+  { prefix: '/admin', permissions: ['Админ'] },
 ];
 
 async function refreshAccessToken(token) {
@@ -107,13 +108,13 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       // Everything else requires authentication.
       if (!isLoggedIn) return false;
 
-      // Role-gated pages: longest matching prefix wins.
-      const rule = ROLE_ROUTES
+      // Permission-gated pages: longest matching prefix wins.
+      const rule = PERMISSION_ROUTES
         .filter((r) => pathname === r.prefix || pathname.startsWith(`${r.prefix}/`))
         .sort((a, b) => b.prefix.length - a.prefix.length)[0];
 
-      if (rule && !hasRole(auth.user, rule.roles)) {
-        // Signed in but lacking the role -> send home (could be a /403 page).
+      if (rule && !hasPermission(auth.user, rule.permissions)) {
+        // Signed in but lacking the permission -> send home (could be a /403 page).
         return Response.redirect(new URL('/', nextUrl));
       }
 

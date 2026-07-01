@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { ROLES, hasRole } from '@askell/shared/roles';
+import { hasPermission } from '@askell/shared/permissions';
 import {
   Calculator,
   Factory,
@@ -30,9 +30,9 @@ import {
 } from '@/components/ui/sidebar';
 
 // Collapsible left navigation built on shadcn/ui's Sidebar primitives.
-// Receives an already role-filtered `items` list and a plain `user` object
-// from the server layout. Collapse/expand state is owned by SidebarProvider
-// (see (app)/layout.js) and persisted via cookie.
+// Receives an already permission-filtered `items` list and a plain `user`
+// object from the server layout. Collapse/expand state is owned by
+// SidebarProvider (see (app)/layout.js) and persisted via cookie.
 export const NAV_ITEMS = [
   { href: '/calculators', label: 'Калькуляторы', icon: Calculator },
   { href: '/production', label: 'Производство', icon: Factory },
@@ -41,12 +41,12 @@ export const NAV_ITEMS = [
   { href: '/ordersWithStages', label: 'Заказы с этапами', icon: Logs },
   { href: '/settings', label: 'Настройки', icon: Settings },
   { href: '/reports', label: 'Отчеты', icon: FileChartColumn },
-  { href: '/admin', label: 'Админка', icon: ShieldCheck, roles: [ROLES.ADMIN] },
+  { href: '/admin', label: 'Админка', icon: ShieldCheck, permissions: ['Админ'] },
 ];
 export function Sidebar({ user }) {
   const pathname = usePathname();
   const items = NAV_ITEMS
-    .filter((item) => hasRole(user, item.roles))
+    .filter((item) => hasPermission(user, item.permissions))
     .map(({ href, label, icon }) => ({ href, label, icon }));
   return (
     <SidebarRoot collapsible="icon">

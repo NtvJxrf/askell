@@ -3,9 +3,9 @@ import '@askell/shared/env';
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
 
-// Re-export the shared role helpers so the rest of the backend has a single
-// import surface and a single source of truth for roles.
-export { ROLES, ALL_ROLES, hasRole, isAdmin } from '@askell/shared/roles';
+// Re-export the shared permission helpers so the rest of the backend has a
+// single import surface and a single source of truth for permissions.
+export { PERMISSIONS, hasPermission, isAdmin } from '@askell/shared/permissions';
 
 const BCRYPT_ROUNDS = 10;
 

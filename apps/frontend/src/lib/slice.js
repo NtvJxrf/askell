@@ -2,7 +2,7 @@ import { configureStore } from "@reduxjs/toolkit";
 import { createSlice } from "@reduxjs/toolkit";
 
 const initialState = {
-    positions: [{name: 'test'}, {name: 'test2'}, {name: 'test3'}],
+    positions: [],
     planDate: {
       apiDate: null,
       strDate: null

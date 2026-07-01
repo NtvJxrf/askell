@@ -1,6 +1,5 @@
 import { ServiceBroker } from "moleculer";
 import { initEnv, valkey } from "@askell/shared";
-import { ROLES } from "@askell/shared/roles";
 import fs from "fs/promises";
 import path from "path";
 import { fileURLToPath } from 'url';
@@ -42,7 +41,7 @@ broker.createService({
     actions: {
         create: {
             rest: "POST /create",
-            roles: [ROLES.REPORTS],
+            permissions: ['Отчеты'],
             async handler(ctx) {
                 const { filters, type } = ctx.params;
                 const user = ctx.meta.user
@@ -61,7 +60,7 @@ broker.createService({
         },
         list: {
             rest: "GET /list",
-            roles: [ROLES.REPORTS],
+            permissions: ['Отчеты'],
             async handler(ctx) {
                 const reports = JSON.parse(await valkey.get('reports') || '[]');
                 return {
@@ -72,7 +71,7 @@ broker.createService({
         },
         download: {
             rest: "GET /download",
-            roles: [ROLES.REPORTS],
+            permissions: ['Отчеты'],
             async handler(ctx) {
                 const { uuid } = ctx.params;
                 const reports = JSON.parse(await valkey.get('reports') || '[]');

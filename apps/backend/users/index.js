@@ -1,6 +1,6 @@
 import { ServiceBroker, Errors } from 'moleculer';
 import { db, users, eq } from '@askell/shared/db';
-import { ROLES, ALL_ROLES } from '@askell/shared/roles';
+import { PERMISSIONS } from '@askell/shared/permissions';
 import {
   hashPassword,
   comparePassword,
@@ -139,7 +139,7 @@ broker.createService({
      */
     list: {
       rest: 'GET /users',
-      roles: [ROLES.ADMIN],
+      permissions: ['Админ'],
       async handler() {
         return db.select(publicColumns).from(users).orderBy(users.createdAt);
       },
@@ -150,14 +150,14 @@ broker.createService({
      */
     create: {
       rest: 'POST /users',
-      roles: [ROLES.ADMIN],
+      permissions: ['Админ'],
       params: {
         username: { type: 'string', trim: true, empty: false },
         fullname: { type: 'string', trim: true, empty: false },
         password: { type: 'string', min: 6 },
         roles: {
           type: 'array',
-          items: { type: 'enum', values: ALL_ROLES },
+          items: { type: 'enum', values: PERMISSIONS },
           optional: true,
           default: [],
         },
@@ -192,13 +192,13 @@ broker.createService({
      */
     update: {
       rest: 'PATCH /users/:id',
-      roles: [ROLES.ADMIN],
+      permissions: ['Админ'],
       params: {
         id: { type: 'uuid' },
         username: { type: 'string', trim: true, empty: false, optional: true },
         fullname: { type: 'string', trim: true, empty: false, optional: true },
         password: { type: 'string', min: 6, optional: true },
-        roles: { type: 'array', items: { type: 'enum', values: ALL_ROLES }, optional: true },
+        roles: { type: 'array', items: { type: 'enum', values: PERMISSIONS }, optional: true },
       },
       async handler(ctx) {
         const { id, username, fullname, password, roles } = ctx.params;
@@ -237,11 +237,23 @@ broker.createService({
      */
     remove: {
       rest: 'DELETE /users/:id',
-      roles: [ROLES.ADMIN],
+      permissions: ['Админ'],
       params: {
         id: { type: 'uuid' },
       },
       async handler(ctx) {
+        const [target] = await db
+          .select({ id: users.id, username: users.username })
+          .from(users)
+          .where(eq(users.id, ctx.params.id))
+          .limit(1);
+        if (!target) {
+          throw new MoleculerClientError('User not found', 404, 'NOT_FOUND');
+        }
+        if (target.username === 'admin') {
+          throw new MoleculerClientError('Cannot delete the admin user', 403, 'CANNOT_DELETE_ADMIN');
+        }
+
         const [deleted] = await db
           .delete(users)
           .where(eq(users.id, ctx.params.id))

@@ -4,7 +4,6 @@
 //   pnpm seed
 //
 import { db, users, eq, client } from '@askell/shared/db';
-import { ROLES } from '@askell/shared/roles';
 import { hashPassword } from '../users/lib/auth.js';
 
 async function main() {
@@ -17,7 +16,9 @@ async function main() {
     process.exitCode = 1;
     return;
   }
-
+  // await db
+  // .delete(users)
+  // .where(eq(users.username, 'admin'));
   const [existing] = await db
     .select({ id: users.id })
     .from(users)
@@ -35,7 +36,7 @@ async function main() {
       username,
       fullname,
       password: await hashPassword(password),
-      roles: [ROLES.ADMIN],
+      roles: ['Админ'],
     })
     .returning({ id: users.id, username: users.username, roles: users.roles });
 

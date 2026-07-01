@@ -14,8 +14,8 @@
     "./env": {
       "import": "./src/initEnv.js"
     },
-    "./roles": {
-      "import": "./src/roles.js"
+    "./permissions": {
+      "import": "./src/permissions.js"
     },
     "./settings": {
       "import": "./src/settings.js"

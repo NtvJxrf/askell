@@ -1,6 +1,5 @@
 import { ServiceBroker } from "moleculer";
 import { initEnv, valkey } from "@askell/shared";
-import { ROLES } from "@askell/shared/roles";
 const PRODUCTION_STAGE_COMPLETION_USER_ATTRIBUTE_META = {
     href : "https://api.moysklad.ru/api/remap/1.2/entity/productionstagecompletion/metadata/attributes/0f552d4d-2e92-11f1-0a80-1088000fa9b8",
     type : "attributemetadata",
@@ -18,7 +17,7 @@ broker.createService({
     actions: {
         complete: {
             rest: "POST /complete",
-            roles: [ROLES.PRODUCTION],
+            permissions: ['Производство'],
             async handler(ctx) {
                 const { item, user, quantity, description } = ctx.params;
                 const response = await broker.call('proxy.sklad',{
@@ -35,7 +34,7 @@ broker.createService({
         },
         defect: {
             rest: "POST /defect",
-            roles: [ROLES.PRODUCTION],
+            permissions: ['Производство'],
             async handler(ctx) {
                 const { item, user, quantity, description } = ctx.params;
             }

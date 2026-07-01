@@ -47,7 +47,7 @@ export default function ProductionPage() {
   };
   return (
     <div>
-      {user?.roles?.includes('admin') && (
+      {user?.roles?.includes('Админ') && (
         <Button onClick={handleRefresh} disabled={disabled}>
           Обновить
         </Button>

@@ -13,7 +13,14 @@ export async function backend(path, { method = 'GET', params, body, responseType
 
   if (!res.ok) {
     const text = await res.text();
-    throw new Error(`Backend ${res.status} ${path}: ${text}`);
+    let message = text;
+    try {
+      const parsed = JSON.parse(text);
+      message = parsed?.message || text;
+    } catch {
+      // response body wasn't JSON, keep raw text
+    }
+    throw new Error(message);
   }
 
   if (responseType === 'blob') {

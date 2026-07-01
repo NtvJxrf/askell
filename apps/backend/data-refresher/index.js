@@ -1,5 +1,4 @@
 import { ServiceBroker } from "moleculer";
-import { ROLES } from "@askell/shared/roles";
 import { getProcessingStages, getPackagingMaterials, getStores, getUnders, getColors, getPicesAndCoefs,
   getCurrency, getPriceTypes, getAttributes, getEmployees, getStates, getProcessingPlansSmd, getMaterials, getStock } from "./utils/skladEntitys.js";
 import { updateHeaps } from "./utils/productionload.js";
@@ -35,11 +34,11 @@ broker.createService({
   name: "data-refresher",
 
   actions: {
-    // Restricted to the `manager` role (admin always passes) via the `roles`
-    // metadata, enforced by the gateway's `authorize`.
+    // Restricted to the `настройки` permission (admin always passes) via the
+    // `permissions` metadata, enforced by the gateway's `authorize`.
     updateEntity: {
       rest: "POST /updateEntity",
-      roles: [ROLES.MANAGER],
+      permissions: ['Настройки'],
       async handler(ctx) {
         await map[ctx.params.entity]();
         await updateSelfcost();
@@ -49,7 +48,7 @@ broker.createService({
     },
     updateAllEntities: {
       rest: "POST /updateAllEntities",
-      roles: [ROLES.MANAGER],
+      permissions: ['Настройки'],
       async handler() {
         const promises = [];
         for(const entity in map) {
@@ -63,7 +62,7 @@ broker.createService({
     },
     setSettings: {
       rest: "POST /setSettings",
-      roles: [ROLES.ADMIN],
+      permissions: ['Настройки'],
       async handler(ctx) {
         const settings = JSON.parse(await valkey.get('settings'));
         const { key, value, editor } = ctx.params;

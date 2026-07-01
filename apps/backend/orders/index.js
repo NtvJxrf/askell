@@ -1,6 +1,5 @@
 import { ServiceBroker } from "moleculer";
 import { initEnv, valkey } from "@askell/shared";
-import { ROLES } from "@askell/shared/roles";
 import { dictionary, mapPrices, productFoldersByType, uomMeta } from './utils/constants.js'
 import deleteEntitys from './utils/deleteEntitys.js'
 import generateProductAttributes from './utils/generateProductAttributes.js'
@@ -41,7 +40,7 @@ broker.createService({
     actions: {
         order: {
             rest: "GET /order",
-            roles: [ROLES.MANAGER],
+            permissions: ['Калькулятор'],
             async handler(ctx) {
                 const { name } = ctx.params;
                 const orders = await broker.call('proxy.sklad', { url: `https://api.moysklad.ru/api/remap/1.2/entity/customerorder?filter=name=${name}&expand=positions.assortment,agent,organization&limit=100`})
@@ -92,7 +91,7 @@ broker.createService({
         },
         saveOrder: {
             rest: "POST /saveOrder",
-            roles: [ROLES.MANAGER],
+            permissions: ['Калькулятор'],
             async handler(ctx) {
                 const data = ctx.params
                 const order = await broker.call('proxy.sklad', {url: `https://api.moysklad.ru/api/remap/1.2/entity/customerorder/${data.order.id}?expand=state,positions.assortment`})

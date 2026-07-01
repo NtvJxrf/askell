@@ -71,7 +71,6 @@ const Calculate = (data, selfcost) => {
     constructWorks('cutting1', S_calc, context);
     constructWorks('cutting2', S_calc, context);
     constructWorks('otk', S_calc, context);
-    console.log(P)
     stanok == 'Криволинейка' && constructWorks('washing1', S_calc, context);
     stanok == 'Криволинейка' && processing == 'Шлифовка' && constructWorks('grindingCurved', P, context)
     stanok == 'Криволинейка' && processing == 'Полировка' && constructWorks('polishingCurved', P, context)

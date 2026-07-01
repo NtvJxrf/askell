@@ -25,7 +25,7 @@ await broker.waitForServices(['users', 'proxy']);
     // }
 // })
 // console.log(test.body)
-// const res = await broker.call("data-refresher.updateHeaps");
+const res = await broker.call("data-refresher.updateHeaps");
 // const heaps = await broker.call("data-refresher.getHeaps");
 // const {schedule, index} = await broker.call("data-refresher.getSchedule");
 // const pricesAndCoefs = JSON.parse(await valkey.get('sklad:data:pricesAndCoefs'));

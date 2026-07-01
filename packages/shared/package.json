@@ -37,6 +37,12 @@
     },
     "./calc/clientGlassTempering": {
       "import": "./src/calculators/clientGlassTempering.js"
+    },
+    "./calc/trimCalc": {
+      "import": "./src/calculators/trimCalc.js"
+    },
+    "./calc/simulation": {
+      "import": "./src/simulation.js"
     }
   },
   "scripts": {

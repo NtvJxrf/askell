@@ -1,3 +1,9 @@
+import ExcelJS from 'exceljs';
+import path from "path";
+import { fileURLToPath } from 'url';
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
 function getAttr(assortment, attrName) {
   if(attrName == 'Серия') return assortment?.attributes?.find(a => a.name === attrName)?.value?.name;
   return assortment?.attributes?.find(a => a.name === attrName)?.value;
@@ -21,31 +27,75 @@ function calcPositionSum(position) {
   return finalPrice * qty;
 }
 
-function setMoneyFormatByColumn(sheet, columnName, currencySymbol = '₽') {
-  const range = XLSX.utils.decode_range(sheet['!ref']);
-  const headerRow = 0; // обычно заголовки в первой строке
+function setColumnWidths(worksheet, widths) {
+  widths.forEach((w, i) => {
+    worksheet.getColumn(i + 1).width = w;
+  });
+}
 
-  // Находим все индексы колонок, где заголовок содержит columnName
-  const matchingCols = [];
-  for (let C = range.s.c; C <= range.e.c; ++C) {
-    const cellAddress = XLSX.utils.encode_cell({ r: headerRow, c: C });
-    const cell = sheet[cellAddress];
-    if (cell && cell.v.includes(columnName)) {
-      matchingCols.push(C);
+function addJsonSheet(workbook, sheetName, data, widths) {
+  const worksheet = workbook.addWorksheet(sheetName);
+
+  // Колонки формируются как объединение всех ключей, в порядке появления (аналог XLSX.utils.json_to_sheet)
+  const columns = [];
+  const seen = new Set();
+  for (const row of data) {
+    for (const key of Object.keys(row)) {
+      if (!seen.has(key)) {
+        seen.add(key);
+        columns.push(key);
+      }
     }
   }
+
+  worksheet.columns = columns.map(key => ({ header: key, key }));
+  worksheet.addRows(data);
+
+  if (widths) setColumnWidths(worksheet, widths);
+
+  return worksheet;
+}
+
+function worksheetToJson(worksheet) {
+  const headers = {};
+  worksheet.getRow(1).eachCell({ includeEmpty: true }, (cell, colNumber) => {
+    headers[colNumber] = cell.value;
+  });
+
+  const data = [];
+  worksheet.eachRow({ includeEmpty: true }, (row, rowNumber) => {
+    if (rowNumber === 1) return; // пропускаем заголовок
+
+    const obj = {};
+    row.eachCell({ includeEmpty: true }, (cell, colNumber) => {
+      const header = headers[colNumber];
+      if (header) obj[header] = cell.value;
+    });
+    data.push(obj);
+  });
+
+  return data;
+}
+
+function setMoneyFormatByColumn(worksheet, columnName, currencySymbol = '₽') {
+  // Находим все индексы колонок, где заголовок содержит columnName
+  const matchingCols = [];
+  worksheet.getRow(1).eachCell({ includeEmpty: true }, (cell, colNumber) => {
+    if (cell.value && String(cell.value).includes(columnName)) {
+      matchingCols.push(colNumber);
+    }
+  });
 
   if (matchingCols.length === 0) return; // нет колонок с таким названием
 
   // Применяем денежный формат ко всем найденным колонкам, кроме заголовка
   for (const colIndex of matchingCols) {
-    for (let R = range.s.r + 1; R <= range.e.r; ++R) {
-      const cellAddress = XLSX.utils.encode_cell({ r: R, c: colIndex });
-      const cell = sheet[cellAddress];
-      if (cell && typeof cell.v === 'number') {
-        cell.z = `#,##0.00 "${currencySymbol}"`;
+    worksheet.getColumn(colIndex).eachCell({ includeEmpty: false }, (cell, rowNumber) => {
+      if (rowNumber === 1) return;
+      if (typeof cell.value === 'number') {
+        cell.numFmt = `#,##0.00 "${currencySymbol}"`;
       }
-    }
+    });
   }
 }
 
@@ -372,11 +422,11 @@ function buildTemperingSheet(rows) {
 function buildSummarySheet(workbook) {
   const summary = [];
 
-  for (const sheetName of workbook.SheetNames) {
+  for (const worksheet of workbook.worksheets) {
+    const sheetName = worksheet.name;
     if (sheetName === 'Сводная') continue;
 
-    const sheet = workbook.Sheets[sheetName];
-    const data = XLSX.utils.sheet_to_json(sheet);
+    const data = worksheetToJson(worksheet);
 
     if (sheetName === 'СМД') {
       // Суммируем позиции по сериям
@@ -459,11 +509,9 @@ export default async function createReport({filters, broker}) {
     `&expand=positions.assortment`;
   const orderRows = await broker.call('proxy.fetchAllRows', { url: ordersUrl });
 
-  const workbook = XLSX.utils.book_new();
-
-  function setColumnWidths(sheet, widths) {
-    sheet['!cols'] = widths.map(w => ({ wch: w }));
-  }
+  const workbook = new ExcelJS.Workbook();
+  workbook.creator = 'Askell';
+  workbook.created = new Date();
 
   function sortByName(sheetData) {
     return sheetData.sort((a, b) => {
@@ -475,67 +523,53 @@ export default async function createReport({filters, broker}) {
 
   // Лист 1 — СМД
   const smdData = buildSmdSheet(rows);
-  const smdSheet = XLSX.utils.json_to_sheet(smdData);
-  XLSX.utils.book_append_sheet(workbook, smdSheet, 'СМД');
-  setColumnWidths(smdSheet, [120, 10, 10, 14]);
+  const smdSheet = addJsonSheet(workbook, 'СМД', smdData, [120, 10, 10, 14]);
   setMoneyFormatByColumn(smdSheet, 'Сумма', '₽');
 
   const smdOzonData = buildSmdSheet(orderRows);
-  const smdOzonSheet = XLSX.utils.json_to_sheet(smdOzonData);
-  XLSX.utils.book_append_sheet(workbook, smdOzonSheet, 'СМД Озон');
-  setColumnWidths(smdOzonSheet, [120, 10, 10, 14]);
+  const smdOzonSheet = addJsonSheet(workbook, 'СМД Озон', smdOzonData, [120, 10, 10, 14]);
   setMoneyFormatByColumn(smdOzonSheet, 'Сумма', '₽');
 
   // Лист 2 — Цветное стекло (НЕ М1)
   const colorGlassData = sortByName(buildGlassSheet(rows, { isM1: false }));
-  const colorGlassSheet = XLSX.utils.json_to_sheet(colorGlassData);
-  XLSX.utils.book_append_sheet(workbook, colorGlassSheet, 'Цветное стекло');
-  setColumnWidths(colorGlassSheet, [30, 10, 10, 10, 13]);
+  const colorGlassSheet = addJsonSheet(workbook, 'Цветное стекло', colorGlassData, [30, 10, 10, 10, 13]);
   setMoneyFormatByColumn(colorGlassSheet, 'Сумма', '₽');
 
   // Лист 3 — Стекло М1
   const m1GlassData = sortByName(buildGlassSheet(rows, { isM1: true }));
-  const m1GlassSheet = XLSX.utils.json_to_sheet(m1GlassData);
-  XLSX.utils.book_append_sheet(workbook, m1GlassSheet, 'Стекло М1');
-  setColumnWidths(m1GlassSheet, [15, 10, 10, 10, 13]);
+  const m1GlassSheet = addJsonSheet(workbook, 'Стекло М1', m1GlassData, [15, 10, 10, 10, 13]);
   setMoneyFormatByColumn(m1GlassSheet, 'Сумма', '₽');
 
   const triplexData = sortByName(buildTriplexSheet(rows));
-  const triplexSheet = XLSX.utils.json_to_sheet(triplexData);
-  XLSX.utils.book_append_sheet(workbook, triplexSheet, 'Триплекс');
-  setColumnWidths(triplexSheet, [70, 10, 10, 10, 13]);
+  const triplexSheet = addJsonSheet(workbook, 'Триплекс', triplexData, [70, 10, 10, 10, 13]);
   setMoneyFormatByColumn(triplexSheet, 'Сумма', '₽');
 
   // Лист — Керагласс
   const keraglassData = sortByName(buildKeraglassSheet(rows));
-  const keraglassSheet = XLSX.utils.json_to_sheet(keraglassData);
-  XLSX.utils.book_append_sheet(workbook, keraglassSheet, 'Керагласс');
-  setColumnWidths(keraglassSheet, [120, 10, 10, 13]);
+  const keraglassSheet = addJsonSheet(workbook, 'Керагласс', keraglassData, [120, 10, 10, 13]);
   setMoneyFormatByColumn(keraglassSheet, 'Сумма', '₽');
 
   // Лист — Закалка стекла
   const temperingData = sortByName(buildTemperingSheet(rows));
-  const temperingSheet = XLSX.utils.json_to_sheet(temperingData);
-  XLSX.utils.book_append_sheet(workbook, temperingSheet, 'Закалка стекла');
-  setColumnWidths(temperingSheet, [35, 10, 10, 13]);
+  const temperingSheet = addJsonSheet(workbook, 'Закалка стекла', temperingData, [35, 10, 10, 13]);
   setMoneyFormatByColumn(temperingSheet, 'Сумма', '₽');
 
   const otherData = sortByName(buildOtherSheet(rows));
-  const otherSheet = XLSX.utils.json_to_sheet(otherData);
-  XLSX.utils.book_append_sheet(workbook, otherSheet, 'Остальное');
-  setColumnWidths(otherSheet, [120, 10, 10, 13]);
+  const otherSheet = addJsonSheet(workbook, 'Остальное', otherData, [120, 10, 10, 13]);
   setMoneyFormatByColumn(otherSheet, 'Сумма', '₽');
 
   const summaryData = buildSummarySheet(workbook);
-  const summarySheet = XLSX.utils.json_to_sheet(summaryData);
-  XLSX.utils.book_append_sheet(workbook, summarySheet, 'Сводная');
-  setColumnWidths(summarySheet, [30, 10, 10, 13]);
+  const summarySheet = addJsonSheet(workbook, 'Сводная', summaryData, [30, 10, 10, 13]);
   setMoneyFormatByColumn(summarySheet, 'Сумма', '₽');
 
-  const buffer = XLSX.write(workbook, {
-    bookType: 'xlsx',
-    type: 'buffer',
-  });
+  const uuid = crypto.randomUUID();
+  const filePath = path.join(__dirname, "../temporal", `${uuid}.xlsx`);
+  await workbook.xlsx.writeFile(filePath);
+  const buffer = await workbook.xlsx.writeBuffer();
 
-  return buffer;
+  return {
+    buffer: Buffer.from(buffer),
+    uuid,
+    createdAt: Date.now(),
+  };
 }

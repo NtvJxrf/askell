@@ -37,6 +37,19 @@ export const getMaterials = async () => {
     await valkey.set('sklad:updates:materials', Date.now());
     await broker.emit('dataUpdated', 'materials')
 }
+export const getStock = async () => {
+    const stock = await broker.call('proxy.sklad', {url: 'https://api.moysklad.ru/api/remap/1.2/report/stock/bystore/current'})
+    const result = stock.reduce(( acc, curr ) => {
+        acc[curr.assortmentId] ??= {}
+        acc[curr.assortmentId].total ??= 0
+        acc[curr.assortmentId].total += curr.stock
+        acc[curr.assortmentId][curr.storeId] = curr.stock
+        return acc
+    }, {})
+    await valkey.set('sklad:data:stock', JSON.stringify(result))
+    await valkey.set('sklad:updates:stock', Date.now());
+    await broker.emit('dataUpdated', 'stock')
+}
 export const getProcessingStages = async () => {
     const response = await broker.call('proxy.sklad', {url: 'https://api.moysklad.ru/api/remap/1.2/entity/processingstage'})
     const result = response.rows.reduce(( acc, curr ) => {

@@ -100,8 +100,12 @@ const checkReports = async () => {
     const updatedReports = []
     for(const createdReport of createdReports) {
         if(now - createdReport.createdAt > reportsList.find(r => r.type === createdReport.type)?.ttl * 1000) {
-            await fs.unlink(path.join(__dirname, `./temporal/${createdReport.uuid}.xlsx`));
-            continue
+            try{
+                await fs.unlink(path.join(__dirname, `./temporal/${createdReport.uuid}.xlsx`));
+                continue
+            }catch(e){
+                console.error(`Error deleting report file ${createdReport.uuid}.xlsx:`, e);
+            }
         }
         updatedReports.push(createdReport)
     }

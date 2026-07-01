@@ -195,14 +195,27 @@ broker.createService({
       roles: [ROLES.ADMIN],
       params: {
         id: { type: 'uuid' },
+        username: { type: 'string', trim: true, empty: false, optional: true },
         fullname: { type: 'string', trim: true, empty: false, optional: true },
         password: { type: 'string', min: 6, optional: true },
         roles: { type: 'array', items: { type: 'enum', values: ALL_ROLES }, optional: true },
       },
       async handler(ctx) {
-        const { id, fullname, password, roles } = ctx.params;
+        const { id, username, fullname, password, roles } = ctx.params;
+
+        if (username !== undefined) {
+          const [existing] = await db
+            .select({ id: users.id })
+            .from(users)
+            .where(eq(users.username, username))
+            .limit(1);
+          if (existing && existing.id !== id) {
+            throw new MoleculerClientError('Username already exists', 409, 'USERNAME_TAKEN');
+          }
+        }
 
         const patch = { updatedAt: new Date() };
+        if (username !== undefined) patch.username = username;
         if (fullname !== undefined) patch.fullname = fullname;
         if (roles !== undefined) patch.roles = roles;
         if (password !== undefined) patch.password = await hashPassword(password);

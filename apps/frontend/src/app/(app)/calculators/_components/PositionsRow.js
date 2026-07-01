@@ -202,24 +202,39 @@ function QuantityCell({ index, value }) {
 
     const commit = () => {
         const trimmed = String(draft).trim();
-        const next = trimmed === '' ? null : Number(trimmed);
-        if (next != null && Number.isNaN(next)) {
-            setDraft(value ?? '');
+
+        let next = Number(trimmed);
+
+        // если пусто или не число — возвращаем текущее значение
+        if (trimmed === '' || Number.isNaN(next)) {
+            setDraft(String(value));
             return;
         }
-        // Skip dispatch when nothing actually changed.
-        if (next === (value ?? null)) return;
+
+        // ограничиваем минимум и максимум
+        next = Math.min(9999, Math.max(1, next));
+
+        if (next === value) return;
+
         dispatch(setPositionQuantity({ index, quantity: next }));
+        setDraft(String(next));
     };
 
+    const handleChange = (e) => {
+        const next = e.target.value;
+        if (next === '' || (Number(next) >= 1 && Number(next) <= 9999)) {
+            setDraft(next);
+        }
+    };
     return (
         <TableCell className="p-1.5 text-center">
             <Input
                 type="number"
-                min="0"
+                min={1}
+                max={9999}
                 inputMode="numeric"
                 value={draft}
-                onChange={(e) => setDraft(e.target.value)}
+                onChange={handleChange}
                 onBlur={commit}
                 onKeyDown={(e) => {
                     if (e.key === 'Enter') e.currentTarget.blur();

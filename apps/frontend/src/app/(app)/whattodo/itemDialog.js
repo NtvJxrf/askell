@@ -54,13 +54,30 @@ export default function ItemDialog({ item, open, onOpenChange }) {
   };
 
   const handleChange = (e) => {
+    if (e.target.value === "") {
+      return;
+    }
+
     let value = Number(e.target.value);
+
+    if (Number.isNaN(value)) {
+      return;
+    }
 
     if (value > item?.quantity) {
         value = item?.quantity;
+        e.target.value = value;
     }
-    if (value < 1) {
+  };
+
+  const handleBlur = (e) => {
+    let value = Number(e.target.value);
+
+    if (e.target.value === "" || Number.isNaN(value) || value < 1) {
         value = 1;
+    }
+    if (value > item?.quantity) {
+        value = item?.quantity;
     }
 
     e.target.value = value;
@@ -172,6 +189,7 @@ export default function ItemDialog({ item, open, onOpenChange }) {
                 max={item?.quantity}
                 defaultValue={1}
                 onChange={handleChange}
+                onBlur={handleBlur}
               />
 
               <Button

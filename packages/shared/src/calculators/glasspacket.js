@@ -196,7 +196,6 @@ const Calculate = (data, selfcost, triplexArray) => {
     allWorks['assemblePlane'] += planes.length
     allWorks['assembleGlasspacket'] += planes.length
     allWorks['sealing2'] += planes.length
-    console.log(allWorks)
     for(const work of Object.keys(allWorks)){
         if(allWorks[work] > 0){
             const multiplier = (shape == false && work === 'assembleGlasspacket') ? 2 : 1

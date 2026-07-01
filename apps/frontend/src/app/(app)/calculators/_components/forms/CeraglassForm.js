@@ -95,9 +95,6 @@ export default function CeraglassForm({ dv = null }) {
     }
 const handleAddMaterial = () => {
     const count = materialCount.current;
-
-    console.log(count);
-
     setAdditionalMaterials(prev => [
         ...prev,
         {
@@ -125,7 +122,6 @@ const handleAddMaterial = () => {
             materialCount.current--;
         }
     }
-    console.log('additionalMaterials', additionalMaterials);
     return (
         <div className="flex justify-center">
             <form id="CeraglassForm" onSubmit={form.handleSubmit(onSubmit)} className="space-y-1.5 w-full">

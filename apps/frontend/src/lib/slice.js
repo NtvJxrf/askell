@@ -10,11 +10,13 @@ const initialState = {
     currentOrder: null,
     forms: {},
     selfcost: {},
+    stages: [],
     schedule: null,
-    heaps: [],
+    heaps: {},
     user: {},
     settings: {},
-    triplexArray: []
+    triplexArray: [],
+    displayPrice: 'retailPrice'
 };
 
 // Make sure a form bucket exists before writing to it (Immer-friendly).
@@ -60,6 +62,9 @@ const appSlice = createSlice({
     },
     addPosition(state, action) {
       state.positions.push(action.payload);
+    },
+    addPositions(state, action) {
+      state.positions = state.positions.concat(action.payload);
     },
     removeTriplexPosition(state, action) {
       const index = action.payload;
@@ -129,6 +134,9 @@ const appSlice = createSlice({
     },
     setSettings(state, action) {
       state.settings = action.payload;
+    },
+    setDisplayPrice(state, action) {
+      state.displayPrice = action.payload;
     }
   }
 });
@@ -150,10 +158,12 @@ export const {
   setUser,
   setSettings,
   addPosition,
+  addPositions,
   removeTriplexPosition,
   setTriplexPositions,
   addTriplexPosition,
-  replaceTriplexPositions
+  replaceTriplexPositions,
+  setDisplayPrice
 } = appSlice.actions;
 const appReducer = appSlice.reducer;
 export const store = configureStore({

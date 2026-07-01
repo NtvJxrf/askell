@@ -24,7 +24,12 @@ export default function runSimulation(params) {
         if (normaCache[machineName] !== undefined) return normaCache[machineName];
         return (normaCache[machineName] = toNum(schedule[0][machineName]));
     };
-
+    const unableMaterials = Object.entries(heaps).reduce((acc, [stageName, heap]) => {
+        heap.forEach(item => {
+            item.productionPath[item.orderingPosition]
+        })
+        return acc
+    }, {})
     for (const name of machineNames) {
         getNorma(name);
     }
@@ -113,11 +118,6 @@ export default function runSimulation(params) {
         // Конец рабочего дня → переход на следующий
         if (!isMachinesAvailable() && !isMachinesBusy()) {
             if (!nextDay()){
-                for(const machine of machines) {
-                    if(machine.name == 'Trash Сборка СМД'){
-                        console.log(machine)
-                    }
-                }
                 throw new Error(`[SimV4] Schedule exhausted at iteration ${iterations}, time ${simTime}, index ${index}. Cannot advance to next day. Heaps state: ${JSON.stringify(Object.fromEntries(Object.entries(heaps).map(([k,v]) => [k, Array.isArray(v) ? v.length : Object.keys(v || {}).length])))}`);   
             }
         }

@@ -67,7 +67,6 @@ export default function GlasspacketForm({ dv = null }) {
         dispatch(addPosition(res))
     }
     const handleEditTriplex = (item, index) => {
-        console.log('handleEditTriplex', item, index)
         dispatch(replaceTriplexPositions({index, item}))
         setEditingItem(null)
     }

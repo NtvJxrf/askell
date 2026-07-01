@@ -1,7 +1,7 @@
 import { ServiceBroker } from "moleculer";
 import { ROLES } from "@askell/shared/roles";
 import { getProcessingStages, getPackagingMaterials, getStores, getUnders, getColors, getPicesAndCoefs,
-  getCurrency, getPriceTypes, getAttributes, getEmployees, getStates, getProcessingPlansSmd, getMaterials } from "./utils/skladEntitys.js";
+  getCurrency, getPriceTypes, getAttributes, getEmployees, getStates, getProcessingPlansSmd, getMaterials, getStock } from "./utils/skladEntitys.js";
 import { updateHeaps } from "./utils/productionload.js";
 import { updateSchedule } from "./utils/schedule.js";
 import { valkey, settingsSchema } from "@askell/shared";
@@ -24,7 +24,8 @@ const map = {
   getEmployees,
   getStates,
   getProcessingPlansSmd,
-  getMaterials
+  getMaterials,
+  getStock
 }
 let selfcost = {
   updates: {}
@@ -142,7 +143,7 @@ broker.createService({
 broker.start();
 
 const updateSelfcost = async () => {
-  const DATA_KEYS = ['colors', 'unders', 'materials', 'packaging', 'pricesAndCoefs']
+  const DATA_KEYS = ['colors', 'unders', 'materials', 'packaging', 'pricesAndCoefs', 'processingStages', 'stock']
   const updateKeys = await valkey.keys('sklad:updates:*')
 
   const [dataValues, updateValues] = await Promise.all([

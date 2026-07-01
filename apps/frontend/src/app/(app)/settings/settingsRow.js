@@ -17,7 +17,7 @@ export default function SettingsRow({ skey, item }) {
         const valid = settingsSchema[skey].schema.safeParse(Number(inputValue))
         const user = store.getState().app.user;
         if(!valid.success) {
-            console.log(valid.error)
+            console.error(valid.error)
             toast.error("Некорректное значение");
             return;
         }

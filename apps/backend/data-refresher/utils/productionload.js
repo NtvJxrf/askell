@@ -32,13 +32,12 @@ export const updateHeaps = async () => {
             ]);
 
             return {
-            ...task,
-            productionstages,
-            products,
+                ...task,
+                productionstages,
+                products,
             };
         })
     );
-    await valkey.set('tasksWithDetails', JSON.stringify(tasksWithDetails)) //Удалить после отладики await valkey.set('tasksWithDetails', null) //Удалить после отладки
     console.timeEnd('get-heaps-details')
     const assortmentReqAttrs = ['Длина в мм', 'Ширина в мм', 'Окрашивание', 'Тип станка', 'Тип изделия',
         'Материал 1','Материал 2', 'Материал 3', 'Материал 4', 'Вид обработки', '№ заказа покупателя',
@@ -46,6 +45,19 @@ export const updateHeaps = async () => {
         'Кол-во сверлений', 'Кол-во зенкований', 'Закалка'
     ]
     const taskReqAttrs = ['№ заказа покупателя', 'Получатель']
+    // const allMaterials = Object.fromEntries(
+    //     await Promise.all(
+    //         tasksWithDetails
+    //             .flatMap(el => el.productionstages)
+    //             .filter(pstage => pstage.materials.meta.size > 0)
+    //             .map(async pstage => [
+    //                 pstage.materials.meta.href.replace('/materials', ''),
+    //                 1
+    //                 // await broker.call('proxy.fetchAllRows', { url: `${pstage.materials.meta.href}?` })
+    //             ])
+    //     )
+    // );
+    // console.log(Object.keys(allMaterials).length, 'materials fetched')
     for(const el of tasksWithDetails){
         for(const pstage of el.productionstages){
             if(pstage.availableQuantity > 0){
@@ -83,6 +95,10 @@ export const updateHeaps = async () => {
                                 stageName: heapsRaw[ps.stage.meta.href]?.name,
                                 productionRowId: ps.productionRow.meta.href.split('/').pop(),
                                 orderingPosition: ps.orderingPosition,
+                                // materials: (allMaterials[ps.meta.href] || []).reduce((acc, curr) => {
+                                //     acc[curr.assortment.meta.href.split('/').pop()] = curr.planQuantity
+                                //     return acc
+                                // }, {})
                             }
                         }),
                         orderingPosition: pstage.orderingPosition,
@@ -92,7 +108,7 @@ export const updateHeaps = async () => {
             }
         }
     }
-        const orders = await broker.call('proxy.fetchAllRows', { url: `https://api.moysklad.ru/api/remap/1.2/entity/customerorder?filter=`
+    const orders = await broker.call('proxy.fetchAllRows', { url: `https://api.moysklad.ru/api/remap/1.2/entity/customerorder?filter=`
         +`state.name=Подготовить (переделать) чертежи`
         +`;state.name=Чертежи подготовлены, прикреплены`
         +`;state.name=Проверить чертежи`

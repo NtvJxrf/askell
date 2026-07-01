@@ -24,6 +24,7 @@ const keyOf = (position, index) => position?.id ?? index;
 export function PositionsTable() {
   const dispatch = useDispatch();
   const positions = useSelector((state) => state.app.positions);
+  const currentPrice = useSelector((state) => state.app.displayPrice);
   const [detailsItem, setDetailsItem] = useState(null);
   // Drag-and-drop tracking: source row and the row currently hovered over.
   const [dragIndex, setDragIndex] = useState(null);
@@ -40,12 +41,8 @@ export function PositionsTable() {
     setDragIndex(null);
     setOverIndex(null);
   };
-  console.log(positions)
   return (
     <div className="min-h-0 flex-1 overflow-auto">
-      {/* Fixed layout so header and rows share identical column widths. The
-          leading three columns are row controls (actions, select, drag), the
-          "Название" column flexes, the rest are sized to their content. */}
       <Table className="table-fixed text-[13px]">
         <colgroup>
           <col className="w-8" />
@@ -59,7 +56,6 @@ export function PositionsTable() {
         </colgroup>
         <TableHeader>
           <TableRow className="hover:bg-transparent">
-            {/* Control columns: empty actions cell, select-all checkbox, empty drag cell */}
             <TableHead aria-hidden className="h-9 p-0" />
             <TableHead className="h-9 p-0">
               <div className="flex items-center justify-center">
@@ -107,7 +103,7 @@ export function PositionsTable() {
                   onDragEnter={handleDragEnter}
                   dragIndex={dragIndex}
                   onDragEnd={resetDrag}
-                  currentPrice={'retailPrice'}
+                  currentPrice={currentPrice}
                   setDetailsItem={setDetailsItem}
                 />
               );

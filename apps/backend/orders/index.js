@@ -106,7 +106,7 @@ broker.createService({
                             assortment: { meta: pos.meta },
                             added: pos.added,
                             quantity: pos.quantity,
-                            price: pos.price * 100, //При передачи заказа на фронт конвертировали все в рубли, а при сохранении обратно в копейки
+                            price: pos.prices[data.displayPrice] * 100, //При передачи заказа на фронт конвертировали все в рубли, а при сохранении обратно в копейки
                             discount: pos.discount,
                             vat: data.order.organization.name === 'ООО "А2"' ? 22 : 5
                         }) 

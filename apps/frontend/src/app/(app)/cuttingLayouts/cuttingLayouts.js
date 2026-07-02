@@ -233,6 +233,7 @@ export const buildCuttingPiecesByMaterial = (cuttingHeap = []) => {
     const material = attributes['Материал 1'];
     const sourceWidth = toNumber(attributes['Ширина в мм']);
     const sourceHeight = toNumber(attributes['Длина в мм']);
+    const mark = attributes['Маркировка'] || '';
     const sourceId = item?.productionRowId || item?.productionTaskId || `${String(material)}-${index}`;
 
     if (!material || !sourceWidth || !sourceHeight) {
@@ -267,6 +268,9 @@ export const buildCuttingPiecesByMaterial = (cuttingHeap = []) => {
         name: item?.name || 'Без названия',
         docName: item?.taskName || '',
         orderNumber: item?.taskAttrs?.['№ заказа покупателя'] || attributes['№ заказа покупателя'] || '',
+        mark,
+        taskAttrs: item.taskAttrs || {},
+        totalQuantity: item?.totalQuantity || 1,
         material,
         sourceWidth,
         sourceHeight,

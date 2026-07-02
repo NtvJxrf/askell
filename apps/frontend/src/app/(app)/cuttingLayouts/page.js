@@ -39,6 +39,7 @@ import {
   calculateMaterialLayouts,
   groupDailyTaskByMaterial,
 } from "./cuttingLayouts";
+import { printLabels } from "./printLabels";
 
 const ALL_MATERIALS = "__all_materials__";
 const DAILY_TASK_STORAGE_KEY = "daily_cutting_task";
@@ -294,7 +295,6 @@ function SourceGroupRow({ group, onResolved }) {
     }
 
     const quantity = getQuantity();
-
     setBusy(true);
     try {
       const user = store.getState().app.user;
@@ -317,11 +317,6 @@ function SourceGroupRow({ group, onResolved }) {
     } finally {
       setBusy(false);
     }
-  };
-
-  const handleOpenPz = () => {
-    // TODO: реализовать открытие ПЗ
-    toast.info("Открытие ПЗ пока не реализовано");
   };
 
   return (
@@ -353,7 +348,7 @@ function SourceGroupRow({ group, onResolved }) {
           disabled={busy}
           className="h-8 min-h-8 w-40 shrink-0 resize-none py-1.5"
         />
-        <Button variant="outline" size="sm" className="shrink-0" onClick={handleOpenPz}>
+        <Button variant="outline" size="sm" className="shrink-0" onClick={() => window.open(`https://online.moysklad.ru/app/#productiontask/edit?id=${group.source?.productionTaskId}`, "_blank")}>
           Открыть ПЗ
         </Button>
         <Button variant="destructive" size="sm" className="shrink-0" onClick={handleDefect} disabled={busy}>
@@ -369,10 +364,12 @@ function SourceGroupRow({ group, onResolved }) {
 
 function SavedTaskLayoutSection({ material, layout, index, onResolveGroup }) {
   const groups = useMemo(() => buildSourceGroups([layout]), [layout]);
-
-  const handlePrintLabels = () => {
-    // TODO: реализовать печать этикеток
-    toast.info("Печать этикеток пока не реализована");
+  const handlePrintLabels = async () => {
+    try {
+      await printLabels(groups);
+    } catch (error) {
+      toast.error(error?.message || "Не удалось напечатать этикетки");
+    }
   };
 
   const handlePrintDrawings = () => {
@@ -441,7 +438,6 @@ function SavedTaskMaterialSection({ material, data, onResolveGroup }) {
 export default function CuttingLayoutsPage() {
   const heapsRaw = useSelector((state) => state.app.heaps);
   const selfcost = useSelector((state) => state.app.selfcost);
-  console.log(JSON.parse(localStorage.getItem(DAILY_TASK_STORAGE_KEY)))
   const [selectedMaterial, setSelectedMaterial] = useState(ALL_MATERIALS);
   const [selectedLayout, setSelectedLayout] = useState(null);
   const [dailyTask, setDailyTask] = useState(null);

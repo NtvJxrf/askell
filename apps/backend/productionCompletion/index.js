@@ -37,6 +37,22 @@ broker.createService({
             permissions: ['Производство'],
             async handler(ctx) {
                 const { item, user, quantity, description } = ctx.params;
+                const changeTask = await broker.call('proxy.sklad', { 
+                    url: `https://api.moysklad.ru/api/remap/1.2/entity/productiontask/${item.productionTaskId}/productionrows/${item.productionRowId}`,
+                    type: 'put',
+                    data: {
+                        productionVolume: item.totalQuantity + quantity
+                    }
+                });
+                const response = await broker.call('proxy.sklad',{
+                    type: 'post',
+                    url: `https://api.moysklad.ru/api/remap/1.2/entity/productionstagecompletion`,
+                    data: buildStageCompletionPayload({ ...item, description, quantity }, user, { defect: true })
+                })
+                if(!response.errors){
+                    return response
+                }
+                return response.errors[0].error
             }
         }
     }

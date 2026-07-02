@@ -16,26 +16,32 @@ export default function ItemDialog({ item, open, onOpenChange }) {
   const quantityRef = useRef(null);
   const descriptionRef = useRef(null);
 
-  const handleDefect = () => {
+  const handleDefect = async () => {
     if(descriptionRef.current?.value === undefined || descriptionRef.current?.value.trim() === "") {
         toast.error("Введите комментарий для брака");
         return;
     }
-    console.log("Брак", {
-      quantity: Number(quantityRef.current?.value ?? 1),
-      description: descriptionRef.current?.value ?? "",
-      item,
+    const user = store.getState().app.user;
+    const res = await backend('/productionCompletion/defect', {
+      method: 'POST',
+      body: {
+        quantity: Number(quantityRef.current?.value ?? 1),
+        description: descriptionRef.current?.value ?? "",
+        item,
+        user
+      },
     });
+    if(res == true){
+      toast.success("Операция выполнена");
+      onOpenChange(false);
+    } else {
+      toast.error(`Ошибка: ${res}`);
+    }
   };
 
   const handleComplete = async () => {
     const user = store.getState().app.user;
-    console.log("Выполнить", {
-      quantity: Number(quantityRef.current?.value ?? 1),
-      description: descriptionRef.current?.value ?? "",
-      item,
-      user
-    });
+
     const res = await backend('/productionCompletion/complete', {
       method: 'POST',
       body: {

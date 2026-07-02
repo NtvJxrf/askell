@@ -27,7 +27,9 @@ export default function constructWorks(work, quantity, context, multiplier) {
         const householdExpenses = value * PAC[`% общехозяйственных расходов ${place}`].value
         const allExpenses = workshopExpenses + commercialExpenses + householdExpenses
         const tax = context.type == 'Стеклопакет' ? value * PAC['Налог на зарплату'].value : 0
+        const fot = quantity * workConfig.costOfWork
         result.works.push({
+            fot,
             name,
             finalValue: (value + allExpenses + tax) * (multiplier || 1),
             value,

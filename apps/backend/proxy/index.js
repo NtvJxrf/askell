@@ -168,8 +168,10 @@ broker.createService({
         },
         async request(ctx){
             const { url, type = 'get', data = null } = ctx.params;
+            const args = {};
+            if (data) args.json = data;
             try{
-                const response = await gotClient[type](url, { ...args });
+                const response = await gotClient[type](url, args);
                 try{
                     const body = JSON.parse(response.body);
                     return body
@@ -178,7 +180,7 @@ broker.createService({
                     return response.body
                 }
             }catch(err){
-                console.error(`Error in request to ${url} with token ${token}:`, err);
+                console.error(`Error in request to ${url}:`, err);
                 throw err;
             }
         }

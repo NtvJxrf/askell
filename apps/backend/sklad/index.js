@@ -1,10 +1,12 @@
 import { ServiceBroker } from "moleculer";
-import { initEnv, valkey } from "@askell/shared";
+import { initEnv } from "@askell/shared";
 import { dictionary, mapPrices, productFoldersByType, uomMeta } from './utils/constants.js'
 import deleteEntitys from './utils/deleteEntitys.js'
 import generateProductAttributes from './utils/generateProductAttributes.js'
-const broker = new ServiceBroker({
-  nodeID: "orders",
+import { getData, refreshData } from './utils/dataManager.js'
+import { createProductionTask } from './utils/createProductionTask.js'
+export const broker = new ServiceBroker({
+  nodeID: "sklad",
   transporter: "nats://localhost:4222",
   logger: true
 });
@@ -25,18 +27,8 @@ const reverseMap = priceItems.reduce((acc, { key, label }) => {
     return acc;
 }, {});
 
-let smdPlans = JSON.parse(await valkey.get('sklad:data:smdPlans'))
-let sklad_materials = JSON.parse(await valkey.get('sklad:data:materials'))
-let sklad_packaging = JSON.parse(await valkey.get('sklad:data:packaging'))
-let currencies = JSON.parse(await valkey.get('sklad:data:currencies'))
-let stores = JSON.parse(await valkey.get('sklad:data:stores'))
-let priceTypes = JSON.parse(await valkey.get('sklad:data:priceTypes'))
-let processingStages = JSON.parse(await valkey.get('sklad:data:processingStages'))
-let attributes = JSON.parse(await valkey.get('sklad:data:attributes'))
-let colors = JSON.parse(await valkey.get('sklad:data:colors'))
-
 broker.createService({
-    name: "orders",
+    name: "sklad",
     actions: {
         order: {
             rest: "GET /order",
@@ -93,6 +85,7 @@ broker.createService({
             rest: "POST /saveOrder",
             permissions: ['Калькулятор'],
             async handler(ctx) {
+                const { attributes, sklad_materials, currencies, priceTypes, stores } = getData()
                 const data = ctx.params
                 const order = await broker.call('proxy.sklad', {url: `https://api.moysklad.ru/api/remap/1.2/entity/customerorder/${data.order.id}?expand=state,positions.assortment`})
                 if(['В работе', 'Поставлено в производство'].includes(order.state.name)) throw new Error(400, `Нельзя менять позиции у заказа который в работе, смените статус на "Карантин"`)//Кидаю ошибку чтоб не пересохраняли заказы которые уже в работе
@@ -178,21 +171,149 @@ broker.createService({
                     deleteEntitys(deletedPositions)
                 }
             }
+        },
+        orderChanged: {
+            rest: "POST /orderChanged",
+            permissions: [],
+            async handler(ctx) {
+                const { attributes } = getData()
+                let order = null
+                const event = ctx.params.events[0]
+                try{
+                    if(event?.updatedFields?.includes('state')){
+                        order ??= await broker.call('proxy.sklad', {url: `${event.meta.href}?expand=agent,store,state`})
+                        const attrs = (order.attributes || []).reduce((a, x) => {
+                            a[x.name] = x.value;
+                            return a;
+                        }, {});
+                        switch(order.state.name){
+                            case 'Готово':
+                                if(order.payedSum < order.sum && !attrs['Рекламация'] && order?.agent?.name !== 'ООО "ИНТЕРНЕТ РЕШЕНИЯ".'){
+                                    await broker.call('proxy.sklad', {
+                                        url: order.meta.href,
+                                        type: 'put',
+                                        body: {
+                                            state: { meta: states.customerorder['Готово, не оплачено'] }
+                                        }
+                                    })
+                                    return
+                                }
+                                await broker.call('proxy.sklad', {
+                                    url: order.meta.href,
+                                    type: 'put',
+                                    body: {
+                                    attributes: [{ meta: attributes.customerorder['Дата готовности факт'], value: new Date().toISOString().slice(0, 19).replace('T', ' ') }]
+                                }})
+                                if(order?.owner?.meta?.href == `https://api.moysklad.ru/api/remap/1.2/entity/employee/03579653-eedf-11e8-9107-50480000f34d`) return
+                                if (!order?.agent?.email) {
+                                    if (order?.owner?.meta) {
+                                        await broker.call('proxy.sklad', {
+                                            url: 'https://api.moysklad.ru/api/remap/1.2/entity/task',
+                                            type: 'post',
+                                            body: {
+                                                assignee: { meta: order.owner.meta },
+                                                operation: { meta: order.meta },
+                                                description: `Уведомление о готовом заказе не отправлено, тк не указан email`
+                                            }
+                                        })
+                                    }
+                                }else{
+                                    let store = 'Кажется что-то пошло не так, обратитесь к менеджеру для уточнения адреса'
+                                    switch(order?.store?.name){
+                                        case('Селькоровская СГИ'):
+                                            store = 'Селькоровская улица, 114А, Екатеринбург, Свердловская область.\nЧасы работы: 09:00 - 19:00'
+                                        break
+                                        case('ВИЗ СГИ'):
+                                            store = 'Верх-Исетский бульвар, 13Н, Екатеринбург, Свердловская область.\nЧасы работы: 09:00 - 19:00'
+                                        break
+                                        case('Полеводство СГИ'):
+                                            store = 'Улица Николы Теслы, 1/2, Екатеринбург, Свердловская область.\nЧасы работы: 09:00 - 19:00'//УКАЗАТЬ АДРЕС ПОЛЕВОДСТВА
+                                        break
+                                    }
+                                    await broker.call('proxy.request', { 
+                                        url: process.env.UNISENDER_URL,
+                                        type: 'post',
+                                        data: { 
+                                            email: order?.agent?.email,
+                                            orderName: order.name,
+                                            store
+                                        }
+                                    })
+                                }
+                            break
+                            case 'Поставлено в производство':
+                                ctx.call('sklad.createPZ', { id: order.id, initiator: data.auditContext.uid })
+                            break
+                            case 'Поставлено в производство ВИЗ':
+                                ctx.call('sklad.createPZ', { id: order.id, initiator: data.auditContext.uid })
+                            break
+                            // case 'Тест':
+                            //     ctx.call('sklad.createPZ', { id: order.id, initiator: data.auditContext.uid })
+                            // break
+                            case 'Карантин':
+                                if(!order.productionTasks) break
+                                for(const productiontask of order.productionTasks){
+                                    const task = await broker.call('proxy.sklad', {
+                                        url: `https://api.moysklad.ru/api/remap/1.2/entity/task`,
+                                        type: 'post',
+                                        body: {
+                                            assignee: { meta: employees['ea79c5e9-b7fd-11ed-0a80-03260003eb9f'].meta }, //Руслан
+                                            operation: { meta: productiontask.meta },
+                                            description: `Остановить выпуск продукции по этому ПЗ`
+                                        }
+                                    })
+                                    await broker.call('proxy.sklad', {
+                                        url: productiontask.meta.href,
+                                        type: 'put',
+                                        body: {
+                                            state: { meta: states.productiontask['Остановлено'] }
+                                        }
+                                    })
+                                }
+                            break
+                        }
+                    }
+                }catch(err){
+                    // logger.error(err)
+                    await broker.call('proxy.sklad', {
+                        url: 'https://api.moysklad.ru/api/remap/1.2/entity/task',
+                        type: 'post',
+                        body: {
+                            assignee: { meta: employees['62d9a852-3488-11f0-0a80-043b00408594'].meta },
+                            description: `Ошибка во время обработки изменения заказа покупателя № ${order?.name}
+                            Ошибка: ${err.message}
+                            Stack:
+                            ${err.stack}
+                            Event: ${JSON.stringify(data)}`
+                        }
+                    })
+                    await broker.call('proxy.sklad', {
+                        url: `https://api.moysklad.ru/api/remap/1.2/entity/customerorder/${order.id}`,
+                        type: 'put',
+                        body: {
+                            state: { meta: {
+                                "href" : "https://api.moysklad.ru/api/remap/1.2/entity/customerorder/metadata/states/6a37967b-5899-11f0-0a80-1bc9000373a3",
+                                "metadataHref" : "https://api.moysklad.ru/api/remap/1.2/entity/customerorder/metadata",
+                                "type" : "state",
+                                "mediaType" : "application/json"
+                            }}
+                        }
+                    })
+                }
+            }
+        },
+        createPZ: {
+            rest: "POST /createPZ",
+            permissions: ['Админ'],
+            async handler(ctx) {
+                const { id, initiator } = ctx.params
+                return await createProductionTask({ id, initiator })
+            }
         }
     },
     events: {
         async dataUpdated(ctx) {
-            switch(ctx.params.type) {
-                case 'smdPlans': JSON.parse(await valkey.get('sklad:data:smdPlans')); break
-                case 'materials': JSON.parse(await valkey.get('sklad:data:materials')); break
-                case 'packaging': sklad_packaging = JSON.parse(await valkey.get('sklad:data:packaging')); break
-                case 'currencies': currencies = JSON.parse(await valkey.get('sklad:data:currencies')); break
-                case 'stores': stores = JSON.parse(await valkey.get('sklad:data:stores')); break
-                case 'priceTypes': priceTypes = JSON.parse(await valkey.get('sklad:data:priceTypes')); break
-                case 'processingStages': processingStages = JSON.parse(await valkey.get('sklad:data:processingStages')); break
-                case 'attributes': attributes = JSON.parse(await valkey.get('sklad:data:attributes')); break
-                case 'colors': colors = JSON.parse(await valkey.get('sklad:data:colors')); break
-            }
+            await refreshData(ctx.params)
         },
     }
 });

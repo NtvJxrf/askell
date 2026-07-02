@@ -1,6 +1,6 @@
 // Client-side helper to call any backend action through the same-origin proxy
 // (see app/api/backend/[...path]/route.js). Usage from client components:
-//   await backend('/orders/order', { params: { name: 'test' } });
+//   await backend('/sklad/order', { params: { name: 'test' } });
 //   await backend('/users/create', { method: 'POST', body: { ... } });
 export async function backend(path, { method = 'GET', params, body, responseType } = {}) {
   const qs = params ? `?${new URLSearchParams(params)}` : '';

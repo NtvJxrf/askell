@@ -80,7 +80,7 @@ export function PositionsPanel() {
     if (!name) return;
     setDisabled(true);
     try{
-      const { order, positions } = await backend(`/orders/order?name=${name}`);
+      const { order, positions } = await backend(`/sklad/order?name=${name}`);
       dispatch(setOrder(order));
       dispatch(addPositions(positions));
     } finally {
@@ -96,7 +96,7 @@ export function PositionsPanel() {
     const positions = store.getState().app.positions;
     const order = store.getState().app.currentOrder;
     if (!order) return;
-    const response = await backend(`/orders/saveOrder`, {
+    const response = await backend(`/sklad/saveOrder`, {
       method: 'POST',
       body: {positions, order, displayPrice, planDate: { workingDays: 12}}
     });

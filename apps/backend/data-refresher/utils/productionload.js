@@ -125,7 +125,6 @@ export const updateHeaps = async () => {
                 return a;
             }, {});
             const posType = attrs['Тип изделия']
-            console.log('posType', posType, 'assortment', assortment?.name)
             if(posType == 'Стекло'){
                 for (let i = 0; i < pos.quantity; i++) {
                     heapsRaw?.['https://api.moysklad.ru/api/remap/1.2/entity/processingstage/d94b1d68-59e2-11ed-0a80-03cd0012392b']?.heap.push({ //Раскрой

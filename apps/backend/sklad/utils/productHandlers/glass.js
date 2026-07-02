@@ -1,0 +1,43 @@
+import generateStages from '../generateStages.js'
+import { makeProcessingProcess, makeProduct, makeProcessingPlan } from '../apiHelpers.js'
+
+export const glass = async ({ data, order, position, createdEntitys, results }) => {
+    if (data.initialData.customerSuppliedGlassForTempering) {
+        const processingProcess = await makeProcessingProcess(['Закалка', 'ОТК'])
+        const plan = await makeProcessingPlan({ name: position.assortment.name, order, processingProcess, product: position.assortment, createdEntitys })
+        plan.quantity = position.quantity
+        results.polevGlass.push(plan)
+        return
+    }
+
+    if (data.initialData.print) results.print = true
+    if (data.initialData.color) results.colors.push(data.initialData.color)
+
+    const isPF = data.result.other.viz
+    const processingProcess = await makeProcessingProcess(generateStages(data, 'selk'))
+    const product = isPF
+        ? await makeProduct({ data, material: data.initialData.material, createdEntitys, order, type: 'Стекло' })
+        : position.assortment
+
+    const plan = await makeProcessingPlan({ data, name: position.assortment.name, order, processingProcess, product, isPF, material: data.initialData.material, createdEntitys, mode: 'glass' })
+    plan._material = data.initialData.material
+    plan.quantity = position.quantity
+    results.polevGlass.push(plan)
+
+    if (isPF) {
+        const processingProcessViz = await makeProcessingProcess(generateStages(data, 'viz'))
+        const planViz = await makeProcessingPlan({
+            data,
+            name: position.assortment.name,
+            order,
+            processingProcess: processingProcessViz,
+            product: position.assortment,
+            isPF: false,
+            materials: [{ assortment: { meta: product.meta }, quantity: 1 }],
+            createdEntitys,
+            viz: true
+        })
+        planViz.quantity = position.quantity
+        results.viz.push(planViz)
+    }
+}

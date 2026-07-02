@@ -96,6 +96,134 @@ export const calculateMaterialLayouts = (piecesByMaterial = {}, materialsCatalog
   return { trims, materialLayouts, errors };
 };
 
+const isPieceUrgent = (piece, urgentBeforeTime) => {
+  const moment = piece.source?.deliveryPlannedMoment;
+  if (!moment) return false;
+  return new Date(moment).getTime() < urgentBeforeTime;
+};
+
+export const buildDailyCuttingTask = (materialsEntries = [], { maxArea = 150 } = {}) => {
+  const allPieces = [];
+
+  materialsEntries.forEach(([material, data]) => {
+    const sheetAreaM2 = (data.sheet.width * data.sheet.height) / 1_000_000;
+
+    data.layouts.forEach((layout) => {
+      const layoutKey = `${material}::${layout.id}`;
+
+      layout.pieces.forEach((piece) => {
+        allPieces.push({ piece, material, layout, layoutKey, sheetAreaM2 });
+      });
+    });
+  });
+
+  allPieces.sort((a, b) => {
+    const timeA = a.piece.source?.deliveryPlannedMoment ? new Date(a.piece.source.deliveryPlannedMoment).getTime() : Infinity;
+    const timeB = b.piece.source?.deliveryPlannedMoment ? new Date(b.piece.source.deliveryPlannedMoment).getTime() : Infinity;
+
+    return timeA - timeB;
+  });
+
+  const tomorrowEnd = new Date();
+  tomorrowEnd.setDate(tomorrowEnd.getDate() + 1);
+  tomorrowEnd.setHours(23, 59, 59, 999);
+  const urgentBeforeTime = tomorrowEnd.getTime();
+
+  const includedLayoutKeys = new Set();
+  const taskLayouts = [];
+  let totalArea = 0;
+
+  for (const entry of allPieces) {
+    if (includedLayoutKeys.has(entry.layoutKey)) continue;
+
+    if (totalArea >= maxArea && !isPieceUrgent(entry.piece, urgentBeforeTime)) break;
+
+    includedLayoutKeys.add(entry.layoutKey);
+    totalArea += entry.sheetAreaM2;
+    taskLayouts.push({
+      material: entry.material,
+      layout: entry.layout,
+      sheetAreaM2: entry.sheetAreaM2,
+    });
+  }
+
+  return { maxArea, totalArea, layouts: taskLayouts, moment: Date.now() };
+};
+
+export const groupDailyTaskByMaterial = (task) => {
+  const grouped = {};
+
+  task.layouts.forEach(({ material, layout }) => {
+    if (!grouped[material]) {
+      grouped[material] = { layouts: [] };
+    }
+
+    grouped[material].layouts.push(
+      typeof structuredClone === 'function' ? structuredClone(layout) : JSON.parse(JSON.stringify(layout))
+    );
+  });
+
+  const materials = Object.entries(grouped).sort((a, b) => a[0].localeCompare(b[0], 'ru'));
+
+  return { maxArea: task.maxArea, moment: task.moment, materials };
+};
+
+export const buildTaskOrderGroups = (layouts = []) => {
+  const grouped = new Map();
+
+  layouts.forEach((layout) => {
+    layout.pieces.forEach((piece) => {
+      const orderNumber = piece.source?.orderNumber || 'Без заказа';
+      const docName = piece.source?.docName || 'Без ПЗ';
+      const key = `${orderNumber}::${docName}`;
+      const pieceWithLayout = { ...piece, layoutId: layout.id };
+      const existing = grouped.get(key);
+
+      if (existing) {
+        existing.pieces.push(pieceWithLayout);
+        return;
+      }
+
+      grouped.set(key, { key, orderNumber, docName, pieces: [pieceWithLayout] });
+    });
+  });
+
+  return Array.from(grouped.values()).sort(
+    (a, b) => b.pieces.length - a.pieces.length || a.orderNumber.localeCompare(b.orderNumber, 'ru')
+  );
+};
+
+export const buildSourceGroups = (layouts = []) => {
+  const grouped = new Map();
+
+  layouts.forEach((layout) => {
+    layout.pieces.forEach((piece) => {
+      const key = piece.sourceId || piece.source?.id || piece.pieceId;
+      const pieceWithLayout = { ...piece, layoutId: layout.id };
+      const existing = grouped.get(key);
+
+      if (existing) {
+        existing.count += 1;
+        existing.pieces.push(pieceWithLayout);
+        return;
+      }
+
+      grouped.set(key, {
+        sourceId: key,
+        source: piece.source,
+        sourceWidth: piece.sourceWidth,
+        sourceHeight: piece.sourceHeight,
+        count: 1,
+        pieces: [pieceWithLayout],
+      });
+    });
+  });
+
+  return Array.from(grouped.values()).sort(
+    (a, b) => b.count - a.count || (a.source?.orderNumber || '').localeCompare(b.source?.orderNumber || '', 'ru')
+  );
+};
+
 export const buildCuttingPiecesByMaterial = (cuttingHeap = []) => {
   const grouped = {};
   const skipped = [];

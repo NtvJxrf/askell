@@ -63,7 +63,7 @@ export function PositionsRow({
     const finalPrice = price * (1 - discount / 100);
     const profit = finalPrice - cost;
 
-    const profitPercent = cost > 0 ? (profit / cost) * 100 : 0;
+    const profitPercent = cost > 0 ? (cost / finalPrice) * 100 : 0;
 
     const handleEditing = () => {
         console.log('editing', position);
@@ -165,8 +165,9 @@ export function PositionsRow({
             )}
 
             <span className="absolute left-0 bottom-0 text-[10px] font-semibold text-green-600" title={`Прибыль: ${profitPercent.toFixed(1)}%`}>
-                {profit > 0 ? "+" : ""}
-                {formatPrice(profit)} ({profitPercent.toFixed(1)}%)
+                {/* {profit > 0 ? "+" : ""}
+                {formatPrice(profit)} ({profitPercent.toFixed(1)}%) */}
+                +{profitPercent.toFixed(1)}%
             </span>
         </TableCell>
 

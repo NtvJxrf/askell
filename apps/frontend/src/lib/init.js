@@ -12,6 +12,7 @@ export default function Init() {
             const schedule = await backend('/data-refresher/getSchedule');
             const user = await backend('/me');
             const settings = await backend('/data-refresher/getSettings');
+            console.log(selfcost)
             dispatch(setSettings(settings));
             dispatch(setHeaps(heaps));
             dispatch(setSchedule(schedule));

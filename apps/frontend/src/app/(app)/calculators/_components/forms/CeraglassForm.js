@@ -7,6 +7,7 @@ import { useMemo, useState, useRef } from "react"
 import BottomButtons from "./BottomButtons"
 import calculate from "@askell/shared/calc/ceraglass"
 import { addPosition } from "@/lib/slice"
+import { getMaterialsStock } from "./getStock.js"
 
 const glassAndCera = ['стекло', 'плита'];
 const ceraExcludedWords = ['плита']
@@ -14,20 +15,12 @@ const doorFrameWords = ['короб']
 const lockWords = ['замок']
 const hingeWords = ['петля']
 export default function CeraglassForm({ dv = null }) {
-    const form = useForm({
-        shouldUnregister: true,
-        defaultValues: {
-            shape: true,
-            tempered: true,
-            rounding: 'Округление до 0.5',
-            ...dv
-        }
-    })
     const dispatch = useDispatch()
     const selfcost = useSelector((state) => state.app?.selfcost)
     const materials = selfcost?.materials || {}
     const colors = selfcost?.colors || {}
     const unders = selfcost?.unders || {}
+    const stock = selfcost?.stock || {}
 
     const [additionalMaterials, setAdditionalMaterials] = useState([]);
     const materialCount = useRef(1);
@@ -37,6 +30,9 @@ export default function CeraglassForm({ dv = null }) {
 
         return [...Object.keys(materials).filter(el => glassAndCera.some(word => el.toLowerCase().includes(word))).sort(), 'Керамика клиента']
     }, [materials])
+    const materialsStock = useMemo(() => {
+        return getMaterialsStock(materialsArray, materials, stock)
+    }, [materialsArray, materials, stock])
     const ceraArray = useMemo(() => {
         if (!materials || materials.length === 0) return []
         return [...Object.keys(materials).filter(el => ceraExcludedWords.some(word => el.toLowerCase().includes(word))).sort(), 'Керамика клиента']
@@ -71,7 +67,7 @@ export default function CeraglassForm({ dv = null }) {
     const formFields = [
         { name: 'type', type: 'select', label: 'Изделие', options: ['Стол', 'Дверь', 'Столешница', 'Керамика'], required: true },
         { name: 'material1', type: 'combobox', label: 'Материал 1', options: ceraArray, required: true },
-        { name: 'material2', type: 'combobox', label: 'Материал 2', options: materialsArray },
+        { name: 'material2', type: 'combobox', label: 'Материал 2', options: materialsArray, itemLabels: materialsStock },
         { name: 'width', type: 'input', label: 'Ширина изделия, мм', required: true },
         { name: 'height', type: 'input', label: 'Высота изделия, мм', required: true },
         { name: 'cutsv1', type: 'inputp0', label: 'Вырезы 1 кат. шт' },
@@ -88,6 +84,20 @@ export default function CeraglassForm({ dv = null }) {
         { name: 'tempered', type: 'checkbox', label: 'Закаленное', cheched: true },
         { name: 'quantity', type: 'inputp0', label: 'Количество, шт' },
     ]
+    const form = useForm({
+        shouldUnregister: true,
+        defaultValues: {
+            ...formFields.reduce((acc, field) => {
+                acc[field.name] = "";
+                return acc;
+            }, {}),
+            shape: true,
+            tempered: true,
+            quantity: 1,
+            rounding: 'Округление до 0.5',
+            ...dv
+        }
+    })
     function onSubmit(values) {
         const res = calculate(values, selfcost)
         console.log(res)

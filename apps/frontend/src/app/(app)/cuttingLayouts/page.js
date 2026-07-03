@@ -2,7 +2,7 @@
 import { useMemo, useRef, useState } from "react";
 import { useSelector } from "react-redux";
 import { toast } from "sonner";
-import { Trash2, X } from "lucide-react";
+import { Info, Trash2, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { backend } from "@/lib/backend";
 import { store } from "@/lib/slice";
@@ -30,19 +30,27 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import {
   buildCuttingPiecesByMaterial,
   buildDailyCuttingTask,
   buildSourceGroups,
   buildTaskOrderGroups,
   calculateMaterialLayouts,
+  DAILY_TASK_STRATEGIES,
   groupDailyTaskByMaterial,
 } from "./cuttingLayouts";
 import { printLabels } from "./printLabels";
 
 const ALL_MATERIALS = "__all_materials__";
 const DAILY_TASK_STORAGE_KEY = "daily_cutting_task";
+
+const DAILY_TASK_STRATEGY_OPTIONS = [
+  { value: DAILY_TASK_STRATEGIES.DATE, label: "По дате (сначала просроченные)" },
+  { value: DAILY_TASK_STRATEGIES.OPTIMIZATION, label: "Просроченные + лучшая оптимизация" },
+];
 
 const PIECE_COLOR_CLASSES = [
   "bg-emerald-200/70 border-emerald-400/70 dark:bg-emerald-900/50 dark:border-emerald-700",
@@ -308,10 +316,11 @@ function SourceGroupRow({ group, onResolved }) {
         },
       });
 
-      if (res === true) {
+      if (res) {
         toast.success("Брак зафиксирован");
         onResolved(quantity);
       } else {
+        console.log(err)
         toast.error(`Ошибка: ${res}`);
       }
     } finally {
@@ -444,7 +453,8 @@ export default function CuttingLayoutsPage() {
   const [taskDialogOpen, setTaskDialogOpen] = useState(false);
   const [savedTask, setSavedTask] = useState(null);
   const [savedTaskDialogOpen, setSavedTaskDialogOpen] = useState(false);
-
+  const [taskStrategy, setTaskStrategy] = useState(DAILY_TASK_STRATEGIES.DATE);
+  const targetRef = useRef(150);
   const cuttingHeap = useMemo(
     () => (heapsRaw?.["Раскрой"] || []).filter((item) => item?.tier === 1),
     [heapsRaw]
@@ -503,7 +513,8 @@ export default function CuttingLayoutsPage() {
     return Array.from(grouped.values()).sort((a, b) => b.count - a.count || a.orderNumber.localeCompare(b.orderNumber, "ru"));
   }, [selected]);
   const handleCreateTask = () => {
-    const task = buildDailyCuttingTask(materials, { maxArea: 150 });
+    const maxArea = Number(targetRef.current?.value) || 150;
+    const task = buildDailyCuttingTask(materials, { maxArea, strategy: taskStrategy });
 
     setDailyTask(groupDailyTaskByMaterial(task));
     setTaskDialogOpen(true);
@@ -675,13 +686,57 @@ export default function CuttingLayoutsPage() {
           </SelectContent>
         </Select>
       </div>
-      <div className="flex gap-2">
+      <div className="flex flex-wrap items-end gap-2">
         <Button variant="secondary" size="sm" onClick={handleCreateTask}>
             Собрать задание на сегодня
         </Button>
         <Button variant="outline" size="sm" onClick={handleShowTask}>
             Показать задание
         </Button>
+        <div className="flex flex-col gap-1.5">
+          <Label htmlFor="daily-task-target" className="text-xs text-muted-foreground">
+            Цель, м²
+          </Label>
+          <Input
+            id="daily-task-target"
+            ref={targetRef}
+            type="number"
+            defaultValue={150}
+            className="max-w-[200px]"
+          />
+        </div>
+        <div className="flex flex-col gap-1.5">
+          <span className="flex items-center gap-1 text-xs text-muted-foreground">
+            Алгоритм сборки
+            <Tooltip>
+              <TooltipTrigger>
+                <Info className="size-3.5" />
+              </TooltipTrigger>
+              <TooltipContent className="max-w-xs whitespace-normal">
+                <div className="flex flex-col gap-1">
+                  <div>
+                    <strong>По дате:</strong> сначала все просроченные листы, затем остальные по возрастанию даты сдачи — до достижения цели, м².
+                  </div>
+                  <div>
+                    <strong>Просроченные + лучшая оптимизация:</strong> сначала все просроченные листы, затем остальные листы с наименьшим процентом обрези (лучшая раскладка) — до достижения цели, м².
+                  </div>
+                </div>
+              </TooltipContent>
+            </Tooltip>
+          </span>
+          <Select value={taskStrategy} onValueChange={setTaskStrategy}>
+            <SelectTrigger className="w-[280px]">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {DAILY_TASK_STRATEGY_OPTIONS.map((option) => (
+                <SelectItem key={option.value} value={option.value}>
+                  {option.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
       </div>
       <div className="grid grid-cols-3 gap-3 sm:max-w-lg">
         <Card size="sm">

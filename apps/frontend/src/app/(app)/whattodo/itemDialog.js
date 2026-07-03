@@ -21,41 +21,50 @@ export default function ItemDialog({ item, open, onOpenChange }) {
         toast.error("Введите комментарий для брака");
         return;
     }
-    const user = store.getState().app.user;
-    const res = await backend('/productionCompletion/defect', {
-      method: 'POST',
-      body: {
-        quantity: Number(quantityRef.current?.value ?? 1),
-        description: descriptionRef.current?.value ?? "",
-        item,
-        user
-      },
-    });
-    if(res == true){
-      toast.success("Операция выполнена");
-      onOpenChange(false);
-    } else {
-      toast.error(`Ошибка: ${res}`);
+    try{
+      const user = store.getState().app.user;
+      const res = await backend('/productionCompletion/defect', {
+        method: 'POST',
+        body: {
+          quantity: Number(quantityRef.current?.value ?? 1),
+          description: descriptionRef.current?.value ?? "",
+          item,
+          user
+        },
+      });
+      if(res){
+        toast.success("Операция выполнена");
+        onOpenChange(false);
+      } else {
+        toast.error(`Ошибка: ${res}`);
+      }
+    }catch(err){
+      console.error(err)
+      toast.error(`Ошибка: ${err.message || String(err)}`);
     }
   };
 
   const handleComplete = async () => {
-    const user = store.getState().app.user;
-
-    const res = await backend('/productionCompletion/complete', {
-      method: 'POST',
-      body: {
-        quantity: Number(quantityRef.current?.value ?? 1),
-        description: descriptionRef.current?.value ?? "",
-        item,
-        user
-      },
-    });
-    if(res == true){
-      toast.success("Операция выполнена");
-      onOpenChange(false);
-    } else {
-      toast.error(`Ошибка: ${res}`);
+    try{
+      const user = store.getState().app.user;
+      const res = await backend('/productionCompletion/complete', {
+        method: 'POST',
+        body: {
+          quantity: Number(quantityRef.current?.value ?? 1),
+          description: descriptionRef.current?.value ?? "",
+          item,
+          user
+        },
+      });
+      if(res == true){
+        toast.success("Операция выполнена");
+        onOpenChange(false);
+      } else {
+        toast.error(`Ошибка: ${res}`);
+      }
+    }catch(err){
+      console.error(err)
+      toast.error(`Ошибка: ${err.message || String(err)}`);
     }
   };
 

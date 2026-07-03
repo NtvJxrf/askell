@@ -38,7 +38,6 @@ broker.createService({
       }
     ]
   },
-
   methods: {
     /**
      * Verify the Bearer token and return the user (-> ctx.meta.user), or null

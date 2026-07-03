@@ -96,49 +96,73 @@ export const calculateMaterialLayouts = (piecesByMaterial = {}, materialsCatalog
   return { trims, materialLayouts, errors };
 };
 
-const isPieceUrgent = (piece, urgentBeforeTime) => {
-  const moment = piece.source?.deliveryPlannedMoment;
-  if (!moment) return false;
-  return new Date(moment).getTime() < urgentBeforeTime;
+export const DAILY_TASK_STRATEGIES = {
+  DATE: "date",
+  OPTIMIZATION: "optimization",
 };
 
-export const buildDailyCuttingTask = (materialsEntries = [], { maxArea = 150 } = {}) => {
-  const allPieces = [];
+const getLayoutEarliestTime = (layout) =>
+  layout.pieces.reduce((earliest, piece) => {
+    const moment = piece.source?.deliveryPlannedMoment;
+    const time = moment ? new Date(moment).getTime() : Infinity;
+
+    return time < earliest ? time : earliest;
+  }, Infinity);
+
+export const buildDailyCuttingTask = (materialsEntries = [], { maxArea = 150, strategy = DAILY_TASK_STRATEGIES.DATE } = {}) => {
+  const tomorrowEnd = new Date();
+  tomorrowEnd.setDate(tomorrowEnd.getDate() + 1);
+  tomorrowEnd.setHours(23, 59, 59, 999);
+  const urgentBeforeTime = tomorrowEnd.getTime();
+
+  const layoutInfos = [];
 
   materialsEntries.forEach(([material, data]) => {
     const sheetAreaM2 = (data.sheet.width * data.sheet.height) / 1_000_000;
 
     data.layouts.forEach((layout) => {
       const layoutKey = `${material}::${layout.id}`;
+      const earliestTime = getLayoutEarliestTime(layout);
 
-      layout.pieces.forEach((piece) => {
-        allPieces.push({ piece, material, layout, layoutKey, sheetAreaM2 });
+      layoutInfos.push({
+        material,
+        layout,
+        layoutKey,
+        sheetAreaM2,
+        earliestTime,
+        isUrgent: earliestTime < urgentBeforeTime,
+        waste: Number(layout.waste || 0),
       });
     });
   });
 
-  allPieces.sort((a, b) => {
-    const timeA = a.piece.source?.deliveryPlannedMoment ? new Date(a.piece.source.deliveryPlannedMoment).getTime() : Infinity;
-    const timeB = b.piece.source?.deliveryPlannedMoment ? new Date(b.piece.source.deliveryPlannedMoment).getTime() : Infinity;
+  const urgentLayouts = layoutInfos
+    .filter((entry) => entry.isUrgent)
+    .sort((a, b) => a.earliestTime - b.earliestTime);
 
-    return timeA - timeB;
-  });
+  const restLayouts = layoutInfos.filter((entry) => !entry.isUrgent);
 
-  const tomorrowEnd = new Date();
-  tomorrowEnd.setDate(tomorrowEnd.getDate() + 1);
-  tomorrowEnd.setHours(23, 59, 59, 999);
-  const urgentBeforeTime = tomorrowEnd.getTime();
+  if (strategy === DAILY_TASK_STRATEGIES.OPTIMIZATION) {
+    restLayouts.sort((a, b) => a.waste - b.waste || a.earliestTime - b.earliestTime);
+  } else {
+    restLayouts.sort((a, b) => a.earliestTime - b.earliestTime);
+  }
 
-  const includedLayoutKeys = new Set();
   const taskLayouts = [];
   let totalArea = 0;
 
-  for (const entry of allPieces) {
-    if (includedLayoutKeys.has(entry.layoutKey)) continue;
+  urgentLayouts.forEach((entry) => {
+    totalArea += entry.sheetAreaM2;
+    taskLayouts.push({
+      material: entry.material,
+      layout: entry.layout,
+      sheetAreaM2: entry.sheetAreaM2,
+    });
+  });
 
-    if (totalArea >= maxArea && !isPieceUrgent(entry.piece, urgentBeforeTime)) break;
+  for (const entry of restLayouts) {
+    if (totalArea >= maxArea) break;
 
-    includedLayoutKeys.add(entry.layoutKey);
     totalArea += entry.sheetAreaM2;
     taskLayouts.push({
       material: entry.material,

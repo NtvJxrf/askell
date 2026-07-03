@@ -8,15 +8,6 @@ import { addPosition } from "@/lib/slice"
 import { toast } from 'sonner'
 
 export default function ClientGlassTemperingForm({ dv = null }) {
-    const form = useForm({
-        shouldUnregister: true,
-        defaultValues: {
-            shape: true,
-            tempered: true,
-            rounding: 'Округление до 0.5',
-            ...dv
-        }
-    })
     const dispatch = useDispatch()
     const selfcost = useSelector((state) => state.app?.selfcost)
     const formFields = [
@@ -26,7 +17,20 @@ export default function ClientGlassTemperingForm({ dv = null }) {
         { name: 'rounding', type: 'select', label: 'Округление', options: ['Округление до 0.3', 'Округление до 0.5', 'Умножить на 2'], required: true },
         { name: 'quantity', type: 'inputp0', label: 'Количество, шт' },
     ]
-
+    const form = useForm({
+        shouldUnregister: true,
+        defaultValues: {
+            ...formFields.reduce((acc, field) => {
+                acc[field.name] = "";
+                return acc;
+            }, {}),
+            shape: true,
+            tempered: true,
+            quantity: 1,
+            rounding: 'Округление до 0.5',
+            ...dv
+        }
+    })
     function onSubmit(values) {
         try{
             const res = calculate({...values, width: Number(values.width), height: Number(values.height)}, selfcost)
@@ -44,7 +48,7 @@ export default function ClientGlassTemperingForm({ dv = null }) {
                 {formFields.map((field) => (
                     <RenderField key={field.name} data={{ ...field, control: form.control }} />
                 ))}
-                <BottomButtons form={form} />
+                <BottomButtons form={form} aiEndpoint="/sklad/ai/tempering"/>
             </form>
         </div>
     )

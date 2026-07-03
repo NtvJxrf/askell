@@ -7,24 +7,17 @@ import { useMemo, useState, useRef } from "react"
 import BottomButtons from "./BottomButtons"
 import calculate from "@askell/shared/calc/triplex"
 import { addPosition, addTriplexPosition } from "@/lib/slice"
+import { getMaterialsStock } from "./getStock.js"
 import { toast } from 'sonner'
 
 const filterWords = ['стекло', 'зеркало']
 const tapesWords = ['пленка']
 export default function TriplexForm({handleAddTriplex = false, dv = null, handleReplaceTriplex = null, index = null}) {
-    const form = useForm({
-        shouldUnregister: true,
-        defaultValues: {
-            shape: true,
-            tempered: true,
-            rounding: 'Округление до 0.5',
-            ...dv
-        }
-    })
     const dispatch = useDispatch()
     const selfcost = useSelector((state) => state.app?.selfcost)
     const materials = selfcost?.materials || {}
     const colors = selfcost?.colors || {}
+    const stock = selfcost?.stock || {}
 
     const [additionalMaterials, setAdditionalMaterials] = useState([]);
     const materialCount = useRef(3);
@@ -33,6 +26,9 @@ export default function TriplexForm({handleAddTriplex = false, dv = null, handle
         if (!materials) return []
         return Object.keys(materials).filter(el => filterWords.some(word => el.toLowerCase().includes(word))).sort()
     }, [materials])
+    const materialsStock = useMemo(() => {
+        return getMaterialsStock(materialsArray, materials, stock)
+    }, [materialsArray, materials, stock])
     const tapesArray = useMemo(() => {
         if( !materials) return []
         return Object.keys(materials).filter(el => tapesWords.some(word => el.toLowerCase().includes(word))).sort();
@@ -67,10 +63,29 @@ export default function TriplexForm({handleAddTriplex = false, dv = null, handle
         { name: 'rounding', type: 'select', label: 'Округление', options: ['Округление до 0.3', 'Округление до 0.5', 'Умножить на 2'], required: true },
     ]
     const formMaterialsField = [
-        { name: 'material1', type: 'combobox', label: 'Материал 1', options: materialsArray, required: true },
+        { name: 'material1', type: 'combobox', label: 'Материал 1', options: materialsArray, itemLabels: materialsStock, required: true },
         { name: 'tape1', type: 'combobox', label: 'Пленка 1', options: tapesArray },
-        { name: 'material2', type: 'combobox', label: 'Материал 2', options: materialsArray, required: true },
+        { name: 'material2', type: 'combobox', label: 'Материал 2', options: materialsArray, itemLabels: materialsStock, required: true },
     ]
+
+    const form = useForm({
+        shouldUnregister: true,
+        defaultValues: {
+            ...formFields.reduce((acc, field) => {
+                acc[field.name] = "";
+                return acc;
+            }, {}),
+            ...formMaterialsField.reduce((acc, field) => {
+                acc[field.name] = "";
+                return acc;
+            }, {}),
+            shape: true,
+            tempered: true,
+            quantity: 1,
+            rounding: 'Округление до 0.5',
+            ...dv
+        }
+    })
     function onSubmit(values) {
         try{
             const res = calculate(values, selfcost)
@@ -93,7 +108,7 @@ export default function TriplexForm({handleAddTriplex = false, dv = null, handle
         setAdditionalMaterials(prev => [
             ...prev,
             { id: `tape${materialCount.current - 1}`, name: `tape${materialCount.current - 1}`, type: 'combobox', label: `Пленка ${materialCount.current - 1}`, options: tapesArray },
-            { id: `material${materialCount.current}`, name: `material${materialCount.current}`, type: 'combobox', label: `Материал ${materialCount.current}`, options: materialsArray },
+            { id: `material${materialCount.current}`, name: `material${materialCount.current}`, type: 'combobox', label: `Материал ${materialCount.current}`, options: materialsArray, itemLabels: materialsStock },
         ]);
         materialCount.current++;
     }

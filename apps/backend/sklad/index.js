@@ -309,6 +309,30 @@ broker.createService({
                 const { id, initiator } = ctx.params
                 return await createProductionTask({ id, initiator })
             }
+        },
+        aiGlass: {
+            rest: 'POST /ai/glass',
+            permissions: ['Калькулятор'],
+            async handler(ctx) {
+                const { text } = ctx.params;
+                return JSON.parse(await doAiRequest(ctx, text, process.env.TIMEWEB_GLASS_AI_AGENT_URL)).map(expandObject)
+            }
+        },
+        aiGlasspacket: {
+            rest: 'POST /ai/glasspacket',
+            permissions: ['Калькулятор'],
+            async handler(ctx) {
+                const { text } = ctx.params;
+                return JSON.parse(await doAiRequest(ctx, text, process.env.TIMEWEB_GLASSPACKET_AI_AGENT_URL))
+            }
+        },
+        aiTempering: {
+            rest: 'POST /ai/tempering',
+            permissions: ['Калькулятор'],
+            async handler(ctx) {
+                const { text } = ctx.params;
+                return JSON.parse(await doAiRequest(ctx, text, process.env.TIMEWEB_GLASS_TEMPERING_AI_AGENT_URL))
+            }
         }
     },
     events: {
@@ -319,3 +343,48 @@ broker.createService({
 });
 
 broker.start();
+
+const keyMap = {
+  m: "material",
+  t: "tempered",
+  p: "processing",
+  w: "width",
+  h: "height",
+  q: "quantity",
+  d: "drills",
+  c1: "cutsv1",
+  c2: "cutsv2",
+  c3: "cutsv3",
+  s: "shape",
+  z: "zenk",
+};
+function expandObject(obj) {
+  const result = {};
+
+  for (const [key, value] of Object.entries(obj)) {
+    const fullKey = keyMap[key];
+    if (!fullKey) {
+      result[key] = value;
+      continue;
+    }
+
+    result[fullKey] = value;
+  }
+
+  return result;
+}
+async function doAiRequest(ctx, text, endpoint) {
+    try {
+        const response = await ctx.call('proxy.request', {
+            url: endpoint,
+            type: "post",
+            data: { message: text },
+            headers: { authorization: `Bearer ${process.env.TIMEWEB_AI_TOKEN}` } 
+        });
+        console.log("AI agent response:", response)
+        return response.message
+    }catch (err) {
+        console.error("Error calling AI agent:", err)
+        throw new Error(500, "Failed to generate glass positions from AI")
+    }
+}

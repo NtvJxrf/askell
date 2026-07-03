@@ -6,45 +6,30 @@ import { useMemo } from "react"
 import BottomButtons from "./BottomButtons"
 import calculate from "@askell/shared/calc/glass"
 import { addPosition } from "@/lib/slice"
+import { getMaterialsStock } from "./getStock.js"
 import { toast } from 'sonner'
 const filterWords = ['стекло', 'зеркало']
 
 export default function GlassForm({ dv = null }) {
-    const form = useForm({
-        shouldUnregister: true,
-        defaultValues: {
-            shape: true,
-            tempered: true,
-            rounding: 'Округление до 0.5',
-            ...dv
-        }
-    })
     const selfcost = useSelector((state) => state.app?.selfcost)
     const dispatch = useDispatch()
     const materials = selfcost?.materials || {}
     const colors = selfcost?.colors || {}
-
+    const stock = selfcost?.stock || {}
     const materialsArray = useMemo(() => {
-        if (!materials || materials.length === 0) return []
-
-        return Object.keys(materials)
-            .filter(el => filterWords.some(word => el.toLowerCase().includes(word)))
-            .sort()
+        if (!materials) return []
+        return Object.keys(materials).filter(el => filterWords.some(word => el.toLowerCase().includes(word))).sort()
     }, [materials])
+    const materialsStock = useMemo(() => {
+        return getMaterialsStock(materialsArray, materials, stock)
+    }, [materialsArray, materials, stock])
     const colorsArray = useMemo(() => {
-        if (!colors || colors.length === 0) return []
+        if (!colors) return []
         return Object.keys(colors).sort()
     }, [colors]);
 
-    if(!materials || materials.length === 0 || !colors || colors.length === 0) {
-        return (
-            <div className="flex justify-center">
-                <p className="text-muted-foreground">Материалы не загружены</p>
-            </div>
-        )
-    }
     const formFields = [
-        { name: 'material', type: 'combobox', label: 'Материал', options: materialsArray, required: true },
+        { name: 'material', type: 'combobox', label: 'Материал', options: materialsArray, itemLabels: materialsStock, required: true },
         { name: 'width', type: 'input', label: 'Ширина, мм', required: true },
         { name: 'height', type: 'input', label: 'Высота, мм', required: true },
         { name: 'processing', type: 'select', label: 'Вид обработки', options: ['Притупка', 'Шлифовка', 'Полировка'], required: true },
@@ -60,6 +45,29 @@ export default function GlassForm({ dv = null }) {
         { name: 'quantity', type: 'inputp0', label: 'Количество, шт' },
         { name: 'rounding', type: 'select', label: 'Округление', options: ['Округление до 0.3', 'Округление до 0.5', 'Умножить на 2'], required: true },
     ]
+
+    const form = useForm({
+        shouldUnregister: true,
+        defaultValues: {
+            ...formFields.reduce((acc, field) => {
+                acc[field.name] = "";
+                return acc;
+            }, {}),
+            shape: true,
+            tempered: true,
+            quantity: 1,
+            rounding: 'Округление до 0.5',
+            ...dv
+        }
+    })
+    if(!materials || !colors) {
+        return (
+            <div className="flex justify-center">
+                <p className="text-muted-foreground">Материалы не загружены</p>
+            </div>
+        )
+    }
+
 
     function onSubmit(values) {
         try{
@@ -78,7 +86,7 @@ export default function GlassForm({ dv = null }) {
                 {formFields.map((field) => (
                     <RenderField key={field.name} data={{ ...field, control: form.control }} />
                 ))}
-                <BottomButtons form={form} />
+                <BottomButtons form={form} aiEndpoint="/sklad/ai/glass"/>
             </form>
         </div>
     )

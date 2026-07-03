@@ -8,30 +8,26 @@ import BottomButtons from "./BottomButtons"
 import calculate from "@askell/shared/calc/glasspacket"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { addPosition, removeTriplexPosition, replaceTriplexPositions } from "@/lib/slice"
+import { getMaterialsStock } from "./getStock.js"
 import TriplexForm from "./TriplexForm"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 const filterWords = ['стекло', 'зеркало']
 export default function GlasspacketForm({ dv = null }) {
-    const form = useForm({
-        shouldUnregister: false,
-        defaultValues: {
-            shape: true,
-            rounding: 'Округление до 0.5',
-            ...dv
-        }
-    })
-    const values = form.watch();
     const [openAddTriplex, setOpenAddTriplex] = useState(false)
     const [editingItem, setEditingItem] = useState(null)
     const dispatch = useDispatch()
     const selfcost = useSelector((state) => state.app?.selfcost)
     const materials = selfcost?.materials || {}
     const colors = selfcost?.colors || {}
+    const stock = selfcost?.stock || {}
     const triplexArray = useSelector((state) => state.app?.triplexArray)
     const materialsArray = useMemo(() => {
         if (!materials ) return []
         return Object.keys(materials).filter(el => filterWords.some(word => el.toLowerCase().includes(word))).sort().concat(triplexArray.map(el => el.name))
     }, [materials, triplexArray])
+    const materialsStock = useMemo(() => {
+        return getMaterialsStock(materialsArray, materials, stock)
+    }, [materialsArray, materials, stock])
     const planeArray = useMemo(() => {
         return Object.keys(materials).filter(el => el.toLowerCase().includes('рамка')).sort();
     }, [materials]);
@@ -56,11 +52,29 @@ export default function GlasspacketForm({ dv = null }) {
         { name: 'quantity', type: 'inputp0', label: 'Количество, шт' },
     ]
     const materialFields = [
-        { name: 'material', type: 'combobox', label: 'Материал', options: materialsArray, required: true },
+        { name: 'material', type: 'combobox', label: 'Материал', options: materialsArray, itemLabels: materialsStock, required: true },
         { name: 'processing', type: 'select', label: 'Вид обработки', options: ['Притупка', 'Шлифовка', 'Без обработки'], required: true },
         { name: 'tempered', type: 'checkbox', label: 'Закаленное'},
         { name: 'color', type: 'combobox', label: 'Цвет', options: colorsArray },
     ]
+    const form = useForm({
+        shouldUnregister: false,
+        defaultValues: {
+            ...formFields.reduce((acc, field) => {
+                acc[field.name] = "";
+                return acc;
+            }, {}),
+            ...materialFields.reduce((acc, field) => {
+                acc[field.name] = "";
+                return acc;
+            }, {}),
+            shape: true,
+            quantity: 1,
+            rounding: 'Округление до 0.5',
+            ...dv
+        }
+    })
+    const values = form.watch();
     function onSubmit(values) {
         const res = calculate(values, selfcost, triplexArray)
         console.log(res)
@@ -176,7 +190,7 @@ export default function GlasspacketForm({ dv = null }) {
                             </PopoverContent>
                         </Popover>
                     </div>
-                    <BottomButtons form={form} />
+                    <BottomButtons form={form} aiEndpoint="/sklad/ai/glasspacket"/>
                 </form>
             </div>
             <Dialog open={openAddTriplex} onOpenChange={() => setOpenAddTriplex(!openAddTriplex)}>

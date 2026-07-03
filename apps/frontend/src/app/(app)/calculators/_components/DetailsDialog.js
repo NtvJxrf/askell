@@ -173,12 +173,12 @@ export default function ItemDialog({ item, open, onOpenChange }) {
                             Исходные данные
                         </Label>
                         {Object.entries(item?.initialData || {}).map(([key, value]) => (
-                            value !== undefined && value !== null && (
+                            value !== undefined && value !== null && !ignoreLabels.includes(key) && (
                                 <div key={key} className="flex items-center pb-0.5 gap-1">
                                     <span className="text-sm whitespace-nowrap">
                                         {getInitialDataLabel(key)}:
                                     </span>
-                                    <span className="text-sm max-w-[500px] truncate" title={value}>
+                                    <span className="text-sm max-w-[500px] truncate" title={typeof value === 'boolean' ? (value ? 'Да' : 'Нет') : String(value)}>
                                         {typeof value === 'boolean'
                                             ? (value ? 'Да' : 'Нет')
                                             : value}
@@ -203,7 +203,7 @@ const getInitialDataLabel = (key) => {
 
     return initialDataLabels[key] || key;
 };
-
+const ignoreLabels = ['trims']
 const initialDataLabels = {
     plane: 'Рамка',
     height: 'Высота',

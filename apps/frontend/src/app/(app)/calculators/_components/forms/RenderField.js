@@ -103,6 +103,11 @@ export default function RenderField({ data }) {
                                     {(item) => (
                                         <ComboboxItem key={item} value={item}>
                                             {item}
+                                            {data.itemLabels && (
+                                                <span className="text-muted-foreground text-xs">
+                                                    {` (остаток: ${data.itemLabels[item]?.toFixed(2) ?? 0})`}
+                                                </span>
+                                            )}
                                         </ComboboxItem>
                                     )}
                                 </ComboboxList>

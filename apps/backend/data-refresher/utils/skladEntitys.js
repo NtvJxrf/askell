@@ -20,6 +20,7 @@ export const getMaterials = async () => {
         for(const material of result){
             const res = {
                 meta: material.meta,
+                id: material.id,
                 value: convertPrice(material.buyPrice),
                 calcValue: convertPrice(material.salePrices.find(el => el.priceType.name == 'Цена для расчёта в калькуляторе')),
                 objectValue: convertPrice(material.salePrices.find(el => el.priceType.name == 'Цена для коммерческих объектов'))

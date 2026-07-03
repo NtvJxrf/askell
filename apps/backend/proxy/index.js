@@ -167,10 +167,12 @@ broker.createService({
             }
         },
         async request(ctx){
-            const { url, type = 'get', data = null } = ctx.params;
+            const { url, type = 'get', data = null, headers = {} } = ctx.params;
             const args = {};
             if (data) args.json = data;
+            if (headers) args.headers = headers;
             try{
+                console.log(`Making ${type.toUpperCase()} request to ${url}`);
                 const response = await gotClient[type](url, args);
                 try{
                     const body = JSON.parse(response.body);

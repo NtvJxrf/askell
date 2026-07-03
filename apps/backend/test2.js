@@ -3,7 +3,7 @@ import '@askell/shared/env';
 import got from 'got';
 import { valkey, simulation } from '@askell/shared';
 const BASE = process.env.API_URL || 'http://localhost:6789';
-
+import { randomUUID } from 'crypto';
 const api = got.extend({
   prefixUrl: BASE,
   throwHttpErrors: true, // we assert on statusCode ourselves
@@ -25,23 +25,26 @@ await broker.waitForServices(['users', 'proxy']);
     // }
 // })
 // console.log(test.body)
-const res = await broker.call("data-refresher.updateHeaps");
+// const res = await broker.call("data-refresher.updateHeaps");
 const heaps = await broker.call("data-refresher.getHeaps");
-// const {schedule, index} = await broker.call("data-refresher.getSchedule");
-// const pricesAndCoefs = JSON.parse(await valkey.get('sklad:data:pricesAndCoefs'));
-// const stages = JSON.parse(await valkey.get('sklad:data:processingStages'));
-// const simres = await simulation({
-//   heaps,
-//   schedule: schedule,
-//   startIndex: index,
-//   pricesAndCoefs,
-//   stages
-// })
-// await valkey.set('simulationResult', JSON.stringify(simres))
+const {schedule, index} = await broker.call("data-refresher.getSchedule");
+const pricesAndCoefs = JSON.parse(await valkey.get('sklad:data:pricesAndCoefs'));
+const stages = JSON.parse(await valkey.get('sklad:data:processingStages'));
+console.time('sim')
+const simres = await simulation({
+  heaps,
+  schedule: schedule,
+  startIndex: index,
+  pricesAndCoefs,
+  stages,
+  logging: true,
+})
+await valkey.set('simulationResult', JSON.stringify(simres))
 // const res = await broker.call('&node.actions');
 // const res = JSON.parse(await valkey.get('settings'));
 // const res = await broker.call("reports.create", { filters: { startDate: '2026-06-20', endDate: '2026-06-20' }, type: 'report1' });
 // const list = await broker.call("reports.list");
 // const res = await broker.call("sklad.createPZ", { id: 'e65e442d-d19c-11f0-0a80-0390000360cd', initiator: '1c@askell' });
-console.log(heaps)
+console.log(simres)
+console.timeEnd('sim')
 await broker.stop();

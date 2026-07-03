@@ -8,14 +8,6 @@ import BottomButtons from "./BottomButtons"
 import calculate from "@askell/shared/calc/smd"
 import { addPosition } from "@/lib/slice"
 export default function SMDForm({ dv = null }) {
-    const form = useForm({
-        shouldUnregister: true,
-        defaultValues: {
-            print: false,
-            notax: false,
-            ...dv
-        }
-    })
     const dispatch = useDispatch()
     const selfcost = useSelector((state) => state.app?.selfcost)
     const colors = selfcost?.colors || {}
@@ -46,6 +38,20 @@ export default function SMDForm({ dv = null }) {
         { name: 'notax', type: 'checkbox', label: 'Optiwhite без наценки' },
         { name: 'quantity', type: 'inputp0', label: 'Количество, шт' },
     ]
+
+    const form = useForm({
+        shouldUnregister: true,
+        defaultValues: {
+            ...formFields.reduce((acc, field) => {
+                acc[field.name] = "";
+                return acc;
+            }, {}),
+            print: false,
+            notax: false,
+            quantity: 1,
+            ...dv
+        }
+    })
 
     function onSubmit(values) {
         const result = calculate(values, selfcost)

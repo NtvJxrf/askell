@@ -60,22 +60,30 @@ class BaseMachine {
         if(!nextStage) return null;
         return stages[nextStage.stageName]
     }
-
+    
     hasMaterials(item){
-        if (!item.materials?.length) return true;
-        return item.materials.every(mat => this.materials[mat.id] >= mat.quantity);
+        const materials = item.productionPath?.[item.orderingPosition]?.materials;
+        if (!materials) return true;
+        return Object.entries(materials).every(([assortmentId, quantity]) => {
+            const available = this.materials[assortmentId];
+            // Материал не отслеживается (обычный расходник) — считаем, что он есть на складе
+            if (available === undefined) return true;
+            return available >= quantity;
+        });
     }
 
     consumeMaterials(item){
-        if (!item.materials?.length) return;
-        for (const mat of item.materials) {
-            this.materials[mat.id] -= (mat.quantity || 1);
+        const materials = item.productionPath?.[item.orderingPosition]?.materials;
+        if (!materials) return;
+        for (const [assortmentId, quantity] of Object.entries(materials)) {
+            if (this.materials[assortmentId] === undefined) continue;
+            this.materials[assortmentId] -= quantity;
         }
     }
 
     produceMaterial(item){
-        if (item?.originalId && this.materials[item.originalId] !== undefined) {
-            this.materials[item.originalId]++;
+        if (item?.assortmentId && this.materials[item.assortmentId] !== undefined) {
+            this.materials[item.assortmentId]++;
         }
     }
 }
@@ -352,183 +360,5 @@ export class PerimeterWithCutsMachine extends SingleItemMachine {
 export class DrillingMachine extends SingleItemMachine {
     _calculateTime(item, norma) {
         return Math.ceil((item._num.drills / norma) * 60);
-    }
-}
-
-export class CuttingMachine extends BatchMachine {
-    pickTask(heaps) {
-        const buildBatchFromHeap = (heap) => {
-            if (!heap || !heap.length) return false;
-
-            this.clearBatch();
-            const first = this.pickFirstItem(heap);
-            if (!first) return false;
-
-            const material = first.attributes?.['Материал 1'];
-            this.addToBatch(first);
-            // `addToBatch` already updates `currentBatchArea`
-
-            // collect more items with the same material until batch is full
-            let writeIdx = 0;
-            let i = 0;
-            for (; i < heap.length && !this.isBatchFull(); i++) {
-                const itm = heap[i];
-                const mat = itm.attributes?.['Материал 1'];
-                if (mat === material) {
-                    this.addToBatch(itm);
-                } else {
-                    heap[writeIdx++] = itm;
-                }
-            }
-            // Copy remaining items that weren't processed due to batch being full
-            for (; i < heap.length; i++) {
-                heap[writeIdx++] = heap[i];
-            }
-            // Truncate the array to remove processed items
-            heap.length = writeIdx;
-
-            const norma = this.normaCache[this.name] || 0;
-            if(!norma) throw new Error(`Norma not found for machine ${this.name}`);
-
-            const totalArea = this.currentBatchArea; // m^2
-            const estimatedTime = Math.max(1, Math.ceil((totalArea / norma) * 60));
-            if (this.available < estimatedTime) {
-                for (const item of this.batch) heap.push(item);
-                this.clearBatch();
-                return false;
-            }
-            this.task = this.batch.slice();
-            // ensure at least 1 minute for the whole batch
-            this.remaining = estimatedTime;
-            return true;
-        };
-
-        if (buildBatchFromHeap(heaps[this.availableHeaps])) return;
-
-        // no tasks
-        this.task = null;
-        this.remaining = 0;
-    }
-}
-export class TemperingMachine extends BatchMachine {
-    pickTask(heaps) {
-        const buildBatchFromHeap = (heap) => {
-            if (!heap || !heap.length) return false;
-
-            // start new batch with the first picked item (by delivery date)
-            this.clearBatch();
-            const first = this.pickFirstItem(heap);
-            if (!first) return false;
-
-            const parseThickness = (material) => {
-                if (!material) return NaN;
-                const m = String(material).match(/(\d+(?:[.,]\d+)?)\s*мм/i);
-                if (!m) return NaN;
-                return Number(m[1].replace(',', '.'));
-            };
-
-            const thickness = parseThickness(first.attributes?.['Материал 1']);
-            this.addToBatch(first);
-
-            // collect more items with the same thickness until batch is full
-            let writeIdx = 0;
-            let i = 0;
-            for (; i < heap.length && !this.isBatchFull(); i++) {
-                const itm = heap[i];
-                const mat = parseThickness(itm.attributes?.['Материал 1']);
-                if (!Number.isNaN(thickness) && !Number.isNaN(mat) && mat === thickness) {
-                    this.addToBatch(itm);
-                } else {
-                    heap[writeIdx++] = itm;
-                }
-            }
-            // Copy remaining items that weren't processed due to batch being full
-            for (; i < heap.length; i++) {
-                heap[writeIdx++] = heap[i];
-            }
-            // Truncate the array to remove processed items
-            heap.length = writeIdx;
-
-            const norma = this.normaCache[this.name] || 0;
-            if(!norma) throw new Error(`Norma not found for machine ${this.name}`);
-            const estimatedTime = Math.max(1, Math.ceil(norma));
-            if (this.available < estimatedTime) {
-                for (const item of this.batch) heap.push(item);
-                this.clearBatch();
-                return false;
-            }
-            this.task = this.batch.slice();
-            this.remaining = estimatedTime;
-            return true;
-        };
-
-        // 1) try first heap
-        if (buildBatchFromHeap(heaps[this.availableHeaps])) return;
-
-        // no tasks
-        this.task = null;
-        this.remaining = 0;
-    }
-}
-export class TriplexMachine extends BatchMachine {
-    pickTask(heaps) {
-        const buildBatchFromHeap = (heap) => {
-            if (!heap || !heap.length) return false;
-
-            // start new batch with the first picked item (by delivery date)
-            this.clearBatch();
-            const first = this.pickFirstItem(heap);
-            if (!first) return false;
-
-            const parseThickness = (material) => {
-                if (!material) return NaN;
-                const m = String(material).match(/(\d+(?:[.,]\d+)?)\s*мм/i);
-                if (!m) return NaN;
-                return Number(m[1].replace(',', '.'));
-            };
-
-            const thickness = parseThickness(first.attributes?.['Материал 1']);
-            this.addToBatch(first);
-
-            // collect more items with the same thickness until batch is full
-            let writeIdx = 0;
-            let i = 0;
-            for (; i < heap.length && !this.isBatchFull(); i++) {
-                const itm = heap[i];
-                const mat = parseThickness(itm.attributes?.['Материал 1']);
-                if (!Number.isNaN(thickness) && !Number.isNaN(mat) && mat === thickness && this.hasMaterials(itm)) {
-                    this.addToBatch(itm);
-                } else {
-                    heap[writeIdx++] = itm;
-                }
-            }
-            // Copy remaining items that weren't processed due to batch being full
-            for (; i < heap.length; i++) {
-                heap[writeIdx++] = heap[i];
-            }
-            // Truncate the array to remove processed items
-            heap.length = writeIdx;
-
-            const norma = this.normaCache[this.name] || 0;
-            if (!norma) {
-                throw new Error(`Norma not found for machine ${this.name}`);
-            }
-            const totalArea = this.currentBatchArea; // m^2
-            const estimatedTime = Math.max(1, Math.ceil((totalArea / norma) * 60));
-            if (this.available < estimatedTime) {
-                for (const item of this.batch) heap.push(item);
-                this.clearBatch();
-                return false;
-            }
-            this.task = this.batch.slice();
-            this.remaining = estimatedTime;
-            return true;
-        };
-        // 1) try first heap
-        if (buildBatchFromHeap(heaps[this.availableHeaps])) return;
-
-        // no tasks
-        this.task = null;
-        this.remaining = 0;
     }
 }

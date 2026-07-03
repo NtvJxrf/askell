@@ -61,6 +61,7 @@ const Calculate = (data, selfcost) => {
     for (let tape of tapes) {
         tape === '-' && (tape = undefined)
         switch (tape) {
+            case '':
             case undefined:
                     let useThinMaterial = false
                     for(const material of materials){

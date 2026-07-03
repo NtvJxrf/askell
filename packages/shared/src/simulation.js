@@ -1,7 +1,17 @@
-import { TrashMachine, AreaMachine, TriplexMachine, TemperingMachine, PerimeterMachine, PerimeterWithCutsMachine, ExternalService, CuttingMachine, DrillingMachine } from './machineClasses.js';
+import { TrashMachine, AreaMachine, PerimeterMachine, PerimeterWithCutsMachine, ExternalService, DrillingMachine } from './machineClasses.js';
 
 const machineNames = ['Раскрой', 'Дабл эджер', 'Ялонг', 'Интермак', 'Альпа большая', 
     'Альпа малая', 'Сверление', 'Закалка', 'Окрашивание', 'Триплекс'];
+
+// Станки/этапы, для которых в history сохраняется текущая задача и остаток времени
+// (используется production-страницей фронтенда). Ограничено этим набором, чтобы не
+// раздувать history данными по ~100 вспомогательным (Trash) очередям.
+const LOGGED_MACHINE_NAMES = new Set([...machineNames, 'Сборка стеклопакета']);
+const getTaskName = (task) => {
+    if (!task) return null;
+    if (Array.isArray(task)) return `${task[0]?.name || ''}${task.length > 1 ? ` и ещё ${task.length - 1}` : ''}`;
+    return task.name || null;
+};
 
 export default function runSimulation(params) {
     const {
@@ -10,7 +20,6 @@ export default function runSimulation(params) {
         heaps,
         pricesAndCoefs,
         workStartHour = 9,
-        materials = {},
         logging = false,
         stages
     } = params;
@@ -24,12 +33,34 @@ export default function runSimulation(params) {
         if (normaCache[machineName] !== undefined) return normaCache[machineName];
         return (normaCache[machineName] = toNum(schedule[0][machineName]));
     };
-    const unableMaterials = Object.entries(heaps).reduce((acc, [stageName, heap]) => {
-        heap.forEach(item => {
-            item.productionPath[item.orderingPosition]
-        })
+    const materialsRaw = Object.entries(heaps).reduce((acc, [_, heap]) => {
+        for (const item of heap) {
+            for(const stage of item.productionPath || []) {
+                if(stage.materials) {
+                    for (const assortmentId of Object.keys(stage.materials)) {
+                        acc[assortmentId] ??= 0;
+                        acc[assortmentId] += stage.materials[assortmentId];
+                    }
+                }
+            }
+        }
         return acc
-    }, {})
+    }, {});
+    const usedMaterialIds = new Set();
+    for(const heap of Object.values(heaps)) {
+        for(const item of heap) {
+            if(materialsRaw[item.assortmentId] !== undefined) {
+                materialsRaw[item.assortmentId]--;
+                usedMaterialIds.add(item.assortmentId);
+            }
+        }
+    }
+    const materials = Object.entries(materialsRaw).reduce((acc, [assortmentId, count]) => {
+        if (usedMaterialIds.has(assortmentId)) {
+            acc[assortmentId] = count;
+        }
+        return acc
+    }, {});
     for (const name of machineNames) {
         getNorma(name);
     }
@@ -72,30 +103,27 @@ export default function runSimulation(params) {
     initDay();
     while (!isHeapsEmpty() || isMachinesBusy()) {
         if(logging && (iterations % 5 === 0)) {
-            // Record compact heap summary (name -> length) to avoid copying large arrays
+            // Record compact heap summary (name -> length) to avoid copying large arrays.
+            // NOTE: full per-machine snapshots (all ~100 machines incl. Trash) used to make
+            // `history` ~70MB for long simulations. Now only the machines in
+            // LOGGED_MACHINE_NAMES get a compact {name, task, remaining} entry.
             const heapsSummary = {};
             for (const [k, v] of Object.entries(heaps)) {
                 heapsSummary[k] = Array.isArray(v) ? v.length : (v ? Object.keys(v).length : 0);
             }
 
+            const machinesSummary = machines
+                .filter(m => LOGGED_MACHINE_NAMES.has(m.name.startsWith('Trash ') ? m.name.replace('Trash ', '') : m.name))
+                .map(m => ({
+                    name: m.name,
+                    task: getTaskName(m.task),
+                    remaining: m.remaining || 0,
+                }));
+
             history.push({
                 time: new Date(simTime),
-                machines: machines.map(m => ({
-                    name: m.name || m.machine || null,
-                    remaining: m.remaining,
-                    available: m.available,
-                    task: m.task
-                        ? (Array.isArray(m.task)
-                            ? { name: `${m.task[0]?.name} И еще ${m.task.length - 1}` || null }
-                            : { name: m.task.name || null })
-                        : null,
-                    _busyMinutes: m._busyMinutes || 0,
-                    _totalCompleted: m._totalCompleted || 0,
-                    _lastEndTime: m._lastEndTime ? new Date(m._lastEndTime) : null,
-                    totalM2: m.totalM2 || 0,
-                    totalMP: m.totalMP || 0,
-                })),
                 heaps: heapsSummary,
+                machines: machinesSummary,
             });
         }
         // Обработка станков
@@ -250,11 +278,6 @@ export default function runSimulation(params) {
             if (p.type !== 'literal') d[p.type] = parseInt(p.value, 10);
         }
         return new Date(d.year, d.month - 1, d.day, d.hour, d.minute, d.second);
-    }
-    function produceMaterial(item) {
-        if (item?.originalId && materials[item.originalId] !== undefined) {
-            materials[item.originalId]++;
-        }
     }
 }
 

@@ -7,17 +7,28 @@ export default function Init() {
     const dispatch = useDispatch();
     useEffect(() => {
         const fetchData = async () => {
-            const selfcost = await backend('/data-refresher/selfcost');
-            const heaps = await backend('/data-refresher/getHeaps');
-            const schedule = await backend('/data-refresher/getSchedule');
-            const user = await backend('/me');
-            const settings = await backend('/data-refresher/getSettings');
-            console.log(selfcost)
-            dispatch(setSettings(settings));
-            dispatch(setHeaps(heaps));
-            dispatch(setSchedule(schedule));
-            dispatch(setSelfcost(selfcost));
-            dispatch(setUser(user));
+            const [selfcost, heaps, schedule, user, settings] = await Promise.allSettled([
+                backend('/data-refresher/selfcost'),
+                backend('/data-refresher/getHeaps'),
+                backend('/data-refresher/getSchedule'),
+                backend('/me'),
+                backend('/data-refresher/getSettings'),
+            ]);
+
+            if (settings.status === 'fulfilled') dispatch(setSettings(settings.value));
+            else console.error('Failed to load settings:', settings.reason);
+
+            if (heaps.status === 'fulfilled') dispatch(setHeaps(heaps.value));
+            else console.error('Failed to load heaps:', heaps.reason);
+
+            if (schedule.status === 'fulfilled') dispatch(setSchedule(schedule.value));
+            else console.error('Failed to load schedule:', schedule.reason);
+
+            if (selfcost.status === 'fulfilled') dispatch(setSelfcost(selfcost.value));
+            else console.error('Failed to load selfcost:', selfcost.reason);
+
+            if (user.status === 'fulfilled') dispatch(setUser(user.value));
+            else console.error('Failed to load user:', user.reason);
         }
         fetchData();
     }, [dispatch])

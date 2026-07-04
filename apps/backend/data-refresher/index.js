@@ -111,13 +111,18 @@ broker.createService({
     getHeaps: {
       rest: "GET /getHeaps",
       async handler() {
-        return JSON.parse(await valkey.get('heaps')) || null;
+        const heaps = JSON.parse(await valkey.get('heaps')) || null;
+        if(!heaps) {
+          throw new Error(404, 'Heaps not found. Please update heaps first.');
+        }
+        return heaps;
       }
     },
     getSimulationResult: {
       rest: "GET /getSimulationResult",
       async handler() {
-        return JSON.parse(await valkey.get('simulationResult')) || null;
+        const simulationResult = JSON.parse(await valkey.get('simulationResult')) || {};
+        return simulationResult;
       }
     },
     getSettings: {

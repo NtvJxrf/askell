@@ -13,6 +13,9 @@ import {
 } from "@/components/ui/field"
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
+import { QrCode } from "lucide-react";
+import { useIsMobile } from "@/hooks/use-mobile";
+import QrScannerDialog from "@/app/(app)/whattodo/qrScannerDialog";
 
 const RU_TO_EN_KEYBOARD_MAP = {
   ё: "`", Ё: "~", й: "q", Й: "Q", ц: "w", Ц: "W", у: "e", У: "E",
@@ -40,6 +43,8 @@ export default function WhatToDoPage() {
   const settings = useSelector((state) => state.app.settings);
   const [selectedItem, setSelectedItem] = useState(null);
   const productionRowIdRef = useRef('')
+  const isMobile = useIsMobile();
+  const [qrOpen, setQrOpen] = useState(false);
   const [filters, setFilters] = useState({
     orderNumber: "",
     productionOrder: "",
@@ -70,6 +75,17 @@ export default function WhatToDoPage() {
       productionRowId: extractRowId(value),
     }));
   }
+  const handleQrScan = useCallback((decodedText) => {
+    const id = extractRowId(decodedText);
+    if (productionRowIdRef.current) {
+      productionRowIdRef.current.value = decodedText;
+    }
+    setQrOpen(false);
+    setFilters((prev) => ({
+      ...prev,
+      productionRowId: id,
+    }));
+  }, []);
   const filteredStageCounts = useMemo(() => {
     const counts = {};
 
@@ -259,6 +275,11 @@ export default function WhatToDoPage() {
         <Button onClick={handleProdFilter}>
           Найти
         </Button>
+        {isMobile && (
+          <Button variant="outline" size="icon" onClick={() => setQrOpen(true)} aria-label="Сканировать QR">
+            <QrCode />
+          </Button>
+        )}
       </div>
       <div className="flex h-screen overflow-x-auto overflow-y-hidden text-sm">
         {Object.entries(groupedHeaps).map(([stage, items]) => {
@@ -328,6 +349,11 @@ export default function WhatToDoPage() {
         item={selectedItem}
         open={!!selectedItem}
         onOpenChange={handleDialogChange}
+      />
+      <QrScannerDialog
+        open={qrOpen}
+        onOpenChange={setQrOpen}
+        onScan={handleQrScan}
       />
     </>
   );

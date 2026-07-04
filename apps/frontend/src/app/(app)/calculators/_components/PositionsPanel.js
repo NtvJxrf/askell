@@ -9,15 +9,14 @@ import { setOrder } from '@/lib/slice';
 import { PositionsTable } from './PositionsTable';
 import { store, setPositions, setDisplayPrice, addPositions } from '@/lib/slice';
 import { toast } from 'sonner';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { ChevronDown } from 'lucide-react';
 import simulation from '@askell/shared/calc/simulation';
-import glassCalc from '@askell/shared/calc/glass';
 import triplexCalc from '@askell/shared/calc/triplex';
-import ceraglassCalc from '@askell/shared/calc/ceraglass';
-import smdCalc from '@askell/shared/calc/smd';
-import glasspacketCalc from '@askell/shared/calc/glasspacket';
 import { calculateMaterialLayouts, getCuttingAllowance } from '@/app/(app)/cuttingLayouts/cuttingLayouts';
+import { POSITION_CALCULATORS } from './positionCalculators';
+import { exportPositionsToExcel, importPositionsFromExcel } from './excelPositions';
 // Right-side panel (~60%): order/positions management. Currently a structural
 // scaffold — search bar, order meta, an action button row, a positions info
 // block and the positions table. Handlers are stubs to be wired later.
@@ -32,14 +31,6 @@ const priceItems = {
 // Типы позиций, чьи детали реально вырезаются из листовых материалов —
 // только для них строится раскладка на листе и считается % обрези.
 const CUTTING_LAYOUT_TYPES = ['Стекло', 'Триплекс', 'Стеклопакет'];
-
-const POSITION_CALCULATORS = {
-  'Стекло': glassCalc,
-  'Триплекс': triplexCalc,
-  'Керагласс': ceraglassCalc,
-  'СМД': smdCalc,
-  'Стеклопакет': glasspacketCalc,
-};
 
 // Материалы позиции: одиночное поле `material` (Стекло/СМД) либо набор полей
 // `material1`, `material2`, ... (Триплекс/Стеклопакет).
@@ -86,11 +77,13 @@ function recalculatePosition(position, selfcost, trims) {
 
 export function PositionsPanel() {
   const orderNameRef = useRef(null);
+  const excelFileInputRef = useRef(null);
   const dispatch = useDispatch();
   const order = useSelector((state) => state.app.currentOrder);
   const displayPrice = useSelector((state) => state.app.displayPrice);
   const positions = useSelector((state) => state.app.positions);
   const [disabled, setDisabled] = useState(false);
+  const [importSummary, setImportSummary] = useState(null);
   const positionsInfo = useMemo(() => {
     return positions.reduce(
       (acc, position) => {
@@ -313,6 +306,44 @@ export function PositionsPanel() {
     console.log(res)
     console.timeEnd('simulation')
   }
+  const handleExcelImport = () => {
+    excelFileInputRef.current?.click();
+  }
+  const handleExcelFileSelected = async (e) => {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file) return;
+    const selfcost = store.getState().app.selfcost;
+    const triplexArray = store.getState().app.triplexArray;
+    if (!selfcost?.materials) {
+      toast.error('Себестоимость не загружена');
+      return;
+    }
+    setDisabled(true);
+    try {
+      const result = await importPositionsFromExcel(file, selfcost, triplexArray);
+      if (result.positions.length) dispatch(addPositions(result.positions));
+      setImportSummary(result);
+    } catch (error) {
+      console.error(error);
+      toast.error(`Ошибка чтения файла: ${error.message || String(error)}`);
+    } finally {
+      setDisabled(false);
+    }
+  }
+  const handleExcelExport = async () => {
+    try {
+      const { count, skipped } = await exportPositionsToExcel(positions);
+      if (count === 0) {
+        toast.error('Нет позиций с известным типом калькулятора для экспорта');
+        return;
+      }
+      toast.success(`Экспортировано позиций: ${count}${skipped ? `, пропущено: ${skipped}` : ''}`);
+    } catch (error) {
+      console.error(error);
+      toast.error(`Ошибка экспорта: ${error.message || String(error)}`);
+    }
+  }
   const ACTION_BUTTONS = [
     { id: 'save', label: 'Сохранить', action: handleSave },
     { id: 'deleteSelected', label: 'Удалить выделенное', action: handleDeleteSelected },
@@ -378,6 +409,16 @@ export function PositionsPanel() {
             <Button size="sm" variant="ghost" onClick={() => handleRecalculateTrim(false)}>С базовым %</Button>
           </TooltipContent>
         </Tooltip>
+        <Tooltip>
+          <TooltipTrigger render={
+            <Button variant="outline">Excel</Button>
+          }>
+          </TooltipTrigger>
+          <TooltipContent side="bottom" className="flex flex-col items-start gap-0.5 text-[14px] px-0.5">
+            <Button size="sm" variant="ghost" onClick={handleExcelImport}>Загрузить из Excel</Button>
+            <Button size="sm" variant="ghost" onClick={handleExcelExport}>Выгрузить в Excel</Button>
+          </TooltipContent>
+        </Tooltip>
       </div>
       {/* Positions info block (tooltips) */}
       <div className="flex flex-wrap gap-2">
@@ -430,7 +471,43 @@ export function PositionsPanel() {
 
       {/* Positions table */}
       <PositionsTable />
+
+      <input
+        type="file"
+        accept=".xlsx,.xls"
+        ref={excelFileInputRef}
+        onChange={handleExcelFileSelected}
+        className="hidden"
+      />
+      <ImportSummaryDialog summary={importSummary} onOpenChange={(open) => !open && setImportSummary(null)} />
     </div>
+  );
+}
+
+function ImportSummaryDialog({ summary, onOpenChange }) {
+  return (
+    <Dialog open={!!summary} onOpenChange={onOpenChange}>
+      <DialogContent className="max-h-[80vh]">
+        <DialogHeader>
+          <DialogTitle>Импорт позиций из Excel</DialogTitle>
+        </DialogHeader>
+        {summary && (
+          <div className="flex flex-col gap-2 overflow-y-auto text-[13px]">
+            <span>Всего строк: {summary.total}</span>
+            <span className="text-green-600">Добавлено: {summary.added}</span>
+            <span className="text-orange-400">Пропущено (нет/неизвестен calcType): {summary.skipped}</span>
+            <span className={summary.errors.length ? 'text-red-500' : ''}>Ошибок: {summary.errors.length}</span>
+            {summary.errors.length > 0 && (
+              <div className="flex flex-col gap-1 rounded border p-2">
+                {summary.errors.map((err, index) => (
+                  <span key={index}>Строка {err.row}{err.calcType ? ` (${err.calcType})` : ''}: {err.message}</span>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+      </DialogContent>
+    </Dialog>
   );
 }
 

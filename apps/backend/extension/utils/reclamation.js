@@ -1,0 +1,64 @@
+import { broker } from '../index.js';
+
+const reclamationRequest = async ({ user, dataFromForm}) => {
+  const order = await broker.call('proxy.sklad', { url: `https://api.moysklad.ru/api/remap/1.2/entity/customerorder/${dataFromForm.id}?expand=positions` });
+  
+  let filter = null;
+  if (dataFromForm.positions?.trim()) {
+    filter = dataFromForm.positions.split(',').map(item => {
+      const [idx, qty] = item.split('-').map(s => parseInt(s, 10));
+      return { index: idx - 1, quantity: qty || null };
+    });
+  }
+  const allPositions = order.positions.rows
+  const selectedPositions = filter
+    ? filter.map(f => {
+        const pos = allPositions[f.index];
+        if (!pos) return null;
+        return {
+          quantity: f.quantity ?? pos.quantity,
+          price: pos.price,
+          discount: pos.discount,
+          vat: pos.vat,
+          assortment: pos.assortment,
+        };
+      }).filter(Boolean)
+    : allPositions.map(pos => ({
+        quantity: pos.quantity,
+        price: pos.price,
+        discount: pos.discount,
+        vat: pos.vat,
+        assortment: pos.assortment,
+      }));
+  const params = {
+    name: order.name + '-рекламация',
+    positions: selectedPositions,
+    organization: order.organization,
+    agent: order.agent,
+    description: `Рекламация к заказу покупателя № ${order.name}`,
+    owner: order.owner,
+    attributes: []
+  }
+  dataFromForm.copyAttrs && (params.attributes = order.attributes.filter(el => el.meta.href != 'https://api.moysklad.ru/api/remap/1.2/entity/customerorder/metadata/attributes/7eaf36bf-a80f-11f0-0a80-163f002be9f9'))
+  dataFromForm.copyDescription && (params.description += `\n${order?.description}` || '')
+  params.attributes.push({
+    meta: {
+      "href" : "https://api.moysklad.ru/api/remap/1.2/entity/customerorder/metadata/attributes/7eaf36bf-a80f-11f0-0a80-163f002be9f9",
+      "type" : "attributemetadata",
+      "mediaType" : "application/json"
+    },
+    value: true
+  })
+  const reclamationOrder = await broker.call('proxy.sklad', { 
+    url: `https://api.moysklad.ru/api/remap/1.2/entity/customerorder`,
+    type: 'post',
+    data: params
+ });
+
+  return {
+    message: `Для заказа ${order.name} создана рекламация`,
+    url: reclamationOrder.meta.uuidHref
+  };
+}
+
+export default reclamationRequest;

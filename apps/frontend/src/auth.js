@@ -5,7 +5,7 @@ import { hasPermission } from '@askell/shared';
 // The Moleculer gateway base. API_URL is e.g. http://localhost:6789; routes
 // live under /api.
 const API_BASE = `${process.env.API_URL || 'http://localhost:6789'}/api`;
-
+console.log('API_BASE_src auth', API_BASE);
 // 30 days, matching the backend refresh-token lifetime.
 const SESSION_MAX_AGE = 60 * 60 * 24 * 30;
 

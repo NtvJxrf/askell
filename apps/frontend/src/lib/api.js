@@ -1,7 +1,7 @@
 import { auth } from '@/auth';
 
 const API_BASE = `${process.env.API_URL || 'http://localhost:6789'}/api`;
-console.log('API_BASE', API_BASE);
+console.log('API_BASE_src_lib', API_BASE);
 /**
  * Server-side helper to call the Moleculer API with the current user's
  * access token. Use only in Server Components / Server Actions / Route Handlers.

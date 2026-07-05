@@ -216,19 +216,17 @@ export function PositionsPanel() {
     console.time('simulation')
     const { schedule, index } = store.getState().app.schedule
     const positions = store.getState().app.positions
-    console.log('positions', positions)
     const pricesAndCoefs = store.getState().app?.selfcost?.pricesAndCoefs
     const stages = store.getState().app?.selfcost?.processingStages
     const heaps = JSON.parse(JSON.stringify(origHeaps))
-    console.log('heaps', JSON.parse(JSON.stringify(heaps)))
+    console.log(positions)
     for(const pos of positions){
       const posType = pos?.result?.other?.type
-      console.log(pos, posType)
       if(posType == 'Стекло'){
           for (let i = 0; i < pos.quantity; i++) {
               heaps?.['Раскрой']?.push({
                   name: pos?.name,
-                  // attributes: attrs,
+                  initialData: pos?.initialData,
                   // deliveryPlannedMoment: order.deliveryPlannedMoment,
                   productionPath: buildGlassPath(pos),
                   orderingPosition: 0,
@@ -240,7 +238,7 @@ export function PositionsPanel() {
           for (let i = 0; i < pos.quantity; i++) {
               const obj = {
                   name: pos?.name,
-                  // attributes: attrs,
+                  initialData: pos?.initialData,
                   // deliveryPlannedMoment: order.deliveryPlannedMoment,
                   productionPath: [{stageName: 'Триплексование', orderingPosition: 0, materials: {}}, {stageName: 'ОТК', orderingPosition: 1}],
                   orderingPosition: 0,
@@ -250,7 +248,7 @@ export function PositionsPanel() {
                   const assortmentId = crypto.randomUUID();
                   heaps?.['Раскрой']?.push({//Раскрой
                       name: `Стекло для ${pos?.name}`,
-                      // attributes: attrs,
+                      initialData: pos?.initialData,
                       // deliveryPlannedMoment: order.deliveryPlannedMoment,
                       productionPath: buildGlassPath(pos),
                       orderingPosition: 0,
@@ -267,7 +265,7 @@ export function PositionsPanel() {
         for (let i = 0; i < pos.quantity; i++) {
           const obj = {
               name: pos?.name,
-              // attributes: attrs,
+              initialData: pos?.initialData,
               // deliveryPlannedMoment: order.deliveryPlannedMoment,
               productionPath: [
                   {stageName: 'Изготовление рамки', orderingPosition: 0, materials: {}},
@@ -281,7 +279,7 @@ export function PositionsPanel() {
               const assortmentId = crypto.randomUUID();
               heaps?.['Раскрой']?.push({//Раскрой
                   name: `Стекло для ${pos?.name}`,
-                  // attributes: attrs,
+                  initialData: pos?.initialData,
                   // deliveryPlannedMoment: order.deliveryPlannedMoment,
                   productionPath: buildGlassPathForGlasspacket(pos, material),
                   orderingPosition: 0,

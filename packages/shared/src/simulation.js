@@ -24,6 +24,7 @@ export default function runSimulation(params) {
         stages
     } = params;
     normalize(heaps);
+    console.log('runSimulation: heaps', JSON.parse(JSON.stringify(heaps)))
     // console.log(heaps['Подготовка лист мет ( для СМД)'][0])
     // return
         // ─── Кэш норм из schedule[0] ─────────────────────────
@@ -297,10 +298,11 @@ export function preprocessItems(items) {
         }
         if (!it._num) {
             const a = it.attributes || {};
+            const b = it.initialData || {};
             it._num = {
-                length: toNum(a['Длина в мм']) || 0,
-                width:  toNum(a['Ширина в мм']) || 0,
-                drills: toNum(a['Кол-во сверлений']) || 0,
+                length: toNum(a['Длина в мм']) || toNum(b.height) || 0,
+                width:  toNum(a['Ширина в мм']) || toNum(b.width) || 0,
+                drills: toNum(a['Кол-во сверлений']) || toNum(b.drills) || 0,
             };
         }
     }

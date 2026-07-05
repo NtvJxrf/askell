@@ -12,7 +12,7 @@
 import '@askell/shared/env';
 import got from 'got';
 
-const BASE = process.env.API_URL || 'http://localhost:6789';
+const BASE = process.env.NEXT_PUBLIC_ENV === 'development' ? 'http://localhost:6789' : process.env.API_URL
 
 const api = got.extend({
   prefixUrl: BASE,

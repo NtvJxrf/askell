@@ -14,6 +14,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { setAllPositionsSelected } from '@/lib/slice';
 import { PositionsRow } from './PositionsRow';
 import DetailsDialog from './DetailsDialog.js';
+import EditingDialog from './EditingDialog.js';
 // Data column labels (the leading control columns — actions / select / drag —
 // are intentionally label-less).
 const TABLE_COLUMNS = ['№', 'Название', 'Цена', 'Создано', 'Кол-во'];
@@ -26,6 +27,8 @@ export function PositionsTable() {
   const positions = useSelector((state) => state.app.positions);
   const currentPrice = useSelector((state) => state.app.displayPrice);
   const [detailsItem, setDetailsItem] = useState(null);
+  const [editingItem, setEditingItem] = useState(null);
+  const [touchedIndex, setTouchedIndex] = useState(null);
   // Drag-and-drop tracking: source row and the row currently hovered over.
   const [dragIndex, setDragIndex] = useState(null);
   const [overIndex, setOverIndex] = useState(null);
@@ -105,13 +108,16 @@ export function PositionsTable() {
                   onDragEnd={resetDrag}
                   currentPrice={currentPrice}
                   setDetailsItem={setDetailsItem}
+                  setEditingItem={setEditingItem}
+                  setTouchedIndex={setTouchedIndex}
                 />
               );
             })
           )}
         </TableBody>
       </Table>
-      <DetailsDialog item={detailsItem} open={Boolean(detailsItem)} onOpenChange={(open) => !open && setDetailsItem(null)}/>
+      <DetailsDialog item={detailsItem} index={touchedIndex} open={Boolean(detailsItem)} onOpenChange={(open) => {if (!open) { setDetailsItem(null); setTouchedIndex(null); }}}/>
+      <EditingDialog item={editingItem} index={touchedIndex} open={Boolean(editingItem)} onOpenChange={(open) => {if (!open) { setEditingItem(null); setTouchedIndex(null); }}}/>
     </div>
   );
 }

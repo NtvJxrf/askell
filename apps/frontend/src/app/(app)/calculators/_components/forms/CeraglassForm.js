@@ -6,7 +6,7 @@ import { useSelector, useDispatch } from "react-redux"
 import { useMemo, useState, useRef } from "react"
 import BottomButtons from "./BottomButtons"
 import calculate from "@askell/shared/calc/ceraglass"
-import { addPosition } from "@/lib/slice"
+import { addPosition, replacePosition } from "@/lib/slice"
 import { getMaterialsStock } from "./getStock.js"
 
 const glassAndCera = ['стекло', 'плита'];
@@ -14,7 +14,7 @@ const ceraExcludedWords = ['плита']
 const doorFrameWords = ['короб']
 const lockWords = ['замок']
 const hingeWords = ['петля']
-export default function CeraglassForm({ dv = null }) {
+export default function CeraglassForm({ dv = null, editingIndex = null, onOpenChange = null }) {
     const dispatch = useDispatch()
     const selfcost = useSelector((state) => state.app?.selfcost)
     const materials = selfcost?.materials || {}
@@ -99,9 +99,18 @@ export default function CeraglassForm({ dv = null }) {
         }
     })
     function onSubmit(values) {
-        const res = calculate(values, selfcost)
-        console.log(res)
-        dispatch(addPosition(res))
+        try{
+            const res = calculate(values, selfcost)
+            if(editingIndex !== null){
+                dispatch(replacePosition({ index: editingIndex, item: res }));
+                onOpenChange?.(false);
+            } else {
+                dispatch(addPosition(res))
+            }
+        }catch(e){
+            toast.error(e.message || 'Ошибка при расчете позиции')
+            console.error(e)
+        }
     }
 const handleAddMaterial = () => {
     const count = materialCount.current;

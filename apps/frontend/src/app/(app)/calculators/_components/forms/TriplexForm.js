@@ -6,13 +6,13 @@ import { useSelector, useDispatch } from "react-redux"
 import { useMemo, useState, useRef } from "react"
 import BottomButtons from "./BottomButtons"
 import calculate from "@askell/shared/calc/triplex"
-import { addPosition, addTriplexPosition } from "@/lib/slice"
+import { addPosition, addTriplexPosition, replacePosition } from "@/lib/slice"
 import { getMaterialsStock } from "./getStock.js"
 import { toast } from 'sonner'
 
 const filterWords = ['стекло', 'зеркало']
 const tapesWords = ['пленка']
-export default function TriplexForm({handleAddTriplex = false, dv = null, handleReplaceTriplex = null, index = null}) {
+export default function TriplexForm({handleAddTriplex = false, dv = null, handleReplaceTriplex = null, index = null, editingIndex = null, onOpenChange = null}) {
     const dispatch = useDispatch()
     const selfcost = useSelector((state) => state.app?.selfcost)
     const materials = selfcost?.materials || {}
@@ -89,13 +89,17 @@ export default function TriplexForm({handleAddTriplex = false, dv = null, handle
     function onSubmit(values) {
         try{
             const res = calculate(values, selfcost)
-            console.log(res)
             if(handleReplaceTriplex) {
                 handleReplaceTriplex(res, index)
                 return
             }
             if(handleAddTriplex) {
                 dispatch(addTriplexPosition(res))
+                return
+            }
+            if(editingIndex !== null){
+                dispatch(replacePosition({ index: editingIndex, item: res }));
+                onOpenChange?.(false);
                 return
             }
             dispatch(addPosition(res))

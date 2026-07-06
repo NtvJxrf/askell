@@ -135,6 +135,67 @@ broker.createService({
     },
 
     /**
+     * AUTHENTICATED. Let the current user change their OWN username and/or
+     * password (self-service). Roles/fullname stay admin-only (see `update`).
+     * Changing the password requires confirming the current one.
+     */
+    updateMe: {
+      rest: 'PATCH /me',
+      params: {
+        username: { type: 'string', trim: true, empty: false, optional: true },
+        password: { type: 'string', min: 6, optional: true },
+        currentPassword: { type: 'string', empty: false, optional: true },
+      },
+      async handler(ctx) {
+        const current = ctx.meta.user;
+        if (!current) {
+          throw new MoleculerClientError('Unauthorized', 401, 'UNAUTHORIZED');
+        }
+        const { username, password, currentPassword } = ctx.params;
+        if (username === undefined && password === undefined) {
+          throw new MoleculerClientError('Nothing to update', 422, 'NO_CHANGES');
+        }
+
+        const [user] = await db
+          .select()
+          .from(users)
+          .where(eq(users.id, current.id))
+          .limit(1);
+        if (!user) {
+          throw new MoleculerClientError('Unauthorized', 401, 'UNAUTHORIZED');
+        }
+
+        if (password !== undefined) {
+          if (!currentPassword || !(await comparePassword(currentPassword, user.password))) {
+            throw new MoleculerClientError('Неверный текущий пароль', 401, 'INVALID_CURRENT_PASSWORD');
+          }
+        }
+
+        if (username !== undefined && username !== user.username) {
+          const [existing] = await db
+            .select({ id: users.id })
+            .from(users)
+            .where(eq(users.username, username))
+            .limit(1);
+          if (existing) {
+            throw new MoleculerClientError('Username already exists', 409, 'USERNAME_TAKEN');
+          }
+        }
+
+        const patch = { updatedAt: new Date() };
+        if (username !== undefined) patch.username = username;
+        if (password !== undefined) patch.password = await hashPassword(password);
+
+        const [updated] = await db
+          .update(users)
+          .set(patch)
+          .where(eq(users.id, current.id))
+          .returning(publicColumns);
+        return updated;
+      },
+    },
+
+    /**
      * ADMIN ONLY. List all users.
      */
     list: {

@@ -320,7 +320,7 @@ function SourceGroupRow({ group, onResolved }) {
         toast.success("Брак зафиксирован");
         onResolved(quantity);
       } else {
-        console.log(err)
+        console.error(err)
         toast.error(`Ошибка: ${res}`);
       }
     } finally {

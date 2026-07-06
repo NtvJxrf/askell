@@ -15,6 +15,16 @@ export const metadata = {
   description: "Askell",
 };
 
+// The app has no mobile layout — force browsers (including phones/tablets)
+// to lay out the page at a fixed desktop width instead of `device-width`.
+// This stops content from squeezing to fit narrow screens; instead the
+// browser zooms out and the user can pinch-zoom / scroll horizontally,
+// exactly like a non-responsive desktop site.
+export const viewport = {
+  width: 1280,
+  initialScale: 1,
+};
+
 export default function RootLayout({ children }) {
   return (
     <html

@@ -115,7 +115,6 @@ export default function AdminPage() {
     }
     setDisabled(true);
     const password = generatePassword();
-    console.log('Creating user', { username, fullname, password, roles });
     try {
       const newUser = await backend('/users', {
         method: 'POST',

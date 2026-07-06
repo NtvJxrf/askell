@@ -70,7 +70,10 @@ broker.createService({
                     order: {
                         meta: order.meta,
                         id: order.id,
-                        agent: order.agent.name,
+                        agent: {
+                            name: order.agent.name,
+                            priceType: order?.agent?.priceType?.name || 'Не установлен',
+                        },
                         organization: order.organization.name,
                         name: order.name,
                         moment: order.moment,
@@ -192,7 +195,7 @@ broker.createService({
                                     await broker.call('proxy.sklad', {
                                         url: order.meta.href,
                                         type: 'put',
-                                        body: {
+                                        data: {
                                             state: { meta: states.customerorder['Готово, не оплачено'] }
                                         }
                                     })
@@ -201,16 +204,17 @@ broker.createService({
                                 await broker.call('proxy.sklad', {
                                     url: order.meta.href,
                                     type: 'put',
-                                    body: {
-                                    attributes: [{ meta: attributes.customerorder['Дата готовности факт'], value: new Date().toISOString().slice(0, 19).replace('T', ' ') }]
-                                }})
+                                    data: {
+                                        attributes: [{ meta: attributes.customerorder['Дата готовности факт'], value: new Date().toISOString().slice(0, 19).replace('T', ' ') }]
+                                    }
+                                })
                                 if(order?.owner?.meta?.href == `https://api.moysklad.ru/api/remap/1.2/entity/employee/03579653-eedf-11e8-9107-50480000f34d`) return
                                 if (!order?.agent?.email) {
                                     if (order?.owner?.meta) {
                                         await broker.call('proxy.sklad', {
                                             url: 'https://api.moysklad.ru/api/remap/1.2/entity/task',
                                             type: 'post',
-                                            body: {
+                                            data: {
                                                 assignee: { meta: order.owner.meta },
                                                 operation: { meta: order.meta },
                                                 description: `Уведомление о готовом заказе не отправлено, тк не указан email`
@@ -256,7 +260,7 @@ broker.createService({
                                     const task = await broker.call('proxy.sklad', {
                                         url: `https://api.moysklad.ru/api/remap/1.2/entity/task`,
                                         type: 'post',
-                                        body: {
+                                        data: {
                                             assignee: { meta: employees['ea79c5e9-b7fd-11ed-0a80-03260003eb9f'].meta }, //Руслан
                                             operation: { meta: productiontask.meta },
                                             description: `Остановить выпуск продукции по этому ПЗ`
@@ -265,7 +269,7 @@ broker.createService({
                                     await broker.call('proxy.sklad', {
                                         url: productiontask.meta.href,
                                         type: 'put',
-                                        body: {
+                                        data: {
                                             state: { meta: states.productiontask['Остановлено'] }
                                         }
                                     })
@@ -278,7 +282,7 @@ broker.createService({
                     await broker.call('proxy.sklad', {
                         url: 'https://api.moysklad.ru/api/remap/1.2/entity/task',
                         type: 'post',
-                        body: {
+                        data: {
                             assignee: { meta: employees['62d9a852-3488-11f0-0a80-043b00408594'].meta },
                             description: `Ошибка во время обработки изменения заказа покупателя № ${order?.name}
                             Ошибка: ${err.message}
@@ -290,7 +294,7 @@ broker.createService({
                     await broker.call('proxy.sklad', {
                         url: `https://api.moysklad.ru/api/remap/1.2/entity/customerorder/${order.id}`,
                         type: 'put',
-                        body: {
+                        data: {
                             state: { meta: {
                                 "href" : "https://api.moysklad.ru/api/remap/1.2/entity/customerorder/metadata/states/6a37967b-5899-11f0-0a80-1bc9000373a3",
                                 "metadataHref" : "https://api.moysklad.ru/api/remap/1.2/entity/customerorder/metadata",

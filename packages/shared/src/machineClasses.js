@@ -99,7 +99,7 @@ export class SingleItemMachine extends BaseMachine {
     }
 
     _calculateTime(item, norma) {
-        throw new Error('_calculateTime must be implemented in subclass');
+        return norma / 60
     }
 
     pickTask(heaps) {

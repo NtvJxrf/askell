@@ -45,7 +45,9 @@ export function PositionsRow({
     dragIndex,
     onDragEnd,
     currentPrice,
-    setDetailsItem
+    setDetailsItem,
+    setEditingItem,
+    setTouchedIndex,
 }) {
     const dispatch = useDispatch();
     // Dragging is only enabled while the user holds the grip handle, so plain
@@ -101,11 +103,11 @@ export function PositionsRow({
                         <ChevronRight className="size-3.5" />
                     </DropdownMenuTrigger>
                     <DropdownMenuContent side="bottom" align="start" sideOffset={6} className="min-w-40">
-                        <DropdownMenuItem onClick={handleEditing}>
+                        <DropdownMenuItem onClick={() => { setEditingItem(position); setTouchedIndex(index); }}>
                             <Pencil className="size-3.5" />
                             Редактировать
                         </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => setDetailsItem(position)}>
+                        <DropdownMenuItem onClick={() => { setDetailsItem(position); setTouchedIndex(index); }}>
                             <Info className="size-3.5" />
                             Подробнее
                         </DropdownMenuItem>

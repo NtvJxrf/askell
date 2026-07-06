@@ -6,8 +6,8 @@ import { useSelector, useDispatch } from "react-redux"
 import { useMemo } from "react"
 import BottomButtons from "./BottomButtons"
 import calculate from "@askell/shared/calc/smd"
-import { addPosition } from "@/lib/slice"
-export default function SMDForm({ dv = null }) {
+import { addPosition, replacePosition } from "@/lib/slice"
+export default function SMDForm({ dv = null, editingIndex = null, onOpenChange = null }) {
     const dispatch = useDispatch()
     const selfcost = useSelector((state) => state.app?.selfcost)
     const colors = selfcost?.colors || {}
@@ -54,9 +54,18 @@ export default function SMDForm({ dv = null }) {
     })
 
     function onSubmit(values) {
-        const result = calculate(values, selfcost)
-        console.log(result)
-        dispatch(addPosition(result))
+        try{
+            const res = calculate(values, selfcost)
+            if(editingIndex !== null){
+                dispatch(replacePosition({ index: editingIndex, item: res }));
+                onOpenChange?.(false);
+            } else {
+                dispatch(addPosition(res))
+            }
+        }catch(e){
+            toast.error(e.message || 'Ошибка при расчете позиции')
+            console.error(e)
+        }
     }
 
     return (

@@ -14,7 +14,6 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { QrCode } from "lucide-react";
-import { useIsMobile } from "@/hooks/use-mobile";
 import QrScannerDialog from "@/app/(app)/whattodo/qrScannerDialog";
 
 const RU_TO_EN_KEYBOARD_MAP = {
@@ -43,7 +42,7 @@ export default function WhatToDoPage() {
   const settings = useSelector((state) => state.app.settings);
   const [selectedItem, setSelectedItem] = useState(null);
   const productionRowIdRef = useRef('')
-  const isMobile = useIsMobile();
+  const isMobile = false
   const [qrOpen, setQrOpen] = useState(false);
   const [filters, setFilters] = useState({
     orderNumber: "",

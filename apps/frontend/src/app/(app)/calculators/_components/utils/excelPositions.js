@@ -1,5 +1,5 @@
 import ExcelJS from 'exceljs';
-import { POSITION_CALCULATORS } from './positionCalculators';
+import { POSITION_CALCULATORS } from './positionCalculators.js';
 
 // Объектные/массивные значения (например `trims`) кладём в ячейку как JSON,
 // иначе ExcelJS запишет "[object Object]".

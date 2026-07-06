@@ -57,7 +57,7 @@ export const updateHeaps = async () => {
                 ])
         )
     );
-    console.log(Object.keys(allMaterials).length, 'materials fetched')
+    // console.log(Object.keys(allMaterials).length, 'materials fetched')
     for(const el of tasksWithDetails){
         for(const pstage of el.productionstages){
             if(pstage.availableQuantity > 0){

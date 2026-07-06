@@ -4,10 +4,10 @@ import RenderField from "./RenderField"
 import { useSelector, useDispatch } from "react-redux"
 import BottomButtons from "./BottomButtons"
 import calculate from "@askell/shared/calc/clientGlassTempering"
-import { addPosition } from "@/lib/slice"
+import { addPosition, replacePosition } from "@/lib/slice"
 import { toast } from 'sonner'
 
-export default function ClientGlassTemperingForm({ dv = null }) {
+export default function ClientGlassTemperingForm({ dv = null, editingIndex = null, onOpenChange = null }) {
     const dispatch = useDispatch()
     const selfcost = useSelector((state) => state.app?.selfcost)
     const formFields = [
@@ -33,9 +33,13 @@ export default function ClientGlassTemperingForm({ dv = null }) {
     })
     function onSubmit(values) {
         try{
-            const res = calculate({...values, width: Number(values.width), height: Number(values.height)}, selfcost)
-            console.log(res)
-            dispatch(addPosition(res))
+            const res = calculate(values, selfcost)
+            if(editingIndex !== null){
+                dispatch(replacePosition({ index: editingIndex, item: res }));
+                onOpenChange?.(false);
+            } else {
+                dispatch(addPosition(res))
+            }
         }catch(e){
             toast.error(e.message || 'Ошибка при расчете позиции')
             console.error(e)

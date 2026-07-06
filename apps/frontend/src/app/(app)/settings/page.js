@@ -14,38 +14,44 @@ import { RefreshCw } from "lucide-react";
 import { useSelector } from "react-redux";
 import { backend } from "@/lib/backend";
 import SettingsRow from "./settingsRow";
-const updateKeys = [
-  { label: "Материалы", key: "materials", function: "getMaterials" },
-  { label: "Упаковочные материалы", key: "packaging", function: "getPackagingMaterials" },
-  { label: "Этапы", key: "processingStages", function: "getProcessingStages" },
-  { label: "Склады", key: "stores", function: "getStores" },
-  { label: "Подстолья", key: "unders", function: "getUnders" },
-  { label: "Цвета", key: "colors", function: "getColors" },
-  { label: "Цены и коэффиценты", key: "pricesAndCoefs", function: "getPicesAndCoefs" },
-  { label: "Атрибуты", key: "attributes", function: "getAttributes" },
-  { label: "Техкарты для смд", key: "smdPlans", function: "getProcessingPlansSmd" },
-  { label: "Валюты", key: "currencies", function: "getCurrency" },
-  { label: "Типы цен", key: "priceTypes", function: "getPriceTypes" },
-  { label: "Сотрудники", key: "employees", function: "getEmployees" },
-]
 export default function SettingsPage() {
-  const [loadingId, setLoadingId] = useState(null);
+  const [disabled, setDisabled] = useState(null);
   const selfcost = useSelector((state) => state.app.selfcost);
   const settings = useSelector((state) => state.app.settings);
-
+  const updateKeys = [
+    { label: "Материалы", key: "materials", function: "getMaterials" },
+    { label: "Упаковочные материалы", key: "packaging", function: "getPackagingMaterials" },
+    { label: "Этапы", key: "processingStages", function: "getProcessingStages" },
+    { label: "Склады", key: "stores", function: "getStores" },
+    { label: "Подстолья", key: "unders", function: "getUnders" },
+    { label: "Цвета", key: "colors", function: "getColors" },
+    { label: "Цены и коэффиценты", key: "pricesAndCoefs", function: "getPricesAndCoefs" },
+    { label: "Этапы и нормы", key: "stagesAndNorms", function: "getStagesAndNorms" },
+    { label: "Атрибуты", key: "attributes", function: "getAttributes" },
+    { label: "Техкарты для смд", key: "smdPlans", function: "getProcessingPlansSmd" },
+    { label: "Валюты", key: "currencies", function: "getCurrency" },
+    { label: "Типы цен", key: "priceTypes", function: "getPriceTypes" },
+    { label: "Сотрудники", key: "employees", function: "getEmployees" },
+    { label: "Загруженность производства", key: "productionLoad", function: "updateProductinLoad" },
+  ]
   const data =  updateKeys.map((item) => ({
-      ...item,
-      updatedAt: selfcost?.updates?.[item.key] || null,
-    })
-  );
+    ...item,
+    updatedAt: selfcost?.updates?.[item.key] || null,
+  }));
 
   const handleRefresh = async (item) => {
-    setLoadingId(item.key);
-    const res = await backend(`/data-refresher/updateEntity`, {
-      method: "POST",
-      body: { entity: item.function },
-    });
-    setLoadingId(null);
+    setDisabled(true);
+    try{
+      const res = await backend(`/data-refresher/updateEntity`, {
+        method: "POST",
+        body: { entity: item.function },
+      });
+    }catch(e){
+      console.error(e)
+      toast.error('Ошибка при обновлении данных');
+    }finally{
+      setDisabled(false);
+    }
   };
 
   return (
@@ -73,11 +79,11 @@ export default function SettingsPage() {
                       <Button
                         size="xs"
                         variant="outline"
-                        disabled={loadingId === item.key}
+                        disabled={disabled}
                         onClick={() => handleRefresh(item)}
                       >
                         <RefreshCw className={`mr-2 h-4 w-4 ${
-                            loadingId === item.key
+                            disabled
                               ? "animate-spin"
                               : ""
                           }`}

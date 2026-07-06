@@ -7,16 +7,16 @@ import { useDispatch, useSelector } from 'react-redux';
 import { backend } from '@/lib/backend';
 import { setOrder } from '@/lib/slice';
 import { PositionsTable } from './PositionsTable';
-import { store, setPositions, setDisplayPrice, addPositions } from '@/lib/slice';
+import { store, setPositions, setDisplayPrice, addPositions, setPlanDate } from '@/lib/slice';
 import { toast } from 'sonner';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { ChevronDown } from 'lucide-react';
-import simulation from '@askell/shared/calc/simulation';
 import triplexCalc from '@askell/shared/calc/triplex';
 import { calculateMaterialLayouts, getCuttingAllowance } from '@/app/(app)/cuttingLayouts/cuttingLayouts';
-import { POSITION_CALCULATORS } from './positionCalculators';
-import { exportPositionsToExcel, importPositionsFromExcel } from './excelPositions';
+import { POSITION_CALCULATORS } from './utils/positionCalculators';
+import { exportPositionsToExcel, importPositionsFromExcel } from './utils/excelPositions';
+import recalcDeadline from './utils/recalcDeadline.js';
 // Right-side panel (~60%): order/positions management. Currently a structural
 // scaffold — search bar, order meta, an action button row, a positions info
 // block and the positions table. Handlers are stubs to be wired later.
@@ -26,7 +26,8 @@ const priceItems = {
   bulkPrice: 'Опт',
   dealerPrice: 'Дилер',
   vipPrice: 'ВИП'
-};
+}
+const reversePriceMap = priceItems ? Object.fromEntries(Object.entries(priceItems).map(([key, value]) => [value, key])) : {};
 
 // Типы позиций, чьи детали реально вырезаются из листовых материалов —
 // только для них строится раскладка на листе и считается % обрези.
@@ -82,6 +83,9 @@ export function PositionsPanel() {
   const order = useSelector((state) => state.app.currentOrder);
   const displayPrice = useSelector((state) => state.app.displayPrice);
   const positions = useSelector((state) => state.app.positions);
+  const planDate = useSelector((state) => state.app.planDate);
+  const planDateObj = useMemo(() => (planDate ? new Date(planDate) : null), [planDate]);
+  const days = useMemo(() => calcDays(planDateObj), [planDateObj]);
   const [disabled, setDisabled] = useState(false);
   const [importSummary, setImportSummary] = useState(null);
   const positionsInfo = useMemo(() => {
@@ -127,7 +131,6 @@ export function PositionsPanel() {
       }
     );
   }, [positions, displayPrice]);
-  console.log(positionsInfo)
   const handleSearch = async () => {
     const name = orderNameRef.current;
     if (!name) return;
@@ -136,6 +139,27 @@ export function PositionsPanel() {
       const { order, positions } = await backend(`/sklad/order?name=${name}`);
       dispatch(setOrder(order));
       dispatch(addPositions(positions));
+
+      const prices = positions[0]?.prices;
+      const price = positions[0].price;
+      const match = Object.entries(prices || {}).find(([key, value]) => value === price);
+      if(match){
+        const [priceType] = match;
+        dispatch(setDisplayPrice(priceType))
+        toast.success('Установлен тип цен по первой позиции: ' + priceItems[priceType])
+      }
+      else{
+        const match = reversePriceMap[order.agent?.priceType?.name]
+        if(match){
+          dispatch(setDisplayPrice(match))
+          toast.success('Установлен тип цен контрагента: ' + priceItems[match])
+        }
+        else{
+          dispatch(setDisplayPrice('retailPrice'))
+          toast.success('Не удалось подобрать тип цен по позициям и контрагенту. Установлен тип цен по умолчанию: Розница')
+        }
+      }
+
     } finally {
       toast.success(`Заказ ${name} загружен`);
       setDisabled(false); 
@@ -152,7 +176,7 @@ export function PositionsPanel() {
     try{
       const response = await backend(`/sklad/saveOrder`, {
         method: 'POST',
-        body: {positions, order, displayPrice, planDate: { workingDays: 12}}
+        body: {positions, order, displayPrice, planDate: null}
       });
     }catch(err){
       console.error(err)
@@ -207,102 +231,20 @@ export function PositionsPanel() {
     toast.success(withLayout ? 'Обрезь пересчитана с раскладкой' : 'Обрезь пересчитана с базовым %');
   }
   const handleRecalcDeadline = () => {
-    toast.success('Функция пересчета срока пока не реализована');
-    const origHeaps = store.getState().app.heaps
-    if(Object.keys(origHeaps).length === 0) {
-      toast.error('Нет данных о текущей загрузке, либо они еще не загрузились');
-      return;
+    try{
+      console.time('simulation')
+      const settings = store.getState().app.settings;
+      const res = recalcDeadline()
+      const {calcMoment, lastTier3End, machines, tier3EndTimes} = res
+      const date = new Date(lastTier3End.time);
+      date.setDate(date.getDate() + (settings?.addProdDays?.value || settings?.addProdDays?.default || 0));
+      dispatch(setPlanDate(date.toISOString()));
+      console.timeEnd('simulation')
+      toast.success(`Срок пересчитан: ${date.toISOString().split('T')[0]}`);
+    }catch(err){
+      console.error(err)
+      toast.error(`Ошибка: ${err.message || String(err)}`);
     }
-    console.time('simulation')
-    const { schedule, index } = store.getState().app.schedule
-    const positions = store.getState().app.positions
-    const pricesAndCoefs = store.getState().app?.selfcost?.pricesAndCoefs
-    const stages = store.getState().app?.selfcost?.processingStages
-    const heaps = JSON.parse(JSON.stringify(origHeaps))
-    console.log(positions)
-    for(const pos of positions){
-      const posType = pos?.result?.other?.type
-      if(posType == 'Стекло'){
-          for (let i = 0; i < pos.quantity; i++) {
-              heaps?.['Раскрой']?.push({
-                  name: pos?.name,
-                  initialData: pos?.initialData,
-                  // deliveryPlannedMoment: order.deliveryPlannedMoment,
-                  productionPath: buildGlassPath(pos),
-                  orderingPosition: 0,
-                  tier: 3
-              });
-          }
-      }
-      if(posType == 'Триплекс'){
-          for (let i = 0; i < pos.quantity; i++) {
-              const obj = {
-                  name: pos?.name,
-                  initialData: pos?.initialData,
-                  // deliveryPlannedMoment: order.deliveryPlannedMoment,
-                  productionPath: [{stageName: 'Триплексование', orderingPosition: 0, materials: {}}, {stageName: 'ОТК', orderingPosition: 1}],
-                  orderingPosition: 0,
-                  tier: 3,
-              }
-              for(let i = 0; i < (pos?.result?.other?.materials?.length || 2); i++) {
-                  const assortmentId = crypto.randomUUID();
-                  heaps?.['Раскрой']?.push({//Раскрой
-                      name: `Стекло для ${pos?.name}`,
-                      initialData: pos?.initialData,
-                      // deliveryPlannedMoment: order.deliveryPlannedMoment,
-                      productionPath: buildGlassPath(pos),
-                      orderingPosition: 0,
-                      tier: 3,
-                      assortmentId
-                  });
-                  obj.productionPath[0].materials[assortmentId] ??= 0
-                  obj.productionPath[0].materials[assortmentId] += 1
-              }
-              heaps?.['Триплексование']?.push(obj)//Триплексование
-          }
-      }
-      if(posType == 'Стеклопакет'){
-        for (let i = 0; i < pos.quantity; i++) {
-          const obj = {
-              name: pos?.name,
-              initialData: pos?.initialData,
-              // deliveryPlannedMoment: order.deliveryPlannedMoment,
-              productionPath: [
-                  {stageName: 'Изготовление рамки', orderingPosition: 0, materials: {}},
-                  {stageName: 'Сборка стеклопакета', orderingPosition: 1},
-                  {stageName: 'Вторичная герметизация', orderingPosition: 2}
-              ],
-              orderingPosition: 0,
-              tier: 3
-          }
-          for(const material of (pos?.result?.other?.materials || [])) {
-              const assortmentId = crypto.randomUUID();
-              heaps?.['Раскрой']?.push({//Раскрой
-                  name: `Стекло для ${pos?.name}`,
-                  initialData: pos?.initialData,
-                  // deliveryPlannedMoment: order.deliveryPlannedMoment,
-                  productionPath: buildGlassPathForGlasspacket(pos, material),
-                  orderingPosition: 0,
-                  tier: 3,
-                  assortmentId
-              });
-              obj.productionPath[0].materials[assortmentId] ??= 0
-              obj.productionPath[0].materials[assortmentId] += 1
-          }
-          heaps?.['Изготовление рамки']?.push(obj)//Изготовление рамки
-        }
-      }
-    }
-    console.log('heaps', JSON.parse(JSON.stringify(heaps)))
-    const res = simulation({
-      schedule,
-      startIndex: index,
-      heaps,
-      pricesAndCoefs,
-      stages
-    })
-    console.log(res)
-    console.timeEnd('simulation')
   }
   const handleExcelImport = () => {
     excelFileInputRef.current?.click();
@@ -371,7 +313,10 @@ export function PositionsPanel() {
           № заказа: <span className="text-zinc-900 dark:text-zinc-100">{order?.name ?? '—'}</span>
         </span>
         <span>
-          Контрагент: <span className="text-zinc-900 dark:text-zinc-100">{order?.agent ?? '—'}</span>
+          Контрагент: <span className="text-zinc-900 dark:text-zinc-100">{order?.agent?.name ?? '—'}</span>
+        </span>
+        <span>
+          Тип цен контрагента: <span className="text-zinc-900 dark:text-zinc-100">{order?.agent?.priceType ?? '—'}</span>
         </span>
         <span>
           Создано: <span className="text-zinc-900 dark:text-zinc-100">{order?.moment ? new Date(order.moment).toLocaleDateString() : '—'}</span>
@@ -448,7 +393,9 @@ export function PositionsPanel() {
           }>
           </TooltipTrigger>
           <TooltipContent side="bottom" className="flex flex-col items-start gap-1 text-[14px]">
-            <span>Тут будут сроки</span>
+            <span>Календарные дни: {days.calendarDays}</span>
+            <span>Рабочик дни: {days.workDays}</span>
+            <span>~Дата готовности: {planDateObj ? planDateObj.toISOString().split('T')[0] : '—'}</span>
           </TooltipContent>
         </Tooltip>
         <Tooltip>
@@ -516,40 +463,25 @@ function formatPrice(price) {
     maximumFractionDigits: 2,
   })} ₽`;
 }
-const buildGlassPath = (data) => {
-  const path = ['Раскрой']
-  if(data.initialData.processing == 'Притупка') path.push('ПР Притупка')
-  if(data.initialData.processing == 'Полировка' && data.result.other.stanok == 'Прямолинейка') path.push('ПР Полировка')
-  if(data.initialData.processing == 'Шлифовка' && data.result.other.stanok == 'Прямолинейка') path.push('ПР Шлифовка')
-  if(data.initialData.processing == 'Полировка' && data.result.other.stanok == 'Криволинейка') path.push('КР Полировка')
-  if(data.initialData.processing == 'Шлифовка' && data.result.other.stanok == 'Криволинейка') path.push('КР Шлифовка')
-  if(data.initialData.drills > 0) path.push('Сверление')
-  if(data.initialData.zenk > 0) path.push('Зенковка')
-  if(data.initialData.tempered) path.push('Закалка')
-  path.push('ОТК')
-  const res = path.map((stageName, index) => {
-    return {
-      stageName,
-      orderingPosition: index
+function calcDays(targetDate){
+  if(!targetDate) return {calendarDays: 0, workDays: 0};
+  const now = new Date();
+
+  const diff = targetDate.getTime() - now.getTime();
+  const calendarDays = Math.ceil(diff / (1000 * 60 * 60 * 24));
+
+  let workDays = 0;
+  const current = new Date(now);
+
+  while (current <= targetDate) {
+    const day = current.getDay(); // 0 - Вс, 6 - Сб
+
+    if (day !== 0 && day !== 6) {
+      workDays++;
     }
-  })
-  return res
-}
-const buildGlassPathForGlasspacket = (pos, material) => {
-  const path = ['Раскрой']
-  if(material[2] == 'Притупка') path.push('ПР Притупка')
-  if(material[2] == 'Полировка' && pos.result.other.stanok == 'Прямолинейка') path.push('ПР Полировка')
-  if(material[2] == 'Шлифовка' && pos.result.other.stanok == 'Прямолинейка') path.push('ПР Шлифовка')
-  if(material[2] == 'Полировка' && pos.result.other.stanok == 'Криволинейка') path.push('КР Полировка')
-  if(material[2] == 'Шлифовка' && pos.result.other.stanok == 'Криволинейка') path.push('КР Шлифовка')
-  if(material[1]) path.push('Закалка')
-  if(material[3]) path.push('Окрашивание')
-  path.push('ОТК')
-  const res = path.map((stageName, index) => {
-    return {
-      stageName,
-      orderingPosition: index
-    }
-  })
-  return res
+
+    current.setDate(current.getDate() + 1);
+  }
+
+  return { calendarDays, workDays };
 }

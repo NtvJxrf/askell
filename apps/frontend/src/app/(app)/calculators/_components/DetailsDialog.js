@@ -7,8 +7,7 @@ import {
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Separator } from "@/components/ui/separator";
 import { Label } from "@/components/ui/label";
-export default function ItemDialog({ item, open, onOpenChange }) {
-    console.log(item)
+export default function ItemDialog({ item, index, open, onOpenChange }) {
     const materials = item?.result?.materials
     const works = item?.result?.works
     const finalPrice = item?.result?.finalPrice
@@ -21,9 +20,9 @@ export default function ItemDialog({ item, open, onOpenChange }) {
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent className="min-w-max gap-0">
-                <DialogHeader>
-                    <DialogTitle className="text-base">
-                        Детали позиции
+                <DialogHeader className="text-center">
+                    <DialogTitle className="text-base mb-4 text-[18px] font-semibold">
+                        Детали позиции {index + 1}
                     </DialogTitle>
                 </DialogHeader>
                 <div className="flex gap-2">
@@ -38,7 +37,7 @@ export default function ItemDialog({ item, open, onOpenChange }) {
                                         <span className="text-sm max-w-[500px] truncate" title={material.name}>{material.name}:</span>
                                         <Tooltip>
                                             <TooltipTrigger>
-                                                <span className="text-sm border-b border-dotted border-black">{material?.value?.toFixed(2)}</span>
+                                                <span className="text-sm border-b border-dotted border-current">{material?.value?.toFixed(2)}</span>
                                             </TooltipTrigger>
                                             <TooltipContent className="min-w-max whitespace-nowrap">
                                                 <div className="flex flex-col gap-1">
@@ -83,7 +82,7 @@ export default function ItemDialog({ item, open, onOpenChange }) {
                                         <span className="text-sm">{work.name}:</span>
                                         <Tooltip>
                                             <TooltipTrigger>
-                                                <span className="text-sm border-b border-dotted border-black">{work?.value?.toFixed(2) || 'Неизвестно'}</span>
+                                                <span className="text-sm border-b border-dotted border-current">{work?.value?.toFixed(2) || 'Неизвестно'}</span>
                                             </TooltipTrigger>
                                             <TooltipContent className="min-w-max whitespace-nowrap">
                                                 <div className="flex flex-col gap-1">
@@ -147,7 +146,7 @@ export default function ItemDialog({ item, open, onOpenChange }) {
                                         <span className="text-sm whitespace-nowrap">{material.name}:</span>
                                         <Tooltip>
                                             <TooltipTrigger>
-                                                <span className="text-sm border-b border-dotted border-black">{material?.value?.toFixed(2) || 'Неизвестно'}</span>
+                                                <span className="text-sm border-b border-dotted border-current">{material?.value?.toFixed(2) || 'Неизвестно'}</span>
                                             </TooltipTrigger>
                                             <TooltipContent className="min-w-max whitespace-nowrap">
                                                 <div className="flex flex-col gap-1">

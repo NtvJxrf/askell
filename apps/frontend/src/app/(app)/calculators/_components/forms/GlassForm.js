@@ -5,12 +5,12 @@ import { useSelector, useDispatch } from "react-redux"
 import { useMemo } from "react"
 import BottomButtons from "./BottomButtons"
 import calculate from "@askell/shared/calc/glass"
-import { addPosition } from "@/lib/slice"
+import { addPosition, replacePosition } from "@/lib/slice"
 import { getMaterialsStock } from "./getStock.js"
 import { toast } from 'sonner'
 const filterWords = ['стекло', 'зеркало']
 
-export default function GlassForm({ dv = null }) {
+export default function GlassForm({ dv = null, editingIndex = null, onOpenChange = null }) {
     const selfcost = useSelector((state) => state.app?.selfcost)
     const dispatch = useDispatch()
     const materials = selfcost?.materials || {}
@@ -71,9 +71,13 @@ export default function GlassForm({ dv = null }) {
 
     function onSubmit(values) {
         try{
-            const res = calculate({...values, width: Number(values.width), height: Number(values.height)}, selfcost)
-            console.log(res)
-            dispatch(addPosition(res))
+            const res = calculate(values, selfcost)
+            if(editingIndex !== null){
+                dispatch(replacePosition({ index: editingIndex, item: res }));
+                onOpenChange?.(false);
+            } else {
+                dispatch(addPosition(res))
+            }
         }catch(e){
             toast.error(e.message || 'Ошибка при расчете позиции')
             console.error(e)

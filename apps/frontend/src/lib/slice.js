@@ -3,10 +3,7 @@ import { createSlice } from "@reduxjs/toolkit";
 
 const initialState = {
     positions: [],
-    planDate: {
-      apiDate: null,
-      strDate: null
-    },
+    planDate: null,
     currentOrder: null,
     forms: {},
     selfcost: {},
@@ -137,6 +134,13 @@ const appSlice = createSlice({
     },
     setDisplayPrice(state, action) {
       state.displayPrice = action.payload;
+    },
+    setPlanDate(state, action) {
+      state.planDate = action.payload;
+    },
+    replacePosition(state, action) {
+      const { index, item } = action.payload;
+      state.positions[index] = item;
     }
   }
 });
@@ -163,7 +167,9 @@ export const {
   setTriplexPositions,
   addTriplexPosition,
   replaceTriplexPositions,
-  setDisplayPrice
+  setDisplayPrice,
+  setPlanDate,
+  replacePosition
 } = appSlice.actions;
 const appReducer = appSlice.reducer;
 export const store = configureStore({

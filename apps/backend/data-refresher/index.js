@@ -1,9 +1,11 @@
 import { ServiceBroker } from "moleculer";
-import { getProcessingStages, getPackagingMaterials, getStores, getUnders, getColors, getPicesAndCoefs,
-  getCurrency, getPriceTypes, getAttributes, getEmployees, getStates, getProcessingPlansSmd, getMaterials, getStock } from "./utils/skladEntitys.js";
+import { getProcessingStages, getPackagingMaterials, getStores, getUnders, getColors, getPricesAndCoefs,
+  getCurrency, getPriceTypes, getAttributes, getEmployees, getStates, getProcessingPlansSmd, getMaterials, getStock, getStagesAndNorms } from "./utils/skladEntitys.js";
 import { updateHeaps } from "./utils/productionload.js";
 import { updateSchedule } from "./utils/schedule.js";
 import { valkey, settingsSchema } from "@askell/shared";
+import { scanNonPayedOrders, createCartonLoss } from './utils/skladScaner.js';
+import cron from 'node-cron'
 export const broker = new ServiceBroker({
   nodeID: "data-refresher",
   transporter: "nats://localhost:4222",
@@ -16,7 +18,7 @@ const map = {
   getStores,
   getUnders,
   getColors,
-  getPicesAndCoefs,
+  getPricesAndCoefs,
   getCurrency,
   getPriceTypes,
   getAttributes,
@@ -24,7 +26,9 @@ const map = {
   getStates,
   getProcessingPlansSmd,
   getMaterials,
-  getStock
+  getStock,
+  getStagesAndNorms,
+  updateProductinLoad: broker.call("data-refresher.updateProductinLoad"),
 }
 let selfcost = {
   updates: {}
@@ -140,14 +144,23 @@ broker.createService({
         }
         return mixSettings;
       }
+    },
+    updateProductinLoad: {
+      rest: "GET /updateProductinLoad",
+      async handler() {
+        await updateSchedule();
+        await updateHeaps();
+        await valkey.set('sklad:updates:productionLoad', Date.now());
+        broker.call("websocket.broadcast", { type: 'heaps', heaps: JSON.parse(await valkey.get('heaps')) || null });
+        broker.call("websocket.broadcast", { type: 'schedule', schedule: JSON.parse(await valkey.get('schedule')) || null });
+        return true
+      }
     }
   }     
 });
 
-broker.start();
-
 const updateSelfcost = async () => {
-  const DATA_KEYS = ['colors', 'unders', 'materials', 'packaging', 'pricesAndCoefs', 'processingStages', 'stock']
+  const DATA_KEYS = ['colors', 'unders', 'materials', 'packaging', 'pricesAndCoefs', 'processingStages', 'stagesAndNorms', 'stock']
   const updateKeys = await valkey.keys('sklad:updates:*')
 
   const [dataValues, updateValues] = await Promise.all([
@@ -180,3 +193,23 @@ const updateSelfcost = async () => {
     }
   }
 }
+setInterval(async () => {
+  try {
+    await broker.call("data-refresher.updateAllEntities");
+  } catch (err) {
+    console.error('updateAllEntities error:', err)
+  }
+}, 600_000)//Каждые 10 минут
+setInterval(async () => {
+  try {
+    await scanNonPayedOrders()
+  } catch (err) {
+    console.error('scanNonPayedOrders error:', err)
+  }
+}, 300_000)//Каждые 5 минут
+cron.schedule("0 23 * * *", async () => { // Каждый день в 23 часа ночи
+    await createCartonLoss()
+});
+await broker.start();
+await broker.waitForServices("proxy", 3000);
+await broker.call("data-refresher.updateAllEntities");

@@ -35,7 +35,6 @@ export default function BottomButtons({ form, aiEndpoint = null }) {
                 method: 'POST',
                 body: { text }
             })
-            console.log('ai response', response)
             const selfcost = store.getState().app.selfcost
             const errors = []
             let added = 0

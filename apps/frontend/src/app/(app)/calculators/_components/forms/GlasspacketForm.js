@@ -7,12 +7,12 @@ import { useMemo, useState, useRef } from "react"
 import BottomButtons from "./BottomButtons"
 import calculate from "@askell/shared/calc/glasspacket"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
-import { addPosition, removeTriplexPosition, replaceTriplexPositions } from "@/lib/slice"
+import { addPosition, removeTriplexPosition, replaceTriplexPositions, replacePosition } from "@/lib/slice"
 import { getMaterialsStock } from "./getStock.js"
 import TriplexForm from "./TriplexForm"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 const filterWords = ['стекло', 'зеркало']
-export default function GlasspacketForm({ dv = null }) {
+export default function GlasspacketForm({ dv = null, editingIndex = null, onOpenChange = null }) {
     const [openAddTriplex, setOpenAddTriplex] = useState(false)
     const [editingItem, setEditingItem] = useState(null)
     const dispatch = useDispatch()
@@ -76,9 +76,18 @@ export default function GlasspacketForm({ dv = null }) {
     })
     const values = form.watch();
     function onSubmit(values) {
-        const res = calculate(values, selfcost, triplexArray)
-        console.log(res)
-        dispatch(addPosition(res))
+        try{
+            const res = calculate(values, selfcost, triplexArray)
+            if(editingIndex !== null){
+                dispatch(replacePosition({ index: editingIndex, item: res }));
+                onOpenChange?.(false);
+            } else {
+                dispatch(addPosition(res))
+            }
+        }catch(e){
+            toast.error(e.message || 'Ошибка при расчете позиции')
+            console.error(e)
+        }
     }
     const handleEditTriplex = (item, index) => {
         dispatch(replaceTriplexPositions({index, item}))

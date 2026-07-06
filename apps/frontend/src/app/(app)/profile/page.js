@@ -1,180 +1,176 @@
 'use client'
 import { useState } from "react";
+import { useSelector, useDispatch } from "react-redux";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-export default function PrintOrders() {
-  const [ordersFolder, setOrdersFolder] = useState(null);
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { backend } from "@/lib/backend";
+import { setUser } from "@/lib/slice";
 
-  const selectFolder = async () => {
+export default function ProfilePage() {
+  const user = useSelector((state) => state.app.user);
+  const dispatch = useDispatch();
+
+  const [username, setUsername] = useState(user?.username ?? "");
+  const [savingUsername, setSavingUsername] = useState(false);
+
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [savingPassword, setSavingPassword] = useState(false);
+
+  const handleSaveUsername = async (e) => {
+    e.preventDefault();
+    const trimmed = username.trim();
+    if (!trimmed) {
+      toast.error("Введите логин");
+      return;
+    }
+    if (trimmed === user?.username) return;
+
+    setSavingUsername(true);
     try {
-      const handle = await window.showDirectoryPicker();
-      setOrdersFolder(handle);
+      const updated = await backend("/me", {
+        method: "PATCH",
+        body: { username: trimmed },
+      });
+      dispatch(setUser(updated));
+      toast.success("Логин изменён");
     } catch (err) {
-      console.error(err);
+      toast.error(err.message || "Не удалось изменить логин");
+    } finally {
+      setSavingUsername(false);
     }
   };
-  const printOrder = async (orderNumber) => {
-    if (!ordersFolder) {
-      alert("Сначала выберите папку заказов");
+
+  const handleChangePassword = async (e) => {
+    e.preventDefault();
+    if (!currentPassword) {
+      toast.error("Введите текущий пароль");
+      return;
+    }
+    if (newPassword.length < 6) {
+      toast.error("Новый пароль должен быть не короче 6 символов");
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      toast.error("Пароли не совпадают");
       return;
     }
 
-    const orderFolder = await findDirectory(ordersFolder, orderNumber);
-
-    if (!orderFolder) {
-      alert(`Заказ ${orderNumber} не найден`);
-      return;
-    }
-
-    const images = [];
-
-    for await (const entry of orderFolder.values()) {
-      if (entry.kind !== "file") continue;
-
-      const ext = entry.name.split(".").pop().toLowerCase();
-
-      if (!["jpg", "jpeg", "png"].includes(ext)) {
-        continue;
-      }
-
-      const file = await entry.getFile();
-      images.push({
-        name: entry.name,
-        url: URL.createObjectURL(file),
+    setSavingPassword(true);
+    try {
+      await backend("/me", {
+        method: "PATCH",
+        body: { password: newPassword, currentPassword },
       });
+      toast.success("Пароль изменён");
+      setCurrentPassword("");
+      setNewPassword("");
+      setConfirmPassword("");
+    } catch (err) {
+      toast.error(err.message || "Не удалось изменить пароль");
+    } finally {
+      setSavingPassword(false);
     }
-
-    if (!images.length) {
-      alert("Изображения не найдены");
-      return;
-    }
-
-    // Чтобы файлы шли по порядку
-    images.sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true }));
-
-    const printWindow = window.open("", "_blank");
-
-    if (!printWindow) {
-      alert("Браузер заблокировал окно печати");
-      return;
-    }
-
-    printWindow.document.write(`
-      <!DOCTYPE html>
-      <html>
-        <head>
-          <title>Печать ${orderNumber}</title>
-
-          <style>
-            @page {
-              margin: 0;
-              size: auto;
-            }
-
-            html, body {
-              margin: 0;
-              padding: 0;
-            }
-
-            .page {
-              page-break-after: always;
-              display: flex;
-              justify-content: center;
-              align-items: center;
-              min-height: 100vh;
-            }
-
-            .page:last-child {
-              page-break-after: auto;
-            }
-
-            img {
-              max-width: 100%;
-              max-height: 100vh;
-              object-fit: contain;
-            }
-          </style>
-        </head>
-
-        <body>
-          ${images
-            .map(
-              ({ url }) => `
-                <div class="page">
-                  <img src="${url}" />
-                </div>
-              `
-            )
-            .join("")}
-        </body>
-      </html>
-    `);
-
-    printWindow.document.close();
-
-    // Ждем загрузки всех изображений
-    const waitImages = () =>
-      new Promise((resolve) => {
-        const imgs = printWindow.document.images;
-
-        let loaded = 0;
-
-        if (imgs.length === 0) resolve();
-
-        for (const img of imgs) {
-          if (img.complete) {
-            loaded++;
-            if (loaded === imgs.length) resolve();
-          } else {
-            img.onload = img.onerror = () => {
-              loaded++;
-              if (loaded === imgs.length) resolve();
-            };
-          }
-        }
-      });
-
-    await waitImages();
-
-    printWindow.focus();
-    printWindow.print();
-
-    // После печати закрыть окно
-    printWindow.onafterprint = () => {
-      images.forEach((img) => URL.revokeObjectURL(img.url));
-      printWindow.close();
-    };
   };
 
   return (
-    <div>
-      <Button onClick={selectFolder}>
-        Выбрать папку заказов
-      </Button>
+    <div className="max-w-2xl space-y-6 p-6">
+      <h1 className="text-xl font-semibold tracking-tight">Профиль</h1>
 
-      <Button
-        disabled={!ordersFolder}
-        onClick={() => printOrder("aovam")}
-      >
-        Печать заказа 12035
-      </Button>
+      <Card>
+        <CardHeader>
+          <CardTitle>ФИО: {user?.fullname ?? "—"}</CardTitle>
+          <CardDescription>Логин: {user?.username}</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="shrink-0 text-sm text-muted-foreground">Роли:</span>
+            {(user?.roles ?? []).length > 0 ? (
+              user.roles.map((role) => (
+                <Badge key={role} variant="secondary">{role}</Badge>
+              ))
+            ) : (
+              <span className="text-sm text-muted-foreground">Нет назначенных ролей</span>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">Изменить логин</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleSaveUsername} className="flex items-end gap-2">
+            <div className="flex-1 space-y-2">
+              <Label htmlFor="username">Логин</Label>
+              <Input
+                id="username"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                autoComplete="username"
+              />
+            </div>
+            <Button type="submit" disabled={savingUsername || username.trim() === user?.username}>
+              Изменить логин
+            </Button>
+          </form>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">Изменить пароль</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleChangePassword} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="currentPassword">Текущий пароль</Label>
+              <Input
+                id="currentPassword"
+                type="password"
+                value={currentPassword}
+                onChange={(e) => setCurrentPassword(e.target.value)}
+                autoComplete="current-password"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="newPassword">Новый пароль</Label>
+              <Input
+                id="newPassword"
+                type="password"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                autoComplete="new-password"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="confirmPassword">Повторите новый пароль</Label>
+              <Input
+                id="confirmPassword"
+                type="password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                autoComplete="new-password"
+              />
+            </div>
+            <Button type="submit" disabled={savingPassword}>
+              Сменить пароль
+            </Button>
+          </form>
+        </CardContent>
+      </Card>
     </div>
   );
-}
-
-async function findDirectory(dirHandle, targetName) {
-  for await (const entry of dirHandle.values()) {
-    if (entry.kind === "directory") {
-      if (entry.name === targetName) {
-        return entry;
-      }
-
-      const found = await findDirectory(entry, targetName);
-
-      if (found) {
-        return found;
-      }
-    }
-  }
-
-  return null;
 }

@@ -119,6 +119,12 @@
   * {
     @apply border-border outline-ring/50;
   }
+  html, body {
+    /* No mobile layout: never clip horizontally, let narrow viewports
+       scroll/zoom instead of squeezing the desktop layout. */
+    overflow-x: auto;
+    min-width: 1280px;
+  }
   body {
     @apply bg-background text-foreground;
     font-family: var(--font-sans), Arial, Helvetica, sans-serif;

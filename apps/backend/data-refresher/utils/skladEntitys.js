@@ -65,8 +65,8 @@ export const getProcessingStages = async () => {
     await broker.emit('dataUpdated', 'processingStages')
 }
 export const getPackagingMaterials = async () => {
-    const response = await broker.call('proxy.sklad', {url: 'https://api.moysklad.ru/api/remap/1.2/entity/product?filter=pathName=0 Закупки/0.02.09 Упаковка&expand=buyPrice.currency'})
-    const result = response.rows.reduce(( acc, curr ) => {
+    const response = await broker.call('proxy.fetchAllRows', {url: 'https://api.moysklad.ru/api/remap/1.2/entity/product?filter=pathName=0 Закупки/0.02.09 Упаковка&expand=buyPrice.currency'})
+    const result = response.reduce(( acc, curr ) => {
         acc[curr.name] = {
             meta: curr.meta,
             name: curr.name,
@@ -92,8 +92,8 @@ export const getStores = async () => {
     await broker.emit('dataUpdated', 'stores')
 }
 export const getUnders = async () => {
-    const response = await broker.call('proxy.sklad', {url: 'https://api.moysklad.ru/api/remap/1.2/entity/product?filter=pathName=Керагласс товары и полуфабрикаты/Подстолья&expand=buyPrice.currency'})
-    const result = response.rows.reduce(( acc, curr ) => {
+    const response = await broker.call('proxy.fetchAllRows', {url: 'https://api.moysklad.ru/api/remap/1.2/entity/product?filter=pathName=Керагласс товары и полуфабрикаты/Подстолья&expand=buyPrice.currency'})
+    const result = response.reduce(( acc, curr ) => {
         acc[curr.name] = {
             meta: curr.meta,
             name: curr.name,
@@ -106,8 +106,8 @@ export const getUnders = async () => {
     await broker.emit('dataUpdated', 'unders')
 }
 export const getColors = async () => {
-    const response = await broker.call('proxy.sklad', {url: 'https://api.moysklad.ru/api/remap/1.2/entity/product?filter=pathName=ТЕСТ/Цвета RAL (Только для продажи)&expand=buyPrice.currency'})
-    const result = response.rows.reduce(( acc, curr ) => {
+    const response = await broker.call('proxy.fetchAllRows', {url: 'https://api.moysklad.ru/api/remap/1.2/entity/product?filter=pathName=ТЕСТ/Цвета RAL (Только для продажи)&expand=buyPrice.currency'})
+    const result = response.reduce(( acc, curr ) => {
         acc[curr.name] = {
             meta: curr.meta,
             name: curr.name,
@@ -145,18 +145,17 @@ export const getPriceTypes = async () => {
     await valkey.set('sklad:updates:priceTypes', Date.now());
     await broker.emit('dataUpdated', 'priceTypes')
 }
-export const getPicesAndCoefs = async () => {
-    const res = await broker.call('proxy.sklad', {url: 'https://api.moysklad.ru/api/remap/1.2/entity/customentity/e4579b8f-8e43-11f0-0a80-0049002566f8'})
+export const getPricesAndCoefs = async () => {
+    const res = await broker.call('proxy.fetchAllRows', {url: 'https://api.moysklad.ru/api/remap/1.2/entity/customentity/e4579b8f-8e43-11f0-0a80-0049002566f8?'})
     const attrMap = {
         'Значение': 'value',
         'Норма в час': 'ratePerHour',
         'Сделка': 'costOfWork',
         'Оклад': 'salary',
         'Где выполняется': 'place',
-        'КЗО': 'loadFactor',
-        'Производительность': 'productivity'
     }
-    const result = res.rows.reduce((acc, el) => {
+    const result = res.reduce((acc, el) => {
+        if(!el.attributes) return acc
         const attrs = el.attributes.reduce((obj, curr) => {
             const mappedKey = attrMap[curr.name];
             if (mappedKey) {
@@ -174,6 +173,35 @@ export const getPicesAndCoefs = async () => {
     await valkey.set('sklad:data:pricesAndCoefs', JSON.stringify(result))
     await valkey.set('sklad:updates:pricesAndCoefs', Date.now());
     await broker.emit('dataUpdated', 'pricesAndCoefs')
+}
+export const getStagesAndNorms = async () => {
+    const res = await broker.call('proxy.fetchAllRows', {url: 'https://api.moysklad.ru/api/remap/1.2/entity/customentity/a61baf1d-790e-11f1-0a80-152e00296359?'})
+    const attrMap = {
+        'Ед изм': 'uom',
+        'Норма в час': 'ratePerHour',
+        'Сделка': 'costOfWork',
+        'Оклад': 'salary',
+        'Где выполняется': 'place',
+    }
+    const result = res.reduce((acc, el) => {
+        if(!el.attributes) return acc
+        const attrs = el.attributes.reduce((obj, curr) => {
+            const mappedKey = attrMap[curr.name];
+            if (mappedKey) {
+                obj[mappedKey] = curr.value;
+            }
+            return obj;
+        }, {});
+        acc[el.name] = {
+            meta: el.meta,
+            name: el.name,
+            ...attrs
+        };
+        return acc;
+    }, {});
+    await valkey.set('sklad:data:stagesAndNorms', JSON.stringify(result))
+    await valkey.set('sklad:updates:stagesAndNorms', Date.now());
+    await broker.emit('dataUpdated', 'stagesAndNorms')
 }
 export const getAttributes = async () => {
     const promises = []

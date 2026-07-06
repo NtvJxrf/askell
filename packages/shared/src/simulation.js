@@ -1,4 +1,4 @@
-import { TrashMachine, AreaMachine, PerimeterMachine, PerimeterWithCutsMachine, ExternalService, DrillingMachine } from './machineClasses.js';
+import { SingleItemMachine, TrashMachine, AreaMachine, PerimeterMachine, PerimeterWithCutsMachine, ExternalService, DrillingMachine } from './machineClasses.js';
 
 const machineNames = ['Раскрой', 'Дабл эджер', 'Ялонг', 'Интермак', 'Альпа большая', 
     'Альпа малая', 'Сверление', 'Закалка', 'Окрашивание', 'Триплекс'];
@@ -21,18 +21,15 @@ export default function runSimulation(params) {
         pricesAndCoefs,
         workStartHour = 9,
         logging = false,
-        stages
+        stages,
+        stagesAndNorms,
     } = params;
     normalize(heaps);
-    console.log('runSimulation: heaps', JSON.parse(JSON.stringify(heaps)))
-    // console.log(heaps['Подготовка лист мет ( для СМД)'][0])
-    // return
-        // ─── Кэш норм из schedule[0] ─────────────────────────
     const normaCache = {};
     const history = logging ? [] : null; // для хранения снимков состояния при логировании
     const getNorma = (machineName) => {
         if (normaCache[machineName] !== undefined) return normaCache[machineName];
-        return (normaCache[machineName] = toNum(schedule[0][machineName]));
+        return (normaCache[machineName] = (toNum(schedule[0][machineName])) || stagesAndNorms?.[machineName]?.ratePerHour || 0);
     };
     const materialsRaw = Object.entries(heaps).reduce((acc, [_, heap]) => {
         for (const item of heap) {
@@ -62,9 +59,6 @@ export default function runSimulation(params) {
         }
         return acc
     }, {});
-    for (const name of machineNames) {
-        getNorma(name);
-    }
 
     const machines = [
         new AreaMachine(          {name: 'Раскрой',          availableHeaps: ['Раскрой'],           bufferMinutes: 480, normaCache, materials, maxBatchArea: 15}),
@@ -77,7 +71,13 @@ export default function runSimulation(params) {
         new AreaMachine(        {name: 'Закалка',            availableHeaps: ['Закалка'],         bufferMinutes: 480, normaCache, materials, maxBatchArea: 16.8}),
         // new PerimeterMachine(        {name: 'Окрашивание',   availableHeaps: ['Окраска стекла', 'ОКР (окрашивание стекла)'],          bufferMinutes: 480, normaCache, materials}),
         new AreaMachine(          {name: 'Триплекс',         availableHeaps: ['Триплексование'],           bufferMinutes: 480, normaCache, materials, maxBatchArea: 20}),
+        new AreaMachine(          {name: 'Сборка стеклопакета', availableHeaps: ['Сборка стеклопакета'], bufferMinutes: 480, normaCache, materials }),
+        new AreaMachine(          {name: 'Изготовление рамки', availableHeaps: ['Изготовление рамки'], bufferMinutes: 480, normaCache, materials }),
+        new AreaMachine(          {name: 'Вторичная герметизация', availableHeaps: ['Вторичная герметизация'], bufferMinutes: 480, normaCache, materials }),
     ];
+    for(const machine of machines) {
+        getNorma(machine.name);
+    }
     const usedHeaps = new Set(
         machines.flatMap(machine => machine.availableHeaps)
     );
@@ -164,7 +164,7 @@ export default function runSimulation(params) {
 
     return {
         history,
-        date: Date.now(),
+        calcMoment: Date.now(),
         machines: machines.map(m => ({
             name: m.name || m.machine || null,
             _busyMinutes: m._busyMinutes || 0,

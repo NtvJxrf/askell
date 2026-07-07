@@ -1,26 +1,25 @@
 'use client';
-import { useForm } from "react-hook-form"
 import { Button } from "@/components/ui/button"
 import RenderField from "./RenderField"
 import { useSelector, useDispatch } from "react-redux"
 import { useMemo, useState, useRef } from "react"
 import BottomButtons from "./BottomButtons"
 import calculate from "@askell/shared/calc/triplex"
-import { addPosition, addTriplexPosition, replacePosition } from "@/lib/slice"
+import { addPosition, addTriplexPosition, replacePosition, setFormMeta } from "@/lib/slice"
 import { getMaterialsStock } from "./getStock.js"
 import { toast } from 'sonner'
+import useCalculatorForm, { getPersistedFormMeta } from "./useCalculatorForm"
 
 const filterWords = ['стекло', 'зеркало']
 const tapesWords = ['пленка']
 export default function TriplexForm({handleAddTriplex = false, dv = null, handleReplaceTriplex = null, index = null, editingIndex = null, onOpenChange = null}) {
     const dispatch = useDispatch()
+    const isEditing = dv != null
     const selfcost = useSelector((state) => state.app?.selfcost)
+    const user = useSelector((state) => state.app?.user)
     const materials = selfcost?.materials || {}
     const colors = selfcost?.colors || {}
     const stock = selfcost?.stock || {}
-
-    const [additionalMaterials, setAdditionalMaterials] = useState([]);
-    const materialCount = useRef(3);
 
     const materialsArray = useMemo(() => {
         if (!materials) return []
@@ -37,6 +36,19 @@ export default function TriplexForm({handleAddTriplex = false, dv = null, handle
         if (!colors) return []
         return Object.keys(colors).sort()
     }, [colors]);
+
+    const [additionalMaterials, setAdditionalMaterials] = useState(() => {
+        const persistedCount = getPersistedFormMeta('triplex', isEditing)?.materialCount || 3;
+        const fields = [];
+        for (let count = 3; count < persistedCount; count++) {
+            fields.push(
+                { id: `tape${count - 1}`, name: `tape${count - 1}`, type: 'combobox', label: `Пленка ${count - 1}`, options: tapesArray },
+                { id: `material${count}`, name: `material${count}`, type: 'combobox', label: `Материал ${count}`, options: materialsArray, itemLabels: materialsStock },
+            );
+        }
+        return fields;
+    });
+    const materialCount = useRef(getPersistedFormMeta('triplex', isEditing)?.materialCount || 3);
 
     if(!materials || !colors) {
         return (
@@ -62,14 +74,20 @@ export default function TriplexForm({handleAddTriplex = false, dv = null, handle
         { name: 'addTape', type: 'select', label: 'Доп пленка', options: ['Пленка EVA Прозрачная 0,38 мм', 'Пленка EVA Прозрачная 0,76 мм']},
         { name: 'rounding', type: 'select', label: 'Округление', options: ['Округление до 0.3', 'Округление до 0.5', 'Умножить на 2'], required: true },
     ]
+
+    if(['Игнорировать ограничения', 'Админ'].some(role => user.roles.includes(role))){
+        formFields.push({ name: 'ignoreRestricts', type: 'checkbox', label: 'Игнорировать ограничения', checked: false })
+    }
+
     const formMaterialsField = [
         { name: 'material1', type: 'combobox', label: 'Материал 1', options: materialsArray, itemLabels: materialsStock, required: true },
         { name: 'tape1', type: 'combobox', label: 'Пленка 1', options: tapesArray },
         { name: 'material2', type: 'combobox', label: 'Материал 2', options: materialsArray, itemLabels: materialsStock, required: true },
     ]
 
-    const form = useForm({
+    const form = useCalculatorForm('triplex', {
         shouldUnregister: true,
+        dv,
         defaultValues: {
             ...formFields.reduce((acc, field) => {
                 acc[field.name] = "";
@@ -83,7 +101,6 @@ export default function TriplexForm({handleAddTriplex = false, dv = null, handle
             tempered: true,
             quantity: 1,
             rounding: 'Округление до 0.5',
-            ...dv
         }
     })
     function onSubmit(values) {
@@ -115,6 +132,7 @@ export default function TriplexForm({handleAddTriplex = false, dv = null, handle
             { id: `material${materialCount.current}`, name: `material${materialCount.current}`, type: 'combobox', label: `Материал ${materialCount.current}`, options: materialsArray, itemLabels: materialsStock },
         ]);
         materialCount.current++;
+        if (!isEditing) dispatch(setFormMeta({ id: 'triplex', meta: { materialCount: materialCount.current } }));
     }
     const handleDeleteMaterial = () => {
         setAdditionalMaterials(prev => {
@@ -124,6 +142,7 @@ export default function TriplexForm({handleAddTriplex = false, dv = null, handle
         if (materialCount.current > 3) {
             materialCount.current--;
         }
+        if (!isEditing) dispatch(setFormMeta({ id: 'triplex', meta: { materialCount: materialCount.current } }));
     }
     return (
         <div className="flex justify-center">

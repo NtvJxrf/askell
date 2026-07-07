@@ -59,6 +59,7 @@ export default function handleRecalcDeadline() {
             }
         }
         if(posType == 'Стеклопакет'){
+            console.log(pos)
             for (let i = 0; i < pos.quantity; i++) {
                 const obj = {
                     name: pos?.name,
@@ -72,6 +73,31 @@ export default function handleRecalcDeadline() {
                     tier: 3
                 }
                 for(const material of (pos?.result?.other?.materials || [])) {
+                    if(material[0].toLowerCase().includes('триплекс')){
+                        const usedTriplex = pos?.result?.other?.usedTriplex.find(el => el.name == material[0])
+                        const obj = {
+                            name: `Триплекс для ${pos?.name}`,
+                            initialData: usedTriplex?.initialData,
+                            productionPath: [{stageName: 'Триплексование', orderingPosition: 0, materials: {}}, {stageName: 'ОТК', orderingPosition: 1}],
+                            orderingPosition: 0,
+                            tier: 3,
+                        }
+                        for(let i = 0; i < (pos?.result?.other?.materials?.length || 2); i++) {
+                            const assortmentId = crypto.randomUUID();
+                            heaps?.['Раскрой']?.push({//Раскрой
+                                name: `Стекло для ${usedTriplex.name} для ${pos?.name}`,
+                                initialData: usedTriplex?.initialData,
+                                productionPath: buildGlassPath(usedTriplex),
+                                orderingPosition: 0,
+                                tier: 3,
+                                assortmentId
+                            });
+                            obj.productionPath[0].materials[assortmentId] ??= 0
+                            obj.productionPath[0].materials[assortmentId] += 1
+                        }
+                        heaps?.['Триплексование']?.push(obj)//Триплексование
+                        continue
+                    }
                     const assortmentId = crypto.randomUUID();
                     heaps?.['Раскрой']?.push({//Раскрой
                         name: `Стекло для ${pos?.name}`,
@@ -137,3 +163,190 @@ const buildGlassPathForGlasspacket = (pos, material) => {
   })
   return res
 }
+
+
+// added
+// : 
+// false
+// initialData
+// : 
+// color
+// : 
+// ""
+// color1
+// : 
+// undefined
+// color2
+// : 
+// undefined
+// gas
+// : 
+// ""
+// height
+// : 
+// 1000
+// ignoreRestricts
+// : 
+// ""
+// material
+// : 
+// ""
+// material1
+// : 
+// "Триплекс, Стекло Arctic Blue, 4 мм + Стекло Arctic Blue, 4 мм, (1000х1000, ПР, Притупка, Закаленное, площадь: 1.00)"
+// material2
+// : 
+// "Стекло Arctic Blue, 6 мм"
+// plane1
+// : 
+// "Рамка алюминиевая дистанционная (гибкая + коннектор) 10мм."
+// plane2
+// : 
+// undefined
+// print
+// : 
+// ""
+// processing
+// : 
+// ""
+// processing1
+// : 
+// "Шлифовка"
+// processing2
+// : 
+// "Шлифовка"
+// quantity
+// : 
+// 1
+// rounding
+// : 
+// "Округление до 0.5"
+// sealant
+// : 
+// ""
+// shape
+// : 
+// true
+// tempered
+// : 
+// ""
+// tempered1
+// : 
+// undefined
+// tempered2
+// : 
+// undefined
+// width
+// : 
+// 1000
+// [[Prototype]]
+// : 
+// Object
+// key
+// : 
+// "941a7e4d-3eec-412c-9737-de94cfeff122"
+// name
+// : 
+// "СПО, 24, Arctic Blue 4.Arctic Blue 4.1, 10 алюм, Arctic Blue 6, (1000х1000, площадь: 1.00)"
+// prices
+// : 
+// {gostPrice: 0, retailPrice: 29322.74871711309, bulkPrice: 21258.992819906987, dealerPrice: 19792.855384051338, vipPrice: 18326.71794819568}
+// quantity
+// : 
+// 1
+// result
+// : 
+// errors
+// : 
+// []
+// expenses
+// : 
+// []
+// finalPrice
+// : 
+// (8) [{…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}]
+// materials
+// : 
+// (7) [{…}, {…}, {…}, {…}, {…}, {…}, {…}]
+// other
+// : 
+// P
+// : 
+// 4
+// S
+// : 
+// 1
+// allThickness
+// : 
+// 24
+// calcmaterialsandworks
+// : 
+// 14661.374358556544
+// materials
+// : 
+// (2) [Array(4), Array(4)]
+// materialsandworks
+// : 
+// 14661.374358556544
+// productType
+// : 
+// true
+// stanok
+// : 
+// "Прямолинейка"
+// trims
+// : 
+// {}
+// type
+// : 
+// "Стеклопакет"
+// usedTriplex
+// : 
+// Array(1)
+// 0
+// : 
+// added
+// : 
+// false
+// initialData
+// : 
+// {width: 1000, height: 1000, processing: 'Притупка', drills: '', zenk: '', …}
+// key
+// : 
+// "8106a2e9-59e2-4e75-bc05-2f5113f0805b"
+// name
+// : 
+// "Триплекс, Стекло Arctic Blue, 4 мм + Стекло Arctic Blue, 4 мм, (1000х1000, ПР, Притупка, Закаленное, площадь: 1.00)"
+// prices
+// : 
+// {gostPrice: 0, retailPrice: 21698.595855314965, bulkPrice: 15651.166591856389, dealerPrice: 13790.419126176826, vipPrice: 12860.045393337048}
+// quantity
+// : 
+// 1
+// result
+// : 
+// {materials: Array(3), calcMaterials: Array(0), works: Array(9), expenses: Array(0), other: {…}, …}
+// [[Prototype]]
+// : 
+// Object
+// length
+// : 
+// 1
+// [[Prototype]]
+// : 
+// Array(0)
+// viz
+// : 
+// true
+// weight
+// : 
+// 35.768
+// [[Prototype]]
+// : 
+// Object
+// warnings
+// : 
+// []
+// works
+// : 
+// (6) [{…}, {…}, {…}, {…}, {…}, {…}]

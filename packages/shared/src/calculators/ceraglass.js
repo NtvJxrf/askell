@@ -97,7 +97,7 @@ const Calculate = (data, selfcost) => {
                 const width = Number(widths[i]);
                 const weight = 2.5 * ((height * width) / 1_000_000) * thickness;
 
-                checkDetail({ width, height, weight, tempered, material, stanok, result, thickness, selfcost });
+                ignoreRestricts || checkDetail({ width, height, weight, tempered, material, stanok, result, thickness, selfcost });
             }
             const context = { selfcost, result, thickness, stanok };
             constructWorks('cutting1', S, context);

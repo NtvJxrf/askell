@@ -13,6 +13,7 @@ const KEY_BY_FIELD = {
     processingStages: 'sklad:data:processingStages',
     attributes: 'sklad:data:attributes',
     colors: 'sklad:data:colors',
+    settings: 'settings',
 }
 
 // `dataUpdated` carries the entity type (the valkey key suffix); map it back
@@ -27,6 +28,7 @@ const FIELD_BY_TYPE = {
     processingStages: 'processingStages',
     attributes: 'attributes',
     colors: 'colors',
+    settings: 'settings',
 }
 
 const data = {}

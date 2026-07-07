@@ -72,6 +72,7 @@ export default function ProductionPage() {
   const [timeIndex, setTimeIndex] = useState(0);
   const user = useSelector((state) => state.app.user);
   const heaps = useSelector((state) => state.app.heaps?.['Раскрой']) || [];
+  const updates = useSelector((state) => state.app.selfcost?.updates) || {};
   useEffect(() => {
     const fetchData = async () => {
       const simulationResult = await backend('/data-refresher/getSimulationResult');
@@ -92,8 +93,7 @@ export default function ProductionPage() {
   const handleRefresh = async () => {
     setDisabled(true);
     try{
-      const res = await backend('/data-refresher/updateSchedule');
-      const res2 = await backend('/data-refresher/updateHeaps');
+      const res = await backend('/data-refresher/updateProductinLoad');
       toast.success('Данные обновлены');
     }catch(e){
       console.error(e)
@@ -168,9 +168,12 @@ export default function ProductionPage() {
   return (
     <div className="flex flex-col gap-4 p-4">
       {user?.roles?.includes('Админ') && (
-        <Button onClick={handleRefresh} disabled={disabled} className="w-fit">
-          Обновить
-        </Button>
+        <div className="flex items-center gap-4">
+          <Button onClick={handleRefresh} disabled={disabled} className="w-fit">
+            Обновить
+          </Button>
+          <span>Обновлено: {updates?.productionLoad ? new Date(updates.productionLoad).toLocaleString("ru-RU") : "Не обновлялось"}</span>
+        </div>
       )}
       {heapKeys.length > 0 && (
         <div className="rounded-xl border p-4">

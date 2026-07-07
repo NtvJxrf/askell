@@ -28,7 +28,6 @@ const map = {
   getMaterials,
   getStock,
   getStagesAndNorms,
-  updateProductinLoad: broker.call("data-refresher.updateProductinLoad"),
 }
 let selfcost = {
   updates: {}
@@ -76,6 +75,7 @@ broker.createService({
         }
         await valkey.set('settings', JSON.stringify({ ...settings, [key]: { value, editor } }));
         const settingsUpdated = await broker.call("data-refresher.getSettings");
+        await broker.emit('dataUpdated', 'settings')
         broker.call("websocket.broadcast", { type: 'settings', settings: settingsUpdated });
         return true
       }
@@ -193,23 +193,25 @@ const updateSelfcost = async () => {
     }
   }
 }
-setInterval(async () => {
-  try {
-    await broker.call("data-refresher.updateAllEntities");
-  } catch (err) {
-    console.error('updateAllEntities error:', err)
-  }
-}, 600_000)//Каждые 10 минут
-setInterval(async () => {
-  try {
-    await scanNonPayedOrders()
-  } catch (err) {
-    console.error('scanNonPayedOrders error:', err)
-  }
-}, 300_000)//Каждые 5 минут
-cron.schedule("0 23 * * *", async () => { // Каждый день в 23 часа ночи
+if (process.env.NODE_ENV !== 'development') {
+  setInterval(async () => {
+    try {
+      await broker.call("data-refresher.updateAllEntities");
+    } catch (err) {
+      console.error('updateAllEntities error:', err)
+    }
+  }, 600_000)//Каждые 10 минут
+  setInterval(async () => {
+    try {
+      await scanNonPayedOrders()
+    } catch (err) {
+      console.error('scanNonPayedOrders error:', err)
+    }
+  }, 300_000)//Каждые 5 минут
+  cron.schedule("0 23 * * *", async () => { // Каждый день в 23 часа ночи
     await createCartonLoss()
-});
+  });
+}
 await broker.start();
 await broker.waitForServices("proxy", 3000);
 await broker.call("data-refresher.updateAllEntities");

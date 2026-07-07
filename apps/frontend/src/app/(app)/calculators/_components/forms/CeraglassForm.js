@@ -1,13 +1,13 @@
 'use client';
-import { useForm } from "react-hook-form"
 import { Button } from "@/components/ui/button"
 import RenderField from "./RenderField"
 import { useSelector, useDispatch } from "react-redux"
 import { useMemo, useState, useRef } from "react"
 import BottomButtons from "./BottomButtons"
 import calculate from "@askell/shared/calc/ceraglass"
-import { addPosition, replacePosition } from "@/lib/slice"
+import { addPosition, replacePosition, setFormMeta } from "@/lib/slice"
 import { getMaterialsStock } from "./getStock.js"
+import useCalculatorForm, { getPersistedFormMeta } from "./useCalculatorForm"
 
 const glassAndCera = ['стекло', 'плита'];
 const ceraExcludedWords = ['плита']
@@ -16,14 +16,26 @@ const lockWords = ['замок']
 const hingeWords = ['петля']
 export default function CeraglassForm({ dv = null, editingIndex = null, onOpenChange = null }) {
     const dispatch = useDispatch()
+    const isEditing = dv != null
     const selfcost = useSelector((state) => state.app?.selfcost)
+    const user = useSelector((state) => state.app?.user)
     const materials = selfcost?.materials || {}
     const colors = selfcost?.colors || {}
     const unders = selfcost?.unders || {}
     const stock = selfcost?.stock || {}
 
-    const [additionalMaterials, setAdditionalMaterials] = useState([]);
-    const materialCount = useRef(1);
+    const [additionalMaterials, setAdditionalMaterials] = useState(() => {
+        const persistedCount = getPersistedFormMeta('ceraglass', isEditing)?.materialCount || 1;
+        const fields = [];
+        for (let i = 1; i < persistedCount; i++) {
+            fields.push(
+                { id: `width${i}`, name: `width${i}`, type: 'inputp0', label: `Ширина ${i}` },
+                { id: `height${i}`, name: `height${i}`, type: 'inputp0', label: `Высота ${i}` },
+            );
+        }
+        return fields;
+    });
+    const materialCount = useRef(getPersistedFormMeta('ceraglass', isEditing)?.materialCount || 1);
 
     const materialsArray = useMemo(() => {
         if (!materials || materials.length === 0) return []
@@ -84,8 +96,12 @@ export default function CeraglassForm({ dv = null, editingIndex = null, onOpenCh
         { name: 'tempered', type: 'checkbox', label: 'Закаленное', cheched: true },
         { name: 'quantity', type: 'inputp0', label: 'Количество, шт' },
     ]
-    const form = useForm({
+    if(['Игнорировать ограничения', 'Админ'].some(role => user.roles.includes(role))){
+        formFields.push({ name: 'ignoreRestricts', type: 'checkbox', label: 'Игнорировать ограничения', checked: false })
+    }
+    const form = useCalculatorForm('ceraglass', {
         shouldUnregister: true,
+        dv,
         defaultValues: {
             ...formFields.reduce((acc, field) => {
                 acc[field.name] = "";
@@ -95,7 +111,6 @@ export default function CeraglassForm({ dv = null, editingIndex = null, onOpenCh
             tempered: true,
             quantity: 1,
             rounding: 'Округление до 0.5',
-            ...dv
         }
     })
     function onSubmit(values) {
@@ -131,6 +146,7 @@ const handleAddMaterial = () => {
     ]);
 
     materialCount.current = count + 1;
+    if (!isEditing) dispatch(setFormMeta({ id: 'ceraglass', meta: { materialCount: materialCount.current } }));
 }; 
     const handleDeleteMaterial = () => {
         setAdditionalMaterials(prev => {
@@ -140,6 +156,7 @@ const handleAddMaterial = () => {
         if (materialCount.current > 1) {
             materialCount.current--;
         }
+        if (!isEditing) dispatch(setFormMeta({ id: 'ceraglass', meta: { materialCount: materialCount.current } }));
     }
     return (
         <div className="flex justify-center">

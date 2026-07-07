@@ -1,15 +1,16 @@
 'use client';
-import { useForm } from "react-hook-form"
 import RenderField from "./RenderField"
 import { useSelector, useDispatch } from "react-redux"
 import BottomButtons from "./BottomButtons"
 import calculate from "@askell/shared/calc/clientGlassTempering"
 import { addPosition, replacePosition } from "@/lib/slice"
 import { toast } from 'sonner'
+import useCalculatorForm from "./useCalculatorForm"
 
 export default function ClientGlassTemperingForm({ dv = null, editingIndex = null, onOpenChange = null }) {
     const dispatch = useDispatch()
     const selfcost = useSelector((state) => state.app?.selfcost)
+    const user = useSelector((state) => state.app?.user)
     const formFields = [
         { name: 'thickness', type: 'select', label: 'Толщина', options: [4, 5, 6, 8, 10, 12], required: true },
         { name: 'width', type: 'input', label: 'Ширина, мм', required: true },
@@ -17,8 +18,14 @@ export default function ClientGlassTemperingForm({ dv = null, editingIndex = nul
         { name: 'rounding', type: 'select', label: 'Округление', options: ['Округление до 0.3', 'Округление до 0.5', 'Умножить на 2'], required: true },
         { name: 'quantity', type: 'inputp0', label: 'Количество, шт' },
     ]
-    const form = useForm({
+
+    if(['Игнорировать ограничения', 'Админ'].some(role => user.roles.includes(role))){
+        formFields.push({ name: 'ignoreRestricts', type: 'checkbox', label: 'Игнорировать ограничения', checked: false })
+    }
+
+    const form = useCalculatorForm('tempering', {
         shouldUnregister: true,
+        dv,
         defaultValues: {
             ...formFields.reduce((acc, field) => {
                 acc[field.name] = "";
@@ -28,7 +35,6 @@ export default function ClientGlassTemperingForm({ dv = null, editingIndex = nul
             tempered: true,
             quantity: 1,
             rounding: 'Округление до 0.5',
-            ...dv
         }
     })
     function onSubmit(values) {

@@ -1,5 +1,4 @@
 'use client';
-import { useForm } from "react-hook-form"
 import { Button } from "@/components/ui/button"
 import RenderField from "./RenderField"
 import { useSelector, useDispatch } from "react-redux"
@@ -7,6 +6,7 @@ import { useMemo } from "react"
 import BottomButtons from "./BottomButtons"
 import calculate from "@askell/shared/calc/smd"
 import { addPosition, replacePosition } from "@/lib/slice"
+import useCalculatorForm from "./useCalculatorForm"
 export default function SMDForm({ dv = null, editingIndex = null, onOpenChange = null }) {
     const dispatch = useDispatch()
     const selfcost = useSelector((state) => state.app?.selfcost)
@@ -39,8 +39,9 @@ export default function SMDForm({ dv = null, editingIndex = null, onOpenChange =
         { name: 'quantity', type: 'inputp0', label: 'Количество, шт' },
     ]
 
-    const form = useForm({
+    const form = useCalculatorForm('smd', {
         shouldUnregister: true,
+        dv,
         defaultValues: {
             ...formFields.reduce((acc, field) => {
                 acc[field.name] = "";
@@ -49,7 +50,6 @@ export default function SMDForm({ dv = null, editingIndex = null, onOpenChange =
             print: false,
             notax: false,
             quantity: 1,
-            ...dv
         }
     })
 

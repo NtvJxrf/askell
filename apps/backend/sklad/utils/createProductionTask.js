@@ -2,7 +2,8 @@ import { broker } from '../index.js'
 import checkOrderDetails from './checkOrderDetails.js'
 import { productTypeHandlers } from './productHandlers/index.js'
 import { makeProductionTask } from './apiHelpers.js'
-
+import recalcDate from './recalcDate.js'
+import { getData } from './dataManager.js'
 const ERROR_STATE = {
     href: "https://api.moysklad.ru/api/remap/1.2/entity/customerorder/metadata/states/6a37967b-5899-11f0-0a80-1bc9000373a3",
     metadataHref: "https://api.moysklad.ru/api/remap/1.2/entity/customerorder/metadata",
@@ -46,6 +47,7 @@ const rollback = async (createdEntitys) => {
 }
 
 export const createProductionTask = async ({ id, initiator }) => {
+    const { settings } = getData()
     const order = await broker.call('proxy.sklad', { url: `https://api.moysklad.ru/api/remap/1.2/entity/customerorder/${id}?expand=positions.assortment,invoicesOut,agent,state,owner&limit=100` })
     if (!order) throw new Error(`Заказ покупателя с ${id} не найден`)
 
@@ -65,22 +67,25 @@ export const createProductionTask = async ({ id, initiator }) => {
         colors: []
     }
     let addComment = ''
-
+    const t3heap = []
     try {
         for (const position of order.positions.rows) {
             const attrs = toAttributeMap(position?.assortment?.attributes)
-            const data = attrs['Детали'] ? JSON.parse(attrs['Детали']) : null
-
-            if (data && !data?.result?.other?.customerSuppliedGlassForTempering) {
-                await productTypeHandlers[data.result.other.type]({ data, order, position, createdEntitys, results })
-                continue
+            let data = null
+            if(attrs['Детали']){
+                data = JSON.parse(attrs['Детали'])
+                t3heap.push({position, data})
             }
-            if (position.assortment.name.toLowerCase().includes('упаковка')) {
-                addComment += `${position.assortment.name}\n`
-            }
-            if (!data && (attrs['Тип СМД'] || attrs['Серия'])) {
-                await productTypeHandlers['СМД']({ data: null, order, position, createdEntitys, results })
-            }
+            // if (data && !data?.result?.other?.customerSuppliedGlassForTempering) {
+            //     await productTypeHandlers[data.result.other.type]({ data, order, position, createdEntitys, results })
+            //     continue
+            // }
+            // if (position.assortment.name.toLowerCase().includes('упаковка')) {
+            //     addComment += `${position.assortment.name}\n`
+            // }
+            // if (!data && (attrs['Тип СМД'] || attrs['Серия'])) {
+            //     await productTypeHandlers['СМД']({ data: null, order, position, createdEntitys, results })
+            // }
         }
 
         const productionConfigs = [
@@ -88,7 +93,7 @@ export const createProductionTask = async ({ id, initiator }) => {
                 source: results.viz,
                 materialsStore: 'ВИЗ ПФ',
                 productsStore: 'ВИЗ СГИ',
-                checkboxes: { viz: true, print: results.print, triplex: results.triplex, colors: results.colors, ceraglass: results.ceraglass },
+                checkboxes: { viz: true, print: results.print, colors: results.colors, ceraglass: results.ceraglass },
                 reserve: true
             },
             {
@@ -116,9 +121,20 @@ export const createProductionTask = async ({ id, initiator }) => {
                 materialsStore: 'Полеводство материалы/прочее',
                 productsStore: 'Полеводство материалы/прочее',
                 checkboxes: {}
+            },
+            {
+                groups: groupByMaterial(results.polevGlassForTriplexForSp),
+                materialsStore: 'Полеводство материалы/прочее',
+                productsStore: 'Полеводство материалы/прочее',
+                checkboxes: {}
             }
         ]
-
+        const simRes = await recalcDate(t3heap)
+        const {calcMoment, lastTier3End, machines, tier3EndTimes} = simRes
+        const date = new Date(lastTier3End.time);
+        date.setDate(date.getDate() + (settings?.addProdDays?.value || settings?.addProdDays?.default || 0));
+        console.log(date)
+        return
         const createTask = ({ source, materialsStore, productsStore, checkboxes, reserve }) =>
             makeProductionTask({
                 materialsStore,
@@ -130,7 +146,6 @@ export const createProductionTask = async ({ id, initiator }) => {
                 addComment,
                 createdEntitys
             })
-
         for (const cfg of productionConfigs) {
             if (cfg.groups) {
                 for (const [material, plans] of Object.entries(cfg.groups)) {

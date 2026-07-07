@@ -16,34 +16,10 @@ const initialState = {
     displayPrice: 'retailPrice'
 };
 
-// Make sure a form bucket exists before writing to it (Immer-friendly).
-function ensureForm(state, formId) {
-  if (!state.forms[formId]) {
-    state.forms[formId] = { values: {}, groups: {} };
-  }
-  return state.forms[formId];
-}
-
 const appSlice = createSlice({
   name: "app",
   initialState,
   reducers: {
-    // Set a single field's value for one form (formId = calculator tab id).
-    setFormValue(state, action) {
-      const { formId, name, value } = action.payload;
-      ensureForm(state, formId).values[name] = value;
-    },
-    // Set the repeatable-group count (e.g. Триплекс «ПФ» stack) for one form.
-    setGroupCount(state, action) {
-      const { formId, name, count } = action.payload;
-      ensureForm(state, formId).groups[name] = count;
-    },
-    // Reset one form back to empty; controlled fields then fall back to their
-    // configured defaults.
-    clearForm(state, action) {
-      const { formId } = action.payload;
-      state.forms[formId] = { values: {}, groups: {} };
-    },
     setOrder(state, action) {
       state.currentOrder = action.payload;
     },
@@ -141,14 +117,23 @@ const appSlice = createSlice({
     replacePosition(state, action) {
       const { index, item } = action.payload;
       state.positions[index] = item;
+    },
+    // Persist a calculator form's current field values so they survive
+    // switching tabs/pages (kept only for the session, in redux memory).
+    setFormValues(state, action) {
+      const { id, values } = action.payload;
+      state.forms[id] = { ...state.forms[id], values };
+    },
+    // Persist extra per-form metadata (e.g. count of dynamically added
+    // material fields) alongside the form's values.
+    setFormMeta(state, action) {
+      const { id, meta } = action.payload;
+      state.forms[id] = { ...state.forms[id], meta };
     }
   }
 });
 
 export const {
-  setFormValue,
-  setGroupCount,
-  clearForm,
   setOrder,
   removePosition,
   reorderPositions,
@@ -169,7 +154,9 @@ export const {
   replaceTriplexPositions,
   setDisplayPrice,
   setPlanDate,
-  replacePosition
+  replacePosition,
+  setFormValues,
+  setFormMeta
 } = appSlice.actions;
 const appReducer = appSlice.reducer;
 export const store = configureStore({

@@ -43,6 +43,7 @@ import {
   groupDailyTaskByMaterial,
 } from "./cuttingLayouts";
 import { printLabels } from "./printLabels";
+import { PrintDrawingsDialog } from "./printDraws";
 
 const ALL_MATERIALS = "__all_materials__";
 const DAILY_TASK_STORAGE_KEY = "daily_cutting_task";
@@ -371,7 +372,7 @@ function SourceGroupRow({ group, onResolved }) {
   );
 }
 
-function SavedTaskLayoutSection({ material, layout, index, onResolveGroup }) {
+function SavedTaskLayoutSection({ material, layout, index, onResolveGroup, onPrintDrawings }) {
   const groups = useMemo(() => buildSourceGroups([layout]), [layout]);
   const handlePrintLabels = async () => {
     try {
@@ -382,8 +383,14 @@ function SavedTaskLayoutSection({ material, layout, index, onResolveGroup }) {
   };
 
   const handlePrintDrawings = () => {
-    // TODO: реализовать печать чертежей
-    toast.info("Печать чертежей пока не реализована");
+    const orderNumbers = [...new Set(groups.map((group) => group.source?.orderNumber).filter(Boolean))];
+
+    if (orderNumbers.length === 0) {
+      toast.error("Нет номеров заказов для поиска чертежей");
+      return;
+    }
+
+    onPrintDrawings(orderNumbers);
   };
 
   return (
@@ -415,7 +422,7 @@ function SavedTaskLayoutSection({ material, layout, index, onResolveGroup }) {
   );
 }
 
-function SavedTaskMaterialSection({ material, data, onResolveGroup }) {
+function SavedTaskMaterialSection({ material, data, onResolveGroup, onPrintDrawings }) {
   const totalPieces = data.layouts.reduce((sum, layout) => sum + layout.pieces.length, 0);
 
   return (
@@ -437,6 +444,7 @@ function SavedTaskMaterialSection({ material, data, onResolveGroup }) {
             layout={layout}
             index={index}
             onResolveGroup={onResolveGroup}
+            onPrintDrawings={onPrintDrawings}
           />
         ))}
       </CardContent>
@@ -454,6 +462,7 @@ export default function CuttingLayoutsPage() {
   const [savedTask, setSavedTask] = useState(null);
   const [savedTaskDialogOpen, setSavedTaskDialogOpen] = useState(false);
   const [taskStrategy, setTaskStrategy] = useState(DAILY_TASK_STRATEGIES.DATE);
+  const [printDrawingsOrders, setPrintDrawingsOrders] = useState(null);
   const targetRef = useRef(150);
   const cuttingHeap = useMemo(
     () => (heapsRaw?.["Раскрой"] || []).filter((item) => item?.tier === 1),
@@ -947,6 +956,7 @@ export default function CuttingLayoutsPage() {
                       material={name}
                       data={data}
                       onResolveGroup={handleResolveGroup}
+                      onPrintDrawings={setPrintDrawingsOrders}
                     />
                   ))
                 )}
@@ -961,6 +971,12 @@ export default function CuttingLayoutsPage() {
           ) : null}
         </DialogContent>
       </Dialog>
+
+      <PrintDrawingsDialog
+        open={Boolean(printDrawingsOrders)}
+        onOpenChange={(open) => !open && setPrintDrawingsOrders(null)}
+        orderNumbers={printDrawingsOrders || []}
+      />
     </div>
   );
 }

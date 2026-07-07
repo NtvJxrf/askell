@@ -1,5 +1,4 @@
 'use client';
-import { useForm } from "react-hook-form"
 import { Button } from "@/components/ui/button"
 import RenderField from "./RenderField"
 import { useSelector, useDispatch } from "react-redux"
@@ -11,12 +10,14 @@ import { addPosition, removeTriplexPosition, replaceTriplexPositions, replacePos
 import { getMaterialsStock } from "./getStock.js"
 import TriplexForm from "./TriplexForm"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import useCalculatorForm from "./useCalculatorForm"
 const filterWords = ['стекло', 'зеркало']
 export default function GlasspacketForm({ dv = null, editingIndex = null, onOpenChange = null }) {
     const [openAddTriplex, setOpenAddTriplex] = useState(false)
     const [editingItem, setEditingItem] = useState(null)
     const dispatch = useDispatch()
     const selfcost = useSelector((state) => state.app?.selfcost)
+    const user = useSelector((state) => state.app?.user)
     const materials = selfcost?.materials || {}
     const colors = selfcost?.colors || {}
     const stock = selfcost?.stock || {}
@@ -51,14 +52,20 @@ export default function GlasspacketForm({ dv = null, editingIndex = null, onOpen
         { name: 'print', type: 'input', label: 'Печать, м2'},
         { name: 'quantity', type: 'inputp0', label: 'Количество, шт' },
     ]
+
+    if(['Игнорировать ограничения', 'Админ'].some(role => user.roles.includes(role))){
+        formFields.push({ name: 'ignoreRestricts', type: 'checkbox', label: 'Игнорировать ограничения', checked: false })
+    }
+
     const materialFields = [
         { name: 'material', type: 'combobox', label: 'Материал', options: materialsArray, itemLabels: materialsStock, required: true },
         { name: 'processing', type: 'select', label: 'Вид обработки', options: ['Притупка', 'Шлифовка', 'Без обработки'], required: true },
         { name: 'tempered', type: 'checkbox', label: 'Закаленное'},
         { name: 'color', type: 'combobox', label: 'Цвет', options: colorsArray },
     ]
-    const form = useForm({
+    const form = useCalculatorForm('glasspacket', {
         shouldUnregister: false,
+        dv,
         defaultValues: {
             ...formFields.reduce((acc, field) => {
                 acc[field.name] = "";
@@ -71,7 +78,6 @@ export default function GlasspacketForm({ dv = null, editingIndex = null, onOpen
             shape: true,
             quantity: 1,
             rounding: 'Округление до 0.5',
-            ...dv
         }
     })
     const values = form.watch();

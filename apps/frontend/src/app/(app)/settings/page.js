@@ -32,7 +32,6 @@ export default function SettingsPage() {
     { label: "Валюты", key: "currencies", function: "getCurrency" },
     { label: "Типы цен", key: "priceTypes", function: "getPriceTypes" },
     { label: "Сотрудники", key: "employees", function: "getEmployees" },
-    { label: "Загруженность производства", key: "productionLoad", function: "updateProductinLoad" },
   ]
   const data =  updateKeys.map((item) => ({
     ...item,
@@ -57,43 +56,57 @@ export default function SettingsPage() {
   return (
     <div className="flex h-screen overflow-x-auto overflow-y-hidden text-sm">
       <div className="flex-1 min-w-0 p-6">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Название</TableHead>
-                  <TableHead>Последнее обновление</TableHead>
-                  <TableHead className="w-[140px]"> Обновить</TableHead>
-                </TableRow>
-              </TableHeader>
+        <Button size="sm" variant="outline" onClick={async () => {
+          setDisabled(true);
+          try{
+            const res = await backend(`/data-refresher/updateAllEntities`, {
+              method: "POST",
+            });
+            toast.success('Данные обновлены');
+          }catch(e){
+            console.error(e)
+            toast.error('Ошибка при обновлении данных');
+          }finally{
+            setDisabled(false);
+          }
+        }}>Обновить все</Button>
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Название</TableHead>
+              <TableHead>Последнее обновление</TableHead>
+              <TableHead className="w-[140px]"> Обновить</TableHead>
+            </TableRow>
+          </TableHeader>
 
-              <TableBody>
-                {data.map((item) => (
-                  <TableRow key={item.key}>
-                    <TableCell className="font-medium">
-                      {item.label}
-                    </TableCell>
+          <TableBody>
+            {data.map((item) => (
+              <TableRow key={item.key}>
+                <TableCell className="font-medium">
+                  {item.label}
+                </TableCell>
 
-                    <TableCell>{item.updatedAt ? new Date(item.updatedAt).toLocaleString("ru-RU") : "Не обновлялось"}</TableCell>
+                <TableCell>{item.updatedAt ? new Date(item.updatedAt).toLocaleString("ru-RU") : "Не обновлялось"}</TableCell>
 
-                    <TableCell>
-                      <Button
-                        size="xs"
-                        variant="outline"
-                        disabled={disabled}
-                        onClick={() => handleRefresh(item)}
-                      >
-                        <RefreshCw className={`mr-2 h-4 w-4 ${
-                            disabled
-                              ? "animate-spin"
-                              : ""
-                          }`}
-                        />
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                <TableCell>
+                  <Button
+                    size="xs"
+                    variant="outline"
+                    disabled={disabled}
+                    onClick={() => handleRefresh(item)}
+                  >
+                    <RefreshCw className={`mr-2 h-4 w-4 ${
+                        disabled
+                          ? "animate-spin"
+                          : ""
+                      }`}
+                    />
+                  </Button>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
       </div>
        <Separator orientation="vertical" />
 

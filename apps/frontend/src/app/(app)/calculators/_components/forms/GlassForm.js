@@ -1,5 +1,4 @@
 'use client';
-import { useForm } from "react-hook-form"
 import RenderField from "./RenderField"
 import { useSelector, useDispatch } from "react-redux"
 import { useMemo } from "react"
@@ -8,6 +7,7 @@ import calculate from "@askell/shared/calc/glass"
 import { addPosition, replacePosition } from "@/lib/slice"
 import { getMaterialsStock } from "./getStock.js"
 import { toast } from 'sonner'
+import useCalculatorForm from "./useCalculatorForm"
 const filterWords = ['стекло', 'зеркало']
 
 export default function GlassForm({ dv = null, editingIndex = null, onOpenChange = null }) {
@@ -16,6 +16,7 @@ export default function GlassForm({ dv = null, editingIndex = null, onOpenChange
     const materials = selfcost?.materials || {}
     const colors = selfcost?.colors || {}
     const stock = selfcost?.stock || {}
+    const user = useSelector((state) => state.app?.user)
     const materialsArray = useMemo(() => {
         if (!materials) return []
         return Object.keys(materials).filter(el => filterWords.some(word => el.toLowerCase().includes(word))).sort()
@@ -46,8 +47,13 @@ export default function GlassForm({ dv = null, editingIndex = null, onOpenChange
         { name: 'rounding', type: 'select', label: 'Округление', options: ['Округление до 0.3', 'Округление до 0.5', 'Умножить на 2'], required: true },
     ]
 
-    const form = useForm({
+    if(['Игнорировать ограничения', 'Админ'].some(role => user.roles.includes(role))){
+        formFields.push({ name: 'ignoreRestricts', type: 'checkbox', label: 'Игнорировать ограничения', checked: false })
+    }
+
+    const form = useCalculatorForm('glass', {
         shouldUnregister: true,
+        dv,
         defaultValues: {
             ...formFields.reduce((acc, field) => {
                 acc[field.name] = "";
@@ -57,7 +63,6 @@ export default function GlassForm({ dv = null, editingIndex = null, onOpenChange
             tempered: true,
             quantity: 1,
             rounding: 'Округление до 0.5',
-            ...dv
         }
     })
     if(!materials || !colors) {

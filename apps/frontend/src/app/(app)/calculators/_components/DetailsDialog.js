@@ -172,7 +172,7 @@ export default function ItemDialog({ item, index, open, onOpenChange }) {
                             Исходные данные
                         </Label>
                         {Object.entries(item?.initialData || {}).map(([key, value]) => (
-                            value !== undefined && value !== null && !ignoreLabels.includes(key) && (
+                            value !== undefined && value !== null && value != '' && !ignoreLabels.includes(key) && (
                                 <div key={key} className="flex items-center pb-0.5 gap-1">
                                     <span className="text-sm whitespace-nowrap">
                                         {getInitialDataLabel(key)}:
@@ -202,7 +202,7 @@ const getInitialDataLabel = (key) => {
 
     return initialDataLabels[key] || key;
 };
-const ignoreLabels = ['trims']
+const ignoreLabels = ['trims', 'ignoreRestricts']
 const initialDataLabels = {
     plane: 'Рамка',
     height: 'Высота',

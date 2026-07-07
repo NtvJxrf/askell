@@ -76,7 +76,7 @@ export default function BottomButtons({ form, aiEndpoint = null }) {
     return (
         <div className="flex gap-2 justify-center mt-8">
             <Button type="submit" size="sm">Рассчитать</Button>
-            <Button size="sm" variant="destructive" onClick={() => form.reset()}>Сбросить форму</Button>
+            <Button size="sm" variant="destructive" onClick={() => (form.resetToBlank ? form.resetToBlank() : form.reset())}>Сбросить форму</Button>
             {aiEndpoint && <Button size="sm" variant="secondary" onClick={() => setOpen(true)}>ИИ</Button>}
             <Dialog open={open} onOpenChange={handleOpenChange}>
                 <DialogContent className="gap-0">

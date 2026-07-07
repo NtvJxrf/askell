@@ -105,7 +105,7 @@ const Calculate = (data, selfcost) => {
         const thickness = Number(material.match(/(\d+(?:[.,]\d+)?)\s*мм/i)[1])
         const currentWeight = 2.5 * ((height * width) / 1000000) * thickness
         weight += currentWeight
-        checkDetail({width, height, weight: currentWeight, tempered, material, stanok, result, thickness, type: 'Триплекс', selfcost, processing})
+        ignoreRestricts || checkDetail({width, height, weight: currentWeight, tempered, material, stanok, result, thickness, type: 'Триплекс', selfcost, processing})
         shortThickness.push(thickness)
         allThickness += thickness
         allWeights.push(2.5 * ((height * width) / 1000000) * thickness)

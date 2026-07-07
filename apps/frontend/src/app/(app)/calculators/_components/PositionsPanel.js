@@ -379,7 +379,7 @@ export function PositionsPanel() {
             <span>Опт: {formatPrice(positionsInfo.totalPrices.bulkPrice)}</span>
             <span>Дилер: {formatPrice(positionsInfo.totalPrices.dealerPrice)}</span>
             <span>ВИП: {formatPrice(positionsInfo.totalPrices.vipPrice)}</span>
-            <span>Затраты: {formatPrice(positionsInfo.cost)}</span>
+            <span>Общая себестоимость: {formatPrice(positionsInfo.cost)}</span>
             <span className="text-green-600">Прибыль: {formatPrice(positionsInfo.totalProfit)} ({((positionsInfo.totalProfit / positionsInfo.cost) * 100 || 0).toFixed(2)}%)</span>
             <span className="text-orange-400">Сумма скидки: {formatPrice(positionsInfo.totalDiscount)}</span>
           </TooltipContent>

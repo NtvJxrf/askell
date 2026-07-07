@@ -26,7 +26,7 @@ const Calculate = (data, selfcost) => {
         else trimCoef = selfcost.pricesAndCoefs['Коэффициент обрези стекло Цветное'].value
     }
 
-    checkDetail({...data, stanok, type: 'Стекло', selfcost})
+    ignoreRestricts || checkDetail({...data, stanok, type: 'Стекло', selfcost})
     let S_calc = S
     if (S < 0.3 && rounding == 'Округление до 0.3') {
         S_calc = 0.3

@@ -25,7 +25,6 @@ export default function runSimulation(params) {
         stagesAndNorms,
     } = params;
     normalize(heaps);
-    console.log(JSON.parse(JSON.stringify(heaps)))
     const normaCache = {};
     const history = logging ? [] : null; // для хранения снимков состояния при логировании
     const getNorma = (machineName) => {

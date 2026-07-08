@@ -32,21 +32,23 @@ export const makeProductionTask = async ({
     createdEntitys
 }) => {
     const { stores, attributes } = getData()
-    const task = await broker.call('proxy.sklad', { url: 'https://api.moysklad.ru/api/remap/1.2/entity/productiontask', type: 'post', data: {
-        materialsStore: { meta: stores[materialsStore].meta },
-        productsStore: { meta: stores[productsStore].meta },
-        organization: { meta: order?.organization?.meta },
-        attributes: generateProductionTaskAttributes(order, checkboxes, attributes),
-        productionRows,
-        reserve,
-        awaiting: true,
-        description: `${order.attributes?.find(el => el.name === 'Комментарий для производства')?.value || ''}\n${addComment}`,
-        state: { meta: PRODUCTION_TASK_STATE },
-        productionStart: new Date().toISOString().slice(0, 19).replace('T', ' '),
-        customerOrders: [{ meta: order.meta }],
-        ...(order?.owner?.meta ? { owner: { meta: order.owner.meta } } : {}),
-        ...(order?.deliveryPlannedMoment ? { deliveryPlannedMoment: order.deliveryPlannedMoment } : {})
-    } })
+    const task = await broker.call('proxy.sklad', { url: 'https://api.moysklad.ru/api/remap/1.2/entity/productiontask',
+        type: 'post',
+        data: {
+            materialsStore: { meta: stores[materialsStore].meta },
+            productsStore: { meta: stores[productsStore].meta },
+            organization: { meta: order?.organization?.meta },
+            attributes: generateProductionTaskAttributes(order, checkboxes, attributes),
+            productionRows,
+            reserve,
+            awaiting: true,
+            description: `${order.attributes?.find(el => el.name === 'Комментарий для производства')?.value || ''}\n${addComment}`,
+            state: { meta: PRODUCTION_TASK_STATE },
+            productionStart: new Date().toISOString().slice(0, 19).replace('T', ' '),
+            customerOrders: [{ meta: order.meta }],
+            ...(order?.owner?.meta ? { owner: { meta: order.owner.meta } } : {}),
+            ...(order?.deliveryPlannedMoment ? { deliveryPlannedMoment: order.deliveryPlannedMoment } : {})
+        }})
     createdEntitys.task.push(task)
     return task
 }

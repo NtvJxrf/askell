@@ -76,59 +76,59 @@ export const createProductionTask = async ({ id, initiator }) => {
                 data = JSON.parse(attrs['Детали'])
                 t3heap.push({position, data})
             }
-            // if (data && !data?.result?.other?.customerSuppliedGlassForTempering) {
-            //     await productTypeHandlers[data.result.other.type]({ data, order, position, createdEntitys, results })
-            //     continue
-            // }
-            // if (position.assortment.name.toLowerCase().includes('упаковка')) {
-            //     addComment += `${position.assortment.name}\n`
-            // }
-            // if (!data && (attrs['Тип СМД'] || attrs['Серия'])) {
-            //     await productTypeHandlers['СМД']({ data: null, order, position, createdEntitys, results })
-            // }
+            if (data && !data?.result?.other?.customerSuppliedGlassForTempering) {
+                await productTypeHandlers[data.result.other.type]({ data, order, position, createdEntitys, results })
+                continue
+            }
+            if (position.assortment.name.toLowerCase().includes('упаковка')) {
+                addComment += `${position.assortment.name}\n`
+            }
+            if (!data && (attrs['Тип СМД'] || attrs['Серия'])) {
+                await productTypeHandlers['СМД']({ data: null, order, position, createdEntitys, results })
+            }
         }
 
-        // const productionConfigs = [
-        //     {
-        //         source: results.viz,
-        //         materialsStore: 'ВИЗ ПФ',
-        //         productsStore: 'ВИЗ СГИ',
-        //         checkboxes: { viz: true, print: results.print, colors: results.colors, ceraglass: results.ceraglass },
-        //         reserve: true
-        //     },
-        //     {
-        //         source: results.triplexPz,
-        //         materialsStore: 'Полеводство материалы/прочее',
-        //         productsStore: 'Полеводство СГИ',
-        //         checkboxes: { triplex: true, print: results.print, colors: results.colors },
-        //         reserve: true
-        //     },
-        //     {
-        //         source: results.polevSP,
-        //         materialsStore: 'Полеводство материалы/прочее',
-        //         productsStore: 'Полеводство СГИ',
-        //         checkboxes: { glasspacket: true },
-        //         reserve: true
-        //     },
-        //     {
-        //         groups: groupByMaterial(results.polevGlass),
-        //         materialsStore: 'Полеводство материалы/прочее',
-        //         productsStore: 'Полеводство СГИ',
-        //         checkboxes: {}
-        //     },
-        //     {
-        //         groups: groupByMaterial(results.polevGlassForSp),
-        //         materialsStore: 'Полеводство материалы/прочее',
-        //         productsStore: 'Полеводство материалы/прочее',
-        //         checkboxes: {}
-        //     },
-        //     {
-        //         groups: groupByMaterial(results.polevGlassForTriplexForSp),
-        //         materialsStore: 'Полеводство материалы/прочее',
-        //         productsStore: 'Полеводство материалы/прочее',
-        //         checkboxes: {}
-        //     }
-        // ]
+        const productionConfigs = [
+            {
+                source: results.viz,
+                materialsStore: 'ВИЗ ПФ',
+                productsStore: 'ВИЗ СГИ',
+                checkboxes: { viz: true, print: results.print, colors: results.colors, ceraglass: results.ceraglass },
+                reserve: true
+            },
+            {
+                source: results.triplexPz,
+                materialsStore: 'Полеводство материалы/прочее',
+                productsStore: 'Полеводство СГИ',
+                checkboxes: { triplex: true, print: results.print, colors: results.colors },
+                reserve: true
+            },
+            {
+                source: results.polevSP,
+                materialsStore: 'Полеводство материалы/прочее',
+                productsStore: 'Полеводство СГИ',
+                checkboxes: { glasspacket: true },
+                reserve: true
+            },
+            {
+                groups: groupByMaterial(results.polevGlass),
+                materialsStore: 'Полеводство материалы/прочее',
+                productsStore: 'Полеводство СГИ',
+                checkboxes: {}
+            },
+            {
+                groups: groupByMaterial(results.polevGlassForSp),
+                materialsStore: 'Полеводство материалы/прочее',
+                productsStore: 'Полеводство материалы/прочее',
+                checkboxes: {}
+            },
+            // {
+            //     groups: groupByMaterial(results.polevGlassForTriplexForSp),
+            //     materialsStore: 'Полеводство материалы/прочее',
+            //     productsStore: 'Полеводство материалы/прочее',
+            //     checkboxes: {}
+            // }
+        ]
         const simRes = await recalcDate(t3heap)
         const {calcMoment, lastTier3End, machines, tier3EndTimes, lastEnd, tier3Items } = simRes
         const date = new Date(lastTier3End?.time || lastEnd || Date.now());
@@ -139,8 +139,6 @@ export const createProductionTask = async ({ id, initiator }) => {
         const day = date.getDay();//Прибавляем дни, если дата попадает на выходные
         if (day === 6) date.setDate(date.getDate() + 2);
         else if (day === 0) date.setDate(date.getDate() + 1);
-        console.log(simRes, date)
-        return
         const createTask = ({ source, materialsStore, productsStore, checkboxes, reserve }) =>
             makeProductionTask({
                 materialsStore,

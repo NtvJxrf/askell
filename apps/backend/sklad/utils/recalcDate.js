@@ -119,7 +119,7 @@ const recalc = async (positions) => {
         stages,
         stagesAndNorms
     })
-    return {hasPrint, ...res}
+    return res
 }
 
 export default recalc

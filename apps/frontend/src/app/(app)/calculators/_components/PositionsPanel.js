@@ -170,6 +170,7 @@ export function PositionsPanel() {
   const handleReset = () => {
     dispatch(setOrder(null));
     dispatch(setPositions([]));
+    dispatch(setPlanDate(null));
   };
   const handleSave = async () => {
     const positions = store.getState().app.positions;

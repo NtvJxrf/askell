@@ -16,7 +16,8 @@ const recalc = async (positions) => {
                     initialData: data?.initialData,
                     productionPath: buildGlassPath(data),
                     orderingPosition: 0,
-                    tier: 3
+                    tier: 3,
+                    pfDepth: 1
                 });
             }
         }
@@ -28,6 +29,7 @@ const recalc = async (positions) => {
                     productionPath: [{stageName: 'Триплексование', orderingPosition: 0, materials: {}}, {stageName: 'ОТК', orderingPosition: 1}],
                     orderingPosition: 0,
                     tier: 3,
+                    pfDepth: 1
                 }
                 for(let i = 0; i < (data?.result?.other?.materials?.length || 2); i++) {
                     const assortmentId = crypto.randomUUID();
@@ -37,6 +39,7 @@ const recalc = async (positions) => {
                         productionPath: buildGlassPath(data),
                         orderingPosition: 0,
                         tier: 3,
+                        pfDepth: 2,
                         assortmentId
                     });
                     obj.productionPath[0].materials[assortmentId] ??= 0
@@ -56,9 +59,41 @@ const recalc = async (positions) => {
                         {stageName: 'Вторичная герметизация', orderingPosition: 2}
                     ],
                     orderingPosition: 0,
-                    tier: 3
+                    tier: 3,
+                    pfDepth: 1
                 }
                 for(const material of (data?.result?.other?.materials || [])) {
+                    if(material[0].toLowerCase().includes('триплекс')){
+                        const usedTriplex = data?.result?.other?.usedTriplex.find(el => el.name == material[0])
+                        const assortmentId = crypto.randomUUID();
+                        const triplexObj = {
+                            name: `Триплекс для ${position?.name}`,
+                            initialData: usedTriplex?.initialData,
+                            productionPath: [{stageName: 'Триплексование', orderingPosition: 0, materials: {}}, {stageName: 'ОТК', orderingPosition: 1}],
+                            orderingPosition: 0,
+                            tier: 3,
+                            pfDepth: 2,
+                            assortmentId
+                        }
+                        for(let i = 0; i < (usedTriplex?.result?.other?.materials?.length || 2); i++) {
+                            const glassAssortmentId = crypto.randomUUID();
+                            heaps?.['Раскрой']?.push({//Раскрой
+                                name: `Стекло для ${usedTriplex.name} для ${position?.name}`,
+                                initialData: usedTriplex?.initialData,
+                                productionPath: buildGlassPath(usedTriplex),
+                                orderingPosition: 0,
+                                tier: 3,
+                                pfDepth: 3,
+                                assortmentId: glassAssortmentId
+                            });
+                            triplexObj.productionPath[0].materials[glassAssortmentId] ??= 0
+                            triplexObj.productionPath[0].materials[glassAssortmentId] += 1
+                        }
+                        heaps?.['Триплексование']?.push(triplexObj)//Триплексование
+                        obj.productionPath[0].materials[assortmentId] ??= 0
+                        obj.productionPath[0].materials[assortmentId] += 1
+                        continue
+                    }
                     const assortmentId = crypto.randomUUID();
                     heaps?.['Раскрой']?.push({//Раскрой
                         name: `Стекло для ${position?.name}`,
@@ -66,6 +101,7 @@ const recalc = async (positions) => {
                         productionPath: buildGlassPathForGlasspacket(data, material),
                         orderingPosition: 0,
                         tier: 3,
+                        pfDepth: 2,
                         assortmentId
                     });
                     obj.productionPath[0].materials[assortmentId] ??= 0
@@ -83,7 +119,7 @@ const recalc = async (positions) => {
         stages,
         stagesAndNorms
     })
-    return res
+    return {hasPrint, ...res}
 }
 
 export default recalc

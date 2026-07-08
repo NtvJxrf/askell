@@ -2,17 +2,14 @@ import generateStages from '../generateStages.js'
 import { makeProcessingProcess, makeProduct, makeProcessingPlan } from '../apiHelpers.js'
 
 export const glass = async ({ data, order, position, createdEntitys, results }) => {
-    if (data.initialData.customerSuppliedGlassForTempering) {
-        const processingProcess = await makeProcessingProcess(['Закалка', 'ОТК'])
-        const plan = await makeProcessingPlan({ name: position.assortment.name, order, processingProcess, product: position.assortment, createdEntitys })
-        plan.quantity = position.quantity
-        results.polevGlass.push(plan)
-        return
-    }
-
     if (data.initialData.print) results.print = true
     if (data.initialData.color) results.colors.push(data.initialData.color)
+    
+    if(data.initialData.color){
 
+    }else{
+        
+    }
     const isPF = data.result.other.viz
     const processingProcess = await makeProcessingProcess(generateStages(data, 'selk'))
     const product = isPF

@@ -10,5 +10,10 @@ export const settingsSchema = {
     default: 0,
     schema: z.number().int().min(0).max(30),
     description: "Количество дней, которое прибавляется к сроку изготовления которое посчитал калькулятор.",
+  },
+  addPrintDays: {
+    default: 14,
+    schema: z.number().int().min(0).max(30),
+    description: "Количество дней, которое прибавляется к сроку изготовления которое посчитал калькулятор если хоть в 1 позиции есть печать.",
   }
 };

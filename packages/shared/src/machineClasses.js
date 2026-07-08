@@ -107,6 +107,9 @@ export class SingleItemMachine extends BaseMachine {
             const result = this.tryPickFromHeap(heaps[heapName]);
 
             if (result) {
+                if(result.item.tier == 3){
+                    result.item._totalNeededTime = (result.item._totalNeededTime || 0) + result.time
+                }
                 this.task = result.item;
                 this.remaining = result.time;
                 this.consumeMaterials(result.item);
@@ -181,7 +184,7 @@ export class SingleItemMachine extends BaseMachine {
         return 0;
     }
 
-    routeItem(heaps, simTimeMs, stages) {
+    routeItem(heaps, simTimeMs, stages, tier3Items) {
         const nextStage = this.getNextStage(stages);
         const task = this.task;
         this._totalCompleted++;
@@ -195,6 +198,8 @@ export class SingleItemMachine extends BaseMachine {
             task.orderingPosition++;
             heaps[nextStage.name].push(task);
         } else {
+            if(task.tier === 3)
+                tier3Items.push(task);
             this.produceMaterial(task);
         }
     };

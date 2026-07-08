@@ -45,6 +45,7 @@ export function PositionsRow({
     dragIndex,
     onDragEnd,
     currentPrice,
+    nameOffset = 0,
     setDetailsItem,
     setEditingItem,
     setTouchedIndex,
@@ -147,9 +148,15 @@ export function PositionsRow({
         {/* № */}
         <TableCell className="p-1.5 text-center">{index + 1}</TableCell>
 
-        {/* Название */}
-        <TableCell className="px-2 py-1.5">
-            <span className="block truncate" title={name}>
+        {/* Название: clipped by the cell, scrolled horizontally in sync via
+            the shared `nameOffset` (driven by the scrollbar in the column
+            header) so all rows can be compared side by side. */}
+        <TableCell className="overflow-hidden px-2 py-1.5">
+            <span
+                className="inline-block whitespace-nowrap will-change-transform"
+                style={{ transform: `translateX(-${nameOffset}px)` }}
+                title={name}
+            >
                 {name}
             </span>
         </TableCell>

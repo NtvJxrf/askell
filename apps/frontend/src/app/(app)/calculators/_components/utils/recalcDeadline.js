@@ -20,7 +20,9 @@ export default function handleRecalcDeadline() {
     const stages = store.getState().app?.selfcost?.processingStages
     const stagesAndNorms = store.getState().app?.selfcost?.stagesAndNorms
     const heaps = JSON.parse(JSON.stringify(origHeaps))
+    let hasPrint = false
     for(const pos of positions){
+        if(pos?.initialData?.print) hasPrint = true
         const posType = pos?.result?.other?.type
         if(posType == 'Стекло'){
             for (let i = 0; i < pos.quantity; i++) {
@@ -29,11 +31,12 @@ export default function handleRecalcDeadline() {
                     initialData: pos?.initialData,
                     productionPath: buildGlassPath(pos),
                     orderingPosition: 0,
-                    tier: 3
+                    tier: 3,
+                    pfDepth: 1,
                 });
             }
         }
-        if(posType == 'Триплекс'){
+        else if(posType == 'Триплекс'){
             for (let i = 0; i < pos.quantity; i++) {
                 const obj = {
                     name: pos?.name,
@@ -41,6 +44,7 @@ export default function handleRecalcDeadline() {
                     productionPath: [{stageName: 'Триплексование', orderingPosition: 0, materials: {}}, {stageName: 'ОТК', orderingPosition: 1}],
                     orderingPosition: 0,
                     tier: 3,
+                    pfDepth: 1,
                 }
                 for(let i = 0; i < (pos?.result?.other?.materials?.length || 2); i++) {
                     const assortmentId = crypto.randomUUID();
@@ -50,6 +54,7 @@ export default function handleRecalcDeadline() {
                         productionPath: buildGlassPath(pos),
                         orderingPosition: 0,
                         tier: 3,
+                        pfDepth: 2,
                         assortmentId
                     });
                     obj.productionPath[0].materials[assortmentId] ??= 0
@@ -58,8 +63,7 @@ export default function handleRecalcDeadline() {
                 heaps?.['Триплексование']?.push(obj)//Триплексование
             }
         }
-        if(posType == 'Стеклопакет'){
-            console.log(pos)
+        else if(posType == 'Стеклопакет'){
             for (let i = 0; i < pos.quantity; i++) {
                 const obj = {
                     name: pos?.name,
@@ -70,32 +74,39 @@ export default function handleRecalcDeadline() {
                         {stageName: 'Вторичная герметизация', orderingPosition: 2}
                     ],
                     orderingPosition: 0,
-                    tier: 3
+                    tier: 3,
+                    pfDepth: 1,
                 }
                 for(const material of (pos?.result?.other?.materials || [])) {
                     if(material[0].toLowerCase().includes('триплекс')){
                         const usedTriplex = pos?.result?.other?.usedTriplex.find(el => el.name == material[0])
-                        const obj = {
+                        const assortmentId = crypto.randomUUID();
+                        const triplexObj = {
                             name: `Триплекс для ${pos?.name}`,
                             initialData: usedTriplex?.initialData,
                             productionPath: [{stageName: 'Триплексование', orderingPosition: 0, materials: {}}, {stageName: 'ОТК', orderingPosition: 1}],
                             orderingPosition: 0,
                             tier: 3,
+                            pfDepth: 2,
+                            assortmentId
                         }
-                        for(let i = 0; i < (pos?.result?.other?.materials?.length || 2); i++) {
-                            const assortmentId = crypto.randomUUID();
+                        for(let i = 0; i < (usedTriplex?.result?.other?.materials?.length || 2); i++) {
+                            const glassAssortmentId = crypto.randomUUID();
                             heaps?.['Раскрой']?.push({//Раскрой
                                 name: `Стекло для ${usedTriplex.name} для ${pos?.name}`,
                                 initialData: usedTriplex?.initialData,
                                 productionPath: buildGlassPath(usedTriplex),
                                 orderingPosition: 0,
                                 tier: 3,
-                                assortmentId
+                                pfDepth: 3,
+                                assortmentId: glassAssortmentId
                             });
-                            obj.productionPath[0].materials[assortmentId] ??= 0
-                            obj.productionPath[0].materials[assortmentId] += 1
+                            triplexObj.productionPath[0].materials[glassAssortmentId] ??= 0
+                            triplexObj.productionPath[0].materials[glassAssortmentId] += 1
                         }
-                        heaps?.['Триплексование']?.push(obj)//Триплексование
+                        heaps?.['Триплексование']?.push(triplexObj)//Триплексование
+                        obj.productionPath[0].materials[assortmentId] ??= 0
+                        obj.productionPath[0].materials[assortmentId] += 1
                         continue
                     }
                     const assortmentId = crypto.randomUUID();
@@ -105,6 +116,7 @@ export default function handleRecalcDeadline() {
                         productionPath: buildGlassPathForGlasspacket(pos, material),
                         orderingPosition: 0,
                         tier: 3,
+                        pfDepth: 2,
                         assortmentId
                     });
                     obj.productionPath[0].materials[assortmentId] ??= 0
@@ -112,6 +124,8 @@ export default function handleRecalcDeadline() {
                 }
                 heaps?.['Изготовление рамки']?.push(obj)//Изготовление рамки
             }
+        }else{
+            toast.error(`Позиция ${pos?.name} пропущена при расчете сроков, т.к. не поддерживается тип ${posType}`);
         }
     }
     const res = simulation({
@@ -123,7 +137,7 @@ export default function handleRecalcDeadline() {
         stagesAndNorms
     })
     console.timeEnd('simulation')
-    return res
+    return {hasPrint, ...res}
 }
 
 const buildGlassPath = (data) => {

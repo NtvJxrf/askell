@@ -53,7 +53,7 @@ export default function GlasspacketForm({ dv = null, editingIndex = null, onOpen
         { name: 'quantity', type: 'inputp0', label: 'Количество, шт' },
     ]
 
-    if(['Игнорировать ограничения', 'Админ'].some(role => user.roles.includes(role))){
+    if(['Игнорировать ограничения', 'Админ'].some(role => user?.roles?.includes(role))){
         formFields.push({ name: 'ignoreRestricts', type: 'checkbox', label: 'Игнорировать ограничения', checked: false })
     }
 

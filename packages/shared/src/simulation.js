@@ -25,6 +25,7 @@ export default function runSimulation(params) {
         stagesAndNorms,
     } = params;
     normalize(heaps);
+    console.log(JSON.parse(JSON.stringify(heaps)))
     const normaCache = {};
     const history = logging ? [] : null; // для хранения снимков состояния при логировании
     const getNorma = (machineName) => {
@@ -101,6 +102,7 @@ export default function runSimulation(params) {
     let simTime = null;
     let index = startIndex;
     let iterations = 0;
+    const tier3Items = []
     initDay();
     while (!isHeapsEmpty() || isMachinesBusy()) {
         if(logging && (iterations % 5 === 0)) {
@@ -131,7 +133,7 @@ export default function runSimulation(params) {
         for (const machine of machines) {
             if (machine.remaining < 1 && machine.task) {
                 if (machine.remaining < 1) {
-                    machine.routeItem(heaps, simTimeMs, stages);
+                    machine.routeItem(heaps, simTimeMs, stages, tier3Items);
                     machine.task = null;
                     machine.remaining = 0;
                 }
@@ -172,10 +174,15 @@ export default function runSimulation(params) {
             _lastEndTime: m._lastEndTime ? new Date(m._lastEndTime) : null,
             totalM2: m.totalM2 || 0,
             totalMP: m.totalMP || 0,
-            
         })),
         tier3EndTimes,
+        tier3Items: tier3Items.reduce((acc, item) => {
+            acc[item.pfDepth] ??= 0;
+            acc[item.pfDepth] += item._totalNeededTime || 0;
+            return acc;
+        }, {}),
         lastTier3End: tier3EndTimes.filter(t => t.time).sort((a,b) => b.time - a.time)[0] || null,
+        lastEnd: new Date(Math.max(...machines.map(m => m._lastEndTime || 0))),
     }
     function initDay() {
         const ekbNow = getEkaterinburgDate();
@@ -238,7 +245,7 @@ export default function runSimulation(params) {
         simTimeMs = simTime.getTime();
         
         // Вычисляем сколько минут было пропущено (ночное время)
-        const skippedMinutes = Math.max(0, Math.round((simTimeMs - prevSimMs) / 60000));
+        // const skippedMinutes = Math.max(0, Math.round((simTimeMs - prevSimMs) / 60000));
         
         return true;
     }

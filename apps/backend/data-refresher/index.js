@@ -150,6 +150,19 @@ broker.createService({
       async handler() {
         await updateSchedule();
         await updateHeaps();
+        const heaps = await broker.call("data-refresher.getHeaps");
+        const {schedule, index} = await broker.call("data-refresher.getSchedule");
+        const pricesAndCoefs = JSON.parse(await valkey.get('sklad:data:pricesAndCoefs'));
+        const stages = JSON.parse(await valkey.get('sklad:data:processingStages'));
+        const simres = await simulation({
+          heaps,
+          schedule: schedule,
+          startIndex: index,
+          pricesAndCoefs,
+          stages,
+          logging: true,
+        })
+        await valkey.set('simulationResult', JSON.stringify(simres))
         await valkey.set('sklad:updates:productionLoad', Date.now());
         broker.call("websocket.broadcast", { type: 'heaps', heaps: JSON.parse(await valkey.get('heaps')) || null });
         broker.call("websocket.broadcast", { type: 'schedule', schedule: JSON.parse(await valkey.get('schedule')) || null });
@@ -208,6 +221,13 @@ if (process.env.NODE_ENV !== 'development') {
       console.error('scanNonPayedOrders error:', err)
     }
   }, 300_000)//Каждые 5 минут
+  setInterval(async () => {
+    try {
+      await broker.call("data-refresher.updateProductinLoad");
+    } catch (err) {
+      console.error('updateProductinLoad error:', err)
+    }
+  }, 900_000)//Каждые 15 минут
   cron.schedule("0 23 * * *", async () => { // Каждый день в 23 часа ночи
     await createCartonLoss()
   });

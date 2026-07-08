@@ -92,6 +92,7 @@ export function PositionsPanel() {
     return positions.reduce(
       (acc, position) => {
         const { prices, quantity = 1, discount = 0 } = position;
+        acc.totalQuantity += quantity;
 
         const discountFactor = 1 - discount / 100;
 
@@ -128,6 +129,7 @@ export function PositionsPanel() {
         totalWeight: 0,
         totalS: 0,
         totalP: 0,
+        totalQuantity: 0
       }
     );
   }, [positions, displayPrice]);
@@ -235,9 +237,16 @@ export function PositionsPanel() {
       console.time('simulation')
       const settings = store.getState().app.settings;
       const res = recalcDeadline()
-      const {calcMoment, lastTier3End, machines, tier3EndTimes} = res
-      const date = new Date(lastTier3End.time);
-      date.setDate(date.getDate() + (settings?.addProdDays?.value || settings?.addProdDays?.default || 0));
+      const {calcMoment, lastTier3End, machines, tier3EndTimes, hasPrint, lastEnd} = res
+      const date = new Date(lastTier3End?.time || lastEnd || Date.now());
+      date.setDate(date.getDate()
+        + (settings?.addProdDays?.value || settings?.addProdDays?.default || 0)
+        + (hasPrint ? (settings?.addPrintDays?.value || settings?.addPrintDays?.default || 0) : 0)
+      );//Прибавляем дни в зависимости от настроек
+      const day = date.getDay();//Прибавляем дни, если дата попадает на выходные
+      if (day === 6) date.setDate(date.getDate() + 2);
+      else if (day === 0) date.setDate(date.getDate() + 1);
+      console.log(res, date)
       dispatch(setPlanDate(date.toISOString()));
       console.timeEnd('simulation')
       toast.success(`Срок пересчитан: ${date.toISOString().split('T')[0]}`);
@@ -410,6 +419,7 @@ export function PositionsPanel() {
             <span>Площадь: {positionsInfo.totalS.toFixed(2)} м²</span>
             <span>Периметр: {positionsInfo.totalP.toFixed(2)} м.п.</span>
             <span>Вес: {positionsInfo.totalWeight.toFixed(2)} кг</span>
+            <span>Количество: {positionsInfo.totalQuantity}</span>
           </TooltipContent>
         </Tooltip>
       </div>

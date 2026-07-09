@@ -1,12 +1,10 @@
-import { broker } from '../index.js';
-
-const goodInfo = async ({ user, dataFromForm}) => {
-    const good = await broker.call('proxy.sklad', { url: `https://api.moysklad.ru/api/remap/1.2/entity/product/${dataFromForm.id}` });
-    const stocks = await broker.call('proxy.sklad', { url: `https://api.moysklad.ru/api/remap/1.2/report/stock/bystore?filter=product=https://api.moysklad.ru/api/remap/1.2/entity/product/${good.id}` });
+const goodInfo = async ({ user, dataFromForm}, ctx) => {
+    const good = await ctx.call('proxy.sklad', { url: `https://api.moysklad.ru/api/remap/1.2/entity/product/${dataFromForm.id}` });
+    const stocks = await ctx.call('proxy.sklad', { url: `https://api.moysklad.ru/api/remap/1.2/report/stock/bystore?filter=product=https://api.moysklad.ru/api/remap/1.2/entity/product/${good.id}` });
     const d = new Date()
     d.setFullYear(d.getFullYear() - 1)
     const momentFrom = d.toISOString().slice(0, 19).replace('T', ' ')
-    const operations = await broker.call('proxy.sklad', { url: `https://api.moysklad.ru/api/remap/1.2/report/turnover/byoperations?filter=product=https://api.moysklad.ru/api/remap/1.2/entity/product/${good.id}&momentFrom=${encodeURIComponent(momentFrom)}` });
+    const operations = await ctx.call('proxy.sklad', { url: `https://api.moysklad.ru/api/remap/1.2/report/turnover/byoperations?filter=product=https://api.moysklad.ru/api/remap/1.2/entity/product/${good.id}&momentFrom=${encodeURIComponent(momentFrom)}` });
     const supplies = operations.rows
         .filter(op => op.operation.meta.type === 'supply')
         .sort((a, b) => {

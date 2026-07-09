@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import { RefreshCw } from "lucide-react";
 import { useSelector } from "react-redux";
 import { backend } from "@/lib/backend";
+import { toast } from "sonner";
 import SettingsRow from "./settingsRow";
 export default function SettingsPage() {
   const [disabled, setDisabled] = useState(null);

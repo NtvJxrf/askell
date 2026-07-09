@@ -1,5 +1,3 @@
-import { broker } from '../index.js'
-
 const QUARANTINE_STATE = {
     href: "https://api.moysklad.ru/api/remap/1.2/entity/customerorder/metadata/states/6a37967b-5899-11f0-0a80-1bc9000373a3",
     metadataHref: "https://api.moysklad.ru/api/remap/1.2/entity/customerorder/metadata",
@@ -9,14 +7,14 @@ const QUARANTINE_STATE = {
 
 // Validates that an order is ready for production. On failure it creates a task
 // for the owner, moves the order to quarantine and returns `true` (skip creation).
-const checkOrderDetails = async (order, initiator) => {
+const checkOrderDetails = async (order, initiator, ctx) => {
     const reportIssue = async (message) => {
-        await broker.call('proxy.sklad', { url: 'https://api.moysklad.ru/api/remap/1.2/entity/task', type: 'post', data: {
+        await ctx.call('proxy.sklad', { url: 'https://api.moysklad.ru/api/remap/1.2/entity/task', type: 'post', data: {
             assignee: { meta: order?.owner?.meta },
             operation: { meta: order.meta },
             description: message
         } })
-        await broker.call('proxy.sklad', { url: `https://api.moysklad.ru/api/remap/1.2/entity/customerorder/${order.id}`, type: 'put', data: {
+        await ctx.call('proxy.sklad', { url: `https://api.moysklad.ru/api/remap/1.2/entity/customerorder/${order.id}`, type: 'put', data: {
             state: { meta: QUARANTINE_STATE }
         } })
     }

@@ -54,6 +54,7 @@
   "dependencies": {
     "dotenv": "^17.2.3",
     "drizzle-orm": "^0.44.1",
+    "iovalkey": "^0.3.3",
     "postgres": "^3.4.5",
     "zod": "^4.4.3"
   },

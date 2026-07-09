@@ -2,13 +2,13 @@ import { broker } from "../index.js";
 import { valkey } from "@askell/shared"
 import { randomUUID } from 'crypto';
 export const updateHeaps = async () => {
-    console.time('get-heaps-total')
+    const tTotal = Date.now()
     const stagesRaw = JSON.parse(await valkey.get('sklad:data:processingStages'))
     const heapsRaw = {}
     for(const [name, stage] of Object.entries(stagesRaw)) { 
         heapsRaw[stage.meta.href] = { name, heap: [] }
     }
-    console.time('get-heaps-tasks')
+    const tTasks = Date.now()
     const tasks = await broker.call('proxy.fetchAllRows', { url: `https://api.moysklad.ru/api/remap/1.2/entity/productiontask?filter=`
         +`state.name=Раскроен`
         +`;state.name=Ждёт раскрой`
@@ -20,8 +20,8 @@ export const updateHeaps = async () => {
         +`;state.name=Перерезать`
         +`;state.name=Обработан`
     })
-    console.timeEnd('get-heaps-tasks')
-    console.time('get-heaps-details')
+    broker.logger.info({ durationMs: Date.now() - tTasks, tasks: tasks.length }, 'updateHeaps: задания получены')
+    const tDetails = Date.now()
     const tasksWithDetails = await Promise.all(
         tasks.map(async (task) => {
             const taskHref = task.meta.href;
@@ -38,7 +38,7 @@ export const updateHeaps = async () => {
             };
         })
     );
-    console.timeEnd('get-heaps-details')
+    broker.logger.info({ durationMs: Date.now() - tDetails }, 'updateHeaps: детали заданий получены')
     const assortmentReqAttrs = ['Длина в мм', 'Ширина в мм', 'Окрашивание', 'Тип станка', 'Тип изделия',
         'Материал 1','Материал 2', 'Материал 3', 'Материал 4', 'Вид обработки', '№ заказа покупателя',
         'Кол-во вырезов 1 категорий', 'Кол-во вырезов 2 категорий', 'Кол-во вырезов 3 категорий', 'Печать',
@@ -204,7 +204,7 @@ export const updateHeaps = async () => {
         heaps[name] = heap
     }
     await valkey.set('heaps', JSON.stringify(heaps))
-    console.timeEnd('get-heaps-total')
+    broker.logger.info({ durationMs: Date.now() - tTotal }, 'updateHeaps: готово')
     return true
 }
 

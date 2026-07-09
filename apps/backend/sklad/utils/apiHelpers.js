@@ -1,6 +1,5 @@
 import crypto from 'crypto'
 import { valkey } from "@askell/shared"
-import { broker } from '../index.js'
 import { getData } from './dataManager.js'
 import { generateSmdMaterials } from './generateSmdMaterials.js'
 import generateProductAttributes from './generateProductAttributes.js'
@@ -22,6 +21,7 @@ const getStagesHash = (stages) =>
     crypto.createHash('sha256').update(JSON.stringify(stages)).digest('hex')
 
 export const makeProductionTask = async ({
+    ctx,
     materialsStore,
     productsStore,
     productionRows,
@@ -32,7 +32,7 @@ export const makeProductionTask = async ({
     createdEntitys
 }) => {
     const { stores, attributes } = getData()
-    const task = await broker.call('proxy.sklad', { url: 'https://api.moysklad.ru/api/remap/1.2/entity/productiontask',
+    const task = await ctx.call('proxy.sklad', { url: 'https://api.moysklad.ru/api/remap/1.2/entity/productiontask',
         type: 'post',
         data: {
             materialsStore: { meta: stores[materialsStore].meta },
@@ -54,6 +54,7 @@ export const makeProductionTask = async ({
 }
 
 export const makeProcessingPlan = async ({
+    ctx,
     data,
     name,
     order,
@@ -87,15 +88,15 @@ export const makeProcessingPlan = async ({
         folderId = "92522e19-80c1-11f0-0a80-09fe001efbca"
     }
     if (data?.result?.other?.package && !isPF) {
-        const positions = await broker.call('proxy.sklad', { url: `${processingProcess.href}/positions` })
+        const positions = await ctx.call('proxy.sklad', { url: `${processingProcess.href}/positions` })
         finalMaterials.push({
             processingProcessPosition: { meta: positions.rows.at(-1).meta },
             assortment: { meta: sklad_packaging[viz ? 'Гофролист Т22 1050х2500 мм' : 'Гофролист Т21 1050х2000 мм'].meta },
             quantity: data.result.other.S * 2
         })
     }
-    const processingProcessFull = await broker.call('proxy.sklad', { url: `${processingProcess.href}/positions?expand=processingstage` })
-    const response = await broker.call('proxy.sklad', { url: 'https://api.moysklad.ru/api/remap/1.2/entity/processingplan', type: 'post', data: {
+    const processingProcessFull = await ctx.call('proxy.sklad', { url: `${processingProcess.href}/positions?expand=processingstage` })
+    const response = await ctx.call('proxy.sklad', { url: 'https://api.moysklad.ru/api/remap/1.2/entity/processingplan', type: 'post', data: {
         name: `${order.name}, ${isPF ? 'ПФ, ' : ''}${name}`,
         processingProcess: { meta: processingProcess },
         ...(finalMaterials ? { materials: finalMaterials } : {}),
@@ -121,7 +122,7 @@ export const makeProcessingPlan = async ({
     return response
 }
 
-export const makeProduct = async ({ data, material, createdEntitys, order, type, processingSPO, colorSPO, temperedSPO }) => {
+export const makeProduct = async ({ ctx, data, material, createdEntitys, order, type, processingSPO, colorSPO, temperedSPO }) => {
     const { attributes, sklad_materials } = getData()
     const { height, width, drills, zenk, cutsv1, cutsv2, cutsv3, print } = data.initialData
     const processing = data.initialData.processing || processingSPO
@@ -130,7 +131,7 @@ export const makeProduct = async ({ data, material, createdEntitys, order, type,
     const { stanok } = data.result.other
     const attrs = { height, width, processing, drills, zenk, cutsv1, cutsv2, cutsv3, tempered, color, print, isPF: true, order, material, stanok }
     if (type) attrs.type = type
-    const product = await broker.call('proxy.sklad', { url: 'https://api.moysklad.ru/api/remap/1.2/entity/product', type: 'post', data: {
+    const product = await ctx.call('proxy.sklad', { url: 'https://api.moysklad.ru/api/remap/1.2/entity/product', type: 'post', data: {
         name: `ПФ ${material} (${height}х${width}, ${stanok && stanok}, ${processing && processing}${tempered ? ', Закаленное' : ''}${cutsv1 ? `, Вырезы 1 кат.: ${cutsv1}` : ''}${cutsv2 ? `, Вырезы 2 кат.: ${cutsv2}` : ''}${cutsv3 ? `, Вырезы 3 кат.: ${cutsv3}` : ''}${drills ? `, Сверление: ${drills}` : ''}${zenk ? `, Зенкование: ${zenk}` : ''}${print ? ', Печать' : ''}${color ? `, ${color}` : ''}, площадь: ${(height * width / 1000000).toFixed(2)})`,
         attributes: generateProductAttributes(attrs, attributes, sklad_materials),
         volume: Number((data.result.other.S).toFixed(2)),
@@ -141,13 +142,13 @@ export const makeProduct = async ({ data, material, createdEntitys, order, type,
     return product
 }
 
-export const makeProcessingProcess = async (stages) => {
+export const makeProcessingProcess = async (stages, ctx) => {
     const { processingStages } = getData()
     const normalizedStages = stages.map(s => s.trim().toLowerCase())
     const hash = getStagesHash(normalizedStages)
     const cached = await valkey.hget(PROCESSING_PROCESS_CACHE_KEY, hash)
     if (cached) return JSON.parse(cached)
-    const response = await broker.call('proxy.sklad', { url: 'https://api.moysklad.ru/api/remap/1.2/entity/processingprocess', type: 'post', data: {
+    const response = await ctx.call('proxy.sklad', { url: 'https://api.moysklad.ru/api/remap/1.2/entity/processingprocess', type: 'post', data: {
         name: String(Date.now()),
         positions: stages.map((el, i) => {
             const next = stages[i + 1]

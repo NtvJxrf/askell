@@ -1,13 +1,11 @@
-import { ServiceBroker } from "moleculer";
+import { Errors } from "moleculer";
 import got from 'got';
 import https from 'https';
-import { initEnv } from "@askell/shared";
+import { createBroker } from "../lib/broker.js";
 
-const broker = new ServiceBroker({
-  nodeID: "proxy",
-  transporter: "nats://localhost:4222",
-  logger: true
-});
+const { MoleculerError } = Errors;
+
+const broker = createBroker("proxy");
 
 const WINDOW_MS = 3000;
 const MAX_WINDOW_REQUESTS = 11;
@@ -46,7 +44,7 @@ function getTokenEnv(tokenName) {
         case 'token4':
             return process.env.SkladAuthToken4;
         default:
-            throw new Error(`Неизвестный токен: ${tokenName}`);
+            throw new MoleculerError(`Неизвестный токен: ${tokenName}`, 500, 'UNKNOWN_TOKEN', { tokenName });
     }
 }
 function chooseToken(type) {
@@ -112,22 +110,23 @@ broker.createService({
                 }, WINDOW_MS);
                 state.totalParallel++;
                 try{
-                    console.log(`Making ${type.toUpperCase()} request to ${url} with token ${token}. Current state:`, state);
+                    this.logger.debug({ type: type.toUpperCase(), url, token, state: { ...state } }, `MoySklad ${type.toUpperCase()} ${url}`);
                     const response = await gotClient[type](url, { ...args });
                     if(response.statusCode >= 400){
-                        throw new Error(`Ошибка при запросе к ${url}: ${response.statusCode} - ${response.body}`);
+                        throw new MoleculerError(`Ошибка при запросе к ${url}: ${response.statusCode}`, 502, 'UPSTREAM_ERROR', { url, statusCode: response.statusCode, body: String(response.body).slice(0, 2000) });
                     }
                     try{
                         const body = JSON.parse(response.body);
                         return body
                     }catch(err){
-                        console.error(`Error parsing response from ${url}:`, err);
+                        this.logger.warn({ url }, `Ответ от ${url} не JSON, возвращаем как есть`);
                         return response.body
                     }
                 }
                 catch(err){
-                    console.error(`Error in request to ${url} with token ${token}:`, err);
-                    throw new Error(`Ошибка при запросе к ${url}: ${err.message}`, { error: err });
+                    this.logger.error({ err, url, token }, `Ошибка запроса к ${url}`);
+                    if (err instanceof MoleculerError) throw err;
+                    throw new MoleculerError(`Ошибка при запросе к ${url}: ${err.message}`, 502, 'UPSTREAM_ERROR', { url });
                 }
                 finally{
                     state[token]--;
@@ -172,18 +171,19 @@ broker.createService({
             if (data) args.json = data;
             if (headers) args.headers = headers;
             try{
-                console.log(`Making ${type.toUpperCase()} request to ${url}`);
+                this.logger.debug({ type: type.toUpperCase(), url }, `HTTP ${type.toUpperCase()} ${url}`);
                 const response = await gotClient[type](url, args);
                 try{
                     const body = JSON.parse(response.body);
                     return body
                 }catch(err){
-                    console.error(`Error parsing response from ${url}:`, err);
+                    this.logger.warn({ url }, `Ответ от ${url} не JSON, возвращаем как есть`);
                     return response.body
                 }
             }catch(err){
-                console.error(`Error in request to ${url}:`, err);
-                throw err;
+                this.logger.error({ err, url }, `Ошибка запроса к ${url}`);
+                if (err instanceof MoleculerError) throw err;
+                throw new MoleculerError(`Ошибка при запросе к ${url}: ${err.message}`, 502, 'UPSTREAM_ERROR', { url });
             }
         }
     }

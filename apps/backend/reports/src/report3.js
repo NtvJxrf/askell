@@ -56,7 +56,7 @@ function setMoneyFormatByColumn(worksheet, columnName, currencySymbol = '₽') {
   }
 }
 
-export default async function createReport ({filters, broker}) {
+export default async function createReport ({filters, ctx}) {
   const { startDate, endDate } = filters
 
   function getYearsInRange(startDate, endDate) {
@@ -75,7 +75,7 @@ export default async function createReport ({filters, broker}) {
     2. Загрузка счетов
   ====================================================== */
 
-  const invoices = await broker.call("fetchAllRows", {
+  const invoices = await ctx.call("proxy.fetchAllRows", {
     url: 'https://api.moysklad.ru/api/remap/1.2/entity/invoiceout' +
       `?filter=` +
       `moment>${startDate} 00:00:00;` +
@@ -100,7 +100,7 @@ export default async function createReport ({filters, broker}) {
     ),
   };
 
-  const reportCounterpartys = await broker.call("fetchAllRows", {
+  const reportCounterpartys = await ctx.call("proxy.fetchAllRows", {
     url: 'https://api.moysklad.ru/api/remap/1.2/report/counterparty?expand=1234',
     method: 'post',
     data: counterpartiesPayload

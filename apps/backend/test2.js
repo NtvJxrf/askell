@@ -26,25 +26,27 @@ await broker.waitForServices(['users', 'proxy']);
 // })
 // console.log(test.body)
 // const res = await broker.call("data-refresher.updateHeaps");
-// const heaps = await broker.call("data-refresher.getHeaps");
-// const {schedule, index} = await broker.call("data-refresher.getSchedule");
-// const pricesAndCoefs = JSON.parse(await valkey.get('sklad:data:pricesAndCoefs'));
-// const stages = JSON.parse(await valkey.get('sklad:data:processingStages'));
-// console.time('sim')
-// const simres = await simulation({
-//   heaps,
-//   schedule: schedule,
-//   startIndex: index,
-//   pricesAndCoefs,
-//   stages,
-//   logging: true,
-// })
+const heaps = await broker.call("data-refresher.getHeaps");
+const {schedule, index} = await broker.call("data-refresher.getSchedule");
+const pricesAndCoefs = JSON.parse(await valkey.get('sklad:data:pricesAndCoefs'));
+const stages = JSON.parse(await valkey.get('sklad:data:processingStages'));
+const stagesAndNorms = JSON.parse(await valkey.get('sklad:data:stagesAndNorms'));
+console.time('sim')
+const simres = simulation({
+  heaps,
+  schedule: schedule,
+  startIndex: index,
+  pricesAndCoefs,
+  stages,
+  logging: true,
+  stagesAndNorms,
+})
 // await valkey.set('simulationResult', JSON.stringify(simres))
 // const res = await broker.call('&node.actions');
 // const res = JSON.parse(await valkey.get('settings'));
 // const res = await broker.call("reports.create", { filters: { startDate: '2026-06-20', endDate: '2026-06-20' }, type: 'report1' });
 // const list = await broker.call("reports.list");
-const res = await broker.call("sklad.createPZ", { id: 'e65e442d-d19c-11f0-0a80-0390000360cd', initiator: '1c@askell' });
-console.log(res)
-// console.timeEnd('sim')
+// const res = await broker.call("sklad.createPZ", { id: 'e65e442d-d19c-11f0-0a80-0390000360cd', initiator: '1c@askell' });
+console.log(simres)
+console.timeEnd('sim')
 await broker.stop();

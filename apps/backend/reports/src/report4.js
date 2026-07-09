@@ -138,9 +138,9 @@ function buildTemperingSheet(orders) {
   return sheetData;
 }
 
-export default async function createReport({ filters, broker }) {
+export default async function createReport({ filters, ctx }) {
     const { startDate, endDate } = filters;
-    const orders = await broker.call('proxy.fetchAllRows', { url: `https://api.moysklad.ru/api/remap/1.2/entity/customerorder?filter=moment>${startDate} 00:00:00;moment<${endDate} 23:59:59;state.name=Готово;state.name=Отгружен&expand=positions.assortment`});
+    const orders = await ctx.call('proxy.fetchAllRows', { url: `https://api.moysklad.ru/api/remap/1.2/entity/customerorder?filter=moment>${startDate} 00:00:00;moment<${endDate} 23:59:59;state.name=Готово;state.name=Отгружен&expand=positions.assortment`});
 
     const workbook = new ExcelJS.Workbook();
     workbook.creator = 'Askell';

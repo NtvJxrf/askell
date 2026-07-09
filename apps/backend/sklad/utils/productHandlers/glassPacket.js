@@ -2,7 +2,7 @@ import generateStages from '../generateStages.js'
 import { makeProcessingProcess, makeProduct, makeProcessingPlan } from '../apiHelpers.js'
 import { getData } from '../dataManager.js'
 
-export const glassPacket = async ({ data, order, position, createdEntitys, results }) => {
+export const glassPacket = async ({ ctx, data, order, position, createdEntitys, results }) => {
     const { sklad_materials, colors } = getData()
     const materialsList = { ...sklad_materials, ...colors }
 
@@ -21,17 +21,17 @@ export const glassPacket = async ({ data, order, position, createdEntitys, resul
     const pfs = []
     for (const material of materials) {
         const [processingProcess, product] = await Promise.all([
-            makeProcessingProcess(generateStages(material, 'glassPolev')),
-            makeProduct({ data, material: material[0], createdEntitys, order, type: 'Стекло', processingSPO: material[2], colorSPO: material[3], temperedSPO: material[1] })
+            makeProcessingProcess(generateStages(material, 'glassPolev'), ctx),
+            makeProduct({ ctx, data, material: material[0], createdEntitys, order, type: 'Стекло', processingSPO: material[2], colorSPO: material[3], temperedSPO: material[1] })
         ])
-        const plan = await makeProcessingPlan({ data, name: position.assortment.name, order, processingProcess, product, isPF: true, material: material[0], createdEntitys, mode: 'glass' })
+        const plan = await makeProcessingPlan({ ctx, data, name: position.assortment.name, order, processingProcess, product, isPF: true, material: material[0], createdEntitys, mode: 'glass' })
         plan._material = material[0]
         plan.quantity = position.quantity
         results.polevGlassForSp.push(plan)
         pfs.push(product)
     }
 
-    const processingProcessPolev = await makeProcessingProcess(generateStages(data, 'SPbuild'))
+    const processingProcessPolev = await makeProcessingProcess(generateStages(data, 'SPbuild'), ctx)
     const materialsSP = pfs.map(pf => ({ assortment: { meta: pf.meta }, quantity: 1 }))
     const excludedWords = ['стекло', 'зеркало', 'триплекс']
     const filteredMaterials = data.result.materials.filter(el => !excludedWords.some(word => el.name.toLowerCase().includes(word)))
@@ -42,7 +42,7 @@ export const glassPacket = async ({ data, order, position, createdEntitys, resul
         })
     }
 
-    const planPolev = await makeProcessingPlan({ data, name: position.assortment.name, order, processingProcess: processingProcessPolev, product: position.assortment, isPF: false, materials: materialsSP, createdEntitys })
+    const planPolev = await makeProcessingPlan({ ctx, data, name: position.assortment.name, order, processingProcess: processingProcessPolev, product: position.assortment, isPF: false, materials: materialsSP, createdEntitys })
     planPolev.quantity = position.quantity
     results.polevSP.push(planPolev)
 }

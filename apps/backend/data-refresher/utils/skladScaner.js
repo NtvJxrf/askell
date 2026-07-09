@@ -5,14 +5,22 @@ export const scanNonPayedOrders = async () => {
     const states = JSON.parse(await valkey.get('sklad:data:states')).customerorder
     for(const order of orders.rows){
         if(order.payedSum >= order.sum){
-            await broker.call('proxy.sklad', { url: order.meta.href, type: 'PUT', data: { state: { meta: states['Готово']} } })
+            await broker.call('proxy.sklad', { 
+                url: order.meta.href,
+                type: 'put',
+                data: { 
+                    state: { 
+                        meta: states['Готово'].meta
+                    } 
+                } 
+            })
         }
     }
 }
 export async function createCartonLoss (){
     const today = new Date()
     const date = today.toISOString().slice(0, 10) // YYYY-MM-DD
-    const response = await fetchAllRows(`https://api.moysklad.ru/api/remap/1.2/entity/demand?filter=moment>${date} 00:00:00;moment<${date} 23:59:59&expand=positions.assortment,store`)
+    const response = await broker.call('proxy.fetchAllRows', { url: `https://api.moysklad.ru/api/remap/1.2/entity/demand?filter=moment>${date} 00:00:00;moment<${date} 23:59:59&expand=positions.assortment,store` })
     const result = {
         'ВИЗ СГИ': {
             material: { 
@@ -75,7 +83,7 @@ export async function createCartonLoss (){
             quantity: 0
         })
         if(posData.quantity <= 0) continue
-        await broker.call('proxy.sklad', { url: 'https://api.moysklad.ru/api/remap/1.2/entity/loss', type: 'POST', data: {
+        await broker.call('proxy.sklad', { url: 'https://api.moysklad.ru/api/remap/1.2/entity/loss', type: 'post', data: {
             organization: {
                 "meta" : {
                     "href" : "https://api.moysklad.ru/api/remap/1.2/entity/organization/ecb1e71e-cfd4-11e5-7a69-97110006a2a3",
@@ -85,7 +93,7 @@ export async function createCartonLoss (){
                     "uuidHref" : "https://online.moysklad.ru/app/#mycompany/edit?id=ecb1e71e-cfd4-11e5-7a69-97110006a2a3"
                 }
             },
-            store: { meta: stores[result[store].store] },
+            store: { meta: stores[result[store].store].meta },
             positions: [posData],
             description
         }})

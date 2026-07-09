@@ -1,4 +1,3 @@
-import { broker } from '../index.js'
 import checkOrderDetails from './checkOrderDetails.js'
 import { productTypeHandlers } from './productHandlers/index.js'
 import { makeProductionTask } from './apiHelpers.js'
@@ -33,7 +32,7 @@ const groupByMaterial = (plans) => plans.reduce((acc, plan) => {
 // A production task should reserve its input materials only when it actually has any.
 const shouldReserve = (plans) => plans.reduce((sum, plan) => sum + (plan?.materials?.meta?.size || 0), 0) > 0
 
-const rollback = async (createdEntitys) => {
+const rollback = async (createdEntitys, ctx) => {
     const entities = [
         ['task', 'productiontask'],
         ['plan', 'processingplan'],
@@ -41,17 +40,17 @@ const rollback = async (createdEntitys) => {
     ]
     for (const [key, entity] of entities) {
         if (createdEntitys[key].length > 0) {
-            await broker.call('proxy.sklad', { url: `https://api.moysklad.ru/api/remap/1.2/entity/${entity}/delete`, type: 'post', data: createdEntitys[key].map(el => ({ meta: el.meta })) })
+            await ctx.call('proxy.sklad', { url: `https://api.moysklad.ru/api/remap/1.2/entity/${entity}/delete`, type: 'post', data: createdEntitys[key].map(el => ({ meta: el.meta })) })
         }
     }
 }
 
-export const createProductionTask = async ({ id, initiator }) => {
+export const createProductionTask = async ({ id, initiator }, ctx) => {
     const { settings } = getData()
-    const order = await broker.call('proxy.sklad', { url: `https://api.moysklad.ru/api/remap/1.2/entity/customerorder/${id}?expand=positions.assortment,invoicesOut,agent,state,owner&limit=100` })
+    const order = await ctx.call('proxy.sklad', { url: `https://api.moysklad.ru/api/remap/1.2/entity/customerorder/${id}?expand=positions.assortment,invoicesOut,agent,state,owner&limit=100` })
     if (!order) throw new Error(`Заказ покупателя с ${id} не найден`)
 
-    const skip = await checkOrderDetails(order, initiator)
+    const skip = await checkOrderDetails(order, initiator, ctx)
     if (skip) return
 
     const createdEntitys = { task: [], plan: [], product: [] }
@@ -77,14 +76,14 @@ export const createProductionTask = async ({ id, initiator }) => {
                 t3heap.push({position, data})
             }
             if (data && !data?.result?.other?.customerSuppliedGlassForTempering) {
-                await productTypeHandlers[data.result.other.type]({ data, order, position, createdEntitys, results })
+                await productTypeHandlers[data.result.other.type]({ ctx, data, order, position, createdEntitys, results })
                 continue
             }
             if (position.assortment.name.toLowerCase().includes('упаковка')) {
                 addComment += `${position.assortment.name}\n`
             }
             if (!data && (attrs['Тип СМД'] || attrs['Серия'])) {
-                await productTypeHandlers['СМД']({ data: null, order, position, createdEntitys, results })
+                await productTypeHandlers['СМД']({ ctx, data: null, order, position, createdEntitys, results })
             }
         }
 
@@ -141,6 +140,7 @@ export const createProductionTask = async ({ id, initiator }) => {
         else if (day === 0) date.setDate(date.getDate() + 1);
         const createTask = ({ source, materialsStore, productsStore, checkboxes, reserve }) =>
             makeProductionTask({
+                ctx,
                 materialsStore,
                 productsStore,
                 productionRows: source.map(plan => ({ processingPlan: { meta: plan.meta }, productionVolume: plan.quantity })),
@@ -161,14 +161,14 @@ export const createProductionTask = async ({ id, initiator }) => {
             }
         }
     } catch (error) {
-        console.error('Ошибка во время создания производственного задания', { stack: error.stack })
-        await rollback(createdEntitys)
-        await broker.call('proxy.sklad', { url: 'https://api.moysklad.ru/api/remap/1.2/entity/task', type: 'post', data: {
+        ctx.broker.logger.error({ err: error, order: order.name }, 'Ошибка во время создания производственного задания')
+        await rollback(createdEntitys, ctx)
+        await ctx.call('proxy.sklad', { url: 'https://api.moysklad.ru/api/remap/1.2/entity/task', type: 'post', data: {
             assignee: { meta: order.owner.meta },
             operation: { meta: order.meta },
             description: `Ошибка во время создания производственного задания ${order.name}`
         } })
-        await broker.call('proxy.sklad', { url: `https://api.moysklad.ru/api/remap/1.2/entity/customerorder/${order.id}`, type: 'put', data: {
+        await ctx.call('proxy.sklad', { url: `https://api.moysklad.ru/api/remap/1.2/entity/customerorder/${order.id}`, type: 'put', data: {
             state: { meta: ERROR_STATE }
         } })
         return
@@ -177,23 +177,23 @@ export const createProductionTask = async ({ id, initiator }) => {
     // Best-effort notifications: a failure here must not roll back the tasks we just created.
     if (results.print) {
         try {
-            await broker.call('proxy.sklad', { url: 'https://api.moysklad.ru/api/remap/1.2/entity/task', type: 'post', data: {
+            await ctx.call('proxy.sklad', { url: 'https://api.moysklad.ru/api/remap/1.2/entity/task', type: 'post', data: {
                 assignee: { meta: UV_PRINT_ASSIGNEE },
                 operation: { meta: order.meta },
                 description: `В заказе №${order.name} есть уф печать`
             } })
         } catch (error) {
-            console.error(`Не удалось создать задачу об УФ печати для заказа ${order.name}`, { stack: error.stack })
+            ctx.broker.logger.error({ err: error, order: order.name }, `Не удалось создать задачу об УФ печати для заказа ${order.name}`)
         }
     }
 
     try {
-        await broker.call('proxy.request', { url: process.env.UNISENDER_URL_prod, type: 'post', data: {
+        await ctx.call('proxy.request', { url: process.env.UNISENDER_URL_prod, type: 'post', data: {
             email: order?.agent?.email,
             orderName: order.name,
             deliveryPlannedMoment: order.deliveryPlannedMoment?.split(' ')[0]
         } })
     } catch (error) {
-        console.error(`Не удалось отправить уведомление по заказу ${order.name}`, { stack: error.stack })
+        ctx.broker.logger.error({ err: error, order: order.name }, `Не удалось отправить уведомление по заказу ${order.name}`)
     }
 }

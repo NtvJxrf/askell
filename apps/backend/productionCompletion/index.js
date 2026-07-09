@@ -1,16 +1,12 @@
-import { ServiceBroker } from "moleculer";
-import { initEnv, valkey } from "@askell/shared";
+import { valkey } from "@askell/shared";
+import { createBroker } from "../lib/broker.js";
 const PRODUCTION_STAGE_COMPLETION_USER_ATTRIBUTE_META = {
     href : "https://api.moysklad.ru/api/remap/1.2/entity/productionstagecompletion/metadata/attributes/0f552d4d-2e92-11f1-0a80-1088000fa9b8",
     type : "attributemetadata",
     mediaType : "application/json"
 }
 
-const broker = new ServiceBroker({
-  nodeID: "productionCompletion",
-  transporter: "nats://localhost:4222",
-  logger: true
-});
+const broker = createBroker("productionCompletion");
 
 broker.createService({
     name: "productionCompletion",
@@ -20,13 +16,13 @@ broker.createService({
             permissions: ['Производство'],
             async handler(ctx) {
                 const { item, user, quantity, description } = ctx.params;
-                const response = await broker.call('proxy.sklad',{
+                const response = await ctx.call('proxy.sklad',{
                     type: 'post',
                     url: `https://api.moysklad.ru/api/remap/1.2/entity/productionstagecompletion`,
                     data: buildStageCompletionPayload({ ...item, description, quantity }, user)
                 })
                 if(!response.errors){
-                    updateHeaps({ ...item, quantity })
+                    updateHeaps({ ...item, quantity }, ctx).catch(err => this.logger.error({ err }, 'Ошибка обновления куч после выполнения этапа'))
                     return true
                 }
                 return response.errors[0].error
@@ -37,14 +33,14 @@ broker.createService({
             permissions: ['Производство'],
             async handler(ctx) {
                 const { item, user, quantity, description } = ctx.params;
-                const changeTask = await broker.call('proxy.sklad', { 
+                const changeTask = await ctx.call('proxy.sklad', { 
                     url: `https://api.moysklad.ru/api/remap/1.2/entity/productiontask/${item.productionTaskId}/productionrows/${item.productionRowId}`,
                     type: 'put',
                     data: {
                         productionVolume: item.totalQuantity + quantity
                     }
                 });
-                const response = await broker.call('proxy.sklad',{
+                const response = await ctx.call('proxy.sklad',{
                     type: 'post',
                     url: `https://api.moysklad.ru/api/remap/1.2/entity/productionstagecompletion`,
                     data: buildStageCompletionPayload({ ...item, description, quantity }, user, { defect: true })
@@ -58,7 +54,7 @@ broker.createService({
     }
 });
 
-const updateHeaps = async (data) => {
+const updateHeaps = async (data, ctx) => {
     const heaps = JSON.parse(await valkey.get('heaps')) || {}
     let heapKey = null
     for (const [key, heap] of Object.entries(heaps)) {
@@ -68,7 +64,7 @@ const updateHeaps = async (data) => {
         }
     }
     if(!heapKey) {
-        console.error('Элементы не найдены в кучах для productionStageId', data.productionStageId)
+        broker.logger.error({ productionStageId: data.productionStageId }, 'Элементы не найдены в кучах для productionStageId')
         return
     }
 
@@ -90,7 +86,7 @@ const updateHeaps = async (data) => {
         newHeap.push(item)
     }
     heaps[heapKey] = newHeap
-    broker.call('websocket.broadcast', { type: 'heaps', heaps })
+    ctx.call('websocket.broadcast', { type: 'heaps', heaps })
     await valkey.set('heaps', JSON.stringify(heaps))
 }
 

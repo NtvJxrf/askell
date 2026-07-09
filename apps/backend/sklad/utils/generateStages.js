@@ -1,7 +1,7 @@
 const generateStages = (data, place) => {
     const result = []
     switch (place) {
-        case 'selk': {
+        case 'glass': {
             const stanok = data.result.other.stanok
             const processing = data.initialData.processing
             if (!processing) throw new Error('Нет данных о виде обработки')

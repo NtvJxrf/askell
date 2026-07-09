@@ -1,16 +1,15 @@
-import { ServiceBroker } from "moleculer";
+import { Errors } from "moleculer";
+import { createBroker } from "../lib/broker.js";
 import { getProcessingStages, getPackagingMaterials, getStores, getUnders, getColors, getPricesAndCoefs,
   getCurrency, getPriceTypes, getAttributes, getEmployees, getStates, getProcessingPlansSmd, getMaterials, getStock, getStagesAndNorms } from "./utils/skladEntitys.js";
 import { updateHeaps } from "./utils/productionload.js";
 import { updateSchedule } from "./utils/schedule.js";
 import { valkey, settingsSchema } from "@askell/shared";
 import { scanNonPayedOrders, createCartonLoss } from './utils/skladScaner.js';
+import simulation from "@askell/shared/calc/simulation"
 import cron from 'node-cron'
-export const broker = new ServiceBroker({
-  nodeID: "data-refresher",
-  transporter: "nats://localhost:4222",
-  logger: true
-});
+const { MoleculerClientError } = Errors;
+export const broker = createBroker("data-refresher");
 
 const map = {
   getProcessingStages,
@@ -45,21 +44,21 @@ broker.createService({
       async handler(ctx) {
         await map[ctx.params.entity]();
         await updateSelfcost();
-        await broker.call("websocket.broadcast", { type: 'selfcost', selfcost });
+        await ctx.call("websocket.broadcast", { type: 'selfcost', selfcost });
         return true
       }
     },
     updateAllEntities: {
       rest: "POST /updateAllEntities",
       permissions: ['Настройки'],
-      async handler() {
+      async handler(ctx) {
         const promises = [];
         for(const entity in map) {
           promises.push(map[entity]());
         }
         await Promise.all(promises);
         await updateSelfcost();
-        await broker.call("websocket.broadcast", { type: 'selfcost', selfcost });
+        await ctx.call("websocket.broadcast", { type: 'selfcost', selfcost });
         return true
       }
     },
@@ -69,14 +68,17 @@ broker.createService({
       async handler(ctx) {
         const settings = JSON.parse(await valkey.get('settings'));
         const { key, value, editor } = ctx.params;
+        if (!settingsSchema[key]) {
+          throw new MoleculerClientError(`Неизвестная настройка: ${key}`, 422, 'UNKNOWN_SETTING', { key });
+        }
         const valid = settingsSchema[key].schema.safeParse(value)
         if(!valid.success) {
-          throw new Error("Некорректное значение");
+          throw new MoleculerClientError("Некорректное значение", 422, 'INVALID_SETTING_VALUE', { key });
         }
         await valkey.set('settings', JSON.stringify({ ...settings, [key]: { value, editor } }));
-        const settingsUpdated = await broker.call("data-refresher.getSettings");
-        await broker.emit('dataUpdated', 'settings')
-        broker.call("websocket.broadcast", { type: 'settings', settings: settingsUpdated });
+        const settingsUpdated = await ctx.call("data-refresher.getSettings");
+        await ctx.emit('dataUpdated', 'settings')
+        ctx.call("websocket.broadcast", { type: 'settings', settings: settingsUpdated });
         return true
       }
     },
@@ -90,19 +92,19 @@ broker.createService({
     },
     updateHeaps: {
       rest: "GET /updateHeaps",
-      async handler() {
-        if (lastUpdateHeaps !== 0 && Date.now() - lastUpdateHeaps < 300_000) throw new Error(404, 'Only one update per 5 minutes')
+      async handler(ctx) {
+        if (lastUpdateHeaps !== 0 && Date.now() - lastUpdateHeaps < 300_000) throw new MoleculerClientError('Обновление куч доступно не чаще раза в 5 минут', 429, 'TOO_MANY_UPDATES')
         lastUpdateHeaps = Date.now()
         await updateHeaps();
-        broker.call("websocket.broadcast", { type: 'heaps', heaps: JSON.parse(await valkey.get('heaps')) || null });
+        ctx.call("websocket.broadcast", { type: 'heaps', heaps: JSON.parse(await valkey.get('heaps')) || null });
         return true
       }
     },
     updateSchedule: {
       rest: "GET /updateSchedule",
-      async handler() {
+      async handler(ctx) {
         await updateSchedule();
-        broker.call("websocket.broadcast", { type: 'schedule', schedule: JSON.parse(await valkey.get('schedule')) || null });
+        ctx.call("websocket.broadcast", { type: 'schedule', schedule: JSON.parse(await valkey.get('schedule')) || null });
         return true;
       }
     },
@@ -117,7 +119,7 @@ broker.createService({
       async handler() {
         const heaps = JSON.parse(await valkey.get('heaps')) || null;
         if(!heaps) {
-          throw new Error(404, 'Heaps not found. Please update heaps first.');
+          throw new MoleculerClientError('Кучи не найдены. Сначала выполните обновление куч.', 404, 'HEAPS_NOT_FOUND');
         }
         return heaps;
       }
@@ -147,25 +149,27 @@ broker.createService({
     },
     updateProductinLoad: {
       rest: "GET /updateProductinLoad",
-      async handler() {
-        await updateSchedule();
-        await updateHeaps();
-        const heaps = await broker.call("data-refresher.getHeaps");
-        const {schedule, index} = await broker.call("data-refresher.getSchedule");
+      async handler(ctx) {
+        // await updateSchedule();
+        // await updateHeaps();
+        const heaps = await ctx.call("data-refresher.getHeaps");
+        const {schedule, index} = await ctx.call("data-refresher.getSchedule");
         const pricesAndCoefs = JSON.parse(await valkey.get('sklad:data:pricesAndCoefs'));
         const stages = JSON.parse(await valkey.get('sklad:data:processingStages'));
+        const stagesAndNorms = JSON.parse(await valkey.get('sklad:data:stagesAndNorms'));
         const simres = await simulation({
           heaps,
           schedule: schedule,
           startIndex: index,
           pricesAndCoefs,
           stages,
+          stagesAndNorms,
           logging: true,
         })
         await valkey.set('simulationResult', JSON.stringify(simres))
         await valkey.set('sklad:updates:productionLoad', Date.now());
-        broker.call("websocket.broadcast", { type: 'heaps', heaps: JSON.parse(await valkey.get('heaps')) || null });
-        broker.call("websocket.broadcast", { type: 'schedule', schedule: JSON.parse(await valkey.get('schedule')) || null });
+        ctx.call("websocket.broadcast", { type: 'heaps', heaps: JSON.parse(await valkey.get('heaps')) || null });
+        ctx.call("websocket.broadcast", { type: 'schedule', schedule: JSON.parse(await valkey.get('schedule')) || null });
         return true
       }
     }
@@ -193,7 +197,7 @@ const updateSelfcost = async () => {
       )
       selfcost[key] = filtered
     } catch(error) {
-      console.error(`Error parsing sklad:data:${key}:`, error)
+      broker.logger.error({ err: error, key }, `Ошибка парсинга sklad:data:${key}`)
       selfcost[key] = {}
     }
   }
@@ -211,27 +215,36 @@ if (process.env.NODE_ENV !== 'development') {
     try {
       await broker.call("data-refresher.updateAllEntities");
     } catch (err) {
-      console.error('updateAllEntities error:', err)
+      broker.logger.error({ err }, 'updateAllEntities error')
     }
   }, 600_000)//Каждые 10 минут
   setInterval(async () => {
     try {
       await scanNonPayedOrders()
     } catch (err) {
-      console.error('scanNonPayedOrders error:', err)
+      broker.logger.error({ err }, 'scanNonPayedOrders error')
     }
   }, 300_000)//Каждые 5 минут
   setInterval(async () => {
     try {
       await broker.call("data-refresher.updateProductinLoad");
     } catch (err) {
-      console.error('updateProductinLoad error:', err)
+      broker.logger.error({ err }, 'updateProductinLoad error')
     }
   }, 900_000)//Каждые 15 минут
   cron.schedule("0 23 * * *", async () => { // Каждый день в 23 часа ночи
-    await createCartonLoss()
+    try {
+      await createCartonLoss()
+    } catch (err) {
+      broker.logger.error({ err }, 'createCartonLoss error')
+    }
   });
 }
 await broker.start();
-await broker.waitForServices("proxy", 3000);
-await broker.call("data-refresher.updateAllEntities");
+try {
+  await broker.waitForServices("proxy", 60_000);
+  await broker.call("data-refresher.updateAllEntities");
+} catch (err) {
+  // Не роняем процесс на старте: данные подтянутся ближайшим интервалом.
+  broker.logger.error({ err }, 'Начальное обновление справочников не удалось')
+}

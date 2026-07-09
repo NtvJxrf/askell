@@ -1,11 +1,7 @@
-import { ServiceBroker } from "moleculer";
 import { WebSocket, WebSocketServer } from "ws";
+import { createBroker } from "../lib/broker.js";
 
-const broker = new ServiceBroker({
-    nodeID: "websocket",
-    transporter: "nats://localhost:4222",
-    logger: true
-});
+const broker = createBroker("websocket");
 
 broker.createService({
     name: "websocket",

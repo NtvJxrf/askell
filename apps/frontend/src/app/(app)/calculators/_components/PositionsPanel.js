@@ -181,6 +181,10 @@ export function PositionsPanel() {
         method: 'POST',
         body: {positions, order, displayPrice, planDate: null}
       });
+      dispatch(setPositions([]));
+      const { order: freshOrder, positions: freshPositions } = await backend(`/sklad/order?name=${order.name}`);
+      dispatch(setOrder(freshOrder));
+      dispatch(addPositions(freshPositions));
     }catch(err){
       console.error(err)
       toast.error(`Ошибка: ${err.message || String(err)}`);

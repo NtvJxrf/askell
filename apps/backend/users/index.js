@@ -1,4 +1,5 @@
-import { ServiceBroker, Errors } from 'moleculer';
+import { Errors } from 'moleculer';
+import { createBroker } from '../lib/broker.js';
 import { db, users, eq } from '@askell/shared/db';
 import { PERMISSIONS } from '@askell/shared/permissions';
 import {
@@ -38,11 +39,7 @@ function issueTokens(user) {
   };
 }
 
-const broker = new ServiceBroker({
-  nodeID: 'users',
-  transporter: 'nats://localhost:4222',
-  logger: true,
-});
+const broker = createBroker('users');
 
 broker.createService({
   name: 'users',

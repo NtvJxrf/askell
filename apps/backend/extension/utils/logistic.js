@@ -2,7 +2,8 @@ import { google } from "googleapis";
 import { valkey } from '@askell/shared'
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { broker } from '../index.js';
+import { Errors } from 'moleculer';
+const { MoleculerClientError } = Errors;
 // Получаем абсолютный путь к текущему файлу
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -124,11 +125,11 @@ function calcPositions(order, filter) {
   const size = `${attrs['Длина в мм']}х${attrs['Ширина в мм']}`;
   return { totalWeight, heaviest, size, packing: Object.keys(packing).join(',') };
 }
-const logisticRequest = async ({ user, dataFromForm}) => {
-  const order = await broker.call('proxy.sklad', { url: `https://api.moysklad.ru/api/remap/1.2/entity/customerorder/${dataFromForm.id}?expand=positions.assortment,organization,store` });
+const logisticRequest = async ({ user, dataFromForm}, ctx) => {
+  const order = await ctx.call('proxy.sklad', { url: `https://api.moysklad.ru/api/remap/1.2/entity/customerorder/${dataFromForm.id}?expand=positions.assortment,organization,store` });
   const attrs = (order?.attributes || []).reduce((a, x) => { a[x.name] = x.value; return a; }, {});
-  if(!attrs['Вид доставки']?.name) throw new ApiError(404, 'Не указан вид доставки');
-  if(attrs['Вид доставки']?.name == 'Самовывоз') throw new ApiError(404, 'Вид доставки самовывоз');
+  if(!attrs['Вид доставки']?.name) throw new MoleculerClientError('Не указан вид доставки', 422, 'NO_DELIVERY_TYPE');
+  if(attrs['Вид доставки']?.name == 'Самовывоз') throw new MoleculerClientError('Вид доставки самовывоз', 422, 'PICKUP_DELIVERY');
   const auth = new google.auth.GoogleAuth({
     keyFile: keyFilePath,
     scopes: ["https://www.googleapis.com/auth/spreadsheets"],

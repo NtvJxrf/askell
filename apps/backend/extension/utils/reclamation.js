@@ -1,7 +1,5 @@
-import { broker } from '../index.js';
-
-const reclamationRequest = async ({ user, dataFromForm}) => {
-  const order = await broker.call('proxy.sklad', { url: `https://api.moysklad.ru/api/remap/1.2/entity/customerorder/${dataFromForm.id}?expand=positions` });
+const reclamationRequest = async ({ user, dataFromForm}, ctx) => {
+  const order = await ctx.call('proxy.sklad', { url: `https://api.moysklad.ru/api/remap/1.2/entity/customerorder/${dataFromForm.id}?expand=positions` });
   
   let filter = null;
   if (dataFromForm.positions?.trim()) {
@@ -49,7 +47,7 @@ const reclamationRequest = async ({ user, dataFromForm}) => {
     },
     value: true
   })
-  const reclamationOrder = await broker.call('proxy.sklad', { 
+  const reclamationOrder = await ctx.call('proxy.sklad', { 
     url: `https://api.moysklad.ru/api/remap/1.2/entity/customerorder`,
     type: 'post',
     data: params

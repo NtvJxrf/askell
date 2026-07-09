@@ -13,6 +13,8 @@ const KEY_BY_FIELD = {
     processingStages: 'sklad:data:processingStages',
     attributes: 'sklad:data:attributes',
     colors: 'sklad:data:colors',
+    employees: 'sklad:data:employees',
+    states: 'sklad:data:states',
     settings: 'settings',
 }
 
@@ -29,6 +31,8 @@ const FIELD_BY_TYPE = {
     attributes: 'attributes',
     colors: 'colors',
     settings: 'settings',
+    employees: 'employees',
+    states: 'states',
 }
 
 const data = {}

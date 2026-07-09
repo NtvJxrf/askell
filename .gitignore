@@ -3,6 +3,9 @@
 
 schedule-471508-c646e9809860.json
 
+# SigNoz (клон, создаётся observability/setup-signoz.mjs)
+/signoz/
+
 # dependencies
 temporal/*
 .next/

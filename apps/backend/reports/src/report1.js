@@ -4,9 +4,9 @@ import path from "path";
 import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-export default async function createReport({ filters, broker }) {
+export default async function createReport({ filters, ctx }) {
     const { startDate, endDate } = filters;
-    const completes = await broker.call('proxy.fetchAllRows', { url: `https://api.moysklad.ru/api/remap/1.2/entity/productionstagecompletion?filter=moment>${startDate} 00:00:00;moment<${endDate} 23:59:59&expand=productionStage`});
+    const completes = await ctx.call('proxy.fetchAllRows', { url: `https://api.moysklad.ru/api/remap/1.2/entity/productionstagecompletion?filter=moment>${startDate} 00:00:00;moment<${endDate} 23:59:59&expand=productionStage`});
     const employees = JSON.parse(await valkey.get('sklad:data:employees'));
     const stages = JSON.parse(await valkey.get('sklad:data:processingStages'));
     const productionRowCache = new Map();
@@ -22,7 +22,7 @@ export default async function createReport({ filters, broker }) {
             const href = `${el.productionStage.productionRow.meta.href}?expand=processingPlan.products.assortment`;
 
             if (!productionRowCache.has(href)) {
-                productionRowCache.set(href, broker.call('proxy.sklad', { url: href }));
+                productionRowCache.set(href, ctx.call('proxy.sklad', { url: href }));
             }
 
             const productionRow = await productionRowCache.get(href);

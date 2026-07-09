@@ -489,7 +489,7 @@ function buildSummarySheet(workbook) {
 }
 
 
-export default async function createReport({filters, broker}) {
+export default async function createReport({filters, ctx}) {
   const { startDate, endDate } = filters;
 
   const urlBase =
@@ -499,7 +499,7 @@ export default async function createReport({filters, broker}) {
     `https://api.moysklad.ru/api/remap/1.2/entity/invoiceout/metadata/attributes/a38c0fc9-24c2-11f0-0a80-194c00046502<${endDate} 23:59:59` +
     `&expand=positions.assortment`;
 
-  const rows = await broker.call('proxy.fetchAllRows', { url: urlBase });
+  const rows = await ctx.call('proxy.fetchAllRows', { url: urlBase });
 
   const ordersUrl =
     `https://api.moysklad.ru/api/remap/1.2/entity/customerorder` +
@@ -507,7 +507,7 @@ export default async function createReport({filters, broker}) {
     `moment>${startDate} 00:00:00;moment<${endDate} 23:59:59;` +
     `agent=https://api.moysklad.ru/api/remap/1.2/entity/counterparty/c1c9d6d1-a0ea-11ef-0a80-0e1200509b38` +
     `&expand=positions.assortment`;
-  const orderRows = await broker.call('proxy.fetchAllRows', { url: ordersUrl });
+  const orderRows = await ctx.call('proxy.fetchAllRows', { url: ordersUrl });
 
   const workbook = new ExcelJS.Workbook();
   workbook.creator = 'Askell';

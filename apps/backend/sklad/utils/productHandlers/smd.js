@@ -10,7 +10,7 @@ const VIZ_SMD_PROCESSING_PROCESS = {
     uuidHref: "https://online.moysklad.ru/app/#processingprocess/edit?id=43072ea8-17cf-11ef-0a80-178100023cbc"
 }
 
-export const smd = async ({ data, order, position, createdEntitys, results }) => {
+export const smd = async ({ ctx, data, order, position, createdEntitys, results }) => {
     const { smdPlans } = getData()
 
     if (!data) {
@@ -20,6 +20,7 @@ export const smd = async ({ data, order, position, createdEntitys, results }) =>
         }, {})
         const print = position.assortment.name.toLowerCase().includes('уф печать')
         await makeProductionTask({
+            ctx,
             materialsStore: 'ВИЗ ПФ',
             productsStore: 'ВИЗ СГИ',
             productionRows: [{ processingPlan: { meta: smdPlans[position.assortment.name].meta }, productionVolume: position.quantity }],
@@ -37,16 +38,17 @@ export const smd = async ({ data, order, position, createdEntitys, results }) =>
     if (color) results.colors.push(color)
 
     const [processingProcess, product] = await Promise.all([
-        makeProcessingProcess(generateStages(data, 'selk')),
-        makeProduct({ data, material: data.initialData.material, createdEntitys, order, type: 'Стекло' })
+        makeProcessingProcess(generateStages(data, 'glass'), ctx),
+        makeProduct({ ctx, data, material: data.initialData.material, createdEntitys, order, type: 'Стекло' })
     ])
-    const plan = await makeProcessingPlan({ data, name: 'Доска стеклянная магнитно-маркерная ASKELL Size', order, processingProcess, product, isPF: true, material: data.initialData.material, createdEntitys, mode: 'glass' })
+    const plan = await makeProcessingPlan({ ctx, data, name: 'Доска стеклянная магнитно-маркерная ASKELL Size', order, processingProcess, product, isPF: true, material: data.initialData.material, createdEntitys, mode: 'glass' })
     plan.quantity = position.quantity
     plan._material = data.initialData.material
     results.polevGlass.push(plan)
 
-    const planViz = await makeProcessingPlan({ data, name: 'Доска стеклянная магнитно-маркерная ASKELL Size', order, processingProcess: VIZ_SMD_PROCESSING_PROCESS, product: position.assortment, color, materialMeta: product.meta, createdEntitys, mode: 'smd', viz: true })
+    const planViz = await makeProcessingPlan({ ctx, data, name: 'Доска стеклянная магнитно-маркерная ASKELL Size', order, processingProcess: VIZ_SMD_PROCESSING_PROCESS, product: position.assortment, color, materialMeta: product.meta, createdEntitys, mode: 'smd', viz: true })
     await makeProductionTask({
+        ctx,
         materialsStore: 'ВИЗ ПФ',
         productsStore: 'ВИЗ СГИ',
         productionRows: [{ processingPlan: { meta: planViz.meta }, productionVolume: position.quantity }],

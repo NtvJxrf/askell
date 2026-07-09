@@ -1,13 +1,8 @@
-import { ServiceBroker } from "moleculer";
-import { initEnv } from "@askell/shared";
+import { createBroker } from "../lib/broker.js";
 import logisticRequest from "./utils/logistic.js";
 import goodInfo from "./utils/goodinfo.js";
 import reclamationRequest from "./utils/reclamation.js";
-export const broker = new ServiceBroker({
-  nodeID: "extension",
-  transporter: "nats://localhost:4222",
-  logger: true
-});
+export const broker = createBroker("extension");
 
 broker.createService({
     name: "extension",
@@ -16,7 +11,7 @@ broker.createService({
             rest: "POST /logisticRequest",
             permissions: ['Расширение'],
             async handler(ctx) {
-                const result = await logisticRequest(ctx.params);
+                const result = await logisticRequest(ctx.params, ctx);
                 return result;
             }
         },
@@ -24,7 +19,7 @@ broker.createService({
             rest: "POST /goodInfo",
             permissions: ['Расширение'],
             async handler(ctx) {
-                const result = await goodInfo(ctx.params);
+                const result = await goodInfo(ctx.params, ctx);
                 return result;
             }
         },
@@ -32,7 +27,7 @@ broker.createService({
             rest: "POST /reclamationRequest",
             permissions: ['Расширение'],
             async handler(ctx) {
-                const result = await reclamationRequest(ctx.params);
+                const result = await reclamationRequest(ctx.params, ctx);
                 return result;
             }
         }

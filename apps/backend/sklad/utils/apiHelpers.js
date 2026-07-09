@@ -29,7 +29,9 @@ export const makeProductionTask = async ({
     checkboxes,
     reserve,
     addComment,
-    createdEntitys
+    createdEntitys,
+    productionTasks = null,
+    deliveryPlannedMoment
 }) => {
     const { stores, attributes } = getData()
     const task = await ctx.call('proxy.sklad', { url: 'https://api.moysklad.ru/api/remap/1.2/entity/productiontask',
@@ -45,9 +47,13 @@ export const makeProductionTask = async ({
             description: `${order.attributes?.find(el => el.name === 'Комментарий для производства')?.value || ''}\n${addComment}`,
             state: { meta: PRODUCTION_TASK_STATE },
             productionStart: new Date().toISOString().slice(0, 19).replace('T', ' '),
-            customerOrders: [{ meta: order.meta }],
+            deliveryPlannedMoment,
+            // ПЗ на полуфабрикаты связываются с родительским ПЗ (документы-основания),
+            // финальная продукция — напрямую с заказом покупателя.
+            ...(productionTasks
+                ? { productionTasks: productionTasks.map(meta => ({ meta })) }
+                : { customerOrders: [{ meta: order.meta }] }),
             ...(order?.owner?.meta ? { owner: { meta: order.owner.meta } } : {}),
-            ...(order?.deliveryPlannedMoment ? { deliveryPlannedMoment: order.deliveryPlannedMoment } : {})
         }})
     createdEntitys.task.push(task)
     return task
@@ -122,7 +128,7 @@ export const makeProcessingPlan = async ({
     return response
 }
 
-export const makeProduct = async ({ ctx, data, material, createdEntitys, order, type, processingSPO, colorSPO, temperedSPO }) => {
+export const makeProduct = async ({ ctx, data, material, createdEntitys, order, type, processingSPO, colorSPO, temperedSPO, pfFor }) => {
     const { attributes, sklad_materials } = getData()
     const { height, width, drills, zenk, cutsv1, cutsv2, cutsv3, print } = data.initialData
     const processing = data.initialData.processing || processingSPO
@@ -132,12 +138,12 @@ export const makeProduct = async ({ ctx, data, material, createdEntitys, order, 
     const attrs = { height, width, processing, drills, zenk, cutsv1, cutsv2, cutsv3, tempered, color, print, isPF: true, order, material, stanok }
     if (type) attrs.type = type
     const product = await ctx.call('proxy.sklad', { url: 'https://api.moysklad.ru/api/remap/1.2/entity/product', type: 'post', data: {
-        name: `ПФ ${material} (${height}х${width}, ${stanok && stanok}, ${processing && processing}${tempered ? ', Закаленное' : ''}${cutsv1 ? `, Вырезы 1 кат.: ${cutsv1}` : ''}${cutsv2 ? `, Вырезы 2 кат.: ${cutsv2}` : ''}${cutsv3 ? `, Вырезы 3 кат.: ${cutsv3}` : ''}${drills ? `, Сверление: ${drills}` : ''}${zenk ? `, Зенкование: ${zenk}` : ''}${print ? ', Печать' : ''}${color ? `, ${color}` : ''}, площадь: ${(height * width / 1000000).toFixed(2)})`,
+        name: `ПФ ${pfFor ? 'для ' + pfFor + ' ' : ''}${material} (${height}х${width}, ${stanok && stanok}, ${processing && processing}${tempered ? ', Закаленное' : ''}${cutsv1 ? `, Вырезы 1 кат.: ${cutsv1}` : ''}${cutsv2 ? `, Вырезы 2 кат.: ${cutsv2}` : ''}${cutsv3 ? `, Вырезы 3 кат.: ${cutsv3}` : ''}${drills ? `, Сверление: ${drills}` : ''}${zenk ? `, Зенкование: ${zenk}` : ''}${print ? ', Печать' : ''}${color ? `, ${color}` : ''}, площадь: ${(height * width / 1000000).toFixed(2)})`,
         attributes: generateProductAttributes(attrs, attributes, sklad_materials),
         volume: Number((data.result.other.S).toFixed(2)),
         uom: uomMeta,
         productFolder: productFoldersByType['ПФ']
-    } })
+    }})
     createdEntitys.product.push(product)
     return product
 }

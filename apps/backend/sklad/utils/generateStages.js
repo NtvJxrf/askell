@@ -15,15 +15,15 @@ const generateStages = (data, place) => {
             data.initialData.drillssmd && result.push('Сверление')
             data.initialData.zenk && result.push('Зенковка')
             data.initialData.tempered && result.push('Закалка')
+            data.initialData.color && result.push('Окраска стекла')
+            data.initialData.color && result.push('Зачистка стекла')
+            data.initialData.print && result.push('УФ печать')
+            data.initialData.color && result.push('Упаковка в картон')
             result.push('ОТК')
             return result
         }
-        case 'viz':
-            data.initialData.color && result.push('Окраска стекла')
-            data.initialData.color && result.push('Зачистка стекла')
-            data.result.other.type === 'Триплекс' && result.push('Триплексование')
-            data.initialData.print && result.push('УФ печать')
-            data.initialData.color && result.push('Упаковка в картон')
+        case 'triplex':
+            result.push('Триплексование')
             result.push('ОТК')
             return result
         case 'vizCera':

@@ -177,9 +177,14 @@ export function PositionsPanel() {
     const order = store.getState().app.currentOrder;
     if (!order) return;
     try{
+      setDisabled(true)
+      handleRecalculateTrim(true)
+      handleRecalcDeadline()
+      const date = formatDate(store.getState().app.planDate)
+      const days = calcDays(new Date(store.getState().app.planDate));
       const response = await backend(`/sklad/saveOrder`, {
         method: 'POST',
-        body: {positions, order, displayPrice, planDate: null}
+        body: { positions, order, displayPrice, planDate: { date, workDays: days.workDays } }
       });
       dispatch(setPositions([]));
       const { order: freshOrder, positions: freshPositions } = await backend(`/sklad/order?name=${order.name}`);
@@ -188,6 +193,8 @@ export function PositionsPanel() {
     }catch(err){
       console.error(err)
       toast.error(`Ошибка: ${err.message || String(err)}`);
+    }finally{
+      setDisabled(false)
     }
   }
   const handleDeleteSelected = () => {
@@ -251,7 +258,6 @@ export function PositionsPanel() {
       const day = date.getDay();//Прибавляем дни, если дата попадает на выходные
       if (day === 6) date.setDate(date.getDate() + 2);
       else if (day === 0) date.setDate(date.getDate() + 1);
-      console.log(res, date)
       dispatch(setPlanDate(date.toISOString()));
       console.timeEnd('simulation')
       toast.success(`Срок пересчитан: ${date.toISOString().split('T')[0]}`);
@@ -477,6 +483,12 @@ function formatPrice(price) {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   })} ₽`;
+}
+function formatDate(date) {
+    const pad = n => String(n).padStart(2, '0');
+
+    return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())} ` +
+           `${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`;
 }
 function calcDays(targetDate){
   if(!targetDate) return {calendarDays: 0, workDays: 0};

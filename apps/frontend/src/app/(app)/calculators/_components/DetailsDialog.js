@@ -25,7 +25,7 @@ export default function ItemDialog({ item, index, open, onOpenChange }) {
                         Детали позиции {index + 1}
                     </DialogTitle>
                 </DialogHeader>
-                <div className="flex gap-2">
+                <div className="flex gap-2 overflow-y-auto">
                     <div>
                         {materials && materials.length > 0 && (
                             <div>
@@ -37,7 +37,7 @@ export default function ItemDialog({ item, index, open, onOpenChange }) {
                                         <span className="text-sm max-w-[500px] truncate" title={material.name}>{material.name}:</span>
                                         <Tooltip>
                                             <TooltipTrigger>
-                                                <span className="text-sm border-b border-dotted border-current">{material?.value?.toFixed(2)}</span>
+                                                <span className="text-sm border-b border-dotted border-current">{formatPrice(material?.value)}</span>
                                             </TooltipTrigger>
                                             <TooltipContent className="min-w-max whitespace-nowrap">
                                                 <div className="flex flex-col gap-1">
@@ -48,16 +48,16 @@ export default function ItemDialog({ item, index, open, onOpenChange }) {
                                                         <div><strong>Пояснение:</strong> {material.string}</div>
                                                     )}
                                                     {material.value && (
-                                                        <div><strong>Цена:</strong> {material.value.toFixed(2)}</div>
+                                                        <div><strong>Цена:</strong> {formatPrice(material.value)}</div>
                                                     )}
                                                     {material.calcValue && (
                                                         <div>
-                                                            <strong>Цена с типом цен "Для калькулятора":</strong> {material.calcValue.toFixed(2)}
+                                                            <strong>Цена с типом цен "Для калькулятора":</strong> {formatPrice(material.calcValue)}
                                                         </div>
                                                     )}
                                                     {material.objectValue > 0 && (
                                                         <div>
-                                                            <strong>Цена с типом цен "Для коммерческих объектов":</strong> {material.objectValue.toFixed(2)}
+                                                            <strong>Цена с типом цен "Для коммерческих объектов":</strong> {formatPrice(material.objectValue)}
                                                         </div>
                                                     )}
                                                 </div>
@@ -82,7 +82,7 @@ export default function ItemDialog({ item, index, open, onOpenChange }) {
                                         <span className="text-sm">{work.name}:</span>
                                         <Tooltip>
                                             <TooltipTrigger>
-                                                <span className="text-sm border-b border-dotted border-current">{work?.value?.toFixed(2) || 'Неизвестно'}</span>
+                                                <span className="text-sm border-b border-dotted border-current">{formatPrice(work?.value) || 'Неизвестно'}</span>
                                             </TooltipTrigger>
                                             <TooltipContent className="min-w-max whitespace-nowrap">
                                                 <div className="flex flex-col gap-1">
@@ -93,11 +93,11 @@ export default function ItemDialog({ item, index, open, onOpenChange }) {
                                                         <div><strong>Пояснение:</strong> {work.string}</div>
                                                     )}
                                                     {work.value && (
-                                                        <div><strong>ФОТ:</strong> {work.value.toFixed(2)}</div>
+                                                        <div><strong>ФОТ:</strong> {formatPrice(work.value)}</div>
                                                     )}
                                                     {work.tax > 0 && (
                                                         <div>
-                                                            <strong>Налог:</strong> {work.tax.toFixed(2)}
+                                                            <strong>Налог:</strong> {formatPrice(work.tax)}
                                                         </div>
                                                     )}
                                                 </div>
@@ -107,7 +107,7 @@ export default function ItemDialog({ item, index, open, onOpenChange }) {
                                 ))}
                                 <div className='gap-1'>
                                     <strong className="text-[16px] whitespace-nowrap">Итого:</strong>
-                                    <span className="text-sm">{totalWorks.toFixed(2)}</span>
+                                    <span className="text-sm">{formatPrice(totalWorks)}</span>
                                 </div>
                                 <Separator className="my-1"/>
                             </div>
@@ -119,19 +119,19 @@ export default function ItemDialog({ item, index, open, onOpenChange }) {
                                 </Label>
                                 <div className="flex items-center gap-1 pb-0.5">
                                     <span className="text-sm">Цеховые:</span>
-                                    <span className="text-sm">{totalWorkshopExpenses.toFixed(2)}</span>
+                                    <span className="text-sm">{formatPrice(totalWorkshopExpenses)}</span>
                                 </div>
                                 <div className="flex items-center gap-1 pb-0.5">
                                     <span className="text-sm">Коммерческие:</span>
-                                    <span className="text-sm">{totalCommercialExpenses.toFixed(2)}</span>
+                                    <span className="text-sm">{formatPrice(totalCommercialExpenses)}</span>
                                 </div>
                                 <div className="flex items-center gap-1 pb-0.5">
                                     <span className="text-sm">Общехозяйственные:</span>
-                                    <span className="text-sm">{totalHouseholdExpenses.toFixed(2)}</span>
+                                    <span className="text-sm">{formatPrice(totalHouseholdExpenses)}</span>
                                 </div>
                                 <div className="flex items-center gap-1 pb-0.5">
                                     <strong className="text-[16px]">Итого:</strong>
-                                    <span className="text-sm">{totalExpenses.toFixed(2)}</span>
+                                    <span className="text-sm">{formatPrice(totalExpenses)}</span>
                                 </div>
                                 <Separator className="my-1"/>
                             </div>
@@ -146,7 +146,7 @@ export default function ItemDialog({ item, index, open, onOpenChange }) {
                                         <span className="text-sm whitespace-nowrap">{material.name}:</span>
                                         <Tooltip>
                                             <TooltipTrigger>
-                                                <span className="text-sm border-b border-dotted border-current">{material?.value?.toFixed(2) || 'Неизвестно'}</span>
+                                                <span className="text-sm border-b border-dotted border-current">{formatPrice(material?.value) || 'Неизвестно'}</span>
                                             </TooltipTrigger>
                                             <TooltipContent className="min-w-max whitespace-nowrap">
                                                 <div className="flex flex-col gap-1">
@@ -157,7 +157,7 @@ export default function ItemDialog({ item, index, open, onOpenChange }) {
                                                         <div><strong>Пояснение:</strong> {material.string}</div>
                                                     )}
                                                     {material.value && (
-                                                        <div><strong>Цена:</strong> {material.value.toFixed(2)}</div>
+                                                        <div><strong>Цена:</strong> {formatPrice(material.value)}</div>
                                                     )}
                                                 </div>
                                             </TooltipContent>
@@ -202,6 +202,13 @@ const getInitialDataLabel = (key) => {
 
     return initialDataLabels[key] || key;
 };
+function formatPrice(price) {
+  if (price == null) return '—';
+  return `${(price).toLocaleString('ru-RU', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  })} ₽`;
+}
 const ignoreLabels = ['trims', 'ignoreRestricts']
 const initialDataLabels = {
     plane: 'Рамка',

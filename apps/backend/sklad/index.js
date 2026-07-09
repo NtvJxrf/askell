@@ -88,6 +88,7 @@ broker.createService({
             async handler(ctx) {
                 const { attributes, sklad_materials, currencies, priceTypes, stores } = getData()
                 const data = ctx.params
+                console.log(data)
                 const order = await ctx.call('proxy.sklad', {url: `https://api.moysklad.ru/api/remap/1.2/entity/customerorder/${data.order.id}?expand=state,positions.assortment`})
                 if(['В работе', 'Поставлено в производство'].includes(order.state.name)) throw new MoleculerClientError(`Нельзя менять позиции у заказа который в работе, смените статус на "Карантин"`, 400, 'ORDER_IN_PROGRESS', { order: data.order.name })//Кидаю ошибку чтоб не пересохраняли заказы которые уже в работе
                 const positionsToSave = []
@@ -99,7 +100,7 @@ broker.createService({
                             assortment: { meta: pos.meta },
                             added: pos.added,
                             quantity: pos.quantity,
-                            price: pos.prices[data.displayPrice] * 100, //При передачи заказа на фронт конвертировали все в рубли, а при сохранении обратно в копейки
+                            price: Number((pos.prices[data.displayPrice] * 100).toFixed(2)), //При передачи заказа на фронт конвертировали все в рубли, а при сохранении обратно в копейки
                             discount: pos.discount,
                             vat: data.order.organization.name === 'ООО "А2"' ? 22 : 5
                         }) 
@@ -152,14 +153,14 @@ broker.createService({
                         positions: finalPositions,
                         attributes: [{
                             meta: {"href":"https://api.moysklad.ru/api/remap/1.2/entity/customerorder/metadata/attributes/99884b94-8f93-11f0-0a80-029a000276da","type":"attributemetadata","mediaType":"application/json"},
-                            value: String(data.planDate.workingDays)
+                            value: String(data.planDate.workDays)
                         },{
                             meta: {"href":"https://api.moysklad.ru/api/remap/1.2/entity/customerorder/metadata/attributes/afc68830-5368-11f1-0a80-156a000b5f1e","type":"attributemetadata","mediaType":"application/json"},
                             value: Array.from(new Set(data.positions.map(pos => pos.result?.other?.type).filter(Boolean))).join(';')
                         }],
                         store: { meta: vizEngaged ? stores['ВИЗ СГИ'].meta : stores['Полеводство СГИ'].meta }
                     }
-                    if(data.planDate.apiDate) params.deliveryPlannedMoment = data.planDate.apiDate
+                    if(data.planDate.date) params.deliveryPlannedMoment = data.planDate.date
                     this.logger.debug({ order: data.order.name, positions: finalPositions.length }, 'Сохранение заказа')
                     return await ctx.call('proxy.sklad', {url: `https://api.moysklad.ru/api/remap/1.2/entity/customerorder/${data.order.id}`, type: "put", data: params})
                 } catch(error) {

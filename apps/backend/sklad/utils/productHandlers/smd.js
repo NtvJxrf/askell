@@ -39,15 +39,14 @@ export const smd = async ({ ctx, data, order, position, createdEntitys, results 
 
     const [processingProcess, product] = await Promise.all([
         makeProcessingProcess(generateStages(data, 'glass'), ctx),
-        makeProduct({ ctx, data, material: data.initialData.material, createdEntitys, order, type: 'Стекло' })
+        makeProduct({ ctx, data, material: data.initialData.material, createdEntitys, order, type: 'Стекло', pfFor: 'СМД' })
     ])
     const plan = await makeProcessingPlan({ ctx, data, name: 'Доска стеклянная магнитно-маркерная ASKELL Size', order, processingProcess, product, isPF: true, material: data.initialData.material, createdEntitys, mode: 'glass' })
     plan.quantity = position.quantity
     plan._material = data.initialData.material
-    results.polevGlass.push(plan)
 
     const planViz = await makeProcessingPlan({ ctx, data, name: 'Доска стеклянная магнитно-маркерная ASKELL Size', order, processingProcess: VIZ_SMD_PROCESSING_PROCESS, product: position.assortment, color, materialMeta: product.meta, createdEntitys, mode: 'smd', viz: true })
-    await makeProductionTask({
+    const task = await makeProductionTask({
         ctx,
         materialsStore: 'ВИЗ ПФ',
         productsStore: 'ВИЗ СГИ',
@@ -58,4 +57,7 @@ export const smd = async ({ ctx, data, order, position, createdEntitys, results 
         addComment: '',
         createdEntitys
     })
+    // Стекло СМД — ПЗ 2-го уровня, связывается с уже созданным ПЗ СМД.
+    plan._parentTask = task.meta
+    results.glasst2.push(plan)
 }

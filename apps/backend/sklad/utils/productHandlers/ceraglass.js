@@ -7,7 +7,6 @@ import { productFoldersByType } from '../constants.js'
 export const ceraglass = async ({ ctx, data, order, position, createdEntitys, results }) => {
     const { sklad_materials, attributes } = getData()
 
-    results.ceraglass = true
     if (data.initialData.color) results.colors.push(data.initialData.color)
 
     const materials = [data.initialData.material1, data.initialData?.material2].filter(Boolean)
@@ -18,6 +17,8 @@ export const ceraglass = async ({ ctx, data, order, position, createdEntitys, re
     const { processing, drills, zenk, cutsv1, cutsv2, cutsv3, tempered, color, print } = data.initialData
     const { stanok } = data.result.other
     const pfs = []
+    const glassPlans = []
+    const ceraPlans = []
 
     for (const material of materials) {
         const isGlass = material.toLowerCase().includes('стекло')
@@ -43,14 +44,15 @@ export const ceraglass = async ({ ctx, data, order, position, createdEntitys, re
                 })
                 plan.quantity = position.quantity
                 plan._material = material
-                results.polevGlass.push(plan)
+                glassPlans.push(plan)
             } else {
                 const processingProcess = await makeProcessingProcess(stagesViz, ctx)
                 const newData = { ...data, initialData: { height: heights[i], width: widths[i] }, ceraTrim: data.result.other.ceraTrim }
                 const mode = material === 'Керамика клиента' ? 'default' : 'glass'
                 const plan = await makeProcessingPlan({ ctx, data: newData, name: position.assortment.name, order, processingProcess, product, isPF: true, material, createdEntitys, mode })
                 plan.quantity = position.quantity
-                results.viz.push(plan)
+                plan._material = material
+                ceraPlans.push(plan)
             }
             pfs.push(product)
         }
@@ -64,5 +66,14 @@ export const ceraglass = async ({ ctx, data, order, position, createdEntitys, re
     const processingProcessViz = await makeProcessingProcess(['ОТК'], ctx)
     const planViz = await makeProcessingPlan({ ctx, data, name: position.assortment.name, order, processingProcess: processingProcessViz, product: position.assortment, isPF: false, materials: materialsViz, createdEntitys, viz: true })
     planViz.quantity = position.quantity
-    results.viz.push(planViz)
+    results.ceraglass.push(planViz)
+    // ПФ керагласса — ПЗ 2-го уровня, связываются с ПЗ сборки керагласса.
+    for (const plan of glassPlans) {
+        plan._parentPlan = planViz
+        results.glasst2.push(plan)
+    }
+    for (const plan of ceraPlans) {
+        plan._parentPlan = planViz
+        results.cerat2.push(plan)
+    }
 }

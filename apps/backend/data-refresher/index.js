@@ -150,8 +150,8 @@ broker.createService({
     updateProductinLoad: {
       rest: "GET /updateProductinLoad",
       async handler(ctx) {
-        // await updateSchedule();
-        // await updateHeaps();
+        await updateSchedule();
+        await updateHeaps();
         const heaps = await ctx.call("data-refresher.getHeaps");
         const {schedule, index} = await ctx.call("data-refresher.getSchedule");
         const pricesAndCoefs = JSON.parse(await valkey.get('sklad:data:pricesAndCoefs'));

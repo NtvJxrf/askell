@@ -29,6 +29,9 @@ const groupByMaterial = (plans) => plans.reduce((acc, plan) => {
     return acc
 }, {})
 
+// Цвет должен попадать только в то ПЗ, где непосредственно находится окрашенная деталь.
+const getColors = (plans) => [...new Set(plans.map(plan => plan._color).filter(Boolean))]
+
 // A production task should reserve its input materials only when it actually has any.
 const shouldReserve = (plans) => plans.reduce((sum, plan) => sum + (plan?.materials?.meta?.size || 0), 0) > 0
 
@@ -77,8 +80,7 @@ export const createProductionTask = async ({ id, initiator }, ctx) => {
         triplext2: [],
         // Уровень 3 — стекло для триплекса стеклопакета (связь с ПЗ triplext2)
         glasst3: [],
-        print: false,
-        colors: []
+        print: false
     }
     let addComment = ''
     const t3heap = []
@@ -134,14 +136,14 @@ export const createProductionTask = async ({ id, initiator }, ctx) => {
                 groups: groupByMaterial(results.glass),
                 materialsStore: 'Полеводство материалы/прочее', 
                 productsStore: 'Полеводство СГИ', 
-                checkboxes: {},
+                checkboxes: { print: results.print },
                 deliveryPlannedMoment: formatDate(date),
             },
             {
                 source: results.triplex,
                 materialsStore: 'Полеводство материалы/прочее', 
                 productsStore: 'Полеводство СГИ', 
-                checkboxes: { triplex: true, print: results.print, colors: results.colors },
+                checkboxes: { triplex: true, print: results.print },
                 reserve: true,
                 deliveryPlannedMoment: formatDate(date),
             },
@@ -149,7 +151,7 @@ export const createProductionTask = async ({ id, initiator }, ctx) => {
                 source: results.ceraglass,
                 materialsStore: 'ВИЗ ПФ', 
                 productsStore: 'ВИЗ СГИ', 
-                checkboxes: { viz: true, ceraglass: true, print: results.print, colors: results.colors },
+                checkboxes: { viz: true, ceraglass: true, print: results.print },
                 reserve: true,
                 deliveryPlannedMoment: formatDate(date),
             },
@@ -219,10 +221,10 @@ export const createProductionTask = async ({ id, initiator }, ctx) => {
             if (cfg.groups) {
                 for (const [material, plans] of Object.entries(cfg.groups)) {
                     if (!plans.length) continue
-                    await createTask({ ...cfg, source: plans, checkboxes: { ...cfg.checkboxes, material }, reserve: shouldReserve(plans) })
+                    await createTask({ ...cfg, source: plans, checkboxes: { ...cfg.checkboxes, material, colors: getColors(plans) }, reserve: shouldReserve(plans) })
                 }
             } else if (cfg.source.length) {
-                await createTask(cfg)
+                await createTask({ ...cfg, checkboxes: { ...cfg.checkboxes, colors: getColors(cfg.source) } })
             }
         }
     } catch (error) {

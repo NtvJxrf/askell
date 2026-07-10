@@ -7,8 +7,6 @@ import { productFoldersByType } from '../constants.js'
 export const ceraglass = async ({ ctx, data, order, position, createdEntitys, results }) => {
     const { sklad_materials, attributes } = getData()
 
-    if (data.initialData.color) results.colors.push(data.initialData.color)
-
     const materials = [data.initialData.material1, data.initialData?.material2].filter(Boolean)
     const heights = data.result.other.heights
     const widths = data.result.other.widths
@@ -66,6 +64,7 @@ export const ceraglass = async ({ ctx, data, order, position, createdEntitys, re
     const processingProcessViz = await makeProcessingProcess(['ОТК'], ctx)
     const planViz = await makeProcessingPlan({ ctx, data, name: position.assortment.name, order, processingProcess: processingProcessViz, product: position.assortment, isPF: false, materials: materialsViz, createdEntitys, viz: true })
     planViz.quantity = position.quantity
+    if (data.initialData.color) planViz._color = data.initialData.color
     results.ceraglass.push(planViz)
     // ПФ керагласса — ПЗ 2-го уровня, связываются с ПЗ сборки керагласса.
     for (const plan of glassPlans) {

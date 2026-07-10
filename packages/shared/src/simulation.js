@@ -104,7 +104,7 @@ export default function runSimulation(params) {
     const tier3Items = []
     initDay();
     while (!isHeapsEmpty() || isMachinesBusy()) {
-        if(logging && (iterations % 5 === 0)) {
+        if(logging && (iterations % 10 === 0)) {
             // Record compact heap summary (name -> length) to avoid copying large arrays.
             // NOTE: full per-machine snapshots (all ~100 machines incl. Trash) used to make
             // `history` ~70MB for long simulations. Now only the machines in

@@ -13,6 +13,11 @@ const MAX_WINDOW_REQUESTS = 11;
 const TOKEN_PARALLEL_LIMIT = 5;
 const ACCOUNT_PARALLEL_LIMIT = 20;
 
+// Отдельный токен с собственными лимитами (используется только для GET)
+const EXTENSION_WINDOW_MS = 3000;
+const EXTENSION_MAX_WINDOW_REQUESTS = 45;
+const EXTENSION_TOKEN_PARALLEL_LIMIT = 5;
+
 class KeepAliveAgent extends https.Agent {
     createConnection(options, cb) {
         const socket = super.createConnection(options, cb);
@@ -43,18 +48,27 @@ function getTokenEnv(tokenName) {
             return process.env.SkladAuthToken3;
         case 'token4':
             return process.env.SkladAuthToken4;
+        case 'extension':
+            return process.env.SkladAuthTokenExtension;
         default:
             throw new MoleculerError(`Неизвестный токен: ${tokenName}`, 500, 'UNKNOWN_TOKEN', { tokenName });
     }
 }
 function chooseToken(type) {
     if (['post', 'put', 'delete'].includes(type))
-        return 'main'
-    for(const token of get_tokens){
-        if(state[token] < TOKEN_PARALLEL_LIMIT){
-            return token
+        return state.last_3_sec_count < MAX_WINDOW_REQUESTS ? 'main' : null;
+    // Для GET в приоритете отдельный токен с расширенными лимитами
+    if (state.extension < EXTENSION_TOKEN_PARALLEL_LIMIT && state.last_3_sec_count_extension < EXTENSION_MAX_WINDOW_REQUESTS) {
+        return 'extension';
+    }
+    if (state.last_3_sec_count < MAX_WINDOW_REQUESTS) {
+        for (const token of get_tokens) {
+            if (state[token] < TOKEN_PARALLEL_LIMIT) {
+                return token
+            }
         }
     }
+    return null;
 }
 const get_tokens = [ 'token2', 'token3', 'token4'];
 const state = {
@@ -62,12 +76,13 @@ const state = {
     token2: 0,
     token3: 0,
     token4: 0,
+    extension: 0,
     last_3_sec_count: 0,
+    last_3_sec_count_extension: 0,
     totalParallel: 0,
 }
 function canRequest(){
     if(state.totalParallel >= ACCOUNT_PARALLEL_LIMIT) return false
-    if(state.last_3_sec_count >= MAX_WINDOW_REQUESTS) return false
     return true
 }
 
@@ -104,13 +119,21 @@ broker.createService({
                 if (data) args.json = data;
                 
                 state[token]++;
-                state.last_3_sec_count++;
-                setTimeout(() => {
-                    state.last_3_sec_count--;
-                }, WINDOW_MS);
+                if (token === 'extension') {
+                    state.last_3_sec_count_extension++;
+                    setTimeout(() => {
+                        state.last_3_sec_count_extension--;
+                    }, EXTENSION_WINDOW_MS);
+                } else {
+                    state.last_3_sec_count++;
+                    setTimeout(() => {
+                        state.last_3_sec_count--;
+                    }, WINDOW_MS);
+                }
                 state.totalParallel++;
                 try{
                     this.logger.debug({ type: type.toUpperCase(), url, token, state: { ...state } }, `MoySklad ${type.toUpperCase()} ${url}`);
+                    console.log(`MoySklad ${type.toUpperCase()} ${url} (token: ${token})`, state);
                     const response = await gotClient[type](url, { ...args });
                     if(response.statusCode >= 400){
                         throw new MoleculerError(`Ошибка при запросе к ${url}: ${response.statusCode}`, 502, 'UPSTREAM_ERROR', { url, statusCode: response.statusCode, body: String(response.body).slice(0, 2000) });
@@ -124,6 +147,7 @@ broker.createService({
                     }
                 }
                 catch(err){
+                    console.error(err)
                     this.logger.error({ err, url, token }, `Ошибка запроса к ${url}`);
                     if (err instanceof MoleculerError) throw err;
                     throw new MoleculerError(`Ошибка при запросе к ${url}: ${err.message}`, 502, 'UPSTREAM_ERROR', { url });

@@ -9,7 +9,6 @@ const buildTriplexPane = async ({ ctx, triplexData, order, position, createdEnti
     const { sklad_materials, attributes } = getData()
 
     if (triplexData.initialData.print) results.print = true
-    if (triplexData.initialData.color) results.colors.push(triplexData.initialData.color)
 
     const materials = Object.entries(triplexData.initialData)
         .filter(([key, value]) => key.startsWith('material') && value !== undefined)
@@ -48,6 +47,7 @@ const buildTriplexPane = async ({ ctx, triplexData, order, position, createdEnti
     const processingProcessTriplex = await makeProcessingProcess(generateStages(triplexData, 'triplex'), ctx)
     const panePlan = await makeProcessingPlan({ ctx, data: triplexData, name: position.assortment.name, order, processingProcess: processingProcessTriplex, product: paneProduct, isPF: true, materials: materialsTriplex, createdEntitys })
     panePlan.quantity = position.quantity
+    if (triplexData.initialData.color) panePlan._color = triplexData.initialData.color
 
     // Стёкла панели — ПЗ 3-го уровня, связываются с ПЗ триплексной панели.
     for (const plan of glassPlans) {

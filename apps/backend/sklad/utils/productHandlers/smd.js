@@ -35,7 +35,6 @@ export const smd = async ({ ctx, data, order, position, createdEntitys, results 
 
     const { print, color } = data.initialData
     if (print) results.print = true
-    if (color) results.colors.push(color)
 
     const [processingProcess, product] = await Promise.all([
         makeProcessingProcess(generateStages(data, 'glass'), ctx),

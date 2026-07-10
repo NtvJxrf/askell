@@ -11,12 +11,15 @@ import { store, setPositions, setDisplayPrice, addPositions, setPlanDate } from 
 import { toast } from 'sonner';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Badge } from '@/components/ui/badge';
 import { ChevronDown } from 'lucide-react';
 import triplexCalc from '@askell/shared/calc/triplex';
-import { calculateMaterialLayouts, getCuttingAllowance } from '@/app/(app)/cuttingLayouts/cuttingLayouts';
+import { calculateMaterialLayouts, getCuttingAllowance, buildTaskOrderGroups } from '@/app/(app)/cuttingLayouts/cuttingLayouts';
+import { CuttingSheetPreview, formatPercent, getWasteBadgeClass } from '@/app/(app)/cuttingLayouts/CuttingSheetPreview';
 import { POSITION_CALCULATORS } from './utils/positionCalculators';
-import { exportPositionsToExcel, importPositionsFromExcel } from './utils/excelPositions';
+import { exportPositionsToExcel, importPositionsFromExcel, downloadWorkbookBuffer } from './utils/excelPositions';
 import recalcDeadline from './utils/recalcDeadline.js';
+import ExcelJS from 'exceljs';
 // Right-side panel (~60%): order/positions management. Currently a structural
 // scaffold — search bar, order meta, an action button row, a positions info
 // block and the positions table. Handlers are stubs to be wired later.
@@ -41,6 +44,37 @@ function getPositionMaterials(initialData) {
   return Object.entries(initialData)
     .filter(([key, value]) => key.startsWith('material') && value)
     .map(([, value]) => value);
+}
+
+// Формат ячеек с денежными суммами в Excel-отчёте (как в backend-отчётах).
+const CURRENCY_FORMAT = '#,##0.00 "₽"';
+
+// Добавляет строку в лист Excel с нужным оформлением: жирный шрифт для
+// заголовков/итогов, заливка для секций, отступ для вложенных строк и
+// формат валюты/процента для указанных колонок (1-based индексы).
+function addExcelRow(sheet, values, { bold = false, fill = false, indent = 0, moneyCols = [], percentCols = [], topBorder = false } = {}) {
+  const row = sheet.addRow(values);
+  if (bold) row.font = { bold: true };
+  if (fill) {
+    row.eachCell({ includeEmpty: true }, (cell) => {
+      cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFE5E7EB' } };
+    });
+  }
+  if (indent) row.getCell(2).alignment = { indent };
+  moneyCols.forEach((col) => {
+    const cell = row.getCell(col);
+    if (typeof cell.value === 'number') cell.numFmt = CURRENCY_FORMAT;
+  });
+  percentCols.forEach((col) => {
+    const cell = row.getCell(col);
+    if (typeof cell.value === 'number') cell.numFmt = '0.00"%"';
+  });
+  if (topBorder) {
+    row.eachCell({ includeEmpty: true }, (cell) => {
+      cell.border = { top: { style: 'thin' } };
+    });
+  }
+  return row;
 }
 
 // Стеклопакет хранит использованный при расчёте триплекс отдельным объектом
@@ -88,6 +122,10 @@ export function PositionsPanel() {
   const days = useMemo(() => calcDays(planDateObj), [planDateObj]);
   const [disabled, setDisabled] = useState(false);
   const [importSummary, setImportSummary] = useState(null);
+  const [materialLayouts, setMaterialLayouts] = useState(null);
+  const [lastTrims, setLastTrims] = useState({});
+  const [viewMaterial, setViewMaterial] = useState(null);
+  const [selectedLayout, setSelectedLayout] = useState(null);
   const positionsInfo = useMemo(() => {
     return positions.reduce(
       (acc, position) => {
@@ -140,8 +178,9 @@ export function PositionsPanel() {
     try{
       const { order, positions } = await backend(`/sklad/order?name=${name}`);
       dispatch(setOrder(order));
+      dispatch(setPositions([]));
       dispatch(addPositions(positions));
-
+      setMaterialLayouts(null)
       const prices = positions[0]?.prices;
       const price = positions[0].price;
       const match = Object.entries(prices || {}).find(([key, value]) => value === price);
@@ -171,6 +210,9 @@ export function PositionsPanel() {
     dispatch(setOrder(null));
     dispatch(setPositions([]));
     dispatch(setPlanDate(null));
+    setMaterialLayouts(null);
+    setLastTrims({});
+    setMaterialLayouts(null);
   };
   const handleSave = async () => {
     const positions = store.getState().app.positions;
@@ -180,8 +222,9 @@ export function PositionsPanel() {
       setDisabled(true)
       handleRecalculateTrim(true)
       handleRecalcDeadline()
-      const date = formatDate(store.getState().app.planDate)
+      const date = formatDate(new Date(store.getState().app.planDate))
       const days = calcDays(new Date(store.getState().app.planDate));
+      const positions = store.getState().app.positions
       const response = await backend(`/sklad/saveOrder`, {
         method: 'POST',
         body: { positions, order, displayPrice, planDate: { date, workDays: days.workDays } }
@@ -224,8 +267,36 @@ export function PositionsPanel() {
         const { width, height } = position.initialData || {};
         if (!width || !height) return;
         const quantity = position.quantity || position.initialData?.quantity || 1;
+        const usedTriplex = position?.result?.other?.usedTriplex || [];
         getPositionMaterials(position.initialData).forEach((material) => {
+          console.log(material)
           if (!material) return;
+          // У стеклопакета одно из "стёкол" может быть триплексом — в этом
+          // случае раскладку на листе нужно строить не по названию триплекса
+          // (это не сырьевой материал), а по реальным стёклам, из которых он
+          // собран (initialData триплекса берётся из result.other.usedTriplex).
+          if (material.toLowerCase().includes('триплекс')) {
+            const triplexData = usedTriplex.find((t) => t?.name === material);
+            if (!triplexData) {
+              toast.error(`Не найдены данные триплекса "${material}" для позиции ${position.name || position.key || index}`);
+              return;
+            }
+            const triplexInitialData = triplexData.initialData || {};
+            const triplexWidth = triplexInitialData.width || width;
+            const triplexHeight = triplexInitialData.height || height;
+            getPositionMaterials(triplexInitialData).forEach((triplexMaterial) => {
+              if (!triplexMaterial) return;
+              if (!piecesByMaterial[triplexMaterial]) piecesByMaterial[triplexMaterial] = [];
+              const triplexAllowance = getCuttingAllowance(triplexMaterial);
+              piecesByMaterial[triplexMaterial].push({
+                id: `${position.key || index}-${material}-${triplexMaterial}`,
+                width: Number(triplexWidth) + triplexAllowance,
+                height: Number(triplexHeight) + triplexAllowance,
+                quantity: Number(quantity) || 1,
+              });
+            });
+            return;
+          }
           if (!piecesByMaterial[material]) piecesByMaterial[material] = [];
           const allowance = getCuttingAllowance(material);
           piecesByMaterial[material].push({
@@ -236,10 +307,14 @@ export function PositionsPanel() {
           });
         });
       });
-      const { trims: computedTrims, errors } = calculateMaterialLayouts(piecesByMaterial, selfcost.materials);
+      const { trims: computedTrims, errors, materialLayouts: computedLayouts } = calculateMaterialLayouts(piecesByMaterial, selfcost.materials);
       trims = computedTrims;
+      setMaterialLayouts(computedLayouts);
       Object.keys(errors).forEach((material) => toast.error(`Не удалось рассчитать обрезь для материала: ${material}`));
+    } else {
+      setMaterialLayouts(null);
     }
+    setLastTrims(trims);
     const recalculated = rawPositions.map((position) => recalculatePosition(position, selfcost, trims));
     dispatch(setPositions(recalculated));
     toast.success(withLayout ? 'Обрезь пересчитана с раскладкой' : 'Обрезь пересчитана с базовым %');
@@ -302,6 +377,192 @@ export function PositionsPanel() {
     } catch (error) {
       console.error(error);
       toast.error(`Ошибка экспорта: ${error.message || String(error)}`);
+    }
+  }
+  const handleExcelReport = async () => {
+    try {
+      setDisabled(true);
+      if (!positions.length) {
+        toast.error('Нет позиций для отчета');
+        return;
+      }
+
+      const num = (n) => Number(n) || 0;
+      const round2 = (n) => Math.round(num(n) * 100) / 100;
+      // приоритет значения такой же, как в окне "Детали позиции"
+      const pickValue = (item) => num(item?.finalValue ?? item?.calcValue ?? item?.value);
+
+      const workbook = new ExcelJS.Workbook();
+      workbook.creator = 'Askell';
+      workbook.created = new Date();
+
+      const detailSheet = workbook.addWorksheet('Позиции');
+      detailSheet.columns = [
+        { width: 24 }, { width: 32 }, { width: 14 }, { width: 16 },
+        { width: 12 }, { width: 12 }, { width: 32 }, { width: 45 },
+      ];
+      addExcelRow(detailSheet, ['Позиция', 'Наименование', 'За 1 шт', 'Итого (×кол-во)', 'ФОТ', 'Налог', 'Формула', 'Пояснение'], { bold: true, fill: true });
+      detailSheet.views = [{ state: 'frozen', ySplit: 1 }];
+
+      const materialsAgg = {};
+      const worksAgg = {};
+      const expensesAgg = { workshop: 0, commercial: 0, household: 0 };
+
+      positions.forEach((position, index) => {
+        const { result } = position || {};
+        const quantity = num(position.quantity || position.initialData?.quantity) || 1;
+        const positionName = position.name || position.position?.assortment?.name || position.key || '';
+
+        addExcelRow(detailSheet, [`Позиция ${index + 1}: ${positionName}`, `Количество: ${quantity}`, '', '', '', '', '', ''], { bold: true, fill: true });
+
+        if (!result) {
+          addExcelRow(detailSheet, ['', 'Нет данных расчета', '', '', '', '', '', '']);
+          detailSheet.addRow([]);
+          return;
+        }
+
+        const { materials = [], works = [], finalPrice = [], additions = [] } = result;
+
+        if (materials.length) {
+          addExcelRow(detailSheet, ['Материалы', '', '', '', '', '', '', ''], { bold: true });
+          let totalMaterialsUnit = 0;
+          materials.forEach((item) => {
+            const unit = pickValue(item);
+            totalMaterialsUnit += unit;
+            addExcelRow(detailSheet, ['', item.name || '', round2(unit), round2(unit * quantity), '', '', item.formula || '', item.string || ''], { indent: 1, moneyCols: [3, 4] });
+
+            const key = item.name || 'Без названия';
+            if (!materialsAgg[key]) materialsAgg[key] = { totalCost: 0, totalCount: 0, hasCount: false };
+            materialsAgg[key].totalCost += unit * quantity;
+            // у некоторых материалов (в основном у стекла) нет явного count -
+            // в этом случае берем площадь позиции (result.other.S) как количество
+            const countValue = item.count ?? result.other?.S;
+            if (countValue !== undefined && countValue !== null) {
+              materialsAgg[key].totalCount += num(countValue) * quantity * (position?.result?.other?.trims?.[item.name] ?? 1);
+              materialsAgg[key].hasCount = true;
+            }
+          });
+          addExcelRow(detailSheet, ['', 'Итого по материалам', round2(totalMaterialsUnit), round2(totalMaterialsUnit * quantity), '', '', '', ''], { bold: true, moneyCols: [3, 4], topBorder: true });
+        }
+
+        if (works.length) {
+          addExcelRow(detailSheet, ['Работы', '', '', '', '', '', '', ''], { bold: true });
+          let totalWorksUnit = 0;
+          let totalWorkshop = 0, totalCommercial = 0, totalHousehold = 0;
+          works.forEach((item) => {
+            const unit = num(item.value) + num(item.tax);
+            totalWorksUnit += unit;
+            totalWorkshop += num(item.workshopExpenses);
+            totalCommercial += num(item.commercialExpenses);
+            totalHousehold += num(item.householdExpenses);
+            addExcelRow(detailSheet, ['', item.name || '', round2(unit), round2(unit * quantity), round2(item.value), round2(item.tax), item.formula || '', item.string || ''], { indent: 1, moneyCols: [3, 4, 5, 6] });
+
+            const workKey = item.name || 'Без названия';
+            if (!worksAgg[workKey]) worksAgg[workKey] = 0;
+            worksAgg[workKey] += unit * quantity;
+          });
+          addExcelRow(detailSheet, ['', 'Итого по работам', round2(totalWorksUnit), round2(totalWorksUnit * quantity), '', '', '', ''], { bold: true, moneyCols: [3, 4], topBorder: true });
+
+          const totalExpenses = totalWorkshop + totalCommercial + totalHousehold;
+          addExcelRow(detailSheet, ['Расходы', '', '', '', '', '', '', ''], { bold: true });
+          addExcelRow(detailSheet, ['', 'Цеховые', round2(totalWorkshop), round2(totalWorkshop * quantity), '', '', '', ''], { indent: 1, moneyCols: [3, 4] });
+          addExcelRow(detailSheet, ['', 'Коммерческие', round2(totalCommercial), round2(totalCommercial * quantity), '', '', '', ''], { indent: 1, moneyCols: [3, 4] });
+          addExcelRow(detailSheet, ['', 'Общехозяйственные', round2(totalHousehold), round2(totalHousehold * quantity), '', '', '', ''], { indent: 1, moneyCols: [3, 4] });
+          addExcelRow(detailSheet, ['', 'Итого расходов', round2(totalExpenses), round2(totalExpenses * quantity), '', '', '', ''], { bold: true, moneyCols: [3, 4], topBorder: true });
+
+          expensesAgg.workshop += totalWorkshop * quantity;
+          expensesAgg.commercial += totalCommercial * quantity;
+          expensesAgg.household += totalHousehold * quantity;
+        }
+
+        if (additions.length) {
+          addExcelRow(detailSheet, ['Комплектующие', '', '', '', '', '', '', ''], { bold: true });
+          let totalAdditionsUnit = 0;
+          additions.forEach((item) => {
+            const unit = pickValue(item);
+            totalAdditionsUnit += unit;
+            addExcelRow(detailSheet, ['', item.name || '', round2(unit), round2(unit * quantity), '', '', item.formula || '', item.string || ''], { indent: 1, moneyCols: [3, 4] });
+          });
+          addExcelRow(detailSheet, ['', 'Итого по комплектующим', round2(totalAdditionsUnit), round2(totalAdditionsUnit * quantity), '', '', '', ''], { bold: true, moneyCols: [3, 4], topBorder: true });
+        }
+
+        if (finalPrice.length) {
+          addExcelRow(detailSheet, ['Цена', '', '', '', '', '', '', ''], { bold: true });
+          finalPrice.forEach((item) => {
+            const unit = pickValue(item);
+            addExcelRow(detailSheet, ['', item.name || '', round2(unit), round2(unit * quantity), '', '', item.formula || '', item.string || ''], { indent: 1, moneyCols: [3, 4] });
+          });
+        }
+
+        detailSheet.addRow([]);
+      });
+
+      const summarySheet = workbook.addWorksheet('Сводка');
+      summarySheet.columns = [{ width: 32 }, { width: 18 }, { width: 18 }];
+
+      addExcelRow(summarySheet, ['Материалы', '', ''], { bold: true, fill: true });
+      addExcelRow(summarySheet, ['Материал', 'Количество', 'Общая стоимость'], { bold: true });
+      let materialsGrandTotal = 0;
+      Object.entries(materialsAgg)
+        .sort((a, b) => b[1].totalCost - a[1].totalCost)
+        .forEach(([name, agg]) => {
+          addExcelRow(summarySheet, [name, agg.hasCount ? round2(agg.totalCount) : '—', round2(agg.totalCost)], { moneyCols: [3] });
+          materialsGrandTotal += agg.totalCost;
+        });
+      addExcelRow(summarySheet, ['Материалы всего', '', round2(materialsGrandTotal)], { bold: true, moneyCols: [3], topBorder: true });
+      summarySheet.addRow([]);
+
+      addExcelRow(summarySheet, ['Работы', ''], { bold: true, fill: true });
+      addExcelRow(summarySheet, ['Работа', 'Общая стоимость'], { bold: true });
+      let worksGrandTotal = 0;
+      Object.entries(worksAgg)
+        .sort((a, b) => b[1] - a[1])
+        .forEach(([name, cost]) => {
+          addExcelRow(summarySheet, [name, round2(cost)], { moneyCols: [2] });
+          worksGrandTotal += cost;
+        });
+      addExcelRow(summarySheet, ['Работы всего', round2(worksGrandTotal)], { bold: true, moneyCols: [2], topBorder: true });
+      summarySheet.addRow([]);
+
+      addExcelRow(summarySheet, ['Расходы', ''], { bold: true, fill: true });
+      addExcelRow(summarySheet, ['Расход', 'Общая стоимость'], { bold: true });
+      addExcelRow(summarySheet, ['Цеховые', round2(expensesAgg.workshop)], { moneyCols: [2] });
+      addExcelRow(summarySheet, ['Коммерческие', round2(expensesAgg.commercial)], { moneyCols: [2] });
+      addExcelRow(summarySheet, ['Общехозяйственные', round2(expensesAgg.household)], { moneyCols: [2] });
+      const expensesGrandTotal = expensesAgg.workshop + expensesAgg.commercial + expensesAgg.household;
+      addExcelRow(summarySheet, ['Расходы всего', round2(expensesGrandTotal)], { bold: true, moneyCols: [2], topBorder: true });
+      summarySheet.addRow([]);
+
+      const totalCosts = materialsGrandTotal + worksGrandTotal + expensesGrandTotal;
+
+      const orderTotal = positions.reduce((sum, position) => {
+        const quantity = num(position.quantity || position.initialData?.quantity) || 1;
+        const unitPrice = num(position.prices?.[displayPrice]);
+        return sum + unitPrice * quantity;
+      }, 0);
+      const VAT_RATE = 0.22;
+      const vatAmount = (orderTotal * VAT_RATE) / (1 + VAT_RATE);
+      const totalWithoutVat = orderTotal - vatAmount;
+      const margin = totalWithoutVat - totalCosts;
+      const marginPercent = totalWithoutVat ? (margin / totalWithoutVat) * 100 : 0;
+
+      addExcelRow(summarySheet, ['Итоги', ''], { bold: true, fill: true });
+      addExcelRow(summarySheet, ['Итого затрат', round2(totalCosts)], { moneyCols: [2] });
+      addExcelRow(summarySheet, [`Общая сумма заказа (${priceItems[displayPrice] || displayPrice})`, round2(orderTotal)], { moneyCols: [2] });
+      addExcelRow(summarySheet, [`Сумма НДС (${round2(VAT_RATE * 100)}%)`, round2(vatAmount)], { moneyCols: [2] });
+      addExcelRow(summarySheet, ['Сумма без НДС', round2(totalWithoutVat)], { moneyCols: [2] });
+      addExcelRow(summarySheet, ['Маржа по проекту', round2(margin)], { bold: true, moneyCols: [2], topBorder: true });
+      addExcelRow(summarySheet, ['Маржа в %', round2(marginPercent)], { percentCols: [2] });
+
+      const buffer = await workbook.xlsx.writeBuffer();
+      const stamp = new Date().toISOString().slice(0, 19).replace(/[:T]/g, '-');
+      downloadWorkbookBuffer(buffer, `positions_report_${stamp}.xlsx`);
+      toast.success('Отчет создан');
+    } catch (error) {
+      console.error(error);
+      toast.error('Ошибка при создании отчета');
+    } finally {
+      setDisabled(false);
     }
   }
   const ACTION_BUTTONS = [
@@ -378,8 +639,9 @@ export function PositionsPanel() {
           }>
           </TooltipTrigger>
           <TooltipContent side="bottom" className="flex flex-col items-start gap-0.5 text-[14px] px-0.5">
-            <Button size="sm" variant="ghost" onClick={handleExcelImport}>Загрузить из Excel</Button>
-            <Button size="sm" variant="ghost" onClick={handleExcelExport}>Выгрузить в Excel</Button>
+            <Button size="sm" variant="ghost" onClick={handleExcelImport}>Загрузить</Button>
+            <Button size="sm" variant="ghost" onClick={handleExcelExport}>Выгрузить</Button>
+            <Button size="sm" variant="ghost" onClick={handleExcelReport}>Отчет по позициям</Button>
           </TooltipContent>
         </Tooltip>
       </div>
@@ -433,6 +695,44 @@ export function PositionsPanel() {
             <span>Количество: {positionsInfo.totalQuantity}</span>
           </TooltipContent>
         </Tooltip>
+        <Tooltip>
+          <TooltipTrigger render={
+            <Button variant="outline">
+              Обрезь 
+              <ChevronDown />
+            </Button>
+          }>
+          </TooltipTrigger>
+          <TooltipContent side="bottom" className="flex flex-col items-start gap-1 text-[14px] w-64">
+            {materialLayouts && Object.keys(materialLayouts).length > 0 ? (
+              Object.entries(materialLayouts).map(([material, data]) => (
+                <Button
+                  key={material}
+                  size="sm"
+                  variant="ghost"
+                  className="flex w-full items-center justify-between gap-2"
+                  onClick={() => setViewMaterial(material)}
+                >
+                  <span className="truncate">{material}</span>
+                  <Badge className={getWasteBadgeClass(data.summary.averageWaste)}>
+                    {formatPercent(data.summary.averageWaste)}
+                  </Badge>
+                </Button>
+              ))
+            ) : Object.keys(lastTrims).length > 0 ? (
+              Object.entries(lastTrims).map(([material, trim]) => (
+                <div key={material} className="flex w-full items-center justify-between gap-2 px-2 py-1">
+                  <span className="truncate">{material}</span>
+                  <span>{(((trim || 1) - 1) * 100).toFixed(2)}%</span>
+                </div>
+              ))
+            ) : (
+              <span className="px-2 py-1 text-muted-foreground">
+                Нет данных. Нажмите «Пересчитать обрезь»
+              </span>
+            )}
+          </TooltipContent>
+        </Tooltip>
       </div>
 
       {/* Positions table */}
@@ -446,6 +746,83 @@ export function PositionsPanel() {
         className="hidden"
       />
       <ImportSummaryDialog summary={importSummary} onOpenChange={(open) => !open && setImportSummary(null)} />
+
+      <Dialog open={!!viewMaterial} onOpenChange={(open) => !open && setViewMaterial(null)}>
+        <DialogContent className="max-h-[85vh] w-[min(900px,95vw)] max-w-[95vw] flex-col gap-4 overflow-y-auto">
+          {viewMaterial && materialLayouts?.[viewMaterial] ? (
+            <div className="overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle>{viewMaterial}</DialogTitle>
+              </DialogHeader>
+              <div className="flex flex-wrap gap-1.5">
+                <Badge variant="outline">
+                  Лист: {materialLayouts[viewMaterial].sheet.width} x {materialLayouts[viewMaterial].sheet.height} мм
+                </Badge>
+                <Badge variant="outline">Деталей: {materialLayouts[viewMaterial].summary.totalPieces}</Badge>
+                <Badge variant="outline">Листов: {materialLayouts[viewMaterial].summary.totalPanelsUsed}</Badge>
+                <Badge className={getWasteBadgeClass(materialLayouts[viewMaterial].summary.averageWaste)}>
+                  Обрезь: {formatPercent(materialLayouts[viewMaterial].summary.averageWaste)}
+                </Badge>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {materialLayouts[viewMaterial].layouts.map((layout, index) => (
+                  <div key={layout.id}>
+                    <CuttingSheetPreview
+                      layout={layout}
+                      label={`Лист ${index + 1}`}
+                      maxWidth={220}
+                      maxHeight={150}
+                      interactive
+                      onClick={() => setSelectedLayout({ material: viewMaterial, layout, layoutIndex: index })}
+                    />
+                    <div className="text-xs text-muted-foreground">{layout.pieces.length} деталей на листе</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : null}
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={!!selectedLayout} onOpenChange={(open) => !open && setSelectedLayout(null)}>
+        <DialogContent className="w-fit max-w-[95vw] flex-col gap-4">
+          {selectedLayout ? (
+            <>
+              <DialogHeader>
+                <DialogTitle>{selectedLayout.material} · лист {selectedLayout.layoutIndex + 1}</DialogTitle>
+              </DialogHeader>
+              <div className="flex h-[min(640px,65vh)] min-h-0 gap-4">
+                <div className="flex-1 min-w-0 flex">
+                  <CuttingSheetPreview
+                    layout={selectedLayout.layout}
+                    fill
+                    maxWidth={760}
+                    showPieceLabels
+                    className="w-full ring-1 ring-primary/30"
+                  />
+                </div>
+
+                <div className="flex h-full w-[300px] shrink-0 flex-col gap-4 overflow-y-auto pr-1">
+                  <div>
+                    <div className="mb-1.5 text-sm font-medium">Заказы на этом листе</div>
+                    <div className="space-y-1.5">
+                      {buildTaskOrderGroups([selectedLayout.layout]).map((order) => (
+                        <div key={order.key} className="rounded-md border px-2.5 py-1.5 text-sm">
+                          <div className="flex items-center justify-between gap-2">
+                            <span className="font-medium">{order.orderNumber}</span>
+                            <Badge variant="outline">{order.pieces.length} шт.</Badge>
+                          </div>
+                          <div className="text-xs text-muted-foreground">ПЗ: {order.docName}</div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </>
+          ) : null}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

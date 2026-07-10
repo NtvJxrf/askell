@@ -4,8 +4,7 @@ import { createBroker } from "../lib/broker.js";
 import { verifyAccessToken } from "../users/lib/auth.js";
 import { hasPermission } from "@askell/shared/permissions";
 
-const { UnAuthorizedError, ForbiddenError, ERR_NO_TOKEN, ERR_INVALID_TOKEN } =
-  ApiGateway.Errors;
+const { UnAuthorizedError, ForbiddenError, ERR_NO_TOKEN, ERR_INVALID_TOKEN } = ApiGateway.Errors;
 
 // Запросы с этих IP проходят без Bearer-токена с правами админа
 // (вебхуки МойСклад / 1С / локальные интеграции).

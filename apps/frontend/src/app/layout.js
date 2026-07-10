@@ -11,8 +11,13 @@ const manrope = Manrope({
 });
 
 export const metadata = {
-  title: "Askell",
-  description: "Askell",
+  title: "Calculator",
+  description: "Calculator",
+  icons: {
+    icon: '/favicon.png',
+    shortcut: '/favicon.png',
+    apple: '/favicon.png',
+  },
 };
 
 // The app has no mobile layout — force browsers (including phones/tablets)

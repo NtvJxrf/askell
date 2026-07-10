@@ -9,7 +9,7 @@ broker.createService({
     actions: {
         logisticRequest: {
             rest: "POST /logisticRequest",
-            permissions: ['Расширение'],
+            permissions: [],
             async handler(ctx) {
                 const result = await logisticRequest(ctx.params, ctx);
                 return result;
@@ -17,7 +17,7 @@ broker.createService({
         },
         goodInfo: {
             rest: "POST /goodInfo",
-            permissions: ['Расширение'],
+            permissions: [],
             async handler(ctx) {
                 const result = await goodInfo(ctx.params, ctx);
                 return result;
@@ -25,7 +25,7 @@ broker.createService({
         },
         reclamationRequest: {
             rest: "POST /reclamationRequest",
-            permissions: ['Расширение'],
+            permissions: [],
             async handler(ctx) {
                 const result = await reclamationRequest(ctx.params, ctx);
                 return result;

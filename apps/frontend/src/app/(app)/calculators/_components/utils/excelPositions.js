@@ -19,7 +19,7 @@ function deserializeValue(value) {
   return value;
 }
 
-function downloadWorkbookBuffer(buffer, filename) {
+export function downloadWorkbookBuffer(buffer, filename) {
   const blob = new Blob([buffer], {
     type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
   });

@@ -6,7 +6,6 @@ export const triplex = async ({ ctx, data, order, position, createdEntitys, resu
     const { sklad_materials } = getData()
 
     if (data.initialData.print) results.print = true
-    if (data.initialData.color) results.colors.push(data.initialData.color)
 
     const materials = Object.entries(data.initialData)
         .filter(([key, value]) => key.startsWith('material') && value !== undefined)
@@ -45,6 +44,7 @@ export const triplex = async ({ ctx, data, order, position, createdEntitys, resu
         viz: true
     })
     planTriplex.quantity = position.quantity
+    if (data.initialData.color) planTriplex._color = data.initialData.color
     results.triplex.push(planTriplex)
     // Стёкла триплекса — ПЗ 2-го уровня, связываются с ПЗ самого триплекса.
     for (const plan of glassPlans) {

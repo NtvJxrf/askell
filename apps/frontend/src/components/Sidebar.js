@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import Image from "next/image";
 import { hasPermission } from '@askell/shared/permissions';
 import {
   Calculator,
@@ -58,9 +59,14 @@ export function Sidebar({ user }) {
             className="flex min-w-0 items-center gap-2 group-data-[collapsible=icon]:hidden"
           >
             {/* LOGO SLOT — replace this <span> with your <Image>/<svg>. */}
-            <span className="grid size-7 shrink-0 place-items-center rounded-md bg-gradient-to-br from-violet-500 to-indigo-500 text-[11px] font-bold text-white">
-              A
-            </span>
+            <Image
+              src="/logo.svg" // public/logo.svg
+              alt="ASKELL"
+              width={28}
+              height={28}
+              className="shrink-0 rounded-md"
+              priority
+            />
             <span className="truncate text-sm font-semibold tracking-tight">ASKELL</span>
           </Link>
           <SidebarTrigger className="ml-auto" />

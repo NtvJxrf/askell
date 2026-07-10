@@ -49,7 +49,8 @@ export const updateHeaps = async () => {
         await Promise.all(
             tasksWithDetails
                 .flatMap(el => el.productionstages)
-                .filter(pstage => ['Триплексование', 'Изготовление рамки'].includes(heapsRaw[pstage.stage.meta.href]?.name))
+                // .filter(pstage => ['Триплексование', 'Изготовление рамки'].includes(heapsRaw[pstage.stage.meta.href]?.name))
+                .filter(pstage => pstage.materials.meta.size > 0)
                 .map(async pstage => [
                     pstage.materials.meta.href.replace('/materials', ''),
                     // 1

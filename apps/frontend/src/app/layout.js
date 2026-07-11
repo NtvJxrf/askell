@@ -14,9 +14,9 @@ export const metadata = {
   title: "Calculator",
   description: "Calculator",
   icons: {
-    icon: '/favicon.png',
-    shortcut: '/favicon.png',
-    apple: '/favicon.png',
+    icon: [{ url: '/favicon.png?v=2', type: 'image/png' }],
+    shortcut: [{ url: '/favicon.png?v=2', type: 'image/png' }],
+    apple: [{ url: '/favicon.png?v=2', type: 'image/png' }],
   },
 };
 

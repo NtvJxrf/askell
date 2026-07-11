@@ -328,7 +328,7 @@ async function doAiRequest(ctx, text, endpoint) {
         throw new MoleculerError("Failed to generate glass positions from AI", 502, 'AI_AGENT_FAILED', { endpoint })
     }
 }
-function handleOrderChanged(ctx) {
+async function handleOrderChanged(ctx) {
     const { attributes, states, employees } = getData()
     let order = null
     for(const event of ctx.params.events){
@@ -462,7 +462,7 @@ function handleOrderChanged(ctx) {
         }
     }
 }
-function handlePZChanged(ctx) {
+async function handlePZChanged(ctx) {
     let document = null
     let order = null
     const data  = ctx.params
@@ -490,7 +490,7 @@ function handlePZChanged(ctx) {
         }
     }
 }
-function handlePaymentInChanged(ctx) {
+async function handlePaymentInChanged(ctx) {
     let document = null
     let invoice = null
     const data = ctx.params
@@ -523,7 +523,7 @@ function handlePaymentInChanged(ctx) {
         }
     }
 }
-function handleOrderCreated(ctx) {
+async function handleOrderCreated(ctx) {
     const data = ctx.params
     for(const event of data.events){
         let order = null

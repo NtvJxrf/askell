@@ -5,7 +5,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Separator } from "@/components/ui/separator";
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -15,7 +15,7 @@ import { store } from "@/lib/slice";
 export default function ItemDialog({ item, open, onOpenChange }) {
   const quantityRef = useRef(null);
   const descriptionRef = useRef(null);
-
+  const [disabled, setDisabled] = useState(false);
   const handleDefect = async () => {
     if(descriptionRef.current?.value === undefined || descriptionRef.current?.value.trim() === "") {
         toast.error("Введите комментарий для брака");
@@ -236,6 +236,7 @@ export default function ItemDialog({ item, open, onOpenChange }) {
               variant="destructive"
               size="sm"
               onClick={handleDefect}
+              disabled={disabled}
             >
               Указать брак
             </Button>
@@ -245,6 +246,7 @@ export default function ItemDialog({ item, open, onOpenChange }) {
               className="ml-auto"
               size="sm"
               onClick={handleComplete}
+              disabled={disabled}
             >
               Выполнить
             </Button>

@@ -3,7 +3,6 @@ import QRCode from 'qrcode'
 import SVGtoPDF from 'svg-to-pdfkit'
 import path from 'path'
 import { fileURLToPath } from 'url'
-import { Client } from '@askell/shared'
 
 /* ===== Пути ===== */
 

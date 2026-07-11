@@ -2,7 +2,6 @@ import PDFDocument from 'pdfkit'
 import QRCode from 'qrcode'
 import path from 'path'
 import { fileURLToPath } from 'url'
-import { Client } from '@askell/shared'
 
 /* ===== Пути ===== */
 

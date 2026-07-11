@@ -2,6 +2,7 @@
 import { useEffect, useRef } from "react";
 import { useDispatch } from "react-redux";
 import { setSelfcost, setHeaps, setSettings, setSchedule } from "@/lib/slice";
+import { toast } from 'sonner'
 export default function WebSocketHandler() {
     const dispatch = useDispatch();
     const wsRef = useRef(null);
@@ -38,6 +39,19 @@ export default function WebSocketHandler() {
                     break;
                     case "schedule":
                         dispatch(setSchedule(data.schedule));
+                    break;
+                    case 'reloadApp':
+                        window.location.reload();
+                    break;
+                    case 'globalToast':
+                        toast.info(
+                            <>
+                                <div className="font-bold text-center">
+                                    Сообщение для всех пользователей:
+                                </div>
+                                <div>{data.message}</div>
+                            </>
+                        );
                     break;
                 }
             };

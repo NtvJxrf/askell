@@ -35,13 +35,13 @@ import {
 // object from the server layout. Collapse/expand state is owned by
 // SidebarProvider (see (app)/layout.js) and persisted via cookie.
 export const NAV_ITEMS = [
-  { href: '/calculators', label: 'Калькуляторы', icon: Calculator },
+  { href: '/calculators', label: 'Калькуляторы', icon: Calculator, permissions: ['Калькулятор'] },
   { href: '/production', label: 'Производство', icon: Factory },
   { href: '/cuttingLayouts', label: 'Раскрой', icon: Slice },
   { href: '/whattodo', label: 'Что брать в работу', icon: SquareChartGantt },
   { href: '/ordersWithStages', label: 'Заказы с этапами', icon: Logs },
-  { href: '/settings', label: 'Настройки', icon: Settings },
-  { href: '/reports', label: 'Отчеты', icon: FileChartColumn },
+  { href: '/settings', label: 'Настройки', icon: Settings, permissions: ['Настройки'] },
+  { href: '/reports', label: 'Отчеты', icon: FileChartColumn, permissions: ['Отчеты'] },
   { href: '/admin', label: 'Админка', icon: ShieldCheck, permissions: ['Админ'] },
 ];
 export function Sidebar({ user }) {

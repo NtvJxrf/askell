@@ -19,6 +19,7 @@ export default function SettingsPage() {
   const [disabled, setDisabled] = useState(null);
   const selfcost = useSelector((state) => state.app.selfcost);
   const settings = useSelector((state) => state.app.settings);
+  const user = useSelector((state) => state.app.user);
   const updateKeys = [
     { label: "Материалы", key: "materials", function: "getMaterials" },
     { label: "Упаковочные материалы", key: "packaging", function: "getPackagingMaterials" },
@@ -53,7 +54,6 @@ export default function SettingsPage() {
       setDisabled(false);
     }
   };
-
   return (
     <div className="flex h-screen overflow-x-auto overflow-y-hidden text-sm">
       <div className="flex-1 min-w-0 p-6">
@@ -109,27 +109,29 @@ export default function SettingsPage() {
           </TableBody>
         </Table>
       </div>
-       <Separator orientation="vertical" />
+      <Separator orientation="vertical" />
 
-      <div className="flex-2 min-w-0 p-6">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead />
-              <TableHead>Ключ</TableHead>
-              <TableHead>Текущее значение</TableHead>
-              <TableHead>Значение по умолчанию</TableHead>
-              <TableHead>Описание</TableHead>
-              <TableHead>Кто обновил</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {Object.entries(settings).map(([key, item]) => (
-              <SettingsRow key={key} skey={key} item={item}/>
-            ))}
-          </TableBody>
-        </Table>
-      </div>
+      {user?.roles?.includes('Админ') && (
+        <div className="flex-2 min-w-0 p-6">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead />
+                <TableHead>Ключ</TableHead>
+                <TableHead>Текущее значение</TableHead>
+                <TableHead>Значение по умолчанию</TableHead>
+                <TableHead>Описание</TableHead>
+                <TableHead>Кто обновил</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {Object.entries(settings).map(([key, item]) => (
+                <SettingsRow key={key} skey={key} item={item}/>
+              ))}
+            </TableBody>
+          </Table>
+        </div> 
+      )}
     </div>
   );
 }

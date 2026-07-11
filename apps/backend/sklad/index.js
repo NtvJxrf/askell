@@ -445,6 +445,7 @@ broker.createService({
             // Заходит по ?token=ONE_C_TOKEN (см. gateway authenticate) —
             // тогда пользователь системный с ролью 'Админ', permissions не нужны.
             // Либо укажите permissions: ['Админ'] если хотите пускать только через токен/JWT-админа.
+            permissions: ['Админ'],
             async handler(ctx) {
                 const result = await expProd(ctx.params, ctx)
                 return result
@@ -452,6 +453,7 @@ broker.createService({
         },
         demand: {
             rest: "GET /demand",
+            permissions: ['Админ'],
             async handler(ctx) {
                 const result = await expDemands(ctx.params, ctx)
                 return result
@@ -459,6 +461,7 @@ broker.createService({
         },
         invoiceout: {
             rest: "GET /invoiceout",
+            permissions: ['Админ'],
             async handler(ctx) {
                 const result = await expInvoiceout(ctx.params, ctx)
                 return result

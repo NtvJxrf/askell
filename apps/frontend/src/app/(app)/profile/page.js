@@ -1,6 +1,7 @@
 'use client'
 import { useState } from "react";
 import { useSelector, useDispatch } from "react-redux";
+import { signOut } from "next-auth/react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -119,7 +120,7 @@ export default function ProfilePage() {
                 id="username"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
-                autoComplete="username"
+                autoComplete="off"
               />
             </div>
             <Button type="submit" disabled={savingUsername || username.trim() === user?.username}>
@@ -142,7 +143,7 @@ export default function ProfilePage() {
                 type="password"
                 value={currentPassword}
                 onChange={(e) => setCurrentPassword(e.target.value)}
-                autoComplete="current-password"
+                autoComplete="off"
               />
             </div>
             <div className="space-y-2">
@@ -152,7 +153,7 @@ export default function ProfilePage() {
                 type="password"
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
-                autoComplete="new-password"
+                autoComplete="off"
               />
             </div>
             <div className="space-y-2">
@@ -162,7 +163,7 @@ export default function ProfilePage() {
                 type="password"
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
-                autoComplete="new-password"
+                autoComplete="off"
               />
             </div>
             <Button type="submit" disabled={savingPassword}>
@@ -171,6 +172,11 @@ export default function ProfilePage() {
           </form>
         </CardContent>
       </Card>
+      <Button variant="destructive" onClick={async () => {
+        if (confirm("Вы уверены, что хотите выйти?")) {
+          await signOut({ callbackUrl: "/login" });
+        }
+      }}>Выйти</Button>
     </div>
   );
 }

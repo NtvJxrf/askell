@@ -64,7 +64,7 @@ broker.createService({
     },
     setSettings: {
       rest: "POST /setSettings",
-      permissions: ['Настройки'],
+      permissions: ['Админ'],
       async handler(ctx) {
         const settings = JSON.parse(await valkey.get('settings'));
         const { key, value, editor } = ctx.params;
@@ -92,6 +92,7 @@ broker.createService({
     },
     updateHeaps: {
       rest: "GET /updateHeaps",
+      permissions: ['Админ'],
       async handler(ctx) {
         if (lastUpdateHeaps !== 0 && Date.now() - lastUpdateHeaps < 300_000) throw new MoleculerClientError('Обновление куч доступно не чаще раза в 5 минут', 429, 'TOO_MANY_UPDATES')
         lastUpdateHeaps = Date.now()
@@ -102,6 +103,7 @@ broker.createService({
     },
     updateSchedule: {
       rest: "GET /updateSchedule",
+      permissions: ['Админ'],
       async handler(ctx) {
         await updateSchedule();
         ctx.call("websocket.broadcast", { type: 'schedule', schedule: JSON.parse(await valkey.get('schedule')) || null });
@@ -149,6 +151,7 @@ broker.createService({
     },
     updateProductinLoad: {
       rest: "GET /updateProductinLoad",
+      permissions: ['Админ'],
       async handler(ctx) {
         await updateSchedule();
         await updateHeaps();

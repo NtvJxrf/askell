@@ -13,7 +13,7 @@ broker.createService({
     actions: {
         complete: {
             rest: "POST /complete",
-            permissions: ['Производство'],
+            permissions: ['Производство-выполнение'],
             async handler(ctx) {
                 const { item, user, quantity, description } = ctx.params;
                 const response = await ctx.call('proxy.sklad',{
@@ -30,7 +30,7 @@ broker.createService({
         },
         defect: {
             rest: "POST /defect",
-            permissions: ['Производство'],
+            permissions: ['Производство-выполнение'],
             async handler(ctx) {
                 const { item, user, quantity, description } = ctx.params;
                 const changeTask = await ctx.call('proxy.sklad', { 

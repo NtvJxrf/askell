@@ -171,6 +171,9 @@ function SourceGroupRow({ group, onResolved }) {
       } else {
         toast.error(`Ошибка: ${res}`);
       }
+    } catch(err){
+      console.error(err);
+      toast.error(`Ошибка: ${err.message}`);
     } finally {
       setBusy(false);
     }
@@ -200,9 +203,12 @@ function SourceGroupRow({ group, onResolved }) {
         toast.success("Брак зафиксирован");
         onResolved(quantity);
       } else {
-        console.error(err)
+        console.error(res)
         toast.error(`Ошибка: ${res}`);
       }
+    } catch(err) {
+      console.error(err);
+      toast.error(`Ошибка: ${err.message}`);
     } finally {
       setBusy(false);
     }

@@ -322,6 +322,26 @@ broker.createService({
         return { id: deleted.id, deleted: true };
       },
     },
+    globalToast: {
+      rest: 'POST /globalToast',
+      permissions: ['Админ'],
+      params: {
+        message: { type: 'string', trim: true, empty: false },
+      },
+      async handler(ctx) {
+        const { message } = ctx.params;
+        ctx.call('websocket.broadcast', { type: 'globalToast', message });
+        return { success: true };
+      },
+    },
+    reloadApp: {
+      rest: 'POST /reloadApp',
+      permissions: ['Админ'],
+      async handler(ctx) {
+        ctx.call('websocket.broadcast', { type: 'reloadApp' });
+        return { success: true };
+      },
+    }
   },
 });
 

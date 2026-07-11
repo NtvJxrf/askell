@@ -162,14 +162,28 @@ const Calculate = (data, selfcost, triplexArray) => {
         });
         const sitoName = `Молекулярное сито (0,5-0,9)`//(${thickness < 10 ? '0,5-0,9' : '1-2'}) Было так, Руслан 10.04.26 сказал оставить только 0.5-0.9
         allSito[sitoName] += thickness
-        angles[thickness] = (angles[thickness] ?? 0) + 1;
+        if(plane.toLowerCase().includes('рамка алюминиевая дистанционная (гибкая + коннектор)')){
+            angles[`Уголок для газа без отверстия ${thickness} мм.`] = (angles[`Уголок для газа без отверстия ${thickness} мм.`] ?? 0) + 1;
+        }
+        else if(plane.toLowerCase().includes('рамка алюминиевая дистанционная жесткая')){
+            angles[`Уголок пластмассовый, ${thickness} мм.`] = (angles[`Уголок пластмассовый, ${thickness} мм.`] ?? 0) + 4;
+        }
+        else if(plane.toLowerCase().includes('рамка дист (термо) ral 9005')){
+            angles[`Уголок полипропиленовый жесткий ${thickness} мм. для рамки Warmex Pro RAL 9005`] = (angles[`Уголок полипропиленовый жесткий ${thickness} мм. для рамки Warmex Pro RAL 9005`] ?? 0) + 1;
+        }
+        else{
+            throw new Error(`Не удалось подобрать уголок для рамки ${plane}`)
+        }
     }
     for(const angle of Object.keys(angles)){
+        if (selfcost.materials[angle] === undefined) {
+            throw new Error(`Не найдено ${angle}`);
+        }
         result.materials.push({
-            name: `Уголок для газа без отверстия ${angle} мм.`,
-            value: selfcost.materials[`Уголок для газа без отверстия ${angle} мм.`].value,
+            name: angle,
+            value: selfcost.materials[angle].value * angles[angle],
             count: angles[angle],
-            string: `${selfcost.materials[`Уголок для газа без отверстия ${angle} мм.`].value} * ${angles[angle].toFixed(2)}`,
+            string: `${selfcost.materials[angle].value} * ${angles[angle].toFixed(2)}`,
             formula: 'Цена за монтажный уголок * Количество'
         })
     }

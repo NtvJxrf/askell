@@ -25,6 +25,7 @@ import {
   ComboboxValue,
   useComboboxAnchor,
 } from "@/components/ui/combobox"
+import { Textarea } from "@/components/ui/textarea"
 import { Input } from "@/components/ui/input"
 export default function AdminPage() {
   const [users, setUsers] = useState([]);
@@ -43,6 +44,7 @@ export default function AdminPage() {
   const [newPassword, setNewPassword] = useState(null);
   const [roles, setRoles] = useState([]);
   const [open, setOpen] = useState(false);
+  const messageRef = useRef(null);
   useEffect(() => {
     if (selectedUser) {
       setRoles(selectedUser.roles ?? []);
@@ -133,28 +135,57 @@ export default function AdminPage() {
     <div className="p-6">
       <Button className="mb-3" onClick={() => setOpen(true)}>Создать пользователя</Button>
       <h1 className="text-xl font-semibold tracking-tight">Админка</h1>
-      <Table className="table-fixed w-full">
-        <TableHeader className="text-[14px]">
-          <TableRow>
-            <TableHead >Логин</TableHead>
-            <TableHead >ФИО</TableHead>
-            <TableHead >Права доступа</TableHead>
-            <TableHead >Создан</TableHead>
-          </TableRow>
-        </TableHeader>
-  
-        <TableBody>
-          {users.map((user) => (
-            <TableRow key={user.username} onClick={() => setSelectedUser(user)}>
-              <TableCell >{user.username}</TableCell>
-              <TableCell >{user.fullname}</TableCell>
-              <TableCell >{(user.roles ?? []).map(role => PERMISSIONS[role] || role).join(', ')}</TableCell>
-              <TableCell >{new Date(user.createdAt).toLocaleString()}</TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
-
+      <div className="flex gap-3">
+        <div className="flex-1">
+          <Table className="table-fixed w-full flex-1">
+            <TableHeader className="text-[14px]">
+              <TableRow>
+                <TableHead >Логин</TableHead>
+                <TableHead >ФИО</TableHead>
+                <TableHead >Права доступа</TableHead>
+                <TableHead >Создан</TableHead>
+              </TableRow>
+            </TableHeader>
+      
+            <TableBody>
+              {users.map((user) => (
+                <TableRow key={user.username} onClick={() => setSelectedUser(user)}>
+                  <TableCell >{user.username}</TableCell>
+                  <TableCell >{user.fullname}</TableCell>
+                  <TableCell >
+                    <span className={"block truncate"} title={(user.roles ?? []).map(role => PERMISSIONS[role] || role).join(', ')}>
+                      {(user.roles ?? []).map(role => PERMISSIONS[role] || role).join(', ')}
+                    </span>
+                  </TableCell>
+                  <TableCell >{new Date(user.createdAt).toLocaleString()}</TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
+        <div className="flex-1 flex flex-col gap-2">
+          <div className="flex gap-2 justify-center items-center">
+              <Button onClick={async () => {
+                const message = messageRef.current?.value;
+                if (message) {
+                  await backend("/globalToast", { 
+                    method: "POST",
+                    body: { message } 
+                  });
+                }else{
+                  toast.error("Введите сообщение");
+                }
+              }}>Сообщение всем</Button>
+              <Textarea ref={messageRef} className="min-w-0" placeholder="Введите сообщение для всех пользователей..." />
+          </div>
+          <Button className="self-start" onClick={async () => {
+            await backend("/reloadApp", { 
+              method: "POST",
+              body: {}
+            });
+          }}>Обновить страницу у всех</Button>
+        </div>
+      </div>
       <Dialog open={selectedUser} onOpenChange={() => setSelectedUser(null)}>
         <DialogContent>
           <DialogHeader>

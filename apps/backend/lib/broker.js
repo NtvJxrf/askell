@@ -16,18 +16,28 @@
 //                       не были доступны снаружи, но оставались доступны коллектору
 import '@askell/shared/env';
 import { ServiceBroker } from 'moleculer';
+import { AsyncLocalStorage } from 'node:async_hooks';
 
 const isDev = process.env.NODE_ENV === 'development';
+
+// Хранилище текущего пользователя запроса (per-action, per-async-context).
+// Заполняется один раз в middleware ниже и читается в pino `mixin`, поэтому
+// username автоматически попадает во ВСЕ логи (this.logger/ctx.broker.logger/...)
+// без необходимости передавать его вручную в каждый вызов логгера.
+const requestContext = new AsyncLocalStorage();
 
 /**
  * Middleware: структурированный лог каждой упавшей action с requestID/traceID,
  * чтобы ошибку можно было найти в SigNoz и связать с трейсом.
  * Параметры действий НЕ логируются (в них бывают пароли/токены).
+ *
+ * Заодно прокидывает username текущего пользователя (ctx.meta.user, если есть)
+ * в AsyncLocalStorage на время выполнения action - см. requestContext выше.
  */
 const actionErrorLogger = {
   name: 'ActionErrorLogger',
   localAction(next, action) {
-    return async (ctx) => {
+    return (ctx) => requestContext.run({ username: ctx.meta?.user?.username }, async () => {
       const start = Date.now();
       try {
         return await next(ctx);
@@ -53,7 +63,7 @@ const actionErrorLogger = {
         );
         throw err;
       }
-    };
+    });
   },
 };
 
@@ -84,6 +94,12 @@ const buildLogger = (nodeID) => {
           level: process.env.LOG_LEVEL || 'info',
           base: { service: nodeID },
           transport: { targets },
+          // Добавляет username (если он есть в текущем request-контексте) в
+          // каждую строку лога - см. requestContext/actionErrorLogger выше.
+          mixin() {
+            const username = requestContext.getStore()?.username;
+            return username ? { username } : {};
+          },
         },
       },
     },

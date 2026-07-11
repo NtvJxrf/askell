@@ -222,7 +222,9 @@ broker.createService({
       },
       async handler(ctx) {
         const { username, fullname, password, roles } = ctx.params;
-
+        if(username === 'admin') {
+          throw new MoleculerClientError('Cannot create a user with the username "admin"', 403, 'CANNOT_CREATE_ADMIN');
+        }
         const [existing] = await db
           .select({ id: users.id })
           .from(users)
@@ -260,6 +262,26 @@ broker.createService({
       },
       async handler(ctx) {
         const { id, username, fullname, password, roles } = ctx.params;
+        const current = ctx.meta.user;
+
+        const [target] = await db
+          .select({ id: users.id, username: users.username })
+          .from(users)
+          .where(eq(users.id, id))
+          .limit(1);
+        if (!target) {
+          throw new MoleculerClientError('User not found', 404, 'NOT_FOUND');
+        }
+
+        // The `admin` account can only be edited by itself.
+        if (target.username === 'admin' && current?.username !== 'admin') {
+          throw new MoleculerClientError('Only admin can modify the admin user', 403, 'FORBIDDEN');
+        }
+
+        // The `admin` account must always keep the Админ role.
+        if (target.username === 'admin' && roles !== undefined && !roles.includes('Админ')) {
+          throw new MoleculerClientError('Cannot remove the Админ role from the admin user', 403, 'CANNOT_STRIP_ADMIN_ROLE');
+        }
 
         if (username !== undefined) {
           const [existing] = await db
@@ -309,7 +331,7 @@ broker.createService({
           throw new MoleculerClientError('User not found', 404, 'NOT_FOUND');
         }
         if (target.username === 'admin') {
-          throw new MoleculerClientError('Cannot delete the admin user', 403, 'CANNOT_DELETE_ADMIN');
+          throw new MoleculerClientError('Cannot delete the admin user', 403, 'FORBIDDEN');
         }
 
         const [deleted] = await db
@@ -341,7 +363,47 @@ broker.createService({
         ctx.call('websocket.broadcast', { type: 'reloadApp' });
         return { success: true };
       },
-    }
+    },
+
+    /**
+     * ADMIN ONLY. Snapshot of the moleculer cluster state (nodes + services
+     * with their actions) for the admin dashboard. No logs/metrics here —
+     * those live in SigNoz.
+     */
+    systemInfo: {
+      rest: 'GET /system/info',
+      permissions: ['Админ'],
+      async handler(ctx) {
+        const [nodes, services] = await Promise.all([
+          ctx.call('$node.list', { withServices: false }),
+          ctx.call('$node.services', { withActions: true, skipInternal: true }),
+        ]);
+
+        return {
+          nodes: nodes.map((node) => ({
+            id: node.id,
+            local: node.local,
+            available: node.available,
+            hostname: node.hostname,
+            ipList: node.ipList,
+            client: node.client,
+            lastHeartbeatTime: node.lastHeartbeatTime,
+            cpu: node.cpu,
+          })),
+          services: services.map((svc) => ({
+            name: svc.fullName ?? svc.name,
+            version: svc.version,
+            nodes: svc.nodes ?? (svc.nodeID ? [svc.nodeID] : []),
+            actions: Object.values(svc.actions ?? {}).map((action) => ({
+              name: action.name,
+              rest: action.rest ?? null,
+              auth: action.auth,
+              permissions: action.permissions ?? null,
+            })),
+          })),
+        };
+      },
+    },
   },
 });
 

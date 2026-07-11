@@ -19,7 +19,8 @@ broker.createService({
                 const response = await ctx.call('proxy.sklad',{
                     type: 'post',
                     url: `https://api.moysklad.ru/api/remap/1.2/entity/productionstagecompletion`,
-                    data: buildStageCompletionPayload({ ...item, description, quantity }, user)
+                    data: buildStageCompletionPayload({ ...item, description, quantity }, user),
+                    priority: true
                 })
                 if(!response.errors){
                     updateHeaps({ ...item, quantity }, ctx).catch(err => this.logger.error({ err }, 'Ошибка обновления куч после выполнения этапа'))
@@ -38,12 +39,14 @@ broker.createService({
                     type: 'put',
                     data: {
                         productionVolume: item.totalQuantity + quantity
-                    }
+                    },
+                    priority: true
                 });
                 const response = await ctx.call('proxy.sklad',{
                     type: 'post',
                     url: `https://api.moysklad.ru/api/remap/1.2/entity/productionstagecompletion`,
-                    data: buildStageCompletionPayload({ ...item, description, quantity }, user, { defect: true })
+                    data: buildStageCompletionPayload({ ...item, description, quantity }, user, { defect: true }),
+                    priority: true
                 })
                 if(!response.errors){
                     return response

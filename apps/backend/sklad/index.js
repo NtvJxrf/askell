@@ -32,7 +32,7 @@ broker.createService({
             permissions: ['Калькулятор'],
             async handler(ctx) {
                 const { name } = ctx.params;
-                const orders = await ctx.call('proxy.sklad', { url: `https://api.moysklad.ru/api/remap/1.2/entity/customerorder?filter=name=${name}&expand=positions.assortment,agent,organization&limit=100`})
+                const orders = await ctx.call('proxy.sklad', { url: `https://api.moysklad.ru/api/remap/1.2/entity/customerorder?filter=name=${name}&expand=positions.assortment,agent,organization&limit=100`, priority: true})
                 const order = [...(orders.rows || [])].sort((left, right) => {
                     const leftTime = new Date(left?.moment || 0).getTime()
                     const rightTime = new Date(right?.moment || 0).getTime()
@@ -88,7 +88,7 @@ broker.createService({
             async handler(ctx) {
                 const { attributes, sklad_materials, currencies, priceTypes, stores } = getData()
                 const data = ctx.params
-                const order = await ctx.call('proxy.sklad', {url: `https://api.moysklad.ru/api/remap/1.2/entity/customerorder/${data.order.id}?expand=state,positions.assortment`})
+                const order = await ctx.call('proxy.sklad', {url: `https://api.moysklad.ru/api/remap/1.2/entity/customerorder/${data.order.id}?expand=state,positions.assortment`, priority: true})
                 if(['В работе', 'Поставлено в производство'].includes(order.state.name)) throw new MoleculerClientError(`Нельзя менять позиции у заказа который в работе, смените статус на "Карантин"`, 400, 'ORDER_IN_PROGRESS', { order: data.order.name })//Кидаю ошибку чтоб не пересохраняли заказы которые уже в работе
                 const positionsToSave = []
                 let vizEngaged = false
@@ -132,7 +132,8 @@ broker.createService({
                             ctx.call('proxy.sklad', {
                                 url: `https://api.moysklad.ru/api/remap/1.2/entity${isService ? '/service' : '/product'}`,
                                 type: "post",
-                                data: params
+                                data: params,
+                                priority: true
                             }).then(result => {
                                 return {
                                     assortment: { meta: result?.meta },

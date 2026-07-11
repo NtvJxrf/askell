@@ -475,7 +475,7 @@ async function handlePZChanged(ctx) {
                 document ??= await ctx.call('proxy.sklad',{ url: event.meta.href })
                 order ??= await ctx.call('proxy.sklad',{ url: document.customerOrders[0].meta.href + '?expand=productionTasks' })
                 let orderCompleted = true
-                for(const task of order.productionTasks){
+                for(const task of (order?.productionTasks || [])){
                     if(!task.productionEnd) orderCompleted = false
                 }
                 if(orderCompleted)

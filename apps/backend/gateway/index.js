@@ -52,7 +52,7 @@ const getClientIp = (req) => {
 
   const xff = req.headers['x-forwarded-for'];
   if (!xff) return socketIp;
-
+  console.log('xff', xff, 'socketIp', socketIp, 'trusted?', TRUSTED_PROXIES.includes(socketIp));
   const parts = xff.split(',').map(s => normalizeIp(s.trim())).filter(Boolean);
   return parts.length ? parts[parts.length - 1] : socketIp;
 };

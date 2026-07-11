@@ -207,219 +207,32 @@ broker.createService({
             rest: "POST /orderChanged",
             permissions: ["Админ"],
             async handler(ctx) {
-                console.log('orderChanged request', ctx.params)
-                const { attributes, states, employees } = getData()
-                let order = null
-                for(const event of ctx.params.events){
-                    try{
-                        if(event?.updatedFields?.includes('state')){
-                            order ??= await ctx.call('proxy.sklad', {url: `${event.meta.href}?expand=agent,store,state`})
-                            const attrs = (order.attributes || []).reduce((a, x) => {
-                                a[x.name] = x.value;
-                                return a;
-                            }, {});
-                            switch(order.state.name){
-                                case 'Готово':
-                                    if(order.payedSum < order.sum && !attrs['Рекламация'] && order?.agent?.name !== 'ООО "ИНТЕРНЕТ РЕШЕНИЯ".'){
-                                        await ctx.call('proxy.sklad', {
-                                            url: order.meta.href,
-                                            type: 'put',
-                                            data: {
-                                                state: { meta: states.customerorder['Готово, не оплачено'] }
-                                            }
-                                        })
-                                        return
-                                    }
-                                    await ctx.call('proxy.sklad', {
-                                        url: order.meta.href,
-                                        type: 'put',
-                                        data: {
-                                            attributes: [{ meta: attributes.customerorder['Дата готовности факт'], value: new Date().toISOString().slice(0, 19).replace('T', ' ') }]
-                                        }
-                                    })
-                                    if(order?.owner?.meta?.href == `https://api.moysklad.ru/api/remap/1.2/entity/employee/03579653-eedf-11e8-9107-50480000f34d`) return
-                                    if (!order?.agent?.email) {
-                                        if (order?.owner?.meta) {
-                                            await ctx.call('proxy.sklad', {
-                                                url: 'https://api.moysklad.ru/api/remap/1.2/entity/task',
-                                                type: 'post',
-                                                data: {
-                                                    assignee: { meta: order.owner.meta },
-                                                    operation: { meta: order.meta },
-                                                    description: `Уведомление о готовом заказе не отправлено, тк не указан email`
-                                                }
-                                            })
-                                        }
-                                    }else{
-                                        let store = 'Кажется что-то пошло не так, обратитесь к менеджеру для уточнения адреса'
-                                        switch(order?.store?.name){
-                                            case('Селькоровская СГИ'):
-                                                store = 'Селькоровская улица, 114А, Екатеринбург, Свердловская область.\nЧасы работы: 09:00 - 19:00'
-                                            break
-                                            case('ВИЗ СГИ'):
-                                                store = 'Верх-Исетский бульвар, 13Н, Екатеринбург, Свердловская область.\nЧасы работы: 09:00 - 19:00'
-                                            break
-                                            case('Полеводство СГИ'):
-                                                store = 'Улица Николы Теслы, 1/2, Екатеринбург, Свердловская область.\nЧасы работы: 09:00 - 19:00'//УКАЗАТЬ АДРЕС ПОЛЕВОДСТВА
-                                            break
-                                        }
-                                        await ctx.call('proxy.request', {
-                                            url: process.env.UNISENDER_URL,
-                                            type: 'post',
-                                            data: { 
-                                                email: order?.agent?.email,
-                                                orderName: order.name,
-                                                store
-                                            }
-                                        })
-                                    }
-                                break
-                                case 'Поставлено в производство':
-                                    ctx.call('sklad.createPZ', { id: order.id, initiator: ctx.params.auditContext?.uid })
-                                break
-                                case 'Поставлено в производство ВИЗ':
-                                    ctx.call('sklad.createPZ', { id: order.id, initiator: ctx.params.auditContext?.uid })
-                                break
-                                // case 'Тест':
-                                //     ctx.call('sklad.createPZ', { id: order.id, initiator: ctx.params.auditContext?.uid })
-                                // break
-                                case 'Карантин':
-                                    if(!order.productionTasks) break
-                                    for(const productiontask of order.productionTasks){
-                                        const task = await ctx.call('proxy.sklad', {
-                                            url: `https://api.moysklad.ru/api/remap/1.2/entity/task`,
-                                            type: 'post',
-                                            data: {
-                                                assignee: { meta: employees['ea79c5e9-b7fd-11ed-0a80-03260003eb9f'].meta }, //Руслан
-                                                operation: { meta: productiontask.meta },
-                                                description: `Остановить выпуск продукции по этому ПЗ`
-                                            }
-                                        })
-                                        await ctx.call('proxy.sklad', {
-                                            url: productiontask.meta.href,
-                                            type: 'put',
-                                            data: {
-                                                state: { meta: states.productiontask['Остановлено'] }
-                                            }
-                                        })
-                                    }
-                                break
-                            }
-                        }
-                    }catch(err){
-                        this.logger.error({ err, order: order?.name, event }, `Ошибка обработки изменения заказа ${order?.name || ''}`)
-                        try {
-                            await ctx.call('proxy.sklad', {
-                                url: 'https://api.moysklad.ru/api/remap/1.2/entity/task',
-                                type: 'post',
-                                data: {
-                                    assignee: { meta: employees['62d9a852-3488-11f0-0a80-043b00408594'].meta },
-                                    description: `Ошибка во время обработки изменения заказа покупателя № ${order?.name}
-                                    Ошибка: ${err.message}
-                                    Stack:
-                                    ${err.stack}
-                                    Event: ${JSON.stringify(ctx.params)}`
-                                }
-                            })
-                            if (order?.id) {
-                                await ctx.call('proxy.sklad', {
-                                    url: `https://api.moysklad.ru/api/remap/1.2/entity/customerorder/${order.id}`,
-                                    type: 'put',
-                                    data: {
-                                        state: { meta: {
-                                            "href" : "https://api.moysklad.ru/api/remap/1.2/entity/customerorder/metadata/states/6a37967b-5899-11f0-0a80-1bc9000373a3",
-                                            "metadataHref" : "https://api.moysklad.ru/api/remap/1.2/entity/customerorder/metadata",
-                                            "type" : "state",
-                                            "mediaType" : "application/json"
-                                        }}
-                                    }
-                                })
-                            }
-                        } catch (notifyErr) {
-                            this.logger.error({ err: notifyErr, order: order?.name }, 'Не удалось отправить уведомление об ошибке orderChanged')
-                        }
-                    }
-                }
+                handleOrderChanged(ctx)
+                return true
             }
         },
         pzChanged: {
             rest: "POST /pzChanged",
             permissions: [],
             async handler(ctx) {
-                let document = null
-                let order = null
-                const data  = ctx.params
-                const { states } = getData()
-                for(const event of data.events){
-                    try{
-                        if(event?.updatedFields?.includes('productionEnd')){
-                            document ??= await Client.sklad(event.meta.href)
-                            order ??= await Client.sklad(document.customerOrders[0].meta.href + '?expand=productionTasks')
-                            let orderCompleted = true
-                            for(const task of order.productionTasks){
-                                if(!task.productionEnd) orderCompleted = false
-                            }
-                            if(orderCompleted)
-                                await Client.sklad(order.meta.href, 'put', {
-                                    state: { meta: states.customerorder['Готово'] }
-                                })
-                        }
-                    }catch(err){
-                        this.logger.error({ err, order: order?.name, event }, `Ошибка обработки изменения ПЗ ${document?.name || ''}`)
-                    }
-                }
+                handlePZChanged(ctx)
+                return true
             }
         },
         paymentInChanged: {
             rest: "POST /paymentInChanged",
             permissions: [],
             async handler(ctx) {
-                let document = null
-                let invoice = null
-                const data = ctx.params
-                for(const event of data.events){
-                    try{
-                        if(event?.updatedFields?.includes('operationLink')){
-                            document ??= await Client.sklad(event.meta.href)
-                            const invoices = document?.operations?.filter(el => el.meta.type == 'invoiceout')
-                            if(!invoices || invoices.length == 0) return
-                            invoice ??= await Client.sklad(invoices[0].meta.href)
-                            const attrs = {
-                                attributes: [{
-                                    meta: {
-                                        href: 'https://api.moysklad.ru/api/remap/1.2/entity/paymentin/metadata/attributes/26decc76-3403-11f1-0a80-01be000d4638',
-                                        type: 'attributemetadata',
-                                        mediaType: 'application/json'
-                                    },
-                                    value: invoice.owner
-                                }]
-                            }
-                            invoice?.project?.meta && (attrs.project = { meta: invoice.project.meta })
-                            const response = await Client.sklad(document.meta.href, 'put', attrs)
-                        }
-                    }catch(err){
-                        this.logger.error({ err, invoice: invoice?.name, event }, `Ошибка обработки изменения входящего платежа ${document?.name || ''}`)
-                    }
-                }
+                handlePaymentInChanged(ctx)
+                return true
             }
         },
         orderCreated: {
             rest: "POST /orderCreated",
             permissions: [],
             async handler(ctx) {
-                const data = ctx.params
-                for(const event of data.events){
-                    try{
-                        const order = await Client.sklad(event.meta.href)
-                        const contracts = await Client.sklad(`https://api.moysklad.ru/api/remap/1.2/entity/contract?filter=agent=${order.agent.meta.href}&order=moment`)
-                        if(contracts.rows.length == 0) continue
-                        await Client.sklad(order.meta.href, 'put', {
-                            contract: { meta: contracts.rows[0].meta }
-                        })
-                    }catch(err){
-                        this.logger.error({ err, order: order?.name, event }, `Ошибка обработки создания заказа ${order?.name || ''}`)
-                    }
-                }
+                handleOrderCreated(ctx)
+                return true
             }
         }
     },
@@ -513,5 +326,220 @@ async function doAiRequest(ctx, text, endpoint) {
     }catch (err) {
         ctx.broker.logger.error({ err, endpoint }, "Error calling AI agent")
         throw new MoleculerError("Failed to generate glass positions from AI", 502, 'AI_AGENT_FAILED', { endpoint })
+    }
+}
+function handleOrderChanged(ctx) {
+    const { attributes, states, employees } = getData()
+    let order = null
+    for(const event of ctx.params.events){
+        try{
+            if(event?.updatedFields?.includes('state')){
+                order ??= await ctx.call('proxy.sklad', {url: `${event.meta.href}?expand=agent,store,state`})
+                const attrs = (order.attributes || []).reduce((a, x) => {
+                    a[x.name] = x.value;
+                    return a;
+                }, {});
+                switch(order.state.name){
+                    case 'Готово':
+                        if(order.payedSum < order.sum && !attrs['Рекламация'] && order?.agent?.name !== 'ООО "ИНТЕРНЕТ РЕШЕНИЯ".'){
+                            await ctx.call('proxy.sklad', {
+                                url: order.meta.href,
+                                type: 'put',
+                                data: {
+                                    state: { meta: states.customerorder['Готово, не оплачено'] }
+                                }
+                            })
+                            return
+                        }
+                        await ctx.call('proxy.sklad', {
+                            url: order.meta.href,
+                            type: 'put',
+                            data: {
+                                attributes: [{ meta: attributes.customerorder['Дата готовности факт'], value: new Date().toISOString().slice(0, 19).replace('T', ' ') }]
+                            }
+                        })
+                        if(order?.owner?.meta?.href == `https://api.moysklad.ru/api/remap/1.2/entity/employee/03579653-eedf-11e8-9107-50480000f34d`) return
+                        if (!order?.agent?.email) {
+                            if (order?.owner?.meta) {
+                                await ctx.call('proxy.sklad', {
+                                    url: 'https://api.moysklad.ru/api/remap/1.2/entity/task',
+                                    type: 'post',
+                                    data: {
+                                        assignee: { meta: order.owner.meta },
+                                        operation: { meta: order.meta },
+                                        description: `Уведомление о готовом заказе не отправлено, тк не указан email`
+                                    }
+                                })
+                            }
+                        }else{
+                            let store = 'Кажется что-то пошло не так, обратитесь к менеджеру для уточнения адреса'
+                            switch(order?.store?.name){
+                                case('Селькоровская СГИ'):
+                                    store = 'Селькоровская улица, 114А, Екатеринбург, Свердловская область.\nЧасы работы: 09:00 - 19:00'
+                                break
+                                case('ВИЗ СГИ'):
+                                    store = 'Верх-Исетский бульвар, 13Н, Екатеринбург, Свердловская область.\nЧасы работы: 09:00 - 19:00'
+                                break
+                                case('Полеводство СГИ'):
+                                    store = 'Улица Николы Теслы, 1/2, Екатеринбург, Свердловская область.\nЧасы работы: 09:00 - 19:00'//УКАЗАТЬ АДРЕС ПОЛЕВОДСТВА
+                                break
+                            }
+                            await ctx.call('proxy.request', {
+                                url: process.env.UNISENDER_URL,
+                                type: 'post',
+                                data: { 
+                                    email: order?.agent?.email,
+                                    orderName: order.name,
+                                    store
+                                }
+                            })
+                        }
+                    break
+                    case 'Поставлено в производство':
+                        ctx.call('sklad.createPZ', { id: order.id, initiator: ctx.params.auditContext?.uid })
+                    break
+                    case 'Поставлено в производство ВИЗ':
+                        ctx.call('sklad.createPZ', { id: order.id, initiator: ctx.params.auditContext?.uid })
+                    break
+                    // case 'Тест':
+                    //     ctx.call('sklad.createPZ', { id: order.id, initiator: ctx.params.auditContext?.uid })
+                    // break
+                    case 'Карантин':
+                        if(!order.productionTasks) break
+                        for(const productiontask of order.productionTasks){
+                            const task = await ctx.call('proxy.sklad', {
+                                url: `https://api.moysklad.ru/api/remap/1.2/entity/task`,
+                                type: 'post',
+                                data: {
+                                    assignee: { meta: employees['ea79c5e9-b7fd-11ed-0a80-03260003eb9f'].meta }, //Руслан
+                                    operation: { meta: productiontask.meta },
+                                    description: `Остановить выпуск продукции по этому ПЗ`
+                                }
+                            })
+                            await ctx.call('proxy.sklad', {
+                                url: productiontask.meta.href,
+                                type: 'put',
+                                data: {
+                                    state: { meta: states.productiontask['Остановлено'] }
+                                }
+                            })
+                        }
+                    break
+                }
+            }
+        }catch(err){
+            ctx.broker.logger.error({ err, order: order?.name, event }, `Ошибка обработки изменения заказа ${order?.name || ''}`)
+            try {
+                await ctx.call('proxy.sklad', {
+                    url: 'https://api.moysklad.ru/api/remap/1.2/entity/task',
+                    type: 'post',
+                    data: {
+                        assignee: { meta: employees['62d9a852-3488-11f0-0a80-043b00408594'].meta },
+                        description: `Ошибка во время обработки изменения заказа покупателя № ${order?.name}
+                        Ошибка: ${err.message}
+                        Stack:
+                        ${err.stack}
+                        Event: ${JSON.stringify(ctx.params)}`
+                    }
+                })
+                if (order?.id) {
+                    await ctx.call('proxy.sklad', {
+                        url: `https://api.moysklad.ru/api/remap/1.2/entity/customerorder/${order.id}`,
+                        type: 'put',
+                        data: {
+                            state: { meta: {
+                                "href" : "https://api.moysklad.ru/api/remap/1.2/entity/customerorder/metadata/states/6a37967b-5899-11f0-0a80-1bc9000373a3",
+                                "metadataHref" : "https://api.moysklad.ru/api/remap/1.2/entity/customerorder/metadata",
+                                "type" : "state",
+                                "mediaType" : "application/json"
+                            }}
+                        }
+                    })
+                }
+            } catch (notifyErr) {
+                ctx.logger.error({ err: notifyErr, order: order?.name }, 'Не удалось отправить уведомление об ошибке orderChanged')
+            }
+        }
+    }
+}
+function handlePZChanged(ctx) {
+    let document = null
+    let order = null
+    const data  = ctx.params
+    const { states } = getData()
+    for(const event of data.events){
+        try{
+            if(event?.updatedFields?.includes('productionEnd')){
+                document ??= await ctx.call('proxy.sklad',{ url: event.meta.href })
+                order ??= await ctx.call('proxy.sklad',{ url: document.customerOrders[0].meta.href + '?expand=productionTasks' })
+                let orderCompleted = true
+                for(const task of order.productionTasks){
+                    if(!task.productionEnd) orderCompleted = false
+                }
+                if(orderCompleted)
+                    await ctx.call('proxy.sklad',{
+                        url: order.meta.href,
+                        type: 'put',
+                        data: {
+                            state: { meta: states.customerorder['Готово'] }
+                        }
+                    })
+            }
+        }catch(err){
+            ctx.broker.logger.error({ err, order: order?.name, event }, `Ошибка обработки изменения ПЗ ${document?.name || ''}`)
+        }
+    }
+}
+function handlePaymentInChanged(ctx) {
+    let document = null
+    let invoice = null
+    const data = ctx.params
+    for(const event of data.events){
+        try{
+            if(event?.updatedFields?.includes('operationLink')){
+                document ??= await ctx.call('proxy.sklad',{ url: event.meta.href })
+                const invoices = document?.operations?.filter(el => el.meta.type == 'invoiceout')
+                if(!invoices || invoices.length == 0) return
+                invoice ??= await ctx.call('proxy.sklad',{ url: invoices[0].meta.href })
+                const attrs = {
+                    attributes: [{
+                        meta: {
+                            href: 'https://api.moysklad.ru/api/remap/1.2/entity/paymentin/metadata/attributes/26decc76-3403-11f1-0a80-01be000d4638',
+                            type: 'attributemetadata',
+                            mediaType: 'application/json'
+                        },
+                        value: invoice.owner
+                    }]
+                }
+                invoice?.project?.meta && (attrs.project = { meta: invoice.project.meta })
+                const response = await ctx.call('proxy.sklad',{
+                    url: document.meta.href,
+                    type: 'put',
+                    data: attrs
+                })
+            }
+        }catch(err){
+            this.logger.error({ err, invoice: invoice?.name, event }, `Ошибка обработки изменения входящего платежа ${document?.name || ''}`)
+        }
+    }
+}
+function handleOrderCreated(ctx) {
+    const data = ctx.params
+    for(const event of data.events){
+        let order = null
+        try{
+            order = await ctx.call('proxy.sklad', { url: event.meta.href })
+            const contracts = await ctx.call('proxy.sklad', { url: `https://api.moysklad.ru/api/remap/1.2/entity/contract?filter=agent=${order.agent.meta.href}&order=moment` })
+            if(contracts.rows.length == 0) continue
+            await ctx.call('proxy.sklad', {
+                url: order.meta.href,
+                type: 'put',
+                data: {
+                    contract: { meta: contracts.rows[0].meta }
+                }
+            })
+        }catch(err){
+            ctx.broker.logger.error({ err, order: order?.name, event }, `Ошибка обработки создания заказа ${order?.name || ''}`)
+        }
     }
 }

@@ -51,7 +51,6 @@ const getClientIp = (req) => {
   if (!TRUSTED_PROXIES.includes(socketIp)) return socketIp;
 
   const xff = req.headers['x-forwarded-for'];
-  console.log('xff', xff, 'socketIp', socketIp)
   if (!xff) return socketIp;
 
   const parts = xff.split(',').map(s => normalizeIp(s.trim())).filter(Boolean);
@@ -101,7 +100,6 @@ broker.createService({
     async authenticate(ctx, route, req) {
       // 1) Доверенные IP
       const remoteIp = getClientIp(req);
-      console.log('remoteIp', remoteIp)
       if (TRUSTED_IPS.includes(remoteIp)) {
         return systemUser(`trusted-ip:${remoteIp}`);
       }

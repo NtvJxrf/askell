@@ -199,7 +199,6 @@ export const createProductionTask = async ({ id, initiator }, ctx) => {
                 deliveryPlannedMoment: formatDate(depth3date),
             }
         ]
-        console.log(productionConfigs)
         const createTask = async ({ source, materialsStore, productsStore, checkboxes, reserve, linkToParent, deliveryPlannedMoment }) => {
             const task = await makeProductionTask({
                 ctx,

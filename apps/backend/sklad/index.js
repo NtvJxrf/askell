@@ -88,7 +88,6 @@ broker.createService({
             async handler(ctx) {
                 const { attributes, sklad_materials, currencies, priceTypes, stores } = getData()
                 const data = ctx.params
-                console.log(data)
                 const order = await ctx.call('proxy.sklad', {url: `https://api.moysklad.ru/api/remap/1.2/entity/customerorder/${data.order.id}?expand=state,positions.assortment`})
                 if(['В работе', 'Поставлено в производство'].includes(order.state.name)) throw new MoleculerClientError(`Нельзя менять позиции у заказа который в работе, смените статус на "Карантин"`, 400, 'ORDER_IN_PROGRESS', { order: data.order.name })//Кидаю ошибку чтоб не пересохраняли заказы которые уже в работе
                 const positionsToSave = []
@@ -147,7 +146,6 @@ broker.createService({
                     }
                 }
                 const finalPositions = await Promise.all(positionsToSave)
-                console.log(finalPositions)
                 const deletedPositions = order?.positions?.rows?.filter(pos => !finalPositions.some(p => p?.assortment?.meta?.href === pos?.assortment?.meta?.href))
                 try {
                     const params = {
@@ -173,10 +171,43 @@ broker.createService({
                 }
             }
         },
+        createPZ: {
+            rest: "POST /createPZ",
+            permissions: ['Админ'],
+            async handler(ctx) {
+                const { id, initiator } = ctx.params
+                return await createProductionTask({ id, initiator }, ctx)
+            }
+        },
+        aiGlass: {
+            rest: 'POST /ai/glass',
+            permissions: ['Калькулятор'],
+            async handler(ctx) {
+                const { text } = ctx.params;
+                return JSON.parse(await doAiRequest(ctx, text, process.env.TIMEWEB_GLASS_AI_AGENT_URL)).map(expandObject)
+            }
+        },
+        aiGlasspacket: {
+            rest: 'POST /ai/glasspacket',
+            permissions: ['Калькулятор'],
+            async handler(ctx) {
+                const { text } = ctx.params;
+                return JSON.parse(await doAiRequest(ctx, text, process.env.TIMEWEB_GLASSPACKET_AI_AGENT_URL))
+            }
+        },
+        aiTempering: {
+            rest: 'POST /ai/tempering',
+            permissions: ['Калькулятор'],
+            async handler(ctx) {
+                const { text } = ctx.params;
+                return JSON.parse(await doAiRequest(ctx, text, process.env.TIMEWEB_GLASS_TEMPERING_AI_AGENT_URL))
+            }
+        },
         orderChanged: {
             rest: "POST /orderChanged",
-            permissions: [],
+            permissions: ["Админ"],
             async handler(ctx) {
+                console.log('orderChanged request', ctx.params)
                 const { attributes, states, employees } = getData()
                 let order = null
                 for(const event of ctx.params.events){
@@ -309,38 +340,6 @@ broker.createService({
                         }
                     }
                 }
-            }
-        },
-        createPZ: {
-            rest: "POST /createPZ",
-            permissions: ['Админ'],
-            async handler(ctx) {
-                const { id, initiator } = ctx.params
-                return await createProductionTask({ id, initiator }, ctx)
-            }
-        },
-        aiGlass: {
-            rest: 'POST /ai/glass',
-            permissions: ['Калькулятор'],
-            async handler(ctx) {
-                const { text } = ctx.params;
-                return JSON.parse(await doAiRequest(ctx, text, process.env.TIMEWEB_GLASS_AI_AGENT_URL)).map(expandObject)
-            }
-        },
-        aiGlasspacket: {
-            rest: 'POST /ai/glasspacket',
-            permissions: ['Калькулятор'],
-            async handler(ctx) {
-                const { text } = ctx.params;
-                return JSON.parse(await doAiRequest(ctx, text, process.env.TIMEWEB_GLASSPACKET_AI_AGENT_URL))
-            }
-        },
-        aiTempering: {
-            rest: 'POST /ai/tempering',
-            permissions: ['Калькулятор'],
-            async handler(ctx) {
-                const { text } = ctx.params;
-                return JSON.parse(await doAiRequest(ctx, text, process.env.TIMEWEB_GLASS_TEMPERING_AI_AGENT_URL))
             }
         },
         pzChanged: {

@@ -269,7 +269,6 @@ export function PositionsPanel() {
         const quantity = position.quantity || position.initialData?.quantity || 1;
         const usedTriplex = position?.result?.other?.usedTriplex || [];
         getPositionMaterials(position.initialData).forEach((material) => {
-          console.log(material)
           if (!material) return;
           // У стеклопакета одно из "стёкол" может быть триплексом — в этом
           // случае раскладку на листе нужно строить не по названию триплекса

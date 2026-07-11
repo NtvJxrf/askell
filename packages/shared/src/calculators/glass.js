@@ -2,7 +2,6 @@ import checkDetail from './checkDetails.js'
 import constructName from './constructName.js'
 import constructWorks from './constructWorks.js'
 const Calculate = (data, selfcost) => {
-    console.log(selfcost)
     const { material, height, width, drills, zenk, cutsv1, cutsv2, cutsv3, processing,
          tempered, shape, color, print, rounding, quantity = 1, ignoreRestricts = false, trims = {} } = data
     let S = (height * width) / 1000000

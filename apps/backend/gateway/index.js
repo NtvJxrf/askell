@@ -54,7 +54,7 @@ broker.createService({
         autoAliases: true,
         // Only expose our own services (keeps moleculer-web internals like
         // `api.listAliases` and `$node.*` off the public surface).
-        whitelist: ["users.*", "proxy.*", "data-refresher.*", "sklad.*", "sklad1c.*", "productionCompletion.*", "reports.*", "extension.*"],
+        whitelist: ["users.*", "proxy.*", "data-refresher.*", "sklad.*", "productionCompletion.*", "reports.*", "extension.*", "1c"],
         authentication: true,
         authorization: true,
         bodyParsers: { json: true },

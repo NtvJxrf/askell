@@ -48,10 +48,10 @@ const normalizeIp = (ip) => (ip || '').replace(/^::ffff:/, '');
 // TCP-соединения, поэтому его нельзя подделать клиентским заголовком.
 const getClientIp = (req) => {
   const socketIp = normalizeIp(req.socket?.remoteAddress);
+  console.log('socketIp', socketIp, 'trusted?', TRUSTED_PROXIES.includes(socketIp));
   if (!TRUSTED_PROXIES.includes(socketIp)) return socketIp;
 
   const xff = req.headers['x-forwarded-for'];
-  console.log('xff', xff, 'socketIp', socketIp, 'trusted?', TRUSTED_PROXIES.includes(socketIp));
   if (!xff) return socketIp;
   const parts = xff.split(',').map(s => normalizeIp(s.trim())).filter(Boolean);
   return parts.length ? parts[parts.length - 1] : socketIp;

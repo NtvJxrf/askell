@@ -345,7 +345,7 @@ async function handleOrderChanged(ctx) {
                                 url: order.meta.href,
                                 type: 'put',
                                 data: {
-                                    state: { meta: states.customerorder['Готово, не оплачено'] }
+                                    state: { meta: states.customerorder['Готово, не оплачено'].meta }
                                 }
                             })
                             return
@@ -354,7 +354,10 @@ async function handleOrderChanged(ctx) {
                             url: order.meta.href,
                             type: 'put',
                             data: {
-                                attributes: [{ meta: attributes.customerorder['Дата готовности факт'], value: new Date().toISOString().slice(0, 19).replace('T', ' ') }]
+                                attributes: [{ 
+                                    meta: attributes.customerorder['Дата готовности факт'].meta,
+                                    value: new Date().toISOString().slice(0, 19).replace('T', ' ')
+                                }]
                             }
                         })
                         if(order?.owner?.meta?.href == `https://api.moysklad.ru/api/remap/1.2/entity/employee/03579653-eedf-11e8-9107-50480000f34d`) return
@@ -419,7 +422,7 @@ async function handleOrderChanged(ctx) {
                                 url: productiontask.meta.href,
                                 type: 'put',
                                 data: {
-                                    state: { meta: states.productiontask['Остановлено'] }
+                                    state: { meta: states.productiontask['Остановлено'].meta }
                                 }
                             })
                         }

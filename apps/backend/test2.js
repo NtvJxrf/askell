@@ -19,7 +19,7 @@ await broker.waitForServices(['users', 'proxy']);
 // const me   = await broker.call('users.me', {}, { meta: { user: { id: list[0].id, roles: list[0].roles } } });
 // const actions = await broker.call("$node.services");
 // console.log(actions);
-const test = await api.post('https://calc.askell.ru/api/backend/sklad/orderCreated', {
+const test = await api.post('https://calc.askell.ru/api/backend/sklad/orderCreated?devToken=31cfad3976d798ce5dfd4c2cc0fa1a35c15d0ba72d6c4be25d1441e20aae5849f223de6b6ca4f44eb50b91b778866530ebafb84b3309f93dc220b5c00524c887', {
   json: {
     "auditContext": {
       "meta": {

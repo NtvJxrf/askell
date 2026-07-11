@@ -2,6 +2,8 @@ import { createBroker } from "../lib/broker.js";
 import logisticRequest from "./utils/logistic.js";
 import goodInfo from "./utils/goodinfo.js";
 import reclamationRequest from "./utils/reclamation.js";
+import productionlabels from "./utils/productionlabels.js";
+import customerlabels from "./utils/customerlabels.js";
 export const broker = createBroker("extension");
 
 broker.createService({
@@ -28,6 +30,22 @@ broker.createService({
             permissions: [],
             async handler(ctx) {
                 const result = await reclamationRequest(ctx.params, ctx);
+                return result;
+            }
+        },
+        productionlabels: {
+            rest: "POST /productionlabels",
+            permissions: [],
+            async handler(ctx) {
+                const result = await productionlabels(ctx.params, ctx);
+                return result;
+            }
+        },
+        customerlabels: {
+            rest: "POST /customerlabels",
+            permissions: [],
+            async handler(ctx) {
+                const result = await customerlabels(ctx.params, ctx);
                 return result;
             }
         }

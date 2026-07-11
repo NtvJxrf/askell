@@ -48,11 +48,9 @@ const normalizeIp = (ip) => (ip || '').replace(/^::ffff:/, '');
 // TCP-соединения, поэтому его нельзя подделать клиентским заголовком.
 const getClientIp = (req) => {
   const socketIp = normalizeIp(req.socket?.remoteAddress);
-  console.log('socketIp', socketIp, 'trusted?', TRUSTED_PROXIES.includes(socketIp));
   if (!TRUSTED_PROXIES.includes(socketIp)) return socketIp;
 
   const xff = req.headers['x-forwarded-for'];
-  console.log('xff', xff, 'trusted?', TRUSTED_PROXIES.includes(xff));
   if (!xff) return socketIp;
   const parts = xff.split(',').map(s => normalizeIp(s.trim())).filter(Boolean);
   return parts.length ? parts[parts.length - 1] : socketIp;
@@ -101,7 +99,6 @@ broker.createService({
     async authenticate(ctx, route, req) {
       // 1) Доверенные IP
       const remoteIp = getClientIp(req);
-      console.log('remoteIp', remoteIp, 'trusted?', TRUSTED_IPS.includes(remoteIp));
       if (TRUSTED_IPS.includes(remoteIp)) {
         return systemUser(`trusted-ip:${remoteIp}`);
       }

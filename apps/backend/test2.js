@@ -19,8 +19,8 @@ await broker.waitForServices(['users', 'proxy']);
 // const me   = await broker.call('users.me', {}, { meta: { user: { id: list[0].id, roles: list[0].roles } } });
 // const actions = await broker.call("$node.services");
 // console.log(actions);
-const test = await api.get('https://calc.askell.ru/api/backend/1c/production?startDate=2026-06-20&endDate=2026-06-20&devToken=31cfad3976d798ce5dfd4c2cc0fa1a35c15d0ba72d6c4be25d1441e20aae5849f223de6b6ca4f44eb50b91b778866530ebafb84b3309f93dc220b5c00524c887')
-console.log(test.body)
+// const test = await api.get('https://calc.askell.ru/api/backend/1c/production?startDate=2026-06-10&endDate=2026-06-20&devToken=31cfad3976d798ce5dfd4c2cc0fa1a35c15d0ba72d6c4be25d1441e20aae5849f223de6b6ca4f44eb50b91b778866530ebafb84b3309f93dc220b5c00524c887')
+// console.log(test.body)
 // const res = await broker.call("data-refresher.updateHeaps");
 // const scheduleUpdate = await broker.call("data-refresher.updateSchedule");
 // const heaps = await broker.call("data-refresher.getHeaps");
@@ -39,7 +39,7 @@ console.log(test.body)
 //   stagesAndNorms,
 // })
 // await valkey.set('simulationResult', JSON.stringify(simres))
-// const res = await broker.call('$node.actions');
+const res = await broker.call('$node.services');
 // const res = JSON.parse(await valkey.get('settings'));
 // const res = await broker.call("reports.create", { filters: { startDate: '2026-06-20', endDate: '2026-06-20' }, type: 'report1' });
 // const res = await broker.call("sklad.orderChanged", {
@@ -64,6 +64,6 @@ console.log(test.body)
 //     ]
 //   });
 // const res = await broker.call("sklad.createPZ", { id: 'e65e442d-d19c-11f0-0a80-0390000360cd', initiator: '1c@askell' });
-// console.log(res)
+console.log(res)
 // console.timeEnd('sim')
 await broker.stop();

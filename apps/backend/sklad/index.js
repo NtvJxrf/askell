@@ -250,7 +250,6 @@ import expProd from './utils/1c/production.js'
 // экшены маунтятся на /api/1c/*, а не на /api/sklad1c/*.
 broker.createService({
     name: "1с",
-    settings: { rest: "/1c" },
     actions: {
         production: {
             rest: "GET /production",

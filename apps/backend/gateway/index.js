@@ -75,6 +75,7 @@ broker.createService({
     async authenticate(ctx, route, req) {
       // 1) Доверенные IP
       const remoteIp = normalizeIp(req.socket?.remoteAddress);
+      console.log('ip: ', remoteIp)
       if (TRUSTED_IPS.includes(remoteIp)) {
         return systemUser(`trusted-ip:${remoteIp}`);
       }

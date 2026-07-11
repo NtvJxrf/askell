@@ -8,10 +8,19 @@ const { UnAuthorizedError, ForbiddenError, ERR_NO_TOKEN, ERR_INVALID_TOKEN } = A
 
 // Запросы с этих IP проходят без Bearer-токена с правами админа
 // (вебхуки МойСклад / 1С / локальные интеграции).
-// ВАЖНО: сравнение идёт по req.socket.remoteAddress (не по X-Forwarded-For,
-// его можно подделать). Если поставите gateway за reverse-proxy (nginx),
-// уберите 127.0.0.1 из списка, иначе ВСЕ внешние запросы станут админскими.
+// ВАЖНО: сравнение идёт по реальному IP клиента (см. getClientIp ниже),
+// а не напрямую по req.socket.remoteAddress — иначе за reverse-proxy
+// (nginx на этом же сервере) тут всегда будет 127.0.0.1.
 const TRUSTED_IPS = ['23.105.238.220', '23.105.239.236'];
+
+// IP прокси, которым мы доверяем настолько, чтобы читать их X-Forwarded-For.
+// Это должен быть ТОЛЬКО ваш собственный nginx/балансировщик (обычно loopback,
+// если nginx на том же сервере, что и gateway). Если добавите сюда что-то ещё —
+// любой клиент сможет подделать X-Forwarded-For и выдать себя за TRUSTED_IPS.
+const TRUSTED_PROXIES = (process.env.TRUSTED_PROXY_IPS || '127.0.0.1,::1')
+  .split(',')
+  .map(s => s.trim())
+  .filter(Boolean);
 
 // Синтетический пользователь для доверенных источников.
 const systemUser = (username) => ({
@@ -31,6 +40,22 @@ const safeEqual = (a, b) => {
 };
 
 const normalizeIp = (ip) => (ip || '').replace(/^::ffff:/, '');
+
+// Реальный IP клиента: если запрос пришёл напрямую (не через доверенный
+// прокси), доверяем только req.socket.remoteAddress. Если непосредственный
+// пир — наш доверенный прокси (nginx), берём ПОСЛЕДНИЙ адрес из
+// X-Forwarded-For: именно его прокси дописывает сам на основе реального
+// TCP-соединения, поэтому его нельзя подделать клиентским заголовком.
+const getClientIp = (req) => {
+  const socketIp = normalizeIp(req.socket?.remoteAddress);
+  if (!TRUSTED_PROXIES.includes(socketIp)) return socketIp;
+
+  const xff = req.headers['x-forwarded-for'];
+  if (!xff) return socketIp;
+
+  const parts = xff.split(',').map(s => normalizeIp(s.trim())).filter(Boolean);
+  return parts.length ? parts[parts.length - 1] : socketIp;
+};
 
 const broker = createBroker('gateway');
 
@@ -74,8 +99,7 @@ broker.createService({
      */
     async authenticate(ctx, route, req) {
       // 1) Доверенные IP
-      const remoteIp = normalizeIp(req.socket?.remoteAddress);
-      console.log('ip: ', remoteIp)
+      const remoteIp = getClientIp(req);
       if (TRUSTED_IPS.includes(remoteIp)) {
         return systemUser(`trusted-ip:${remoteIp}`);
       }

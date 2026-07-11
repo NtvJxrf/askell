@@ -480,7 +480,7 @@ async function handlePZChanged(ctx) {
                         url: order.meta.href,
                         type: 'put',
                         data: {
-                            state: { meta: states.customerorder['Готово'] }
+                            state: { meta: states.customerorder['Готово'].meta }
                         }
                     })
             }

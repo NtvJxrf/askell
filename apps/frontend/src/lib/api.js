@@ -1,4 +1,5 @@
 import { auth } from '@/auth';
+import { headers } from 'next/headers';
 
 const API_BASE = process.env.NEXT_PUBLIC_ENV === 'development' ? 'http://localhost:6789/api' : `${process.env.API_URL}/api`;
 /**
@@ -8,17 +9,21 @@ const API_BASE = process.env.NEXT_PUBLIC_ENV === 'development' ? 'http://localho
 export async function apiFetch(path, options = {}) {
   const session = await auth();
 
-  const headers = {
-    'Content-Type': 'application/json',
-    ...(options.headers || {}),
-  };
+  const headersMap = { 'Content-Type': 'application/json' };
   if (session?.accessToken) {
-    headers.Authorization = `Bearer ${session.accessToken}`;
+    headersMap.Authorization = `Bearer ${session.accessToken}`;
   }
+  // Прокидываем реальный IP клиента (см. комментарий в route.js) —
+  // без этого gateway всегда видит IP самого Next.js-сервера.
+  const incomingHeaders = await headers();
+  const forwardedFor = incomingHeaders.get('x-forwarded-for');
+  if (forwardedFor) headersMap['x-forwarded-for'] = forwardedFor;
+  const realIp = incomingHeaders.get('x-real-ip');
+  if (realIp) headersMap['x-real-ip'] = realIp;
 
   const res = await fetch(`${API_BASE}${path}`, {
     ...options,
-    headers,
+    headers: { ...headersMap, ...(options.headers || {}) },
     cache: 'no-store',
   });
 

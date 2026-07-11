@@ -16,6 +16,14 @@ async function forward(request, { params }) {
   if (session?.accessToken) {
     headers.Authorization = `Bearer ${session.accessToken}`;
   }
+  // fetch() не пробрасывает IP исходного запроса сам по себе — без этого
+  // gateway всегда видел бы IP этого Next.js-сервера, а не браузера.
+  // nginx уже положил реальный IP клиента в эти заголовки (real_ip_header),
+  // просто ретранслируем их дальше на gateway.
+  const forwardedFor = request.headers.get('x-forwarded-for');
+  if (forwardedFor) headers['x-forwarded-for'] = forwardedFor;
+  const realIp = request.headers.get('x-real-ip');
+  if (realIp) headers['x-real-ip'] = realIp;
 
   const method = request.method;
   const hasBody = method !== 'GET' && method !== 'HEAD';

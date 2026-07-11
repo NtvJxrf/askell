@@ -56,7 +56,7 @@ function getTokenEnv(tokenName) {
 }
 function chooseToken(type) {
     if (['post', 'put', 'delete'].includes(type))
-        return state.last_3_sec_count < MAX_WINDOW_REQUESTS ? 'main' : null;
+        return (state.main < TOKEN_PARALLEL_LIMIT && state.last_3_sec_count < MAX_WINDOW_REQUESTS) ? 'main' : null;
     // Для GET в приоритете отдельный токен с расширенными лимитами
     if (state.extension < EXTENSION_TOKEN_PARALLEL_LIMIT && state.last_3_sec_count_extension < EXTENSION_MAX_WINDOW_REQUESTS) {
         return 'extension';
@@ -86,30 +86,86 @@ function canRequest(){
     return true
 }
 
+// Очереди запросов на получение токена, разбитые по двум осям:
+//  - категория ресурса (write -> токен 'main', read -> extension/token2-4),
+//    т.к. это независимые пулы токенов и подходящий токен для головы очереди
+//    не зависит от конкретного type внутри категории;
+//  - приоритет (priority/normal), приоритетная очередь всегда разбирается первой.
+// Благодаря этому диспетчеризация не требует сканирования всей очереди (O(1)
+// проверка головы каждой из 4 очередей), что важно при 1-2 тыс. запросов в очереди.
+function category(type) {
+    return ['post', 'put', 'delete'].includes(type) ? 'write' : 'read';
+}
+const queues = {
+    write: { priority: [], normal: [] },
+    read: { priority: [], normal: [] },
+};
+
+function assignToken(token) {
+    state[token]++;
+    state.totalParallel++;
+    if (token === 'extension') {
+        state.last_3_sec_count_extension++;
+        setTimeout(() => {
+            state.last_3_sec_count_extension--;
+            processQueue();
+        }, EXTENSION_WINDOW_MS);
+    } else {
+        state.last_3_sec_count++;
+        setTimeout(() => {
+            state.last_3_sec_count--;
+            processQueue();
+        }, WINDOW_MS);
+    }
+}
+
+function processQueue() {
+    let progressed = true;
+    while (progressed) {
+        progressed = false;
+        for (const cat of ['write', 'read']) {
+            if (!canRequest()) return;
+            const lanes = queues[cat];
+            const q = lanes.priority.length > 0 ? lanes.priority : lanes.normal;
+            if (q.length === 0) continue;
+            const token = chooseToken(q[0].type);
+            if (!token) continue;
+            const item = q.shift();
+            assignToken(token);
+            item.resolve(token);
+            progressed = true;
+        }
+    }
+}
+
+function acquireToken(type, priority = false) {
+    return new Promise(resolve => {
+        const item = { type, resolve };
+        queues[category(type)][priority ? 'priority' : 'normal'].push(item);
+        processQueue();
+    });
+}
+
+function releaseToken(token) {
+    state[token]--;
+    state.totalParallel--;
+    processQueue();
+}
+
 broker.createService({
     name: "proxy",
 
     actions: {
-        // Any authenticated user (no `roles` metadata required).
         sklad: {
             rest: "POST /sklad",
+            permissions: ['Админ'],
             async handler(ctx){
-                const {url, type = 'get', data = null} = ctx.params;
+                const {url, type = 'get', data = null, priority = false} = ctx.params;
 
-                // if(process.env.NODE_ENV === 'development'){
-                //     return await gotClient.get(`https://calc.askell.ru/api/proxy?devToken=${process.env.DEV_TOKEN}`, { url, type, data });
-                // }
-                while(!canRequest()) 
-                    await new Promise(r => setTimeout(r, 50));
-                let token = chooseToken(type);
-                while (token == null) {
-                    await new Promise(r => setTimeout(r, 50));
-                    token = chooseToken(type);
+                if(process.env.NODE_ENV === 'development'){
+                    return await gotClient.post(`https://calc.askell.ru/api/backend/proxy/sklad?devToken=${process.env.DEV_TOKEN}`, { url, type, data });
                 }
-                if(token == 'main'){
-                    while(state.main >= TOKEN_PARALLEL_LIMIT) 
-                        await new Promise(r => setTimeout(r, 50));
-                }
+                const token = await acquireToken(type, priority);
 
                 const args = {
                     headers: {
@@ -117,20 +173,7 @@ broker.createService({
                     }
                 }
                 if (data) args.json = data;
-                
-                state[token]++;
-                if (token === 'extension') {
-                    state.last_3_sec_count_extension++;
-                    setTimeout(() => {
-                        state.last_3_sec_count_extension--;
-                    }, EXTENSION_WINDOW_MS);
-                } else {
-                    state.last_3_sec_count++;
-                    setTimeout(() => {
-                        state.last_3_sec_count--;
-                    }, WINDOW_MS);
-                }
-                state.totalParallel++;
+
                 try{
                     this.logger.debug({ type: type.toUpperCase(), url, token, state: { ...state } }, `MoySklad ${type.toUpperCase()} ${url}`);
                     console.log(`MoySklad ${type.toUpperCase()} ${url} (token: ${token})`, state);
@@ -153,18 +196,21 @@ broker.createService({
                     throw new MoleculerError(`Ошибка при запросе к ${url}: ${err.message}`, 502, 'UPSTREAM_ERROR', { url });
                 }
                 finally{
-                    state[token]--;
-                    state.totalParallel--;
+                    releaseToken(token);
                 }
             }
         },
         fetchAllRows: {
             rest: "POST /fetchAllRows",
+            permissions: ['Админ'],
             async handler(ctx){
-                const { url } = ctx.params;
+                const { url, priority = false } = ctx.params;
+                if(process.env.NODE_ENV === 'development'){
+                    return await gotClient.post(`https://calc.askell.ru/api/backend/proxy/fetchAllRows?devToken=${process.env.DEV_TOKEN}`, { url });
+                }
                 const limit = 100;
                 const firstUrl = `${url}&limit=${limit}&offset=0`;
-                const firstResponse = await ctx.call('proxy.sklad', { url: firstUrl });
+                const firstResponse = await ctx.call('proxy.sklad', { url: firstUrl, priority });
 
                 if (!firstResponse.rows || firstResponse.rows.length === 0) {
                     return [];
@@ -176,7 +222,7 @@ broker.createService({
                 const requests = [];
                 for (let offset = limit; offset < totalSize; offset += limit) {
                     const url_new = `${url}&limit=${limit}&offset=${offset}`;
-                    requests.push(ctx.call('proxy.sklad', { url: url_new }));
+                    requests.push(ctx.call('proxy.sklad', { url: url_new, priority }));
                 }
 
                 const responses = await Promise.all(requests);

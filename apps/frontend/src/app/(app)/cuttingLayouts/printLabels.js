@@ -27,17 +27,15 @@ const buildLabelItems = (groups = []) => {
 
   groups.forEach((group, groupIndex) => {
     const source = group.source || {};
-    const positionNumber = groupIndex + 1;
-
     (group.pieces || []).forEach(() => {
       items.push({
         productName: source.name || "Без названия",
         agent: source.taskAttrs?.["Получатель"] || "",
         orderName: source.orderNumber || "",
         taskName: source.docName || "",
-        positionNumber,
         id: source.id,
         assortmentId: source.assortmentId,
+        belongsToPosition: source.belongsToPosition,
         mark: source.mark || "Нет",
         quantity: group.count,
         deliveryPlannedMoment: formatDate(source.deliveryPlannedMoment),

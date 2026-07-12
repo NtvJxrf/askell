@@ -112,7 +112,7 @@ async function drawLabelPage(doc, item) {
 
     y += doc.currentLineHeight(true)
 
-    doc.fontSize(12).text(`Позиция: ${item.positionNumber + 1}`, MARGIN, y, {
+    doc.fontSize(12).text(`№ позиции в заказе: ${item.positionNumber + 1}`, MARGIN, y, {
         width: CONTENT_WIDTH
     })
 
@@ -166,6 +166,12 @@ async function drawLabelPage(doc, item) {
 async function generateLabelsPdf({ user, dataFromForm}, ctx) {
     const task = await ctx.call('proxy.sklad', { url: `https://api.moysklad.ru/api/remap/1.2/entity/productiontask/${dataFromForm.id}` })
     const products = await ctx.call('proxy.sklad', { url: `https://api.moysklad.ru/api/remap/1.2/entity/productiontask/${dataFromForm.id}/products?expand=assortment` })
+    const orders = await ctx.call('proxy.sklad', { url: `https://api.moysklad.ru/api/remap/1.2/entity/customerorder?filter=name=${task.attributes.find( att => att.name == '№ заказа покупателя')?.value}` })
+    const order = [...(orders.rows || [])].sort((left, right) => {
+        const leftTime = new Date(left?.moment || 0).getTime()
+        const rightTime = new Date(right?.moment || 0).getTime()
+        return rightTime - leftTime
+    })[0]
     const items = products.rows.map( (el, index) => { 
             const url = new URL(el.productionRow.meta.uuidHref);
             const params = new URLSearchParams(url.hash.split('?')[1]);
@@ -175,7 +181,6 @@ async function generateLabelsPdf({ user, dataFromForm}, ctx) {
                 taskName: task.name,
                 productName: el.assortment.name,
                 code: el.assortment.code,
-                positionNumber: index,
                 qrPayload: `https://mskld.ru/ent/productionrow/${id}`,
                 quantity: el.planQuantity,
                 deliveryPlannedMoment: task.deliveryPlannedMoment,
@@ -185,7 +190,9 @@ async function generateLabelsPdf({ user, dataFromForm}, ctx) {
                 a[x.name] = x.value;
                 return a;
             }, {});
+            const positionNumber = order.positions.rows.findIndex(as => as.assortment.id == attrs['Принадлежит позиции'] || el.assortment.id) + 1
             stats.mark = attrs['Маркировка'] || 'Нет'
+            stats.positionNumber = positionNumber || 'Не обнаружено совпадений'
             return stats
         })
     return new Promise(async (resolve, reject) => {

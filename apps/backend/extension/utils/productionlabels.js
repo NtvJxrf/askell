@@ -166,7 +166,7 @@ async function drawLabelPage(doc, item) {
 async function generateLabelsPdf({ user, dataFromForm}, ctx) {
     const task = await ctx.call('proxy.sklad', { url: `https://api.moysklad.ru/api/remap/1.2/entity/productiontask/${dataFromForm.id}` })
     const products = await ctx.call('proxy.sklad', { url: `https://api.moysklad.ru/api/remap/1.2/entity/productiontask/${dataFromForm.id}/products?expand=assortment` })
-    const orders = await ctx.call('proxy.sklad', { url: `https://api.moysklad.ru/api/remap/1.2/entity/customerorder?filter=name=${task.attributes.find( att => att.name == '№ заказа покупателя')?.value}` })
+    const orders = await ctx.call('proxy.sklad', { url: `https://api.moysklad.ru/api/remap/1.2/entity/customerorder?filter=name=${task.attributes.find( att => att.name == '№ заказа покупателя')?.value}&expand=positions.assortment&limit=100` })
     const order = [...(orders.rows || [])].sort((left, right) => {
         const leftTime = new Date(left?.moment || 0).getTime()
         const rightTime = new Date(right?.moment || 0).getTime()
@@ -190,7 +190,7 @@ async function generateLabelsPdf({ user, dataFromForm}, ctx) {
                 a[x.name] = x.value;
                 return a;
             }, {});
-            const positionNumber = order.positions.rows.findIndex(as => as.assortment.id == attrs['Принадлежит позиции'] || el.assortment.id) + 1
+            const positionNumber = order.positions.rows.findIndex(as => as.assortment.id == (attrs['Принадлежит позиции'] || el.assortment.id)) + 1
             stats.mark = attrs['Маркировка'] || 'Нет'
             stats.positionNumber = positionNumber || 'Не обнаружено совпадений'
             return stats

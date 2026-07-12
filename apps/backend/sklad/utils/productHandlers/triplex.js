@@ -16,7 +16,7 @@ export const triplex = async ({ ctx, data, order, position, createdEntitys, resu
     for (const material of materials) {
         const [processingProcess, product] = await Promise.all([
             makeProcessingProcess(stagesSelk, ctx),
-            makeProduct({ ctx, data, material, createdEntitys, order, type: 'Стекло', pfFor: 'Триплекс' })
+            makeProduct({ ctx, data, material, createdEntitys, order, type: 'Стекло', pfFor: 'Триплекс', position })
         ])
         const plan = await makeProcessingPlan({ ctx, data, name: position.assortment.name, order, processingProcess, product, isPF: true, material, createdEntitys, mode: 'glass' })
         plan.quantity = position.quantity

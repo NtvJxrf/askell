@@ -38,7 +38,7 @@ export const smd = async ({ ctx, data, order, position, createdEntitys, results 
 
     const [processingProcess, product] = await Promise.all([
         makeProcessingProcess(generateStages(data, 'glass'), ctx),
-        makeProduct({ ctx, data, material: data.initialData.material, createdEntitys, order, type: 'Стекло', pfFor: 'СМД' })
+        makeProduct({ ctx, data, material: data.initialData.material, createdEntitys, order, type: 'Стекло', pfFor: 'СМД', position })
     ])
     const plan = await makeProcessingPlan({ ctx, data, name: 'Доска стеклянная магнитно-маркерная ASKELL Size', order, processingProcess, product, isPF: true, material: data.initialData.material, createdEntitys, mode: 'glass' })
     plan.quantity = position.quantity

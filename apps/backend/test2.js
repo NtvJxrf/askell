@@ -19,8 +19,12 @@ await broker.waitForServices(['users', 'proxy']);
 // const me   = await broker.call('users.me', {}, { meta: { user: { id: list[0].id, roles: list[0].roles } } });
 // const actions = await broker.call("$node.services");
 // console.log(actions);
-// const test = await api.get('https://calc.askell.ru/api/backend/1c/production?startDate=2026-06-10&endDate=2026-06-20&devToken=31cfad3976d798ce5dfd4c2cc0fa1a35c15d0ba72d6c4be25d1441e20aae5849f223de6b6ca4f44eb50b91b778866530ebafb84b3309f93dc220b5c00524c887')
-// console.log(test.body)
+const test = await api.post('https://calc.askell.ru/api/backend/proxy/sklad?&devToken=31cfad3976d798ce5dfd4c2cc0fa1a35c15d0ba72d6c4be25d1441e20aae5849f223de6b6ca4f44eb50b91b778866530ebafb84b3309f93dc220b5c00524c887', {
+  json : {
+    url: `https://api.moysklad.ru/api/remap/1.2/entity/customerorder/e65e442d-d19c-11f0-0a80-0390000360cd`
+  }
+})
+console.log(test.body)
 // const res = await broker.call("data-refresher.updateHeaps");
 // const scheduleUpdate = await broker.call("data-refresher.updateSchedule");
 // const heaps = await broker.call("data-refresher.getHeaps");

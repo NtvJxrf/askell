@@ -243,44 +243,6 @@ broker.createService({
         },
     }
 });
-import expDemands from './utils/1c/demands.js'
-import expInvoiceout from './utils/1c/invoiceout.js'
-import expProd from './utils/1c/production.js'
-// Отдельный сервис (тот же процесс/broker) для интеграции с 1С.
-// settings.rest переопределяет базовый path autoAliases, поэтому эти
-// экшены маунтятся на /api/1c/*, а не на /api/sklad1c/*.
-broker.createService({
-    name: "1c",
-    actions: {
-        production: {
-            rest: "GET /production",
-            // Заходит по ?token=ONE_C_TOKEN (см. gateway authenticate) —
-            // тогда пользователь системный с ролью 'Админ', permissions не нужны.
-            // Либо укажите permissions: ['Админ'] если хотите пускать только через токен/JWT-админа.
-            permissions: ['Админ'],
-            async handler(ctx) {
-                const result = await expProd(ctx.params, ctx)
-                return result
-            }
-        },
-        demand: {
-            rest: "GET /demand",
-            permissions: ['Админ'],
-            async handler(ctx) {
-                const result = await expDemands(ctx.params, ctx)
-                return result
-            }
-        },
-        invoiceout: {
-            rest: "GET /invoiceout",
-            permissions: ['Админ'],
-            async handler(ctx) {
-                const result = await expInvoiceout(ctx.params, ctx)
-                return result
-            }
-        },
-    }
-});
 
 broker.start();
 

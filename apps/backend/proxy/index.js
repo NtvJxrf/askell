@@ -163,7 +163,11 @@ broker.createService({
                 const {url, type = 'get', data = null, priority = false} = ctx.params;
 
                 if(process.env.NODE_ENV === 'development'){
-                    return await gotClient.post(`https://calc.askell.ru/api/backend/proxy/sklad?devToken=${process.env.DEV_TOKEN}`, { url, type, data });
+                    const { body } = await gotClient.post(`https://calc.askell.ru/api/backend/proxy/sklad?devToken=${process.env.DEV_TOKEN}`, { 
+                        json: { url, type, data, priority },
+                        responseType: 'json'
+                    });
+                    return body
                 }
                 const token = await acquireToken(type, priority);
 
@@ -206,7 +210,11 @@ broker.createService({
             async handler(ctx){
                 const { url, priority = false } = ctx.params;
                 if(process.env.NODE_ENV === 'development'){
-                    return await gotClient.post(`https://calc.askell.ru/api/backend/proxy/fetchAllRows?devToken=${process.env.DEV_TOKEN}`, { url });
+                    const { body } = await gotClient.post(`https://calc.askell.ru/api/backend/proxy/fetchAllRows?devToken=${process.env.DEV_TOKEN}`, { 
+                        json: {url, priority },
+                        responseType: 'json'
+                    });
+                    return body;
                 }
                 const limit = 100;
                 const firstUrl = `${url}&limit=${limit}&offset=0`;

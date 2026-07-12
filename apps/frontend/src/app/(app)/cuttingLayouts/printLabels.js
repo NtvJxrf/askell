@@ -1,5 +1,5 @@
 import QRCode from "qrcode";
-
+import { backend } from "@/lib/backend";
 const LABEL_SIZE_MM = 100;
 
 const formatDate = (moment) => {
@@ -36,6 +36,8 @@ const buildLabelItems = (groups = []) => {
         orderName: source.orderNumber || "",
         taskName: source.docName || "",
         positionNumber,
+        id: source.id,
+        assortmentId: source.assortmentId,
         mark: source.mark || "Нет",
         quantity: group.count,
         deliveryPlannedMoment: formatDate(source.deliveryPlannedMoment),
@@ -55,6 +57,7 @@ const renderLabelHtml = (item, qrDataUrl) => `
     <div class="line">Получатель: ${escapeHtml(item.agent)}</div>
     <div class="line">№ заказа покупателя: <span class="order">${escapeHtml(item.orderName)}</span></div>
     <div class="line">№ производственного задания: ${escapeHtml(item.taskName)}</div>
+    <div class="line">№ позиции в заказе: ${escapeHtml(item.positionNumber)}</div>
     <div class="line">Марк.: ${escapeHtml(item.mark)}</div>
     <div class="line">Дата готовности: ${escapeHtml(item.deliveryPlannedMoment)}</div>
     ${qrDataUrl ? `<img class="qr" src="${qrDataUrl}" alt="qr" />` : ""}
@@ -87,8 +90,25 @@ const waitForImages = (printWindow) =>
 
 // Печать этикеток по деталям раскроя (одна физическая деталь = одна этикетка)
 export async function printLabels(groups = []) {
-  const items = buildLabelItems(groups);
-
+  const itemsRaw = buildLabelItems(groups);
+  const res = await backend(`/proxy/sklad`, {
+    method: "POST",
+    body: {
+      url: `https://api.moysklad.ru/api/remap/1.2/entity/customerorder?filter=name=${[...new Set(itemsRaw.map(el => el.orderName))].join(';name=')}&expand=positions.assortment&limit=100`,
+      priority: true,
+    }
+  });
+  const ordersPos = res.rows.reduce((acc, order) => {
+    acc[order.name] = order.positions.rows.map(pos => pos.assortment.id)
+    return acc
+  }, {})
+  const items = itemsRaw.map(el => {
+    const id = el.belongsToPosition || el.assortmentId
+    return {
+      ...el,
+      positionNumber: (ordersPos[el.orderName].indexOf(id) + 1) || 'Не обнаружено совпадений',
+    }
+  })
   if (items.length === 0) {
     throw new Error("Нет деталей для печати этикеток");
   }

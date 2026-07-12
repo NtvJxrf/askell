@@ -26,6 +26,7 @@ const generateProductAttributes = (data, attributes, sklad_materials) => {
             case 'stanok': data.stanok && result.push({ meta: attributes.product["Тип станка"].meta, value: data.stanok }); break;
             case 'tempered': data.tempered === true && result.push({ meta: attributes.product["Закалка"].meta, value: true }); break;
             case 'isPF': data.isPF === true && result.push({ meta: attributes.product["Это полуфабрикат"].meta, value: true }); break;
+            case 'belongsTo': data.belongsTo && result.push({ meta: attributes.product["Принадлежит позиции"].meta, value: data.belongsTo }); break;
             case 'P': data.P && result.push({ meta: attributes.product["Периметр 1 детали в пог. м"].meta, value: data.P }); break;
             case 'details': result.push({ meta: attributes.product["Детали"].meta, value: JSON.stringify(data.details) }); break;
             case 'resultTapes': result.push({ meta: attributes.product["Пленки"].meta, value: data?.resultTapes?.join(' | ') || '' }); break;

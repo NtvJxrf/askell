@@ -70,7 +70,11 @@ export default function ReportsPage() {
       link.download = `report_${type}.xlsx`;
       link.click();
       URL.revokeObjectURL(url);
+      const listRes = await backend('/reports/list');
+      setReportsList(listRes.reportsList);
+      setCreatedReports(listRes.createdReports);
     }catch(e){
+      console.error(e)
       toast.error(`Ошибка: ${e.message}`)
     }finally{
       setDisabled(false)

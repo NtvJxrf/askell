@@ -19,7 +19,7 @@ const buildTriplexPane = async ({ ctx, triplexData, order, position, createdEnti
     for (const material of materials) {
         const [processingProcess, product] = await Promise.all([
             makeProcessingProcess(stagesGlass, ctx),
-            makeProduct({ ctx, data: triplexData, material, createdEntitys, order, type: 'Стекло', pfFor: 'Триплекс' })
+            makeProduct({ ctx, data: triplexData, material, createdEntitys, order, type: 'Стекло', pfFor: 'Триплекс', position })
         ])
         const plan = await makeProcessingPlan({ ctx, data: triplexData, name: position.assortment.name, order, processingProcess, product, isPF: true, material, createdEntitys, mode: 'glass' })
         plan.quantity = position.quantity
@@ -32,7 +32,7 @@ const buildTriplexPane = async ({ ctx, triplexData, order, position, createdEnti
     const { height, width } = triplexData.initialData
     const paneProduct = await ctx.call('proxy.sklad', { url: 'https://api.moysklad.ru/api/remap/1.2/entity/product', type: 'post', data: {
         name: `ПФ Триплекс (${height}х${width}, ${materials.join(' + ')}, площадь: ${(height * width / 1000000).toFixed(2)})`,
-        attributes: generateProductAttributes({ height, width, isPF: true, order, type: 'Триплекс', material1: materials[0], material2: materials[1] }, attributes, sklad_materials),
+        attributes: generateProductAttributes({ height, width, isPF: true, order, type: 'Триплекс', material1: materials[0], material2: materials[1], belongsTo: position.assortment.id }, attributes, sklad_materials),
         volume: Number((triplexData.result.other.S).toFixed(2)),
         uom: uomMeta,
         productFolder: productFoldersByType['ПФ']
@@ -89,7 +89,7 @@ export const glassPacket = async ({ ctx, data, order, position, createdEntitys, 
         }
         const [processingProcess, product] = await Promise.all([
             makeProcessingProcess(generateStages(material, 'glassPolev'), ctx),
-            makeProduct({ ctx, data, material: material[0], createdEntitys, order, type: 'Стекло', processingSPO: material[2], colorSPO: material[3], temperedSPO: material[1], pfFor: 'Стеклопакет' })
+            makeProduct({ ctx, data, material: material[0], createdEntitys, order, type: 'Стекло', processingSPO: material[2], colorSPO: material[3], temperedSPO: material[1], pfFor: 'Стеклопакет', position })
         ])
         const plan = await makeProcessingPlan({ ctx, data, name: position.assortment.name, order, processingProcess, product, isPF: true, material: material[0], createdEntitys, mode: 'glass' })
         plan._material = material[0]

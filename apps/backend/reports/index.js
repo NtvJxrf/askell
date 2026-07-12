@@ -98,6 +98,43 @@ broker.createService({
     }
 });
 
+import expDemands from './1c/demands.js'
+import expInvoiceout from './1c/invoiceout.js'
+import expProd from './1c/production.js'
+// Отдельный сервис (тот же процесс/broker) для интеграции с 1С.
+broker.createService({
+    name: "1c",
+    actions: {
+        production: {
+            rest: "GET /production",
+            // Заходит по ?token=ONE_C_TOKEN (см. gateway authenticate) —
+            // тогда пользователь системный с ролью 'Админ', permissions не нужны.
+            // Либо укажите permissions: ['Админ'] если хотите пускать только через токен/JWT-админа.
+            permissions: ['Админ'],
+            async handler(ctx) {
+                const result = await expProd(ctx.params, ctx)
+                return result
+            }
+        },
+        demand: {
+            rest: "GET /demand",
+            permissions: ['Админ'],
+            async handler(ctx) {
+                const result = await expDemands(ctx.params, ctx)
+                return result
+            }
+        },
+        invoiceout: {
+            rest: "GET /invoiceout",
+            permissions: ['Админ'],
+            async handler(ctx) {
+                const result = await expInvoiceout(ctx.params, ctx)
+                return result
+            }
+        },
+    }
+});
+
 await broker.start();
 
 const checkReports = async () => {

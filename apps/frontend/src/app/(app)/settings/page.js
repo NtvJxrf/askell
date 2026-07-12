@@ -57,7 +57,7 @@ export default function SettingsPage() {
   return (
     <div className="flex h-screen overflow-x-auto overflow-y-hidden text-sm">
       <div className="flex-1 min-w-0 p-6">
-        <Button size="sm" variant="outline" onClick={async () => {
+        <Button size="sm" onClick={async () => {
           setDisabled(true);
           try{
             const res = await backend(`/data-refresher/updateAllEntities`, {

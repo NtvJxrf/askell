@@ -21,7 +21,7 @@ export const ceraglass = async ({ ctx, data, order, position, createdEntitys, re
     for (const material of materials) {
         const isGlass = material.toLowerCase().includes('стекло')
         for (let i = 0; i < heights.length; i++) {
-            const attrs = { height: heights[i], width: widths[i], processing, drills, zenk, cutsv1, cutsv2, cutsv3, tempered, color, print, ifPF: true, order, material, stanok, type: isGlass ? 'Стекло' : 'Керамика' }
+            const attrs = { height: heights[i], width: widths[i], processing, drills, zenk, cutsv1, cutsv2, cutsv3, tempered, color, print, ifPF: true, order, material, stanok, type: isGlass ? 'Стекло' : 'Керамика', belongsTo: position.assortment.id }
             const name = isGlass
                 ? `ПФ ${material} (${heights[i]}х${widths[i]}${processing}${tempered ? ', Закаленное' : ''}${cutsv1 ? `, Вырезы 1 кат.: ${cutsv1}` : ''}${cutsv2 ? `, Вырезы 2 кат.: ${cutsv2}` : ''}${cutsv3 ? `, Вырезы 3 кат.: ${cutsv3}` : ''}${drills ? `, Сверление: ${drills}` : ''}${zenk ? `, Зенкование: ${zenk}` : ''}${print ? ', Печать' : ''}${color ? `, ${color}` : ''})`
                 : `ПФ ${material} (${heights[i]}х${widths[i]}${cutsv1 ? `, Вырезы 1 кат.: ${cutsv1}` : ''}${cutsv2 ? `, Вырезы 2 кат.: ${cutsv2}` : ''}${cutsv3 ? `, Вырезы 3 кат.: ${cutsv3}` : ''}${zenk ? `, Зенкование: ${zenk}` : ''}${print ? ', Печать' : ''}${color ? `, ${color}` : ''})`

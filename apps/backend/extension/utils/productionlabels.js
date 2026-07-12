@@ -112,7 +112,7 @@ async function drawLabelPage(doc, item) {
 
     y += doc.currentLineHeight(true)
 
-    doc.fontSize(12).text(`№ позиции в заказе: ${item.positionNumber + 1}`, MARGIN, y, {
+    doc.fontSize(12).text(`№ позиции в заказе: ${item.positionNumber}`, MARGIN, y, {
         width: CONTENT_WIDTH
     })
 

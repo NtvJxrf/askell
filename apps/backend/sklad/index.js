@@ -261,6 +261,20 @@ broker.createService({
                     }
                 }
             }
+        },
+        activate: {
+            rest: 'PUT /vendor/1.0/apps/:appId/:accountId',
+            async handler(ctx) {
+                return {
+                    status: "Activated"
+                }
+            }
+        },
+        activate: {
+            rest: 'DELETE /vendor/1.0/apps/:appId/:accountId',
+            async handler(ctx) {
+                return true
+            }
         }
     }
 });

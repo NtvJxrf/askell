@@ -22,6 +22,7 @@ export default function ItemDialog({ item, open, onOpenChange }) {
         return;
     }
     try{
+      setDisabled(true)
       const user = store.getState().app.user;
       const res = await backend('/productionCompletion/defect', {
         method: 'POST',
@@ -41,11 +42,14 @@ export default function ItemDialog({ item, open, onOpenChange }) {
     }catch(err){
       console.error(err)
       toast.error(`Ошибка: ${err.message || String(err)}`);
+    }finally{
+      setDisabled(false)
     }
   };
 
   const handleComplete = async () => {
     try{
+      setDisabled(true)
       const user = store.getState().app.user;
       const res = await backend('/productionCompletion/complete', {
         method: 'POST',
@@ -65,6 +69,8 @@ export default function ItemDialog({ item, open, onOpenChange }) {
     }catch(err){
       console.error(err)
       toast.error(`Ошибка: ${err.message || String(err)}`);
+    }finally{
+      setDisabled(false)
     }
   };
 

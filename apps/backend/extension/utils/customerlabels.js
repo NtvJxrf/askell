@@ -151,8 +151,8 @@ async function drawLabelPage(doc, item) {
 /* ===== ГЛАВНАЯ ФУНКЦИЯ ===== */
 
 async function generateLabelsPdf({ user, dataFromForm}, ctx) {
-    const order = await ctx.call('proxy.sklad', { url: `https://api.moysklad.ru/api/remap/1.2/entity/customerorder/${dataFromForm.id}` })
-    const products = await ctx.call('proxy.sklad', { url: `https://api.moysklad.ru/api/remap/1.2/entity/customerorder/${dataFromForm.id}/positions?expand=assortment` })
+    const order = await ctx.call('proxy.sklad', { url: `https://api.moysklad.ru/api/remap/1.2/entity/customerorder/${dataFromForm.id}`, priority: true })
+    const products = await ctx.call('proxy.sklad', { url: `https://api.moysklad.ru/api/remap/1.2/entity/customerorder/${dataFromForm.id}/positions?expand=assortment`, priority: true })
     const now = new Date();
     const date = String(now.getMonth() + 1).padStart(2, '0') + '-' + now.getFullYear();
     const items = products.rows.map( (el, index) => {

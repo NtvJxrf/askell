@@ -164,9 +164,9 @@ async function drawLabelPage(doc, item) {
 /* ===== ГЛАВНАЯ ФУНКЦИЯ ===== */
 
 async function generateLabelsPdf({ user, dataFromForm}, ctx) {
-    const task = await ctx.call('proxy.sklad', { url: `https://api.moysklad.ru/api/remap/1.2/entity/productiontask/${dataFromForm.id}` })
-    const products = await ctx.call('proxy.sklad', { url: `https://api.moysklad.ru/api/remap/1.2/entity/productiontask/${dataFromForm.id}/products?expand=assortment` })
-    const orders = await ctx.call('proxy.sklad', { url: `https://api.moysklad.ru/api/remap/1.2/entity/customerorder?filter=name=${task.attributes.find( att => att.name == '№ заказа покупателя')?.value}&expand=positions.assortment&limit=100` })
+    const task = await ctx.call('proxy.sklad', { url: `https://api.moysklad.ru/api/remap/1.2/entity/productiontask/${dataFromForm.id}`, priority: true })
+    const products = await ctx.call('proxy.sklad', { url: `https://api.moysklad.ru/api/remap/1.2/entity/productiontask/${dataFromForm.id}/products?expand=assortment`, priority: true })
+    const orders = await ctx.call('proxy.sklad', { url: `https://api.moysklad.ru/api/remap/1.2/entity/customerorder?filter=name=${task.attributes.find( att => att.name == '№ заказа покупателя')?.value}&expand=positions.assortment&limit=100`, priority: true })
     const order = [...(orders.rows || [])].sort((left, right) => {
         const leftTime = new Date(left?.moment || 0).getTime()
         const rightTime = new Date(right?.moment || 0).getTime()

@@ -6,6 +6,7 @@ import path from "path";
 import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+import price from "./src/price.js"
 import report1 from "./src/report1.js";
 import report2 from "./src/report2.js";
 import report3 from "./src/report3.js";
@@ -13,6 +14,13 @@ import report4 from "./src/report4.js";
 const { MoleculerClientError } = Errors;
 const broker = createBroker("reports");
 export const map = {
+    price: {
+        function: price,
+        name: 'Прайс',
+        description: 'Без описания',
+        ttl: 12 * 60 * 60, // 12 часов
+        filters: []
+    },
     report1: {
         function: report1,
         name: 'Выполенные этапы',
@@ -40,7 +48,7 @@ export const map = {
         description: 'Без описания',
         ttl: 12 * 60 * 60, // 12 часов
         filters: ['dateRange']
-    }
+    },
 }
 broker.createService({
     name: "reports",

@@ -270,7 +270,7 @@ broker.createService({
                 }
             }
         },
-        activate: {
+        deactivate: {
             rest: 'DELETE /vendor/1.0/apps/:appId/:accountId',
             async handler(ctx) {
                 return true

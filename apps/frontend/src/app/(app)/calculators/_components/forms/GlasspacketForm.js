@@ -36,6 +36,9 @@ export default function GlasspacketForm({ dv = null, editingIndex = null, onOpen
         if (!colors) return []
         return Object.keys(colors).sort()
     }, [colors]);
+    const sealantArray = useMemo(() => {
+        return Object.keys(materials).filter(el => el.toLowerCase().includes('вторичный')).sort();
+    }, [materials]);
     if(!materials || !colors || colors.length === 0) {
         return (
             <div className="flex justify-center">
@@ -46,9 +49,9 @@ export default function GlasspacketForm({ dv = null, editingIndex = null, onOpen
     const formFields = [
         { name: 'width', type: 'input', label: 'Ширина, мм', required: true },
         { name: 'height', type: 'input', label: 'Высота, мм', required: true },
-        { name: 'gas', type: 'select', label: 'Газ', options: [] },
+        { name: 'gas', type: 'select', label: 'Газ', options: ['Аргон'] },
         { name: 'shape', type: 'checkbox', label: 'Прямоугольная форма' },
-        { name: 'sealant', type: 'select', label: 'Герметик', options: [] },
+        { name: 'sealant', type: 'select', label: 'Герметик', options: sealantArray },
         { name: 'print', type: 'input', label: 'Печать, м2'},
         { name: 'quantity', type: 'inputp0', label: 'Количество, шт' },
     ]

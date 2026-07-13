@@ -22,11 +22,8 @@ broker.createService({
                     data: buildStageCompletionPayload({ ...item, description, quantity }, user),
                     priority: true
                 })
-                if(!response.errors){
-                    updateHeaps({ ...item, quantity }, ctx).catch(err => this.logger.error({ err }, 'Ошибка обновления куч после выполнения этапа'))
-                    return true
-                }
-                return response.errors[0].error
+                updateHeaps({ ...item, quantity }, ctx).catch(err => this.logger.error({ err }, 'Ошибка обновления куч после выполнения этапа'))
+                return true
             }
         },
         defect: {

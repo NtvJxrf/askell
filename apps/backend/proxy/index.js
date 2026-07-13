@@ -167,6 +167,14 @@ broker.createService({
                         json: { url, type, data, priority },
                         responseType: 'json'
                     });
+                    if(body?.name === 'MoleculerError'){
+                        throw new MoleculerError(
+                            body.message,
+                            body.code,
+                            body.type,
+                            body.data
+                        );
+                    }
                     return body
                 }
                 const token = await acquireToken(type, priority);

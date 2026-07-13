@@ -13,6 +13,8 @@ import { toast } from "sonner";
 import { backend } from "@/lib/backend";
 import { store } from "@/lib/slice";
 import { useSelector } from "react-redux";
+import { ChevronDown } from "lucide-react";
+import { Collapsible, CollapsibleTrigger, CollapsibleContent } from "@/components/ui/collapsible"
 export default function ItemDialog({ item, open, onOpenChange }) {
   const quantityRef = useRef(null);
   const descriptionRef = useRef(null);
@@ -109,7 +111,7 @@ export default function ItemDialog({ item, open, onOpenChange }) {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md">
+      <DialogContent className="max-w-lg">
         <DialogHeader>
           <DialogTitle className="text-base line-clamp-3">
             {item?.name}
@@ -146,24 +148,28 @@ export default function ItemDialog({ item, open, onOpenChange }) {
 
           <Separator />
 
-          <div className="space-y-1">
-            <div className="text-sm font-semibold uppercase mb-1">
-              Параметры
-            </div>
-
-            {item?.attributes &&
-              Object.entries(item.attributes).map(([key, value]) => (
-                <div key={key} className="flex justify-between">
-                  <span className="text-muted-foreground">{key}:</span>
-                  <span className="font-medium text-right">
-                    {typeof value === "boolean"
-                      ? value
-                        ? "Да"
-                        : "Нет"
-                      : String(value)}
-                  </span>
-                </div>
-              ))}
+          <div className="space-y-1">          
+            <Collapsible key="parameters">
+              <CollapsibleTrigger className="flex w-full items-center text-sm font-semibold uppercase mb-1">
+                <span>Параметры</span>
+                <ChevronDown className="h-4 w-4 transition-transform duration-200 group-data-[state=open]:rotate-180" />
+              </CollapsibleTrigger>
+              <CollapsibleContent>
+                {item?.attributes &&
+                  Object.entries(item.attributes).map(([key, value]) => (
+                    <div key={key} className="flex justify-between">
+                      <span className="text-muted-foreground">{key}:</span>
+                      <span className="font-medium text-right">
+                        {typeof value === "boolean"
+                          ? value
+                            ? "Да"
+                            : "Нет"
+                          : String(value)}
+                      </span>
+                    </div>
+                  ))}
+              </CollapsibleContent>
+            </Collapsible>
           </div>
 
           <Separator />
@@ -205,12 +211,29 @@ export default function ItemDialog({ item, open, onOpenChange }) {
                 Материалы на текущем этапе
               </div>
 
-              {Object.entries(item?.productionPath?.[item.orderingPosition]?.materials || {}).map(([id, quantity]) => (
-                <div key={id} className="flex justify-between">
-                  <span className="text-muted-foreground">{id}:</span>
-                  <span className="font-medium text-right">{quantity}</span>
-                </div>
-              ))}
+              {Object.entries(item?.productionPath?.[item.orderingPosition]?.materials || {}).map(([id, quantity]) => {
+                const stockQuantity = stock[id][item.materialsStoreId] || 0;
+                const isEnough = Number(quantity) <= Number(stockQuantity);
+
+                return (
+                  <div key={id} className="flex justify-between gap-2">
+                    <span
+                      className="text-muted-foreground truncate min-w-0 max-w-[200px]"
+                      title={stock[id].name}
+                    >
+                      {stock[id].name}:
+                    </span>
+
+                    <span
+                      className={`font-medium text-right ${
+                        isEnough ? "text-green-600" : "text-red-600"
+                      }`}
+                    >
+                      {formatNumber(quantity)}/{formatNumber(stockQuantity)}
+                    </span>
+                  </div>
+                );
+              })}
             </div>
           </div>
 
@@ -279,3 +302,7 @@ export default function ItemDialog({ item, open, onOpenChange }) {
     </Dialog>
   );
 }
+
+const formatNumber = (value) => {
+  return Number(value?.toFixed(2)).toString();
+};

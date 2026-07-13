@@ -286,13 +286,13 @@ export const getProcessingPlansSmd = async () => {
 
     const urls = filters.map((name) => `https://api.moysklad.ru/api/remap/1.2/entity/processingplan?filter=name~${name}&expand=products.assortment`);
 
-    const promises = urls.map((url) => broker.call('proxy.sklad', { url }));
+    const promises = urls.map((url) => broker.call('proxy.fetchAllRows', { url }));
     const res = await Promise.all(promises);
 
     const allPlans = [];
 
     for (const group of res) {
-        for (const el of group.rows) {
+        for (const el of group) {
             const name = el.products?.rows?.[0]?.assortment?.name;
             const meta = el.meta;
 

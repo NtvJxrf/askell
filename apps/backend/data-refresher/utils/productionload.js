@@ -91,6 +91,7 @@ export const updateHeaps = async () => {
                         productionRowId: prowHref.split('/').pop(),
                         deliveryPlannedMoment: el.deliveryPlannedMoment,
                         totalQuantity: pstage.totalQuantity,
+                        materialsStoreId: el.materialsStore.meta.href.split('/').pop(),
                         productionPath: el.productionstages.filter(ps => ps.productionRow.meta.href === prowHref).map(ps => {
                             return {
                                 productionStageId: ps.id,

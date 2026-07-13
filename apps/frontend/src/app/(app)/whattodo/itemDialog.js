@@ -12,10 +12,13 @@ import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { backend } from "@/lib/backend";
 import { store } from "@/lib/slice";
+import { useSelector } from "react-redux";
 export default function ItemDialog({ item, open, onOpenChange }) {
   const quantityRef = useRef(null);
   const descriptionRef = useRef(null);
   const [disabled, setDisabled] = useState(false);
+  const stock = useSelector((state) => state.app?.selfcost?.stock) || {};
+  console.log(stock, item)
   const handleDefect = async () => {
     if(descriptionRef.current?.value === undefined || descriptionRef.current?.value.trim() === "") {
         toast.error("Введите комментарий для брака");
@@ -164,37 +167,51 @@ export default function ItemDialog({ item, open, onOpenChange }) {
           </div>
 
           <Separator />
+          <div className="flex justify-between">
+            <div className="space-y-1">
+              <div className="text-sm font-semibold uppercase mb-1">
+                Маршрут
+              </div>
 
-          <div className="space-y-1">
-            <div className="text-sm font-semibold uppercase mb-1">
-              Маршрут
+              {item?.productionPath?.map((stage) => {
+                const isCurrent =
+                  stage.productionStageId === item?.productionStageId;
+
+                return (
+                  <div
+                    key={stage.productionStageId}
+                    className={`flex items-center gap-2 rounded-sm ${
+                      isCurrent
+                        ? "font-semibold text-green-700 dark:text-green-400"
+                        : ""
+                    }`}
+                  >
+                    {isCurrent ? (
+                      <span className="text-green-600 dark:text-green-400">
+                        ●
+                      </span>
+                    ) : (
+                      <span className="text-gray-300">○</span>
+                    )}
+
+                    {stage.stageName}
+                  </div>
+                );
+              })}
             </div>
+            <Separator orientation="vertical"/>
+            <div className="space-y-1">
+              <div className="text-sm font-semibold uppercase mb-1">
+                Материалы на текущем этапе
+              </div>
 
-            {item?.productionPath?.map((stage) => {
-              const isCurrent =
-                stage.productionStageId === item?.productionStageId;
-
-              return (
-                <div
-                  key={stage.productionStageId}
-                  className={`flex items-center gap-2 rounded-sm ${
-                    isCurrent
-                      ? "font-semibold text-green-700 dark:text-green-400"
-                      : ""
-                  }`}
-                >
-                  {isCurrent ? (
-                    <span className="text-green-600 dark:text-green-400">
-                      ●
-                    </span>
-                  ) : (
-                    <span className="text-gray-300">○</span>
-                  )}
-
-                  {stage.stageName}
+              {Object.entries(item?.productionPath?.[item.orderingPosition]?.materials || {}).map(([id, quantity]) => (
+                <div key={id} className="flex justify-between">
+                  <span className="text-muted-foreground">{id}:</span>
+                  <span className="font-medium text-right">{quantity}</span>
                 </div>
-              );
-            })}
+              ))}
+            </div>
           </div>
 
           <Separator />

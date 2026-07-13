@@ -40,11 +40,19 @@ export const getMaterials = async () => {
 }
 export const getStock = async () => {
     const stock = await broker.call('proxy.sklad', {url: 'https://api.moysklad.ru/api/remap/1.2/report/stock/bystore/current'})
+    const stockWithNamesRaw = await broker.call('proxy.fetchAllRows', {url: 'https://api.moysklad.ru/api/remap/1.2/report/stock/all?filter=quantityMode=all;stockMode=nonEmpty'})
+    const stockWithNames = stockWithNamesRaw.reduce((acc, curr) => {
+        const id = curr.meta.href.split('/').pop().split('?')[0]
+        acc[id] = curr.name
+        return acc
+    }, {})
     const result = stock.reduce(( acc, curr ) => {
-        acc[curr.assortmentId] ??= {}
-        acc[curr.assortmentId].total ??= 0
-        acc[curr.assortmentId].total += curr.stock
-        acc[curr.assortmentId][curr.storeId] = curr.stock
+        const id = curr.assortmentId
+        acc[id] ??= {}
+        acc[id].total ??= 0
+        acc[id].total += curr.stock
+        acc[id].name = stockWithNames[id] || 'Не найдено'
+        acc[id][curr.storeId] = curr.stock
         return acc
     }, {})
     await valkey.set('sklad:data:stock', JSON.stringify(result))

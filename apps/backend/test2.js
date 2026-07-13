@@ -25,9 +25,10 @@ await broker.waitForServices(['users', 'proxy']);
 //   }
 // })
 // console.log(test.body)
-// const res = await broker.call("data-refresher.updateHeaps");
+const res = await broker.call("data-refresher.updateHeaps");
 // const scheduleUpdate = await broker.call("data-refresher.updateSchedule");
-// const heaps = await broker.call("data-refresher.getHeaps");
+const heaps = await broker.call("data-refresher.getHeaps");
+console.dir(heaps, { depth: null });
 // const {schedule, index} = await broker.call("data-refresher.getSchedule");
 // const pricesAndCoefs = JSON.parse(await valkey.get('sklad:data:pricesAndCoefs'));
 // const stages = JSON.parse(await valkey.get('sklad:data:processingStages'));
@@ -68,7 +69,7 @@ await broker.waitForServices(['users', 'proxy']);
 //     ]
 //   });
 // const res = await broker.call("sklad.createPZ", { id: 'e65e442d-d19c-11f0-0a80-0390000360cd', initiator: '1c@askell' });
-const res = await broker.call("extension.productionlabels", { dataFromForm: { id: '549ef197-7de5-11f1-0a80-115700599f25' }});
-console.log(res)
+// const res = await broker.call("extension.productionlabels", { dataFromForm: { id: '549ef197-7de5-11f1-0a80-115700599f25' }});
+// console.log(res)
 // console.timeEnd('sim')
 await broker.stop();

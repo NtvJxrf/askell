@@ -34,6 +34,7 @@ export default function SettingsPage() {
     { label: "Валюты", key: "currencies", function: "getCurrency" },
     { label: "Типы цен", key: "priceTypes", function: "getPriceTypes" },
     { label: "Сотрудники", key: "employees", function: "getEmployees" },
+    { label: "Остатки", key: "stock", function: "getStock" },
   ]
   const data =  updateKeys.map((item) => ({
     ...item,

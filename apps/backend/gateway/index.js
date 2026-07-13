@@ -81,7 +81,7 @@ broker.createService({
         whitelist: ["users.*", "proxy.*", "data-refresher.*", "sklad.*", "productionCompletion.*", "reports.*", "extension.*", "1c.*"],
         authentication: true,
         authorization: true,
-        bodyParsers: { json: true },
+        bodyParsers: { json: { limit: "100mb" } },
         // 4xx-ответы попадают в логи (видно отклонённые запросы в SigNoz).
         log4XXResponses: true
       }

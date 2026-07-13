@@ -251,11 +251,11 @@ broker.createService({
             async handler(ctx) {
                 const { buttonName, extensionPoint, objectId, user, accountId, appId } = ctx.params;
                 switch (buttonName) {
-                    case 'logisticRequest':{
+                    case 'logistic-request':{
                         return {
                             action: "showPopup",
                             params: {
-                                popupName: "logisticRequest",
+                                popupName: "logistic-request",
                             }
                         }
                     }

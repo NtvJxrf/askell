@@ -45,7 +45,7 @@ export const map = {
     report4: {
         function: report4,
         name: 'Список давальческой закалки',
-        description: 'Без описания',
+        description: 'Список заказов покупателей с давальческой закалкой, по статусам "Готово" и "Отгружен"',
         ttl: 12 * 60 * 60, // 12 часов
         filters: ['dateRange']
     },

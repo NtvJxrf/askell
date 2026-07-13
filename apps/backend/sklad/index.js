@@ -243,7 +243,27 @@ broker.createService({
         },
     }
 });
-
+broker.createService({
+    name: "moysklad",
+    actions: {
+        button: {
+            rest: 'POST /vendor/1.0/apps/:appId/:accountId/button',
+            async handler(ctx) {
+                const { buttonName, extensionPoint, objectId, user, accountId, appId } = ctx.params;
+                switch (buttonName) {
+                    case 'logisticRequest':{
+                        return {
+                            action: "showPopup",
+                            params: {
+                                popupName: "logisticRequest",
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+});
 broker.start();
 
 const keyMap = {

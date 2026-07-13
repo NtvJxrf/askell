@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>МойСклад Popup Test</title>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 40px;
+            background: #f5f5f5;
+        }
+
+        button {
+            padding: 12px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            border-radius: 8px;
+            border: none;
+            background: #2563eb;
+            color: white;
+        }
+
+        .popup-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,.4);
+            align-items: center;
+            justify-content: center;
+        }
+
+        .popup {
+            width: 500px;
+            background: white;
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 0 20px 50px rgba(0,0,0,.2);
+        }
+
+        .popup h2 {
+            margin-top: 0;
+        }
+
+        input {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 12px;
+            box-sizing: border-box;
+        }
+
+        .actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+
+        .secondary {
+            background: #ddd;
+            color: black;
+        }
+    </style>
+</head>
+
+<body>
+
+<h1>Тест popup для МойСклад</h1>
+
+<button id="open">
+    Открыть калькулятор
+</button>
+
+
+<div class="popup-overlay" id="overlay">
+
+    <div class="popup">
+
+        <h2>Расчет стекла</h2>
+
+        <label>
+            Материал
+        </label>
+
+        <input 
+            id="material"
+            value="Стекло М1, 4 мм"
+        >
+
+
+        <label>
+            Размер
+        </label>
+
+        <input
+            id="size"
+            value="1700x1000"
+        >
+
+
+        <label>
+            Количество
+        </label>
+
+        <input
+            id="count"
+            value="2"
+        >
+
+
+        <div class="actions">
+
+            <button 
+                class="secondary"
+                id="close">
+                Отмена
+            </button>
+
+
+            <button
+                id="send">
+                Добавить
+            </button>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<script>
+
+const overlay = document.getElementById("overlay");
+
+
+document
+    .getElementById("open")
+    .onclick = () => {
+
+        overlay.style.display = "flex";
+
+
+        // имитация получения данных от МойСклад
+
+        window.parent.postMessage({
+            type: "popup.opened",
+            data: {
+                source: "moisklad",
+                entity: "customerorder",
+                id: "12345"
+            }
+        }, "*");
+
+    };
+
+
+
+document
+    .getElementById("close")
+    .onclick = () => {
+
+        overlay.style.display = "none";
+
+        window.parent.postMessage({
+            type: "popup.closed"
+        }, "*");
+
+    };
+
+
+
+document
+    .getElementById("send")
+    .onclick = () => {
+
+
+        const result = {
+
+            material:
+                document.getElementById("material").value,
+
+            size:
+                document.getElementById("size").value,
+
+            count:
+                Number(
+                    document.getElementById("count").value
+                )
+
+        };
+
+
+        console.log("Отправляем в МойСклад:", result);
+
+
+
+        window.parent.postMessage({
+
+            type: "calculator.result",
+
+            payload: result
+
+        }, "*");
+
+
+
+        overlay.style.display = "none";
+
+    };
+
+
+
+
+// слушаем команды от МойСклад
+
+window.addEventListener(
+    "message",
+    event => {
+
+
+        console.log(
+            "Получено сообщение:",
+            event.data
+        );
+
+
+        if(event.data.type === "popup.init") {
+
+            console.log(
+                "Инициализация",
+                event.data.payload
+            );
+
+        }
+
+
+    }
+);
+
+
+</script>
+
+
+</body>
+</html>

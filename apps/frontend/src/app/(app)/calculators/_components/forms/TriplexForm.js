@@ -75,7 +75,7 @@ export default function TriplexForm({handleAddTriplex = false, dv = null, handle
         { name: 'rounding', type: 'select', label: 'Округление', options: ['Округление до 0.3', 'Округление до 0.5', 'Умножить на 2'], required: true },
     ]
 
-    if(['Игнорировать ограничения', 'Админ'].some(role => user.roles.includes(role))){
+    if(['Игнорировать ограничения', 'Админ'].some(role => user?.roles?.includes(role))){
         formFields.push({ name: 'ignoreRestricts', type: 'checkbox', label: 'Игнорировать ограничения', checked: false })
     }
 

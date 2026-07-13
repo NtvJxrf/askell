@@ -234,7 +234,7 @@ if (process.env.NODE_ENV !== 'development') {
     } catch (err) {
       broker.logger.error({ err }, 'updateProductinLoad error')
     }
-  }, 900_000)//Каждые 15 минут
+  }, 1_020_000)//Каждые 17 минут
   cron.schedule("0 23 * * *", async () => { // Каждый день в 23 часа ночи
     try {
       await createCartonLoss()

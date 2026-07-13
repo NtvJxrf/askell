@@ -56,7 +56,6 @@ const DAILY_TASK_STRATEGY_OPTIONS = [
 function TaskMaterialSection({ material, data, onRemoveLayout, onRemovePiece }) {
   const orderGroups = useMemo(() => buildTaskOrderGroups(data.layouts), [data.layouts]);
   const totalPieces = data.layouts.reduce((sum, layout) => sum + layout.pieces.length, 0);
-  console.log(data)
   return (
     <Card>
       <CardHeader>
@@ -259,11 +258,15 @@ function SourceGroupRow({ group, onResolved }) {
 
 function SavedTaskLayoutSection({ material, layout, index, onResolveGroup, onPrintDrawings }) {
   const groups = useMemo(() => buildSourceGroups([layout]), [layout]);
+  const [disabled, setDisabled] = useState(false);
   const handlePrintLabels = async () => {
     try {
+      setDisabled(true);
       await printLabels(groups);
     } catch (error) {
       toast.error(error?.message || "Не удалось напечатать этикетки");
+    }finally{
+      setDisabled(false);
     }
   };
 
@@ -283,7 +286,7 @@ function SavedTaskLayoutSection({ material, layout, index, onResolveGroup, onPri
         <div className="flex shrink-0 flex-col gap-1.5">
           <CuttingSheetPreview layout={layout} label={`Лист ${index + 1}, ${layout.stockHeight}x${layout.stockWidth}`} maxWidth={180} maxHeight={130} />
           <div className="flex gap-1.5">
-            <Button variant="outline" size="sm" className="flex-1" onClick={handlePrintLabels}>
+            <Button variant="outline" size="sm" className="flex-1" onClick={handlePrintLabels} disabled={disabled}>
               Этикетки
             </Button>
             <Button variant="outline" size="sm" className="flex-1" onClick={handlePrintDrawings}>

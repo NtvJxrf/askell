@@ -31,6 +31,7 @@ export default function BottomButtons({ form, aiEndpoint = null }) {
         setResult(null)
         setRequestError(null)
         try {
+            setDisabled(true)
             const response = await backend(aiEndpoint,{
                 method: 'POST',
                 body: { text }
@@ -85,7 +86,7 @@ export default function BottomButtons({ form, aiEndpoint = null }) {
                             Добавить позиции через ИИ
                         </DialogTitle>
                     </DialogHeader>
-                    <Textarea ref={textRef} placeholder="Введите описание позиций" />
+                    <Textarea ref={textRef} placeholder={`Введите описание позиций\nДля стеклопакетов не более ~10 позиций за 1 раз\nДля стекла и закалки не более ~25 за 1 раз`} />
                     <Button className="mt-2" onClick={handleAiClick} disabled={disabled}>Отправить</Button>
                     {requestError && (
                         <p className="mt-3 text-sm text-destructive">

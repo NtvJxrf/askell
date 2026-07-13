@@ -570,7 +570,6 @@ export function PositionsPanel() {
     { id: 'package', label: 'Упаковка', action: handlePackage },
     { id: 'recalcDeadline', label: 'Пересчитать срок', action: handleRecalcDeadline },
   ];
-  console.log('render positions')
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-4">
       {/* Search bar */}

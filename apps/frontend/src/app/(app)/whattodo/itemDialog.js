@@ -20,7 +20,6 @@ export default function ItemDialog({ item, open, onOpenChange }) {
   const descriptionRef = useRef(null);
   const [disabled, setDisabled] = useState(false);
   const stock = useSelector((state) => state.app?.selfcost?.stock) || {};
-  console.log(stock, item)
   const handleDefect = async () => {
     if(descriptionRef.current?.value === undefined || descriptionRef.current?.value.trim() === "") {
         toast.error("Введите комментарий для брака");

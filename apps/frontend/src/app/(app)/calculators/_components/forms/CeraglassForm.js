@@ -93,10 +93,10 @@ export default function CeraglassForm({ dv = null, editingIndex = null, onOpenCh
         { name: 'lock', type: 'combobox', label: 'Дверной замок', options: lockArray },
         { name: 'hinge', type: 'combobox', label: 'Дверные петли', options: hingeArray },
         { name: 'hingeCount', type: 'inputp0', label: 'Количество петель' },
-        { name: 'tempered', type: 'checkbox', label: 'Закаленное', cheched: true },
+        { name: 'tempered', type: 'checkbox', label: 'Закаленное', checked: true },
         { name: 'quantity', type: 'inputp0', label: 'Количество, шт' },
     ]
-    if(['Игнорировать ограничения', 'Админ'].some(role => user.roles.includes(role))){
+    if(['Игнорировать ограничения', 'Админ'].some(role => user?.roles?.includes(role))){
         formFields.push({ name: 'ignoreRestricts', type: 'checkbox', label: 'Игнорировать ограничения', checked: false })
     }
     const form = useCalculatorForm('ceraglass', {

@@ -94,7 +94,6 @@ export default function ProductionPage() {
     console.time('fetchData')
     const fetchData = async () => {
       const simulationResult = await backend('/data-refresher/getSimulationResult');
-      console.log(simulationResult)
       const sortedMachines = simulationResult.machines.sort((a, b) => {
         if (b.totalM2 !== a.totalM2) {
           return b.totalM2 - a.totalM2;

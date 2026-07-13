@@ -67,10 +67,6 @@ export function PositionsRow({
     const profit = finalPrice - cost;
 
     const profitPercent = cost > 0 ? (finalPrice / cost) * 100 - 100: 0;
-
-    const handleEditing = () => {
-        console.log('editing', position);
-    };
     return (
         <TableRow
             draggable={dragEnabled}

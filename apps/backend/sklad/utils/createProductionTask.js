@@ -80,7 +80,7 @@ export const createProductionTask = async ({ id, initiator }, ctx) => {
         triplext2: [],
         // Уровень 3 — стекло для триплекса стеклопакета (связь с ПЗ triplext2)
         glasst3: [],
-        print: false
+        print: false,
     }
     let addComment = ''
     const t3heap = []
@@ -117,13 +117,13 @@ export const createProductionTask = async ({ id, initiator }, ctx) => {
         else if (day === 0) date.setDate(date.getDate() + 1);
 
         const depth2date = new Date(date)
-        depth2date.setDate(depth2date.getDate() - Math.ceil(tier3Items[1] / 60 / 8))
+        depth2date.setDate(depth2date.getDate() - Math.ceil((tier3Items[1] || 100) / 60 / 8)) //Иначе берем 100 минут, тк например доски не считаются в симуляции, и у них выдает ошибку
         const depth2day = depth2date.getDay();
         if (depth2day === 6) depth2date.setDate(depth2date.getDate() - 1);
         else if (depth2day === 0) depth2date.setDate(depth2date.getDate() - 2);
 
         const depth3date = new Date(depth2date)
-        depth3date.setDate(depth3date.getDate() - Math.ceil(tier3Items[2] / 60 / 8))
+        depth3date.setDate(depth3date.getDate() - Math.ceil((tier3Items[2] || 100) / 60 / 8))
         const depth3day = depth3date.getDay();
         if (depth3day === 6) depth3date.setDate(depth3date.getDate() - 1);
         else if (depth3day === 0) depth3date.setDate(depth3date.getDate() - 2);
@@ -226,6 +226,11 @@ export const createProductionTask = async ({ id, initiator }, ctx) => {
                 await createTask({ ...cfg, checkboxes: { ...cfg.checkboxes, colors: getColors(cfg.source) } })
             }
         }
+        await ctx.call('proxy.sklad', {
+            url: order.meta.href,
+            type: 'post',
+            data: { deliveryPlannedMoment: formatDate(date)}
+        })
     } catch (error) {
         ctx.broker.logger.error({ err: error, order: order.name }, 'Ошибка во время создания производственного задания')
         await rollback(createdEntitys, ctx)

@@ -28,7 +28,8 @@ export const smd = async ({ ctx, data, order, position, createdEntitys, results 
             checkboxes: { viz: true, smd: true, print, height: attributes['Длина в мм'], width: attributes['Ширина в мм'], colors: [attributes['Цвет доски']?.name] },
             reserve: true,
             addComment: '',
-            createdEntitys
+            createdEntitys,
+            deliveryPlannedMoment: order.deliveryPlannedMoment
         })
         return
     }
@@ -54,7 +55,8 @@ export const smd = async ({ ctx, data, order, position, createdEntitys, results 
         checkboxes: { viz: true, smd: true, print, height: data.initialData.height, width: data.initialData.width, colors: [color] },
         reserve: true,
         addComment: '',
-        createdEntitys
+        createdEntitys,
+        deliveryPlannedMoment: order.deliveryPlannedMoment
     })
     // Стекло СМД — ПЗ 2-го уровня, связывается с уже созданным ПЗ СМД.
     plan._parentTask = task.meta

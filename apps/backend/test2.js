@@ -68,9 +68,9 @@ await broker.waitForServices(['users', 'proxy']);
 //       }
 //     ]
 //   });
-// const res = await broker.call("sklad.createPZ", { id: 'e65e442d-d19c-11f0-0a80-0390000360cd', initiator: '1c@askell' });
+const res = await broker.call("sklad.createPZ", { id: 'd94c5ec1-79ca-11f1-0a80-1e2500043125', initiator: '1c@askell' });
 // const res = await broker.call("extension.productionlabels", { dataFromForm: { id: '549ef197-7de5-11f1-0a80-115700599f25' }});
 // const res = JSON.parse(await valkey.get('sklad:data:smdPlans'))
-// console.log(res)
+console.log(res)
 // console.timeEnd('sim')
 await broker.stop();

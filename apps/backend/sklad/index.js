@@ -101,7 +101,7 @@ broker.createService({
                             quantity: pos.quantity,
                             price: pos.prices[data.displayPrice].toFixed(2) * 100, //При передачи заказа на фронт конвертировали все в рубли, а при сохранении обратно в копейки
                             discount: pos.discount,
-                            vat: data.order.organization.name === 'ООО "А2"' ? 22 : 5
+                            vat: data.order.organization === 'ООО "А2"' ? 22 : 5
                         })
                     }else{
                         const isService = Boolean(pos?.result?.other?.customerSuppliedGlassForTempering);
@@ -140,7 +140,7 @@ broker.createService({
                                     quantity: pos.quantity,
                                     price: pos.prices[data.displayPrice].toFixed(2) * 100,
                                     discount: pos?.discount || 0,
-                                    vat: data.order.organization.name === 'ООО "А2"' ? 22 : 5
+                                    vat: data.order.organization === 'ООО "А2"' ? 22 : 5
                                 }
                             })
                         );

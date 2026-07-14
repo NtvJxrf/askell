@@ -2,6 +2,7 @@
 import { store } from "@/lib/slice";
 import { toast } from "sonner";
 import simulation from "@askell/shared/calc/simulation";
+// import simulation from '../../../../../../../../packages/shared/src/simulation2.js'
 
 export default function handleRecalcDeadline() {
     const origHeaps = store.getState().app.heaps
@@ -41,6 +42,7 @@ export default function handleRecalcDeadline() {
                 const obj = {
                     name: pos?.name,
                     initialData: pos?.initialData,
+                    productType: 'Триплекс',
                     productionPath: [{stageName: 'Триплексование', orderingPosition: 0, materials: {}}, {stageName: 'ОТК', orderingPosition: 1}],
                     orderingPosition: 0,
                     tier: 3,
@@ -68,6 +70,7 @@ export default function handleRecalcDeadline() {
                 const obj = {
                     name: pos?.name,
                     initialData: pos?.initialData,
+                    productType: 'Стеклопакет',
                     productionPath: [
                         {stageName: 'Изготовление рамки', orderingPosition: 0, materials: {}},
                         {stageName: 'Сборка стеклопакета', orderingPosition: 1},
@@ -136,6 +139,7 @@ export default function handleRecalcDeadline() {
         stages,
         stagesAndNorms
     })
+    console.log(res)
     console.timeEnd('simulation')
     return {hasPrint, ...res}
 }
@@ -177,190 +181,3 @@ const buildGlassPathForGlasspacket = (pos, material) => {
   })
   return res
 }
-
-
-// added
-// : 
-// false
-// initialData
-// : 
-// color
-// : 
-// ""
-// color1
-// : 
-// undefined
-// color2
-// : 
-// undefined
-// gas
-// : 
-// ""
-// height
-// : 
-// 1000
-// ignoreRestricts
-// : 
-// ""
-// material
-// : 
-// ""
-// material1
-// : 
-// "Триплекс, Стекло Arctic Blue, 4 мм + Стекло Arctic Blue, 4 мм, (1000х1000, ПР, Притупка, Закаленное, площадь: 1.00)"
-// material2
-// : 
-// "Стекло Arctic Blue, 6 мм"
-// plane1
-// : 
-// "Рамка алюминиевая дистанционная (гибкая + коннектор) 10мм."
-// plane2
-// : 
-// undefined
-// print
-// : 
-// ""
-// processing
-// : 
-// ""
-// processing1
-// : 
-// "Шлифовка"
-// processing2
-// : 
-// "Шлифовка"
-// quantity
-// : 
-// 1
-// rounding
-// : 
-// "Округление до 0.5"
-// sealant
-// : 
-// ""
-// shape
-// : 
-// true
-// tempered
-// : 
-// ""
-// tempered1
-// : 
-// undefined
-// tempered2
-// : 
-// undefined
-// width
-// : 
-// 1000
-// [[Prototype]]
-// : 
-// Object
-// key
-// : 
-// "941a7e4d-3eec-412c-9737-de94cfeff122"
-// name
-// : 
-// "СПО, 24, Arctic Blue 4.Arctic Blue 4.1, 10 алюм, Arctic Blue 6, (1000х1000, площадь: 1.00)"
-// prices
-// : 
-// {gostPrice: 0, retailPrice: 29322.74871711309, bulkPrice: 21258.992819906987, dealerPrice: 19792.855384051338, vipPrice: 18326.71794819568}
-// quantity
-// : 
-// 1
-// result
-// : 
-// errors
-// : 
-// []
-// expenses
-// : 
-// []
-// finalPrice
-// : 
-// (8) [{…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}]
-// materials
-// : 
-// (7) [{…}, {…}, {…}, {…}, {…}, {…}, {…}]
-// other
-// : 
-// P
-// : 
-// 4
-// S
-// : 
-// 1
-// allThickness
-// : 
-// 24
-// calcmaterialsandworks
-// : 
-// 14661.374358556544
-// materials
-// : 
-// (2) [Array(4), Array(4)]
-// materialsandworks
-// : 
-// 14661.374358556544
-// productType
-// : 
-// true
-// stanok
-// : 
-// "Прямолинейка"
-// trims
-// : 
-// {}
-// type
-// : 
-// "Стеклопакет"
-// usedTriplex
-// : 
-// Array(1)
-// 0
-// : 
-// added
-// : 
-// false
-// initialData
-// : 
-// {width: 1000, height: 1000, processing: 'Притупка', drills: '', zenk: '', …}
-// key
-// : 
-// "8106a2e9-59e2-4e75-bc05-2f5113f0805b"
-// name
-// : 
-// "Триплекс, Стекло Arctic Blue, 4 мм + Стекло Arctic Blue, 4 мм, (1000х1000, ПР, Притупка, Закаленное, площадь: 1.00)"
-// prices
-// : 
-// {gostPrice: 0, retailPrice: 21698.595855314965, bulkPrice: 15651.166591856389, dealerPrice: 13790.419126176826, vipPrice: 12860.045393337048}
-// quantity
-// : 
-// 1
-// result
-// : 
-// {materials: Array(3), calcMaterials: Array(0), works: Array(9), expenses: Array(0), other: {…}, …}
-// [[Prototype]]
-// : 
-// Object
-// length
-// : 
-// 1
-// [[Prototype]]
-// : 
-// Array(0)
-// viz
-// : 
-// true
-// weight
-// : 
-// 35.768
-// [[Prototype]]
-// : 
-// Object
-// warnings
-// : 
-// []
-// works
-// : 
-// (6) [{…}, {…}, {…}, {…}, {…}, {…}]

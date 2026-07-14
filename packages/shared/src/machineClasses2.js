@@ -320,7 +320,22 @@ export class AreaMachine extends SingleItemMachine {
         return Math.ceil(((len * wid) / 1e6 / norma) * 60)
     }
 }
+export class TemperingMachine extends SingleItemMachine {
+    getNorma(item){
+        const thickness = Number(item.attributes['Материал 1'].match(/(\d+(?:[.,]\d+)?)\s*мм/i)[1])
+        return this.normaCache[this.name + ` ${thickness}`] || 0;
+    }
 
+    calcWorkTime(item){
+        const norma = this.getNorma(item);
+        return this._calculateTime(item, norma);
+    }
+    _calculateTime(item, norma) {
+        const len = item._num.length;
+        const wid = item._num.width;
+        return Math.ceil(((len * wid) / 1e6 / norma) * 60)
+    }
+}
 export class TrashMachine extends SingleItemMachine {
     _calculateTime(item, norma) {
         return 1; // 1 минут на "обработку" (выбрасывание) каждой детали

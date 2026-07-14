@@ -228,7 +228,7 @@ export const createProductionTask = async ({ id, initiator }, ctx) => {
         }
         await ctx.call('proxy.sklad', {
             url: order.meta.href,
-            type: 'post',
+            type: 'put',
             data: { deliveryPlannedMoment: formatDate(date)}
         })
     } catch (error) {

@@ -1,5 +1,5 @@
 import { SingleItemMachine, TrashMachine, AreaMachine, PerimeterMachine,
-     PerimeterWithCutsMachine, DrillingMachine, CuttingMachineBig, CuttingMachineSmall
+     PerimeterWithCutsMachine, DrillingMachine, CuttingMachineBig, CuttingMachineSmall, TemperingMachine
 } from './machineClasses2.js';
 
 const machineNames = ['Раскрой', 'Дабл эджер', 'Ялонг', 'Интермак', 'Альпа большая', 
@@ -8,7 +8,7 @@ const machineNames = ['Раскрой', 'Дабл эджер', 'Ялонг', 'И
 // Станки/этапы, для которых в history сохраняется текущая задача и остаток времени
 // (используется production-страницей фронтенда). Ограничено этим набором, чтобы не
 // раздувать history данными по ~100 вспомогательным (Trash) очередям.
-const LOGGED_MACHINE_NAMES = new Set([...machineNames, 'Сборка стеклопакета']);
+const LOGGED_MACHINE_NAMES = new Set([...machineNames, 'Сборка стеклопакета', 'Раскрой большой', 'Раскрой маленький']);
 const getTaskName = (task) => {
     if (!task) return null;
     if (Array.isArray(task)) return `${task[0]?.name || ''}${task.length > 1 ? ` и ещё ${task.length - 1}` : ''}`;
@@ -33,6 +33,9 @@ export default function runSimulation(params) {
         if (normaCache[machineName] !== undefined) return normaCache[machineName];
         return (normaCache[machineName] = (toNum(schedule[0][machineName])) || stagesAndNorms?.[machineName]?.ratePerHour || 0);
     };
+    for(const [name, norma] of Object.entries(stagesAndNorms || {})) {
+        normaCache[name] = norma.ratePerHour;
+    }
     const materialForItem = {}
     const materialsRaw = Object.entries(heaps).reduce((acc, [_, heap]) => {
         for (const item of heap) {
@@ -64,7 +67,7 @@ export default function runSimulation(params) {
         return acc
     }, {});
     const machines = [
-        new CuttingMachineBig(       {name: 'Раскрой большой', normaName: 'Раскрой', availableHeaps: ['Раскрой'] }),
+        new CuttingMachineBig(       {name: 'Раскрой большой', normaName: 'Раскрой СП', availableHeaps: ['Раскрой'] }),
         new CuttingMachineSmall(     {name: 'Раскрой маленький', normaName: 'Раскрой', availableHeaps: ['Раскрой'] }),
         new PerimeterMachine(        {name: 'Дабл эджер',             availableHeaps: ['ПР Полировка', 'ПР Шлифовка'] }),
         new PerimeterMachine(        {name: 'Ялонг',                  availableHeaps: ['ПР Притупка'] }),
@@ -72,7 +75,7 @@ export default function runSimulation(params) {
         new PerimeterWithCutsMachine({name: 'Альпа большая',          availableHeaps: ['КР Полировка', 'КР Шлифовка'] }),
         new PerimeterWithCutsMachine({name: 'Альпа малая',            availableHeaps: ['КР Полировка', 'КР Шлифовка'] }),
         new DrillingMachine(         {name: 'Сверление',              availableHeaps: ['Сверление'] }),
-        new AreaMachine(             {name: 'Закалка',                availableHeaps: ['Закалка'] }),
+        new TemperingMachine(        {name: 'Закалка',                availableHeaps: ['Закалка'] }),
         // new PerimeterMachine(        {name: 'Окрашивание',   availableHeaps: ['Окраска стекла', 'ОКР (окрашивание стекла)'],          normaCache, materials}),
         new AreaMachine(             {name: 'Триплекс',               availableHeaps: ['Триплексование'] }),
         new AreaMachine(             {name: 'Сборка стеклопакета',    availableHeaps: ['Сборка стеклопакета'] }),
@@ -173,7 +176,6 @@ export default function runSimulation(params) {
             time: m.tier3End ? new Date(m.tier3End) : null,
         }
     });
-    console.dir(machines[1].completed.map(el => ({ name: el.name, length: el._num.length, width: el._num.width})), { maxArrayLength: null, depth: null });
     return {
         history,
         calcMoment: Date.now(),

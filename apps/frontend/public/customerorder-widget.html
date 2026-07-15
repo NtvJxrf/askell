@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>МойСклад — виджет отладки (Заказ покупателя)</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, "Segoe UI", Arial, sans-serif;
+            margin: 0;
+            padding: 10px;
+            background: #0f172a;
+            color: #e2e8f0;
+            font-size: 12px;
+        }
+
+        .status {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px 16px;
+            padding: 8px 10px;
+            background: #1e293b;
+            border-radius: 8px;
+            margin-bottom: 8px;
+        }
+
+        .status b {
+            color: #93c5fd;
+        }
+
+        .buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-bottom: 8px;
+        }
+
+        button {
+            padding: 6px 10px;
+            font-size: 11px;
+            cursor: pointer;
+            border-radius: 6px;
+            border: 1px solid #334155;
+            background: #1e293b;
+            color: #e2e8f0;
+        }
+
+        button:hover {
+            background: #334155;
+        }
+
+        button.danger {
+            border-color: #7f1d1d;
+            color: #fca5a5;
+        }
+
+        .log {
+            max-height: 480px;
+            overflow-y: auto;
+            border-radius: 8px;
+            background: #020617;
+            padding: 6px;
+        }
+
+        .log-entry {
+            border-radius: 6px;
+            margin-bottom: 6px;
+            padding: 6px 8px;
+            border-left: 3px solid #475569;
+            background: #0b1220;
+        }
+
+        .log-entry.in {
+            border-left-color: #22c55e;
+        }
+
+        .log-entry.out {
+            border-left-color: #38bdf8;
+        }
+
+        .log-head {
+            display: flex;
+            gap: 8px;
+            align-items: baseline;
+            margin-bottom: 4px;
+        }
+
+        .log-head .dir {
+            font-weight: 600;
+        }
+
+        .log-entry.in .dir {
+            color: #4ade80;
+        }
+
+        .log-entry.out .dir {
+            color: #38bdf8;
+        }
+
+        .log-head .name {
+            font-weight: 700;
+            color: #fbbf24;
+        }
+
+        .log-head .time {
+            color: #64748b;
+            margin-left: auto;
+        }
+
+        pre {
+            margin: 0;
+            white-space: pre-wrap;
+            word-break: break-all;
+            font-size: 11px;
+            color: #cbd5e1;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="status">
+    <span><b>extensionPoint:</b> <span id="statusExtensionPoint">—</span></span>
+    <span><b>objectId:</b> <span id="statusObjectId">—</span></span>
+    <span><b>displayMode:</b> <span id="statusDisplayMode">—</span></span>
+</div>
+
+<div class="buttons">
+    <button id="btnSetDirty">SetDirty</button>
+    <button id="btnClearDirty">ClearDirty</button>
+    <button id="btnShowDialog">ShowDialogRequest</button>
+    <button id="btnSelectGoodFolder">SelectGoodFolderRequest</button>
+    <button id="btnNavigate">NavigateRequest</button>
+    <button id="btnUpdateDescription">UpdateRequest (description)</button>
+    <button id="btnClearLog" class="danger">Очистить лог</button>
+</div>
+
+<div class="log" id="log"></div>
+
+<script>
+
+    // ---- служебное состояние виджета ----
+    let messageIdCounter = 1;
+    let lastOpenMessageId = null;
+
+    function nextMessageId() {
+        return messageIdCounter++;
+    }
+
+    function escapeHtml(str) {
+        return str
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;");
+    }
+
+    const logEl = document.getElementById("log");
+
+    function renderLogEntry(direction, data) {
+        const entry = document.createElement("div");
+        entry.className = "log-entry " + direction;
+
+        const time = new Date().toLocaleTimeString("ru-RU", { hour12: false });
+        const dirLabel = direction === "in" ? "⬅ от МойСклад" : "➡ в МойСклад";
+
+        entry.innerHTML =
+            '<div class="log-head">' +
+                '<span class="dir">' + dirLabel + '</span>' +
+                '<span class="name">' + (data && data.name ? data.name : '') + '</span>' +
+                '<span class="time">' + time + '</span>' +
+            '</div>' +
+            '<pre>' + escapeHtml(JSON.stringify(data, null, 2)) + '</pre>';
+
+        logEl.prepend(entry);
+    }
+
+    // Логируем ВСЕ входящие/исходящие сообщения и в консоль, и в UI виджета,
+    // чтобы можно было посмотреть на реальные данные, приходящие от МойСклад.
+    function logIncoming(data) {
+        console.log("[МойСклад → виджет]", data);
+        renderLogEntry("in", data);
+    }
+
+    function sendMessage(data) {
+        console.log("[виджет → МойСклад]", data);
+        renderLogEntry("out", data);
+        window.parent.postMessage(data, "*");
+    }
+
+    // ---- обработка входящих сообщений хост-окна ----
+    window.addEventListener("message", (event) => {
+        const msg = event.data;
+        if (!msg || typeof msg !== "object" || !msg.name) {
+            return;
+        }
+
+        logIncoming(msg);
+
+        switch (msg.name) {
+
+            case "Open": {
+                document.getElementById("statusExtensionPoint").textContent = msg.extensionPoint || "—";
+                document.getElementById("statusObjectId").textContent = msg.objectId || "(новый документ)";
+                document.getElementById("statusDisplayMode").textContent = msg.displayMode || "—";
+
+                lastOpenMessageId = msg.messageId;
+
+                // Протокол open-feedback: сообщаем хосту, что содержимое виджета готово к показу.
+                // Если <open-feedback/> не объявлен в дескрипторе для этой точки встраивания — сообщение будет проигнорировано, это нормально.
+                sendMessage({
+                    name: "OpenFeedback",
+                    correlationId: msg.messageId
+                });
+                break;
+            }
+
+            case "Change": {
+                // msg.objectState — несохраненное состояние документа (Заказа покупателя).
+                // msg.changeHints — что именно изменилось: _fields / positions / attributes.
+
+                // Протокол validation-feedback: обязателен ответ на каждое сообщение Change,
+                // иначе пользователь не сможет сохранить документ.
+                sendMessage({
+                    name: "ValidationFeedback",
+                    messageId: nextMessageId(),
+                    correlationId: msg.messageId,
+                    valid: true
+                });
+                break;
+            }
+
+            case "Save": {
+                // Документ сохранен пользователем, msg.objectId уже доступен в JSON API.
+                break;
+            }
+
+            case "InvalidMessageError": {
+                console.warn("[МойСклад] InvalidMessageError:", msg.errors);
+                break;
+            }
+
+            // Ответы хост-окна на запросы, отправленные виджетом ниже (по кнопкам):
+            case "ShowDialogResponse":
+            case "SelectGoodFolderResponse":
+            case "NavigateResponse":
+            case "UpdateResponse":
+            case "ShowPopupResponse":
+                break;
+        }
+    });
+
+    // ---- кнопки для ручного тестирования протоколов ----
+
+    document.getElementById("btnSetDirty").onclick = () => {
+        sendMessage({
+            name: "SetDirty",
+            messageId: nextMessageId(),
+            openMessageId: lastOpenMessageId
+        });
+    };
+
+    document.getElementById("btnClearDirty").onclick = () => {
+        sendMessage({
+            name: "ClearDirty",
+            messageId: nextMessageId()
+        });
+    };
+
+    document.getElementById("btnShowDialog").onclick = () => {
+        sendMessage({
+            name: "ShowDialogRequest",
+            messageId: nextMessageId(),
+            dialogText: "Тестовый диалог из виджета-отладчика",
+            buttons: [
+                { name: "Yes", caption: "Да" },
+                { name: "No", caption: "Нет" }
+            ]
+        });
+    };
+
+    document.getElementById("btnSelectGoodFolder").onclick = () => {
+        sendMessage({
+            name: "SelectGoodFolderRequest",
+            messageId: nextMessageId()
+        });
+    };
+
+    document.getElementById("btnNavigate").onclick = () => {
+        sendMessage({
+            name: "NavigateRequest",
+            messageId: nextMessageId(),
+            path: "#customerorder",
+            target: "self"
+        });
+    };
+
+    document.getElementById("btnUpdateDescription").onclick = () => {
+        sendMessage({
+            name: "UpdateRequest",
+            messageId: nextMessageId(),
+            updateState: {
+                description: "Изменено виджетом-отладчиком: " + new Date().toLocaleString("ru-RU")
+            }
+        });
+    };
+
+    document.getElementById("btnClearLog").onclick = () => {
+        logEl.innerHTML = "";
+    };
+
+    console.log("[widget] customerorder-widget.html загружен, ожидаем сообщений от МойСклад...");
+
+</script>
+
+</body>
+</html>

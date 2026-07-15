@@ -56,6 +56,7 @@ broker.createService({
     actions: {
         button: {
             rest: 'POST /vendor/1.0/apps/:appId/:accountId/button',
+            auth: false,
             async handler(ctx) {
                 const { buttonName, extensionPoint, objectId, user, accountId, appId } = ctx.params;
                 switch (buttonName) {
@@ -72,6 +73,7 @@ broker.createService({
         },
         activate: {
             rest: 'PUT /vendor/1.0/apps/:appId/:accountId',
+            auth: false,
             async handler(ctx) {
                 return {
                     status: "Activated"
@@ -80,6 +82,7 @@ broker.createService({
         },
         deactivate: {
             rest: 'DELETE /vendor/1.0/apps/:appId/:accountId',
+            auth: false,
             async handler(ctx) {
                 return true
             }

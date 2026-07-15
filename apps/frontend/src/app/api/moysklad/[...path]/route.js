@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@/auth';
 
-const API_BASE = process.env.NEXT_PUBLIC_ENV === 'development' ? 'http://localhost:6789/api' : `${process.env.API_URL}/api`;
+const API_BASE = process.env.NEXT_PUBLIC_ENV === 'development' ? 'http://localhost:6789/api/moysklad' : `${process.env.API_URL}/api/moysklad`;
 // Generic same-origin proxy to the Moleculer gateway. The browser calls
 // /api/backend/<anything> and this handler forwards it 1:1, attaching the
 // user's Bearer token server-side. The access token never reaches the client.

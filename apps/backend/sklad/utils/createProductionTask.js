@@ -74,6 +74,7 @@ export const createProductionTask = async ({ id, initiator }, ctx) => {
         triplex: [],
         ceraglass: [],
         glasspacket: [],
+        package: [],
         // Уровень 2 — полуфабрикаты (связь с ПЗ 1-го уровня)
         glasst2: [],
         cerat2: [],
@@ -161,6 +162,13 @@ export const createProductionTask = async ({ id, initiator }, ctx) => {
                 productsStore: 'Полеводство СГИ', 
                 checkboxes: { glasspacket: true },
                 reserve: true,
+                deliveryPlannedMoment: formatDate(date),
+            },
+            {
+                source: results.package,
+                materialsStore: 'Полеводство материалы/прочее', 
+                productsStore: 'Полеводство СГИ', 
+                checkboxes: { pack: true },
                 deliveryPlannedMoment: formatDate(date),
             },
             // —— Уровень 2 — полуфабрикаты, связь с ПЗ 1-го уровня ——

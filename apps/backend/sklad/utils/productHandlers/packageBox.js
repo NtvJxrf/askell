@@ -8,5 +8,5 @@ export const packageBox = async ({ ctx, data, order, position, createdEntitys, r
     const materials = data.result.materials.map(el => ({ assortment: { meta: sklad_packaging[el.name].meta }, quantity: el.count }))
     const plan = await makeProcessingPlan({ ctx, name: position.assortment.name, order, processingProcess, product: position.assortment, materials, createdEntitys, mode: 'package' })
     plan.quantity = position.quantity
-    results.glass.push(plan)
+    results.package.push(plan)
 }

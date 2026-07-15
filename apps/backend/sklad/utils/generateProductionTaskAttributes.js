@@ -1,6 +1,6 @@
 const generateProductionTaskAttributes = (order, checkboxes, attributes) => {
     const result = []
-    const { viz, smd, print, triplex, colors, ceraglass, height, width, material, glasspacket } = checkboxes
+    const { viz, smd, print, triplex, colors, ceraglass, height, width, material, glasspacket, pack } = checkboxes
     const ta = attributes.productiontask
 
     result.push({ meta: ta["№ заказа покупателя"].meta, value: order.name })
@@ -16,6 +16,7 @@ const generateProductionTaskAttributes = (order, checkboxes, attributes) => {
     width && result.push({ meta: ta["Ширина"].meta, value: Number(width) })
     material && result.push({ meta: ta["Материал"].meta, value: material })
     glasspacket && result.push({ meta: ta["Стеклопакет"].meta, value: true })
+    pack && result.push({ meta: ta["Каркас"].meta, value: true })
     if (colors?.length > 0) {
         !smd && result.push({ meta: ta["Окрашивание"].meta, value: true })
         result.push({ meta: ta["Цвет"].meta, value: [...new Set(colors)].join(';') })

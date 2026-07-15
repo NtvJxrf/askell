@@ -41,6 +41,9 @@
     "./calc/trimCalc": {
       "import": "./src/calculators/trimCalc.js"
     },
+    "./calc/packaging": {
+      "import": "./src/calculators/packaging.js"
+    },
     "./calc/simulation": {
       "import": "./src/simulation.js"
     }

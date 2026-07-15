@@ -14,6 +14,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { Badge } from '@/components/ui/badge';
 import { ChevronDown } from 'lucide-react';
 import triplexCalc from '@askell/shared/calc/triplex';
+import packagingCalc from '@askell/shared/calc/packaging';
 import { calculateMaterialLayouts, getCuttingAllowance, buildTaskOrderGroups } from '@/app/(app)/cuttingLayouts/cuttingLayouts';
 import { CuttingSheetPreview, formatPercent, getWasteBadgeClass } from '@/app/(app)/cuttingLayouts/CuttingSheetPreview';
 import { POSITION_CALCULATORS } from './utils/positionCalculators';
@@ -245,7 +246,18 @@ export function PositionsPanel() {
     dispatch(setPositions(unselectedPositions));
   }
   const handlePackage = () => {
-    toast.success('Функция упаковки пока не реализована');
+    const selfcost = store.getState().app.selfcost;
+    const positions = store.getState().app.positions;
+    if(positions.length === 0){
+      toast.error('Нет позиций для упаковки');
+      return;
+    }
+    if(!selfcost?.packaging){
+      toast.error('Себестоимость упаковки не загружена');
+      return;
+    }
+    const pos = packagingCalc(positions, selfcost);
+    dispatch(addPositions(pos));
   }
   const handleRecalculateTrim = (withLayout) => {
     const rawPositions = store.getState().app.positions;

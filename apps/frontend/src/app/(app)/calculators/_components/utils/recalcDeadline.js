@@ -22,10 +22,20 @@ export default function handleRecalcDeadline() {
     const stagesAndNorms = store.getState().app?.selfcost?.stagesAndNorms
     const heaps = JSON.parse(JSON.stringify(origHeaps))
     let hasPrint = false
+    const thicknesses = []
+    const dayThicknessMap = {
+        1: [4],
+        2: [5],
+        3: [6],
+        4: [8],
+        5: [10, 12],
+    }
     for(const pos of positions){
         if(pos?.initialData?.print) hasPrint = true
         const posType = pos?.result?.other?.type
         if(posType == 'Стекло'){
+            const thickness = Number(pos?.initialData?.material?.match(/(\d+(?:[.,]\d+)?)\s*мм/i)[1])
+            thicknesses.push(thickness)
             for (let i = 0; i < pos.quantity; i++) {
                 heaps?.['Раскрой']?.push({
                     name: pos?.name,
@@ -48,11 +58,13 @@ export default function handleRecalcDeadline() {
                     tier: 3,
                     pfDepth: 1,
                 }
-                for(let i = 0; i < (pos?.result?.other?.materials?.length || 2); i++) {
+                for(const material of (pos?.result?.other?.materials || [])) {
                     const assortmentId = crypto.randomUUID();
+                    const thickness = Number(material?.match(/(\d+(?:[.,]\d+)?)\s*мм/i)[1])
+                    thicknesses.push(thickness)
                     heaps?.['Раскрой']?.push({//Раскрой
                         name: `Стекло для ${pos?.name}`,
-                        initialData: pos?.initialData,
+                        initialData: {...pos?.initialData, material},
                         productionPath: buildGlassPath(pos),
                         orderingPosition: 0,
                         tier: 3,
@@ -93,11 +105,13 @@ export default function handleRecalcDeadline() {
                             pfDepth: 2,
                             assortmentId
                         }
-                        for(let i = 0; i < (usedTriplex?.result?.other?.materials?.length || 2); i++) {
+                        for(const material of (usedTriplex?.result?.other?.materials || [])) {
                             const glassAssortmentId = crypto.randomUUID();
+                            const thickness = Number(material?.match(/(\d+(?:[.,]\d+)?)\s*мм/i)[1])
+                            thicknesses.push(thickness)
                             heaps?.['Раскрой']?.push({//Раскрой
                                 name: `Стекло для ${usedTriplex.name} для ${pos?.name}`,
-                                initialData: usedTriplex?.initialData,
+                                initialData: { ...usedTriplex?.initialData, material },
                                 productionPath: buildGlassPath(usedTriplex),
                                 orderingPosition: 0,
                                 tier: 3,
@@ -131,6 +145,22 @@ export default function handleRecalcDeadline() {
             toast.error(`Позиция ${pos?.name} пропущена при расчете сроков, т.к. не поддерживается тип ${posType}`);
         }
     }
+    const currentDay = new Date().getDay()
+    let maxDays = 0;
+    for (const thickness of thicknesses) {
+        const cutDay = Number(Object.keys(dayThicknessMap).find(day => dayThicknessMap[day].includes(thickness)));
+        if (!cutDay) continue;
+
+        // сколько дней ждать до следующего такого дня
+        let diff = cutDay - currentDay;
+
+        if (diff < 0) {
+            diff += 7;
+        }
+
+        maxDays = Math.max(maxDays, diff);
+    }
+
     const res = simulation({
         schedule,
         startIndex: index,
@@ -141,7 +171,7 @@ export default function handleRecalcDeadline() {
     })
     console.log(res)
     console.timeEnd('simulation')
-    return {hasPrint, ...res}
+    return {hasPrint, ...res, addDaysByThickness: maxDays}
 }
 
 const buildGlassPath = (data) => {

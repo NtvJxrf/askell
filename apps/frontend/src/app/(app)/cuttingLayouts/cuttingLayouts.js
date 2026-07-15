@@ -109,7 +109,10 @@ const getLayoutEarliestTime = (layout) =>
     return time < earliest ? time : earliest;
   }, Infinity);
 
-export const buildDailyCuttingTask = (materialsEntries = [], { maxArea = 150, strategy = DAILY_TASK_STRATEGIES.DATE } = {}) => {
+export const buildDailyCuttingTask = (
+  materialsEntries = [],
+  { maxArea = 150, strategy = DAILY_TASK_STRATEGIES.DATE, thicknesses = [] } = {}
+) => {
   const tomorrowEnd = new Date();
   tomorrowEnd.setDate(tomorrowEnd.getDate() + 1);
   tomorrowEnd.setHours(23, 59, 59, 999);
@@ -117,7 +120,13 @@ export const buildDailyCuttingTask = (materialsEntries = [], { maxArea = 150, st
 
   const layoutInfos = [];
 
-  materialsEntries.forEach(([material, data]) => {
+  const filteredMaterialsEntries = thicknesses.length
+    ? materialsEntries.filter(([material]) => {
+      console.log(material, thicknesses, getMaterialThickness(material), thicknesses.includes(getMaterialThickness(material)));
+      return thicknesses.includes(getMaterialThickness(material));
+    })
+    : materialsEntries;
+  filteredMaterialsEntries.forEach(([material, data]) => {
     const sheetAreaM2 = (data.sheet.width * data.sheet.height) / 1_000_000;
 
     data.layouts.forEach((layout) => {

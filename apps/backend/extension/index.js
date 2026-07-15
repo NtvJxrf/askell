@@ -51,5 +51,39 @@ broker.createService({
         }
     }
 });
-
+broker.createService({
+    name: "moysklad",
+    actions: {
+        button: {
+            rest: 'POST /vendor/1.0/apps/:appId/:accountId/button',
+            async handler(ctx) {
+                const { buttonName, extensionPoint, objectId, user, accountId, appId } = ctx.params;
+                switch (buttonName) {
+                    case 'logistic-request':{
+                        return {
+                            action: "showPopup",
+                            params: {
+                                popupName: "logistic-request",
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        activate: {
+            rest: 'PUT /vendor/1.0/apps/:appId/:accountId',
+            async handler(ctx) {
+                return {
+                    status: "Activated"
+                }
+            }
+        },
+        deactivate: {
+            rest: 'DELETE /vendor/1.0/apps/:appId/:accountId',
+            async handler(ctx) {
+                return true
+            }
+        }
+    }
+});
 broker.start();

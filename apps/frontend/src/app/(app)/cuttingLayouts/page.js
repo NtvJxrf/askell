@@ -351,6 +351,7 @@ export default function CuttingLayoutsPage() {
   const [taskStrategy, setTaskStrategy] = useState(DAILY_TASK_STRATEGIES.DATE);
   const [printDrawingsOrders, setPrintDrawingsOrders] = useState(null);
   const targetRef = useRef(150);
+  const thicknessesRef = useRef('');
   const cuttingHeap = useMemo(
     () => (heapsRaw?.["Раскрой"] || []).filter((item) => item?.tier === 1),
     [heapsRaw]
@@ -410,7 +411,8 @@ export default function CuttingLayoutsPage() {
   }, [selected]);
   const handleCreateTask = () => {
     const maxArea = Number(targetRef.current?.value) || 150;
-    const task = buildDailyCuttingTask(materials, { maxArea, strategy: taskStrategy });
+    const thicknesses = thicknessesRef.current?.value.split(' ').map((t) => Number(t.trim())).filter(Boolean);
+    const task = buildDailyCuttingTask(materials, { maxArea, strategy: taskStrategy, thicknesses });
 
     setDailyTask(groupDailyTaskByMaterial(task));
     setTaskDialogOpen(true);
@@ -598,14 +600,26 @@ export default function CuttingLayoutsPage() {
             ref={targetRef}
             type="number"
             defaultValue={150}
-            className="max-w-[200px]"
+            className="max-w-[100px]"
+          />
+        </div>
+        <div className="flex flex-col gap-1.5">
+          <Label htmlFor="daily-task-target" className="text-xs text-muted-foreground">
+            Толщины, мм (через пробел)
+          </Label>
+          <Input
+            id="thicknesses"
+            ref={thicknessesRef}
+            type="text"
+            defaultValue=""
+            className="max-w-[100px]"
           />
         </div>
         <div className="flex flex-col gap-1.5">
           <span className="flex items-center gap-1 text-xs text-muted-foreground">
             Алгоритм сборки
             <Tooltip>
-              <TooltipTrigger>
+              <TooltipTrigger >
                 <Info className="size-3.5" />
               </TooltipTrigger>
               <TooltipContent className="max-w-xs whitespace-normal">
@@ -621,10 +635,10 @@ export default function CuttingLayoutsPage() {
             </Tooltip>
           </span>
           <Select value={taskStrategy} onValueChange={setTaskStrategy}>
-            <SelectTrigger className="w-[280px]">
+            <SelectTrigger className="w-[150px]">
               <SelectValue />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className="min-w-max">
               {DAILY_TASK_STRATEGY_OPTIONS.map((option) => (
                 <SelectItem key={option.value} value={option.value}>
                   {option.label}

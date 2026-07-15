@@ -335,12 +335,14 @@ export function PositionsPanel() {
       console.time('simulation')
       const settings = store.getState().app.settings;
       const res = recalcDeadline()
-      const {calcMoment, lastTier3End, machines, tier3EndTimes, hasPrint, lastEnd} = res
+      const {calcMoment, lastTier3End, machines, tier3EndTimes, hasPrint, lastEnd, addDaysByThickness } = res
+      console.log(addDaysByThickness)
       const date = new Date(lastTier3End?.time || lastEnd || Date.now());
       date.setDate(date.getDate()
         + (settings?.addProdDays?.value || settings?.addProdDays?.default || 0)
         + (hasPrint ? (settings?.addPrintDays?.value || settings?.addPrintDays?.default || 0) : 0)
       );//Прибавляем дни в зависимости от настроек
+      date.setDate(date.getDate() + addDaysByThickness);//Прибавляем дни в зависимости от толщины стекла
       const day = date.getDay();//Прибавляем дни, если дата попадает на выходные
       if (day === 6) date.setDate(date.getDate() + 2);
       else if (day === 0) date.setDate(date.getDate() + 1);

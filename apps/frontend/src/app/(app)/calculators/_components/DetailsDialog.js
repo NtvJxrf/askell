@@ -4,6 +4,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Separator } from "@/components/ui/separator";
 import { Label } from "@/components/ui/label";
@@ -20,6 +22,9 @@ export default function ItemDialog({ item, index, open, onOpenChange }) {
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent className="min-w-max gap-0">
+                <Button className="absolute left-1 top-1" onClick={async () => { await navigator.clipboard.writeText(JSON.stringify(item?.initialData)); toast.success('Скопировано в буфер обмена'); }} variant="ghost">
+                    JSON
+                </Button>
                 <DialogHeader className="text-center">
                     <DialogTitle className="text-base mb-4 text-[18px] font-semibold">
                         Детали позиции {index + 1}

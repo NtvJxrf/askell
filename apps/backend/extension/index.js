@@ -4,6 +4,7 @@ import goodInfo from "./utils/goodinfo.js";
 import reclamationRequest from "./utils/reclamation.js";
 import productionlabels from "./utils/productionlabels.js";
 import customerlabels from "./utils/customerlabels.js";
+import { valkey } from "@askell/shared";
 export const broker = createBroker("extension");
 
 broker.createService({
@@ -58,6 +59,8 @@ broker.createService({
             rest: 'POST /vendor/1.0/apps/:appId/:accountId/button',
             async handler(ctx) {
                 const { buttonName, extensionPoint, objectId, user, accountId, appId } = ctx.params;
+                const employees = JSON.parse(await valkey.get(`sklad:data:employees`))
+                // if(!employees[user.employeeId]) return;
                 switch (buttonName) {
                     case 'logistic-request':{
                         return {

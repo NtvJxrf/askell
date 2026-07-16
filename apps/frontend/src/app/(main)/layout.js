@@ -1,9 +1,9 @@
 import { Manrope } from "next/font/google";
-import './globals.css';
+import '../globals.css';
 import { ThemeProvider } from '@/components/theme-provider';
 import { StoreProvider } from '@/lib/StoreProvider';
 import { Toaster } from '@/components/ui/sonner';
-import WS from "../lib/ws.js";
+import WS from "@/lib/ws.js";
 const manrope = Manrope({
   variable: "--font-manrope",
   subsets: ["latin", "cyrillic"],
@@ -30,7 +30,7 @@ export const viewport = {
   initialScale: 1,
 };
 
-export default function RootLayout({ children }) {
+export default function MainLayout({ children }) {
   return (
     <html
       lang="ru"

@@ -5,8 +5,8 @@ import WidgetSDK from "@moysklad/js-widget-sdk";
 
 export default function WidgetClient({ appUid, appId, contextNonce, states }) {
     const [initialOrderState, setInitialOrderState] = useState(null);
-    const sdk = WidgetSDK.create();
     useEffect(() => {
+        const sdk = WidgetSDK.create();
         const fetchData = async () => {
             const response = await fetch(`https://calc.askell.ru/api/backend/proxy/sklad?contextNonce=${contextNonce}`, {
                 method: 'POST',
@@ -27,17 +27,17 @@ export default function WidgetClient({ appUid, appId, contextNonce, states }) {
             await fetchData();
             sdk.openFeedback(message ? message.messageId : undefined);
         });
+        sdk.onChange( message => {
+            console.log(message)
+            sdk.validationFeedback(true, 'messageText')
+        })
         return () => {
             // если SDK имеет destroy/unsubscribe
-            // sdk.destroy();
+            sdk.destroy();
         };
     }, []);
-    sdk.onChange( message => {
-        console.log(message)
-        sdk.validationFeedback(true, 'messageText')
-    })
     return (
-        <div className="flex flex-col gap-2 p-4 text-sm">
+        <div className="flex flex-col gap-2 p-4 text-sm overflow-y-auto">
             <h2 className="text-lg font-semibold">Widget Client</h2>
             <p className="text-muted-foreground">App UID: <span className="font-medium text-foreground">{appUid}</span></p>
             <p className="text-muted-foreground">App ID: <span className="font-medium text-foreground">{appId}</span></p>

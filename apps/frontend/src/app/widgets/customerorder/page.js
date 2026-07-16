@@ -6,7 +6,6 @@ export default async function WidgetPage({ searchParams }) {
     const states = await apiFetch(`/data-refresher/entity?entity=states&devToken=${process.env.DEV_TOKEN}`)
     return (
         <div>
-            <h1>Customer Order widget</h1>
             <WidgetClient 
                 appUid={appUid}
                 appId={appId}

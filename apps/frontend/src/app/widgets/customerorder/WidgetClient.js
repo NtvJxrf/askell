@@ -39,14 +39,18 @@ export default function WidgetClient({ appUid, appId, contextNonce, states, user
             const initial = initialOrderStateRef.current;
             console.log('objectState', objectState)
             console.log('initialOrderState', initial)
+            console.log(initial.deliveryPlannedMoment > objectState.deliveryPlannedMoment)
             if (!initial) {
+                console.log('initialOrderState is null, skipping validation');
                 sdk.validationFeedback(true, 'messageText');
                 return;
             }
             if (initial.deliveryPlannedMoment > objectState.deliveryPlannedMoment) {
+                console.log('Validation failed: deliveryPlannedMoment is less than initial value');
                 sdk.validationFeedback(false, 'Дата отгрузки меньше изначальной');
                 return;
             }
+            console.log('Validation passed: deliveryPlannedMoment is valid');
             sdk.validationFeedback(true, 'messageText');
         });
 

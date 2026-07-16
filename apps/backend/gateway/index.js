@@ -3,6 +3,7 @@ import crypto from "crypto";
 import { createBroker } from "../lib/broker.js";
 import { verifyAccessToken } from "../users/lib/auth.js";
 import { hasPermission } from "@askell/shared/permissions";
+import { valkey } from "@askell/shared";
 
 const { UnAuthorizedError, ForbiddenError, ERR_NO_TOKEN, ERR_INVALID_TOKEN } = ApiGateway.Errors;
 

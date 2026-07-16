@@ -428,7 +428,7 @@ broker.createService({
           throw new MoleculerClientError('User not found', 404, user.errors);
         }
         const contextNonce = randomUUID()
-        await valkey.set(`extension:${contextNonce}`, JSON.stringify(user), { ttl: 60 * 120 }); // 2 часа
+        await valkey.set(`extension:${contextNonce}`, JSON.stringify(user), 'EX', 60 * 120); // 2 часа
         return { user, contextNonce };
       },
     }

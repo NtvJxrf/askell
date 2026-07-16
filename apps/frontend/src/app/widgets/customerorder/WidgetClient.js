@@ -11,6 +11,7 @@ export default function WidgetClient({ appUid, appId, contextNonce, states, user
         const sdk = WidgetSDK.create();
 
         const fetchData = async (objectId) => {
+            console.log('Fetching data for objectId:', objectId);
             const response = await fetch(`https://calc.askell.ru/api/backend/proxy/sklad?contextNonce=${contextNonce}`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -48,7 +49,7 @@ export default function WidgetClient({ appUid, appId, contextNonce, states, user
                 sdk.validationFeedback(false, `Только администратор может уменьшать дату доставки.`);
                 return;
             }
-            if(objectState.state.meta.href == states.customerorder['Поставлено в производство'].meta.href) {
+            if(objectState.state.meta.href == /*states.customerorder['Поставлено в производство'].meta.href*/ "https://api.moysklad.ru/api/remap/1.2/entity/customerorder/metadata/states/a81ca5d5-94d3-11ee-0a80-00ab001e46ec") {
                 const attrs = (objectState.attributes || []).reduce((acc, x) => {
                     acc[x.name] = x.value
                     return acc

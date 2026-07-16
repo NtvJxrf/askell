@@ -37,12 +37,14 @@ export default function WidgetClient({ appUid, appId, contextNonce, states, user
         });
 
         sdk.onChange(({ changeHints, extensionPoint, name, objectState }) => {
+            console.log('objectState', objectState);
+            console.log('initialOrderStateRef.current', initialOrderStateRef.current);
             const initial = initialOrderStateRef.current;
             if (!initial) {
                 sdk.validationFeedback(true);
                 return;
             }
-            if (initial.deliveryPlannedMoment > objectState.deliveryPlannedMoment && user.permissions.admin.view != 'ALL') {
+            if (initial.deliveryPlannedMoment > objectState.deliveryPlannedMoment /*&& user.permissions.admin.view != 'ALL'*/) {
                 sdk.validationFeedback(false, `Только администратор может уменьшать дату доставки. Текущая дата: ${initial.deliveryPlannedMoment}, вы пытаетесь установить: ${objectState.deliveryPlannedMoment}`);
                 return;
             }

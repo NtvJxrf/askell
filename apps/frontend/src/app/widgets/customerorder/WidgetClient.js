@@ -49,7 +49,7 @@ export default function WidgetClient({ appUid, appId, contextNonce, states, user
                 sdk.validationFeedback(false, `Только администратор может уменьшать дату доставки.`);
                 return;
             }
-            if(objectState.state.meta.href == /*states.customerorder['Поставлено в производство'].meta.href*/ "https://api.moysklad.ru/api/remap/1.2/entity/customerorder/metadata/states/a81ca5d5-94d3-11ee-0a80-00ab001e46ec") {
+            if(objectState.state.meta.href == /*states.customerorder['Поставлено в производство'].meta.href*/ "https://api.moysklad.ru/api/remap/1.2/entity/customerorder/metadata/states/4a0f6ccf-8132-11f1-0a80-13c5000001cf") {
                 const attrs = (objectState.attributes || []).reduce((acc, x) => {
                     acc[x.name] = x.value
                     return acc

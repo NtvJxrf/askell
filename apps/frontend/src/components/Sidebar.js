@@ -33,7 +33,7 @@ import {
 // Collapsible left navigation built on shadcn/ui's Sidebar primitives.
 // Receives an already permission-filtered `items` list and a plain `user`
 // object from the server layout. Collapse/expand state is owned by
-// SidebarProvider (see (app)/layout.js) and persisted via cookie.
+// SidebarProvider (see (main)/layout.js) and persisted via cookie.
 export const NAV_ITEMS = [
   { href: '/calculators', label: 'Калькуляторы', icon: Calculator, permissions: ['Калькулятор'] },
   { href: '/production', label: 'Производство', icon: Factory },

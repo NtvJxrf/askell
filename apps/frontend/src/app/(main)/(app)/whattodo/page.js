@@ -3,7 +3,7 @@
 import { useMemo, useState, useCallback, useEffect, useRef } from "react";
 import { useSelector } from "react-redux";
 import { Separator } from "@/components/ui/separator";
-import ItemDialog from "@/app/(app)/whattodo/itemDialog";
+import ItemDialog from "@/app/(main)/(app)/whattodo/itemDialog";
 import { Input } from "@/components/ui/input";
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
@@ -14,7 +14,7 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { QrCode } from "lucide-react";
-import QrScannerDialog from "@/app/(app)/whattodo/qrScannerDialog";
+import QrScannerDialog from "@/app/(main)/(app)/whattodo/qrScannerDialog";
 import { useIsMobile } from "@/hooks/use-mobile";
 
 const RU_TO_EN_KEYBOARD_MAP = {

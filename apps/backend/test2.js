@@ -28,23 +28,23 @@ await broker.waitForServices(['users', 'proxy']);
 // console.log(test.body)
 // const res = await broker.call("data-refresher.updateHeaps");
 // const scheduleUpdate = await broker.call("data-refresher.updateSchedule");
-const heaps = await broker.call("data-refresher.getHeaps");
-const {schedule, index} = await broker.call("data-refresher.getSchedule");
-const pricesAndCoefs = JSON.parse(await valkey.get('sklad:data:pricesAndCoefs'));
-const stages = JSON.parse(await valkey.get('sklad:data:processingStages'));
-const stagesAndNorms = JSON.parse(await valkey.get('sklad:data:stagesAndNorms'));
-console.time('sim')
-const simres = simulation({
-  heaps,
-  schedule: schedule,
-  startIndex: index,
-  pricesAndCoefs,
-  stages,
-  logging: true,
-  stagesAndNorms,
-})
-await valkey.set('simulationResult', JSON.stringify(simres))
-console.log(simres)
+// const heaps = await broker.call("data-refresher.getHeaps");
+// const {schedule, index} = await broker.call("data-refresher.getSchedule");
+// const pricesAndCoefs = JSON.parse(await valkey.get('sklad:data:pricesAndCoefs'));
+// const stages = JSON.parse(await valkey.get('sklad:data:processingStages'));
+// const stagesAndNorms = JSON.parse(await valkey.get('sklad:data:stagesAndNorms'));
+// console.time('sim')
+// const simres = simulation({
+//   heaps,
+//   schedule: schedule,
+//   startIndex: index,
+//   pricesAndCoefs,
+//   stages,
+//   logging: true,
+//   stagesAndNorms,
+// })
+// await valkey.set('simulationResult', JSON.stringify(simres))
+// console.log(simres)
 // const res = await broker.call('$node.services');
 // const res = JSON.parse(await valkey.get('settings'));
 // const res = await broker.call("reports.create", { filters: { startDate: '2026-06-20', endDate: '2026-06-20' }, type: 'report1' });
@@ -74,37 +74,6 @@ console.log(simres)
 // const res = JSON.parse(await valkey.get('sklad:data:smdPlans'))
 // console.log(res)
 // console.timeEnd('sim')
-// console.log(heaps['Раскрой'])
-// const test = heaps['Раскрой'].sort((a, b) => {
-//   const materialA = a.attributes['Материал 1'];
-//   const materialB = b.attributes['Материал 1'];
-
-//   const thicknessA = Number(materialA.match(/(\d+(?:[.,]\d+)?)\s*мм/i)[1].replace(',', '.'));
-//   const thicknessB = Number(materialB.match(/(\d+(?:[.,]\d+)?)\s*мм/i)[1].replace(',', '.'));
-
-//   // 1. Толщина
-//   if (thicknessA !== thicknessB) {
-//     return thicknessA - thicknessB;
-//   }
-
-//   // 2. Материал
-//   const materialCompare = materialA.localeCompare(materialB, 'ru');
-//   if (materialCompare !== 0) {
-//     return materialCompare;
-//   }
-
-//   // 3. Срочность (дата доставки)
-//   return a.deliveryPlannedMoment.localeCompare(b.deliveryPlannedMoment);
-// });
-// const materials = test.map(item => ({ name: item.name, deliveryPlannedMoment: item.deliveryPlannedMoment }));
-// console.dir(materials, { maxArrayLength: null, depth: null });
-// const obj = materials.reduce((acc, material) => {
-//   const key = `${material.name}_${material.deliveryPlannedMoment}`;
-//   if (!acc[key]) {
-//     acc[key] = 0;
-//   }
-//   acc[key]++;
-//   return acc;
-// }, {});
-// console.log(obj)
+const res =  await broker.call('users.getUserByContextKey', {contextKey: `3e68da1beefab3954c11471a04971db914f9722c`})
+console.log(res)
 await broker.stop();

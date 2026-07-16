@@ -39,7 +39,7 @@ importers:
         specifier: ^15.1.0
         version: 15.1.0
       jsonwebtoken:
-        specifier: ^9.0.2
+        specifier: ^9.0.3
         version: 9.0.3
       moleculer:
         specifier: ^0.15.0

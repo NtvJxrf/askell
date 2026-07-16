@@ -2,6 +2,8 @@ import { Errors } from 'moleculer';
 import { createBroker } from '../lib/broker.js';
 import { db, users, eq } from '@askell/shared/db';
 import { PERMISSIONS } from '@askell/shared/permissions';
+import jwt from "jsonwebtoken";
+import { randomUUID } from "crypto";
 import {
   hashPassword,
   comparePassword,
@@ -40,7 +42,8 @@ function issueTokens(user) {
 }
 
 const broker = createBroker('users');
-
+const appUid = process.env.MS_APP_UID;
+const secretKey = process.env.MS_SECRET_KEY;
 broker.createService({
   name: 'users',
 
@@ -412,12 +415,16 @@ broker.createService({
       },
       async handler(ctx) {
         const { contextKey } = ctx.params;
-        const user = await ctx.call('proxy.sklad', { 
+        const token = createVendorToken()
+        const user = await ctx.call('proxy.request', { 
           url: `https://apps-api.moysklad.ru/api/vendor/1.0/context/${contextKey}`,
-          type: 'post'
+          type: 'post',
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
         });
-        if (!user) {
-          throw new MoleculerClientError('User not found', 404, 'NOT_FOUND');
+        if (user.errors) {
+          throw new MoleculerClientError('User not found', 404, user.errors);
         }
         return user;
       },
@@ -425,4 +432,21 @@ broker.createService({
   },
 });
 
-broker.start();
+await broker.start();
+
+function createVendorToken() {
+    const now = Math.floor(Date.now() / 1000);
+
+    return jwt.sign(
+        {
+            sub: appUid,
+            iat: now,
+            exp: now + 30,       // необязательно
+            jti: randomUUID(),
+        },
+        secretKey,
+        {
+            algorithm: "HS256",
+        }
+    );
+}

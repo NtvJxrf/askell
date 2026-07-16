@@ -16,7 +16,7 @@
     "exceljs": "^4.4.0",
     "googleapis": "^173.0.0",
     "got": "^15.1.0",
-    "jsonwebtoken": "^9.0.2",
+    "jsonwebtoken": "^9.0.3",
     "moleculer": "^0.15.0",
     "moleculer-web": "^0.11.0",
     "nats": "^2.29.3",

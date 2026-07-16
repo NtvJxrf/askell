@@ -17,11 +17,12 @@ export default function ClientGlassTemperingForm({ dv = null, editingIndex = nul
         { name: 'height', type: 'input', label: 'Высота, мм', required: true },
         { name: 'rounding', type: 'select', label: 'Округление', options: ['Округление до 0.3', 'Округление до 0.5', 'Умножить на 2'], required: true },
         { name: 'quantity', type: 'inputp0', label: 'Количество, шт' },
+        { name: 'ignoreRestricts', type: 'checkbox', label: 'Игнорировать ограничения', checked: false }
     ]
 
-    if(['Игнорировать ограничения', 'Админ'].some(role => user?.roles?.includes(role))){
-        formFields.push({ name: 'ignoreRestricts', type: 'checkbox', label: 'Игнорировать ограничения', checked: false })
-    }
+    // if(['Игнорировать ограничения', 'Админ'].some(role => user?.roles?.includes(role))){
+    //     formFields.push({ name: 'ignoreRestricts', type: 'checkbox', label: 'Игнорировать ограничения', checked: false })
+    // }
 
     const form = useCalculatorForm('tempering', {
         shouldUnregister: true,

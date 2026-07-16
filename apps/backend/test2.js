@@ -74,6 +74,6 @@ await broker.waitForServices(['users', 'proxy']);
 // const res = JSON.parse(await valkey.get('sklad:data:smdPlans'))
 // console.log(res)
 // console.timeEnd('sim')
-const res =  await broker.call('users.getUserByContextKey', {contextKey: `3e68da1beefab3954c11471a04971db914f9722c`})
-console.log(res)
+// const res =  await broker.call('users.getUserByContextKey', {contextKey: `3e68da1beefab3954c11471a04971db914f9722c`})
+// console.log(res)
 await broker.stop();

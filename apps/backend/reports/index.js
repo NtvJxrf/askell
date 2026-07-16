@@ -11,6 +11,7 @@ import report1 from "./src/report1.js";
 import report2 from "./src/report2.js";
 import report3 from "./src/report3.js";
 import report4 from "./src/report4.js";
+import report5 from "./src/report5.js";
 const { MoleculerClientError } = Errors;
 const broker = createBroker("reports");
 export const map = {
@@ -46,6 +47,13 @@ export const map = {
         function: report4,
         name: 'Список давальческой закалки',
         description: 'Список заказов покупателей с давальческой закалкой, по статусам "Готово" и "Отгружен"',
+        ttl: 12 * 60 * 60, // 12 часов
+        filters: ['dateRange']
+    },
+    report5: {
+        function: report5,
+        name: 'Расход стекла по месяцам',
+        description: 'Расход товаров папки "Стекло/Материал от поставщиков" с разбивкой по месяцам',
         ttl: 12 * 60 * 60, // 12 часов
         filters: ['dateRange']
     },

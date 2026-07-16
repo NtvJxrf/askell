@@ -83,6 +83,9 @@ importers:
       '@base-ui/react':
         specifier: ^1.6.0
         version: 1.6.0(@date-fns/tz@1.5.0)(date-fns@4.4.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
+      '@moysklad/js-widget-sdk':
+        specifier: ^1.1.0
+        version: 1.1.0
       '@radix-ui/react-separator':
         specifier: ^1.1.10
         version: 1.1.10(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
@@ -1038,6 +1041,9 @@ packages:
 
   '@keyv/serialize@1.1.1':
     resolution: {integrity: sha512-dXn3FZhPv0US+7dtJsIi2R+c7qWYiReoEh5zUntWCf4oSpMNib8FDhSoed6m3QyZdx5hK7iLFkYk3rNxwt8vTA==}
+
+  '@moysklad/js-widget-sdk@1.1.0':
+    resolution: {integrity: sha512-mLbtJw3NPDx6rer+oO39KPYx62odNS/PAyFntgJvbfNmO1HBtHTKMqZ3vv5qEsEyCMDSwscP3mRszcU4go6fjg==}
 
   '@napi-rs/wasm-runtime@1.1.5':
     resolution: {integrity: sha512-AWPoBRJ9tsnVhor4sjO7rkni+7p+2IAEFj6cx06UgP10jkQHqay/36uRV/bFkgrh18D9vb4cr8Q0Pthskgzy+Q==}
@@ -5028,6 +5034,8 @@ snapshots:
   '@js-sdsl/ordered-map@4.4.2': {}
 
   '@keyv/serialize@1.1.1': {}
+
+  '@moysklad/js-widget-sdk@1.1.0': {}
 
   '@napi-rs/wasm-runtime@1.1.5(@emnapi/core@1.10.0)(@emnapi/runtime@1.10.0)':
     dependencies:

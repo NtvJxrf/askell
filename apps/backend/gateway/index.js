@@ -107,11 +107,22 @@ broker.createService({
       const query = new URL(req.url, 'http://localhost').searchParams;
       const oneCToken = query.get('token');
       const devToken = query.get('devToken');
+      const contextNonce = query.get('contextNonce');
       if (oneCToken && safeEqual(oneCToken, process.env.ONE_C_TOKEN)) {
         return systemUser('1c');
       }
       if (devToken && safeEqual(devToken, process.env.DEV_TOKEN)) {
         return systemUser('dev');
+      }
+      if(contextNonce) {
+        const userStr = await valkey.get(`extension:${contextNonce}`);
+        if(userStr) {
+          const user = JSON.parse(userStr);
+          await valkey.expire(`extension:${contextNonce}`, 60 * 120); // продлеваем ещё на 2 часа
+          return systemUser(`extension:${user.uid}`);
+        }else{
+          throw new UnAuthorizedError('Invalid contextNonce', 401, 'INVALID_CONTEXT_NONCE');
+        }
       }
 
       // 4) Bearer JWT

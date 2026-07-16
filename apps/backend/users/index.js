@@ -2,6 +2,7 @@ import { Errors } from 'moleculer';
 import { createBroker } from '../lib/broker.js';
 import { db, users, eq } from '@askell/shared/db';
 import { PERMISSIONS } from '@askell/shared/permissions';
+import { valkey } from '@askell/shared';
 import jwt from "jsonwebtoken";
 import { randomUUID } from "crypto";
 import {
@@ -426,7 +427,9 @@ broker.createService({
         if (user.errors) {
           throw new MoleculerClientError('User not found', 404, user.errors);
         }
-        return user;
+        const contextNonce = randomUUID()
+        await valkey.set(`extension:${contextNonce}`, JSON.stringify(user), { ttl: 60 * 120 }); // 2 часа
+        return { user, contextNonce };
       },
     }
   },

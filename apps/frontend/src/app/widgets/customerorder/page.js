@@ -1,11 +1,8 @@
 import { apiFetch } from "@/lib/api";
+import WidgetClient from "./WidgetClient.js"
 export default async function WidgetPage({ searchParams }) {
-    // Начиная с Next 15+ searchParams — это Promise, его нужно await'ить
     const { contextKey, appUid, appId } = await searchParams;
-    console.log(contextKey, appUid, appId);
-    const user = await apiFetch(`/users/byContextKey?contextKey=${contextKey}`)
-    // Условный запрос к бэкенду в зависимости от параметра
-    // const order = orderId ? await apiFetch(`/orders/${orderId}`) : null;
+    const {user, contextNonce} = await apiFetch(`/users/byContextKey?contextKey=${contextKey}`)
 
     return (
         <div>
@@ -17,6 +14,11 @@ export default async function WidgetPage({ searchParams }) {
             {JSON.stringify(user)}
             {/* Данные, полученные с учётом query-параметра */}
             {/* {order && <pre>{JSON.stringify(order, null, 2)}</pre>} */}
+            <WidgetClient 
+                appUid={appUid}
+                appId={appId}
+                contextNonce={contextNonce}
+            />
         </div>
     );
 }

@@ -34,7 +34,8 @@ export default function WidgetClient({ appUid, appId, contextNonce, states, user
         };
     }, []);
     sdk.onChange( ({changeHints, extensionPoint, name, objectState}) => {
-        console.log(objectState)
+        console.log('objectState', objectState)
+        console.log('initialOrderState', initialOrderState)
         if(initialOrderState.deliveryPlannedMoment > objectState.deliveryPlannedMoment){
             sdk.validationFeedback(false, 'Дата отгрузки меньше изначальной')
             return

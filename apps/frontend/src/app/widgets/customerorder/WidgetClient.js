@@ -45,7 +45,7 @@ export default function WidgetClient({ appUid, appId, contextNonce, states, user
                 return;
             }
             if (initial.deliveryPlannedMoment > objectState.deliveryPlannedMoment /*&& user.permissions.admin.view != 'ALL'*/) {
-                sdk.validationFeedback(false, `Только администратор может уменьшать дату доставки. Текущая дата: ${initial.deliveryPlannedMoment}, вы пытаетесь установить: ${objectState.deliveryPlannedMoment}`);
+                sdk.validationFeedback(false, `Только администратор может уменьшать дату доставки.`);
                 return;
             }
             if(objectState.state.meta.href == states.customerorder['Поставлено в производство'].meta.href) {
@@ -57,7 +57,7 @@ export default function WidgetClient({ appUid, appId, contextNonce, states, user
                     const required = ['Город получателя', 'Вид доставки', 'Телефон получателя', 'Адрес получателя', 'Выбор транспортной компании']
                     const missing = required.filter(key => !(attrs || {})[key])
                     if (missing.length > 0) {
-                        sdk.validationFeedback(false, `Вид доставки не "Самовывоз". Заполнены не все обязательные поля для создания ПЗ. Не заполнено: ${missing.join(',')}`);
+                        sdk.validationFeedback(false, `Вид доставки не "Самовывоз". Заполнены не все обязательные поля для создания ПЗ.`);
                         return
                     }
                 }

@@ -11,6 +11,7 @@ export default async function WidgetPage({ searchParams }) {
                 appId={appId}
                 contextNonce={contextNonce}
                 states={states}
+                user={user}
             />
         </div>
     );

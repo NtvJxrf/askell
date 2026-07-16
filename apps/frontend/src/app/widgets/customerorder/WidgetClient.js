@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import WidgetSDK from "@moysklad/js-widget-sdk";
 
-export default function WidgetClient({ appUid, appId, contextNonce, states }) {
+export default function WidgetClient({ appUid, appId, contextNonce, states, user }) {
     const [initialOrderState, setInitialOrderState] = useState(null);
     useEffect(() => {
         const sdk = WidgetSDK.create();
@@ -13,6 +13,7 @@ export default function WidgetClient({ appUid, appId, contextNonce, states }) {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     url: `https://api.moysklad.ru/api/remap/1.2/entity/customerorder/e65e442d-d19c-11f0-0a80-0390000360cd`,
+                    priority: true
                 })
             });
             if (!response.ok) {
@@ -21,18 +22,21 @@ export default function WidgetClient({ appUid, appId, contextNonce, states }) {
             }
             const data = await response.json();
             console.log("Data received from backend proxy:", data);
+            console.log('user', user)
             setInitialOrderState(data);
         };
         sdk.onOpen(async (message) => {
             await fetchData();
             sdk.openFeedback(message ? message.messageId : undefined);
         });
-        sdk.onChange( message => {
-            console.log(message)
+        sdk.onChange( ({changeHints, extensionPoint, name, objectState}) => {
+            if(initialOrderState.deliveryPlannedMoment > objectState.deliveryPlannedMoment){
+                sdk.validationFeedback(false, 'Дата отгрузки меньше изначальной')
+                return
+            }
             sdk.validationFeedback(true, 'messageText')
         })
         return () => {
-            // если SDK имеет destroy/unsubscribe
             sdk.destroy();
         };
     }, []);

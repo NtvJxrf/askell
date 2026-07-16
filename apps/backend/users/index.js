@@ -404,6 +404,24 @@ broker.createService({
         };
       },
     },
+    getUserByContextKey: {
+      rest: 'GET /users/byContextKey/:contextKey',
+      auth: false,
+      params: {
+        contextKey: { type: 'string', trim: true, empty: false },
+      },
+      async handler(ctx) {
+        const { contextKey } = ctx.params;
+        const user = await ctx.call('proxy.sklad', { 
+          url: `https://apps-api.moysklad.ru/api/vendor/1.0/context/${contextKey}`,
+          type: 'post'
+        });
+        if (!user) {
+          throw new MoleculerClientError('User not found', 404, 'NOT_FOUND');
+        }
+        return user;
+      },
+    }
   },
 });
 

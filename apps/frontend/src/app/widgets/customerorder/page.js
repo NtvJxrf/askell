@@ -1,12 +1,20 @@
-'use server'
-export default async function WidgetPage() {
-    console.log('build widget customer order page')
+export default async function WidgetPage({ searchParams }) {
+    // Начиная с Next 15+ searchParams — это Promise, его нужно await'ить
+    const { contextKey, appUid, appId } = await searchParams;
+    console.log(contextKey, appUid, appId);
+    // Условный запрос к бэкенду в зависимости от параметра
+    // const order = orderId ? await apiFetch(`/orders/${orderId}`) : null;
+
     return (
         <div>
             <h1>Customer Order widget</h1>
-            {Array.from({ length: 100 }, (_, i) => (
-                <p key={i}>{i * Math.random()}</p>
-            ))}
+
+            {/* Условный рендер по параметру */}
+            {appId && <p>{appId}</p>}
+            {appUid && <p>{appUid}</p>}
+
+            {/* Данные, полученные с учётом query-параметра */}
+            {/* {order && <pre>{JSON.stringify(order, null, 2)}</pre>} */}
         </div>
     );
 }

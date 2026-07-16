@@ -7,17 +7,16 @@ export default function WidgetClient({ appUid, appId, contextNonce }) {
 
     useEffect(() => {
         const sdk = WidgetSDK.create();
-
+        console.log(contextNonce)
         sdk.onOpen((message) => {
             console.log("Open", message);
         });
         const fetchData = async () => {
-            const response = await fetch(`https://calc.askell.ru/api/backend/proxy/sklad`, {
+            const response = await fetch(`https://calc.askell.ru/api/backend/proxy/sklad?contextNonce=${contextNonce}`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     url: `https://api.moysklad.ru/api/remap/1.2/entity/customerorder/e65e442d-d19c-11f0-0a80-0390000360cd`,
-                    contextNonce
                 })
             });
             if (!response.ok) {

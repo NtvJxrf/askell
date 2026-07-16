@@ -3,7 +3,7 @@ import WidgetClient from "./WidgetClient.js"
 export default async function WidgetPage({ searchParams }) {
     const { contextKey, appUid, appId } = await searchParams;
     const {user, contextNonce} = await apiFetch(`/users/byContextKey?contextKey=${contextKey}`)
-
+    console.log(user, contextNonce)
     return (
         <div>
             <h1>Customer Order widget</h1>

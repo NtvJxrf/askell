@@ -32,6 +32,7 @@ function waitForOpenMessage() {
 }
 
 export default function WidgetClient({ appUid, appId, contextNonce, states, user, attributes }) {
+    const [initialOrderState, setInitialOrderState] = useState(null);
     const initialOrderStateRef = useRef(null);
 
     useEffect(() => {
@@ -58,6 +59,7 @@ export default function WidgetClient({ appUid, appId, contextNonce, states, user
             console.log("Data received from backend proxy:", data);
             console.log('user', user)
             initialOrderStateRef.current = data;
+            setInitialOrderState(data);
         };
 
         waitForOpenMessage().then(async ({ messageId, objectId }) => {

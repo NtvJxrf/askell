@@ -6,24 +6,23 @@ import WidgetSDK from "@moysklad/js-widget-sdk";
 export default function WidgetClient({ appUid, appId, contextNonce, states, user, attributes }) {
     const [initialOrderState, setInitialOrderState] = useState(null);
     const initialOrderStateRef = useRef(null);
-    function logIncoming(data) {
-        console.log("[МойСклад → виджет]", data);
-    }
-
-    // ---- обработка входящих сообщений хост-окна ----
-    window.addEventListener("message", (event) => {
+    const additionalListener = (event) => {
         const msg = event.data;
         if (!msg || typeof msg !== "object" || !msg.name) {
             return;
         }
 
         logIncoming(msg)
-    })
-    
+    }
+    function logIncoming(data) {
+        console.log("[МойСклад → виджет]", data);
+    }
+
+    // ---- обработка входящих сообщений хост-окна ----
+    window.addEventListener("message", additionalListener)
+
     useEffect(() => {
-        console.log("useEffect");
         const sdk = WidgetSDK.create();
-        console.log("sdk created");
         const fetchData = async (objectId) => {
             console.log('Fetching data for objectId:', objectId);
             const response = await fetch(`https://calc.askell.ru/api/backend/proxy/sklad?contextNonce=${contextNonce}`, {
@@ -49,6 +48,7 @@ export default function WidgetClient({ appUid, appId, contextNonce, states, user
         sdk.onOpen(async ({name, messageId, extensionPoint, objectId, displayMode}) => {
             await fetchData(objectId);
             sdk.openFeedback(messageId);
+            window.addEventListener("message", additionalListener)
         });
 
         sdk.onChange(({ changeHints, extensionPoint, name, objectState }) => {
@@ -86,6 +86,7 @@ export default function WidgetClient({ appUid, appId, contextNonce, states, user
 
         return () => {
             sdk.destroy();
+            window.addEventListener("message", additionalListener)
         };
     }, [contextNonce]);
 

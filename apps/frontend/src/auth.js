@@ -15,7 +15,7 @@ const SESSION_MAX_AGE = 60 * 60 * 24 * 30;
 //   - PERMISSION_ROUTES   : require sign-in AND one of the listed permissions
 //                           (admin always passes). Longest matching prefix wins.
 // Anything not listed here just requires being signed in.
-const PUBLIC_ROUTES = ['/login'];
+const PUBLIC_ROUTES = ['/login', '/widgets'];
 
 const PERMISSION_ROUTES = [
   { prefix: '/calculators', permissions: ['Калькулятор'] },

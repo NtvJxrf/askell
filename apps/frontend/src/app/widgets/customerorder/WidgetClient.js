@@ -5,8 +5,8 @@ import WidgetSDK from "@moysklad/js-widget-sdk";
 
 export default function WidgetClient({ appUid, appId, contextNonce, states }) {
     const [initialOrderState, setInitialOrderState] = useState(null);
+    const sdk = WidgetSDK.create();
     useEffect(() => {
-        const sdk = WidgetSDK.create();
         const fetchData = async () => {
             const response = await fetch(`https://calc.askell.ru/api/backend/proxy/sklad?contextNonce=${contextNonce}`, {
                 method: 'POST',
@@ -32,15 +32,22 @@ export default function WidgetClient({ appUid, appId, contextNonce, states }) {
             // sdk.destroy();
         };
     }, []);
-
+    sdk.onChange( message => {
+        console.log(message)
+        sdk.validationFeedback(true, 'messageText')
+    })
     return (
-        <div>
-            <h2>Widget Client</h2>
-            <p>App UID: {appUid}</p>
-            <p>App ID: {appId}</p>
-            <p>Context Nonce: {contextNonce}</p>
-            <p>Initial Order State: {initialOrderState ? initialOrderState.state.meta.href : "Loading..."}</p>
-            <p>States: {states ? JSON.stringify(states) : "Loading..."}</p>
+        <div className="flex flex-col gap-2 p-4 text-sm">
+            <h2 className="text-lg font-semibold">Widget Client</h2>
+            <p className="text-muted-foreground">App UID: <span className="font-medium text-foreground">{appUid}</span></p>
+            <p className="text-muted-foreground">App ID: <span className="font-medium text-foreground">{appId}</span></p>
+            <p className="text-muted-foreground">Context Nonce: <span className="font-medium text-foreground">{contextNonce}</span></p>
+            <p className="text-muted-foreground">
+                Initial Order State: <span className="font-medium text-foreground">{initialOrderState ? initialOrderState.state.meta.href : "Loading..."}</span>
+            </p>
+            <p className="text-muted-foreground">
+                States: <span className="font-medium text-foreground">{states ? JSON.stringify(states?.customerorder) : "Loading..."}</span>
+            </p>
         </div>
     );
 }

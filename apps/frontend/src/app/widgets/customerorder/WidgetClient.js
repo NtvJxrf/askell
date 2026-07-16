@@ -5,8 +5,8 @@ import WidgetSDK from "@moysklad/js-widget-sdk";
 
 export default function WidgetClient({ appUid, appId, contextNonce, states, user }) {
     const [initialOrderState, setInitialOrderState] = useState(null);
+    const sdk = WidgetSDK.create();
     useEffect(() => {
-        const sdk = WidgetSDK.create();
         const fetchData = async () => {
             const response = await fetch(`https://calc.askell.ru/api/backend/proxy/sklad?contextNonce=${contextNonce}`, {
                 method: 'POST',
@@ -29,17 +29,18 @@ export default function WidgetClient({ appUid, appId, contextNonce, states, user
             await fetchData();
             sdk.openFeedback(message ? message.messageId : undefined);
         });
-        sdk.onChange( ({changeHints, extensionPoint, name, objectState}) => {
-            if(initialOrderState.deliveryPlannedMoment > objectState.deliveryPlannedMoment){
-                sdk.validationFeedback(false, 'Дата отгрузки меньше изначальной')
-                return
-            }
-            sdk.validationFeedback(true, 'messageText')
-        })
         return () => {
             sdk.destroy();
         };
     }, []);
+    sdk.onChange( ({changeHints, extensionPoint, name, objectState}) => {
+        console.log(objectState)
+        if(initialOrderState.deliveryPlannedMoment > objectState.deliveryPlannedMoment){
+            sdk.validationFeedback(false, 'Дата отгрузки меньше изначальной')
+            return
+        }
+        sdk.validationFeedback(true, 'messageText')
+    })
     return (
         <div className="flex flex-col gap-2 p-4 text-sm overflow-y-auto">
             <h2 className="text-lg font-semibold">Widget Client</h2>

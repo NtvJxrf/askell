@@ -1,4 +1,4 @@
-import { backend } from "@lib/backend"
+import { backend } from "@/lib/backend";
 export default async function WidgetPage({ searchParams }) {
     // Начиная с Next 15+ searchParams — это Promise, его нужно await'ить
     const { contextKey, appUid, appId } = await searchParams;

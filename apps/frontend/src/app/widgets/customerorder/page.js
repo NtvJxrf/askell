@@ -5,7 +5,7 @@ export default async function WidgetPage({ searchParams }) {
     const {user, contextNonce} = await apiFetch(`/users/byContextKey?contextKey=${contextKey}`)
     const states = await apiFetch(`/data-refresher/entity?entity=states&devToken=${process.env.DEV_TOKEN}`)
     return (
-        <div>
+        <div className="flex-1 min-h-0 h-full w-full">
             <WidgetClient 
                 appUid={appUid}
                 appId={appId}

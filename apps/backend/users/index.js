@@ -408,7 +408,7 @@ broker.createService({
       },
     },
     getUserByContextKey: {
-      rest: 'GET /users/byContextKey/:contextKey',
+      rest: 'GET /users/byContextKey',
       auth: false,
       params: {
         contextKey: { type: 'string', trim: true, empty: false },

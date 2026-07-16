@@ -3,12 +3,41 @@
 import { useEffect, useRef, useState } from "react";
 import WidgetSDK from "@moysklad/js-widget-sdk";
 
+// МойСклад кэширует и переиспользует iframe виджета в рамках одной вкладки браузера,
+// поэтому при навигации между заказами наш скрипт продолжает работать и просто
+// получает новое сообщение Open. Но при полной перезагрузке страницы iframe создаётся
+// заново, и хост может отправить Open раньше, чем React успеет смонтироваться и
+// подписаться на событие внутри useEffect (SSR/гидратация занимают время). Чтобы не
+// пропустить это сообщение, создаём SDK и подписываемся на onOpen сразу при загрузке
+// модуля, а не внутри useEffect, и буферизуем последнее сообщение.
+const sdk = typeof window !== "undefined" ? WidgetSDK.create() : null;
+
+let lastOpenMessage = null;
+let openMessageWaiters = [];
+
+if (sdk) {
+    sdk.onOpen((message) => {
+        lastOpenMessage = message;
+        const waiters = openMessageWaiters;
+        openMessageWaiters = [];
+        waiters.forEach((resolve) => resolve(message));
+    });
+}
+
+function waitForOpenMessage() {
+    if (lastOpenMessage) {
+        return Promise.resolve(lastOpenMessage);
+    }
+    return new Promise((resolve) => openMessageWaiters.push(resolve));
+}
+
 export default function WidgetClient({ appUid, appId, contextNonce, states, user, attributes }) {
-    const [initialOrderState, setInitialOrderState] = useState(null);
     const initialOrderStateRef = useRef(null);
 
     useEffect(() => {
-        const sdk = WidgetSDK.create();
+        if (!sdk) return;
+
+        let cancelled = false;
 
         const fetchData = async (objectId) => {
             console.log('Fetching data for objectId:', objectId);
@@ -29,10 +58,10 @@ export default function WidgetClient({ appUid, appId, contextNonce, states, user
             console.log("Data received from backend proxy:", data);
             console.log('user', user)
             initialOrderStateRef.current = data;
-            setInitialOrderState(data);
         };
 
-        sdk.onOpen(async ({name, messageId, extensionPoint, objectId, displayMode}) => {
+        waitForOpenMessage().then(async ({ messageId, objectId }) => {
+            if (cancelled) return;
             await fetchData(objectId);
             sdk.openFeedback(messageId);
         });
@@ -54,6 +83,10 @@ export default function WidgetClient({ appUid, appId, contextNonce, states, user
                     acc[x.name] = x.value
                     return acc
                 }, {})
+                if(!attrs['Вид доставки']){
+                    sdk.validationFeedback(false, `Не заполнено обязательное поле "Вид доставки" для создания ПЗ.`);
+                    return
+                }
                 if (attrs['Вид доставки']?.name !== 'Самовывоз') {
                     const required = ['Город получателя', 'Вид доставки', 'Телефон получателя', 'Адрес получателя', 'Выбор транспортной компании']
                     const missing = required.filter(key => !(attrs || {})[key])
@@ -67,7 +100,7 @@ export default function WidgetClient({ appUid, appId, contextNonce, states, user
         });
 
         return () => {
-            sdk.destroy();
+            cancelled = true;
         };
     }, [contextNonce]);
 

@@ -14,7 +14,7 @@
   "scripts": {
     "dev": "pm2 start ecosystem.config.cjs",
     "front": "cd apps/frontend && npm run dev",
-    "front build": "cd apps/frontend && npm run build",
+    "fbuild": "cd apps/frontend && npm run build",
     "signoz:setup": "node observability/setup-signoz.mjs",
     "signoz:up": "docker-compose -p signoz -f signoz/deploy/docker/docker-compose.yaml up -d --remove-orphans",
     "signoz:down": "docker-compose -p signoz -f signoz/deploy/docker/docker-compose.yaml down",

@@ -1,6 +1,6 @@
 'use server'
-export default function WidgetPage() {
-    console.log()
+export default async function WidgetPage() {
+    console.log('build widget customer order page')
     return (
         <div>
             <h1>Customer Order widget</h1>

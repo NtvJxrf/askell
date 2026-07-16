@@ -1,7 +1,7 @@
 import { auth } from '@/auth';
 import { headers } from 'next/headers';
 
-const API_BASE = process.env.NEXT_PUBLIC_ENV === 'development' ? 'http://localhost:6789/api' : `${process.env.API_URL}/api`;
+const API_BASE = 'http://localhost:6789/api'
 /**
  * Server-side helper to call the Moleculer API with the current user's
  * access token. Use only in Server Components / Server Actions / Route Handlers.

@@ -175,6 +175,17 @@ broker.createService({
         ctx.call("websocket.broadcast", { type: 'schedule', schedule: JSON.parse(await valkey.get('schedule')) || null });
         return true
       }
+    },
+    getEntity: {
+      rest: 'GET /entity',
+      async handler(ctx) {
+        const { entity } = ctx.params;
+        const res = await valkey.get(`sklad:data:${entity}`);
+        if(!res) {
+          throw new MoleculerClientError(`Справочник ${entity} не найден. Сначала выполните обновление справочников.`, 404, 'ENTITY_NOT_FOUND');
+        }
+        return JSON.parse(res);
+      }
     }
   }     
 });

@@ -1,16 +1,12 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import WidgetSDK from "@moysklad/js-widget-sdk";
 
-export default function WidgetClient({ appUid, appId, contextNonce }) {
-
+export default function WidgetClient({ appUid, appId, contextNonce, states }) {
+    const [initialOrderState, setInitialOrderState] = useState(null);
     useEffect(() => {
         const sdk = WidgetSDK.create();
-        console.log(contextNonce)
-        sdk.onOpen((message) => {
-            console.log("Open", message);
-        });
         const fetchData = async () => {
             const response = await fetch(`https://calc.askell.ru/api/backend/proxy/sklad?contextNonce=${contextNonce}`, {
                 method: 'POST',
@@ -25,13 +21,26 @@ export default function WidgetClient({ appUid, appId, contextNonce }) {
             }
             const data = await response.json();
             console.log("Data received from backend proxy:", data);
+            setInitialOrderState(data);
         };
-        setTimeout(fetchData, 3000); // Delay the fetch by 1 second
+        sdk.onOpen(async (message) => {
+            await fetchData();
+            sdk.openFeedback(message ? message.messageId : undefined);
+        });
         return () => {
             // если SDK имеет destroy/unsubscribe
             // sdk.destroy();
         };
     }, []);
 
-    return null;
+    return (
+        <div>
+            <h2>Widget Client</h2>
+            <p>App UID: {appUid}</p>
+            <p>App ID: {appId}</p>
+            <p>Context Nonce: {contextNonce}</p>
+            <p>Initial Order State: {initialOrderState ? initialOrderState.state.meta.href : "Loading..."}</p>
+            <p>States: {states ? JSON.stringify(states) : "Loading..."}</p>
+        </div>
+    );
 }

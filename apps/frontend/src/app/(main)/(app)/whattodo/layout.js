@@ -1,17 +1,13 @@
-// The root layout ((main)/layout.js) locks the whole app to a fixed
-// desktop viewport (width: 1280) — by design, since the app has no mobile
-// layout. This page is the one exception: it has a real mobile UI, so it
-// needs the browser to use the actual device width instead of the fixed
-// 1280px canvas (otherwise phones just render the desktop layout zoomed
-// out, and no responsive CSS/JS in the page can compensate for that).
-//
-// Next.js resolves `viewport` per route segment — the segment closest to
-// the page overrides parents — so this scopes the override to /whattodo
-// only, leaving every other route on the fixed desktop viewport.
+// The rest of the app is intentionally locked to a fixed desktop viewport
+// (see the root `(main)` layout, which sets `viewport = { width: 1280 }`).
+// This route implements a real mobile layout, so it needs mobile browsers
+// to report their actual device width instead of being zoomed out to fit
+// ~1280px. A `viewport` export in a nested layout/page replaces (rather
+// than merges with) the one from an ancestor segment, so this is enough to
+// opt this route out of the fixed-width behavior.
 export const viewport = {
-  width: "device-width",
+  width: 'device-width',
   initialScale: 1,
-  maximumScale: 1,
 };
 
 export default function WhatToDoLayout({ children }) {

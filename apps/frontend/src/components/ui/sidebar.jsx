@@ -1,6 +1,5 @@
 "use client";
 import * as React from "react"
-import { usePathname } from "next/navigation"
 import { mergeProps } from "@base-ui/react/merge-props"
 import { useRender } from "@base-ui/react/use-render"
 import { cva } from "class-variance-authority";
@@ -23,7 +22,6 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip"
 import { PanelLeftIcon } from "lucide-react"
-import { useIsMobile } from "@/hooks/use-mobile"
 
 const SIDEBAR_COOKIE_NAME = "sidebar_state"
 const SIDEBAR_COOKIE_MAX_AGE = 60 * 60 * 24 * 7
@@ -52,12 +50,7 @@ function SidebarProvider({
   children,
   ...props
 }) {
-  // Mobile layout is disabled for this app, EXCEPT the /whattodo page,
-  // which has a real mobile UI (QR-scan workflow) and needs the sidebar
-  // to act as an off-canvas drawer there instead of pushing content.
-  const pathname = usePathname()
-  const isMobileDevice = useIsMobile()
-  const isMobile = isMobileDevice && !!pathname?.startsWith("/whattodo")
+  const isMobile = false // useIsMobile() // Mobile layout is disabled for this app.
   const [openMobile, setOpenMobile] = React.useState(false)
 
   // This is the internal state of the sidebar.

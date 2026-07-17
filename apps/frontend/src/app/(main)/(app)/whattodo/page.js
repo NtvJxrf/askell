@@ -13,11 +13,16 @@ import {
 } from "@/components/ui/field"
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
-import { QrCode, Search, SlidersHorizontal } from "lucide-react";
-import { Sheet, SheetTrigger, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
-import { SidebarTrigger } from "@/components/ui/sidebar";
+import { QrCode } from "lucide-react";
 import QrScannerDialog from "@/app/(main)/(app)/whattodo/qrScannerDialog";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useSidebar } from "@/components/ui/sidebar";
+
+// The rest of the app is intentionally locked to a fixed desktop width (see
+// the root `(main)` layout and `globals.css`). This page implements a real
+// mobile layout, so while it's mounted we opt it out of that lock by
+// toggling a class on <html> (see the matching CSS override in globals.css).
+const MOBILE_LAYOUT_HTML_CLASS = "mobile-layout-page";
 
 const RU_TO_EN_KEYBOARD_MAP = {
   ё: "`", Ё: "~", й: "q", Й: "Q", ц: "w", Ц: "W", у: "e", У: "E",
@@ -47,6 +52,30 @@ export default function WhatToDoPage() {
   const productionRowIdRef = useRef('')
   const isMobile = useIsMobile()
   const [qrOpen, setQrOpen] = useState(false);
+  const { open: sidebarOpen, setOpen: setSidebarOpen } = useSidebar();
+  const sidebarOpenBeforeMobileRef = useRef(null);
+
+  useEffect(() => {
+    document.documentElement.classList.add(MOBILE_LAYOUT_HTML_CLASS);
+    return () => document.documentElement.classList.remove(MOBILE_LAYOUT_HTML_CLASS);
+  }, []);
+
+  // Free up horizontal space on phones/small screens by collapsing the
+  // sidebar to icon-only while this page is active, restoring whatever
+  // state it had before.
+  useEffect(() => {
+    if (!isMobile) return;
+
+    sidebarOpenBeforeMobileRef.current = sidebarOpen;
+    setSidebarOpen(false);
+
+    return () => {
+      if (sidebarOpenBeforeMobileRef.current !== null) {
+        setSidebarOpen(sidebarOpenBeforeMobileRef.current);
+      }
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isMobile]);
   const [filters, setFilters] = useState({
     orderNumber: "",
     productionOrder: "",
@@ -170,155 +199,119 @@ export default function WhatToDoPage() {
   };
   return (
     <>
-      {isMobile ? (
-        <div className="flex gap-2 p-2 border-b items-center">
-          <SidebarTrigger className="size-11 shrink-0" />
-
-          <Button
-            variant="outline"
-            size="icon"
-            className="size-11 shrink-0"
-            onClick={() => setQrOpen(true)}
-            aria-label="Сканировать QR"
-          >
-            <QrCode className="size-5" />
-          </Button>
-
-          <Input
-            className="h-11 flex-1 text-base"
-            placeholder="ProductionRowid (qr code)"
-            ref={productionRowIdRef}
-            onChange={(e) => {
-              if (e.currentTarget.value === '') {
-                setFilters((prev) => ({
-                  ...prev,
-                  productionRowId: ''
-                }));
-              }
-            }}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") {
-                handleProdFilter()
-              }
-            }}
-          />
-
-          <Button size="icon" className="size-11 shrink-0" onClick={handleProdFilter} aria-label="Найти">
-            <Search className="size-5" />
-          </Button>
-
-          <Sheet>
-            <SheetTrigger
-              render={
-                <Button variant="outline" size="icon" className="size-11 shrink-0" aria-label="Фильтры" />
-              }
-            >
-              <SlidersHorizontal className="size-5" />
-            </SheetTrigger>
-            <SheetContent side="bottom" className="max-h-[85vh] overflow-y-auto">
-              <SheetHeader>
-                <SheetTitle>Фильтры</SheetTitle>
-              </SheetHeader>
-              <div className="flex flex-col gap-3 p-4 pt-0">
-                <Input
-                  className="h-11 text-base"
-                  placeholder="Номер заказа"
-                  value={filters.orderNumber}
-                  onChange={(e) =>
-                    setFilters((prev) => ({
-                      ...prev,
-                      orderNumber: e.target.value,
-                    }))
-                  }
-                />
-
-                <Input
-                  className="h-11 text-base"
-                  placeholder="Номер ПЗ"
-                  value={filters.productionOrder}
-                  onChange={(e) =>
-                    setFilters((prev) => ({
-                      ...prev,
-                      productionOrder: e.target.value,
-                    }))
-                  }
-                />
-
-                <Separator />
-
-                <div className="text-sm font-semibold uppercase text-muted-foreground">
-                  Колонки
-                </div>
-
-                <ColumnsFieldGroup
-                  heaps={heaps}
-                  visibleKeys={visibleKeys}
-                  setVisibleKeys={setVisibleKeys}
-                  filteredStageCounts={filteredStageCounts}
-                />
+      <div className="flex flex-wrap gap-2 p-2 border-b items-center">
+        <Popover>
+          <PopoverTrigger className="flex" render={<Button variant="outline">Колонки</Button>} />
+          <PopoverContent className="w-[90vw] max-w-none max-h-[70vh] overflow-y-auto">
+            <FieldGroup>
+              <div className="flex gap-2">
+                <Button variant="outline" onClick={() => {
+                  setVisibleKeys(Object.keys(heaps || {}));
+                  localStorage.setItem(localStorageKey, JSON.stringify(Object.keys(heaps || {})));
+                }}>
+                  Показать все
+                </Button>
+                <Button variant="outline" onClick={() => {
+                  setVisibleKeys([]);
+                  localStorage.setItem(localStorageKey, JSON.stringify([]));
+                }}>
+                  Скрыть все
+                </Button>
               </div>
-            </SheetContent>
-          </Sheet>
-        </div>
-      ) : (
-        <div className="flex gap-2 p-2 border-b items-center">
-          <Popover>
-            <PopoverTrigger className="flex" render={<Button variant="outline">Колонки</Button>} />
-            <PopoverContent className="w-[90vw] max-w-none overflow-y-auto">
-              <ColumnsFieldGroup
-                heaps={heaps}
-                visibleKeys={visibleKeys}
-                setVisibleKeys={setVisibleKeys}
-                filteredStageCounts={filteredStageCounts}
-              />
-            </PopoverContent>
-          </Popover>
-          <Input
-            className="max-w-[200px]"
-            placeholder="Номер заказа"
-            value={filters.orderNumber}
-            onChange={(e) =>
-              setFilters((prev) => ({
-                ...prev,
-                orderNumber: e.target.value,
-              }))
-            }
-          />
+              <div className="grid [grid-template-columns:repeat(auto-fit,minmax(180px,1fr))] gap-2.5">
+                {Object.entries(heaps || {})
+                  .sort(([keyA, valueA], [keyB, valueB]) => {
+                    if (valueA?.length !== valueB?.length) {
+                      return (valueB?.length ?? 0) - (valueA?.length ?? 0);
+                    }
+                    return keyA.localeCompare(keyB, 'ru');
+                  })
+                  .map(([key, value]) => (
+                    <Field
+                      key={key}
+                      orientation="horizontal"
+                      className="flex items-center gap-2 min-w-0 border-r pr-2 last:border-r-0"
+                    >
+                      <Checkbox id={`toggle-checkbox-${key}`}
+                        onCheckedChange={() => {
+                          setVisibleKeys((prev) => {
+                            const newVisibleKeys = prev.includes(key)
+                              ? prev.filter((k) => k !== key)
+                              : [...prev, key];
+                            localStorage.setItem(localStorageKey, JSON.stringify(newVisibleKeys));
+                            return newVisibleKeys;
+                          });
+                        }}
+                        checked={visibleKeys.includes(key)}
+                      />
 
-          <Input
-            className="max-w-[200px]"
-            placeholder="Номер ПЗ"
-            value={filters.productionOrder}
-            onChange={(e) =>
+                      <Label
+                        htmlFor={`toggle-checkbox-${key}`}
+                        className="truncate min-w-0 flex-1"
+                        title={key}
+                      >
+                        {key}
+                      </Label>
+
+                      <span className={`shrink-0 text-xs tabular-nums ${filteredStageCounts[key] > 0 ? "text-green-700 dark:text-green-400" : "text-muted-foreground"}`}>
+                        {filteredStageCounts[key]}
+                      </span>
+                    </Field>
+                  ))}
+              </div>
+            </FieldGroup>
+          </PopoverContent>
+        </Popover>
+        <Input
+          className="flex-1 min-w-[140px] sm:max-w-[200px] sm:flex-none"
+          placeholder="Номер заказа"
+          value={filters.orderNumber}
+          onChange={(e) =>
+            setFilters((prev) => ({
+              ...prev,
+              orderNumber: e.target.value,
+            }))
+          }
+        />
+
+        <Input
+          className="flex-1 min-w-[140px] sm:max-w-[200px] sm:flex-none"
+          placeholder="Номер ПЗ"
+          value={filters.productionOrder}
+          onChange={(e) =>
+            setFilters((prev) => ({
+              ...prev,
+              productionOrder: e.target.value,
+            }))
+          }
+        />
+        <Input
+          className="flex-1 min-w-[140px] sm:max-w-[200px] sm:flex-none"
+          placeholder="ProductionRowid (qr code)"
+          ref={productionRowIdRef}
+          onChange={(e) =>{
+            if(e.currentTarget.value === ''){
               setFilters((prev) => ({
                 ...prev,
-                productionOrder: e.target.value,
-              }))
+                productionRowId: ''
+              }));
             }
-          />
-          <Input
-            className="max-w-[200px]"
-            placeholder="ProductionRowid (qr code)"
-            ref={productionRowIdRef}
-            onChange={(e) =>{
-              if(e.currentTarget.value === ''){
-                setFilters((prev) => ({
-                  ...prev,
-                  productionRowId: ''
-                }));
-              }
-            }}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") {
-                handleProdFilter()
-              }
-            }}
-          />
-          <Button onClick={handleProdFilter}>
-            Найти
+          }}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              handleProdFilter()
+            }
+          }}
+        />
+        <Button onClick={handleProdFilter}>
+          Найти
+        </Button>
+        {isMobile && (
+          <Button variant="outline" size="icon" onClick={() => setQrOpen(true)} aria-label="Сканировать QR">
+            <QrCode />
           </Button>
-        </div>
-      )}
+        )}
+      </div>
       <div
         className={
           isMobile
@@ -366,40 +359,26 @@ export default function WhatToDoPage() {
                 {items.map((item, index) => (
                   <div key={item.productionRowId}>
                     <div
-                      className={
-                        isMobile
-                          ? "relative p-4 cursor-pointer active:bg-muted/50"
-                          : "relative p-3 cursor-pointer hover:bg-muted/50"
-                      }
+                      className="relative p-3 cursor-pointer hover:bg-muted/50"
                       onClick={() => handleSelect(item)}
                     >
-                      <div
-                        className={
-                          isMobile
-                            ? "absolute right-4 top-4 text-sm font-semibold"
-                            : "absolute right-3 top-3 text-xs font-semibold"
-                        }
-                      >
+                      <div className="absolute right-3 top-3 text-xs font-semibold">
                         ×{item.quantity}
                       </div>
 
                       <div
-                        className={
-                          isMobile
-                            ? "pr-10 text-base font-medium leading-snug line-clamp-2"
-                            : "pr-8 text-sm font-medium leading-snug line-clamp-2"
-                        }
+                        className="pr-8 text-sm font-medium leading-snug line-clamp-2"
                         title={item.name}
                       >
                         {item.name}
                       </div>
 
-                      <div className={isMobile ? "mt-2 text-sm" : "mt-2 text-xs"}>
+                      <div className="mt-2 text-xs">
                         Заказ: {item.taskAttrs?.["№ заказа покупателя"]}
                       </div>
 
                       <div
-                        className={`mt-1 ${isMobile ? "text-sm" : "text-xs"} ${
+                        className={`mt-1 text-xs ${
                           overdue(item) ? "text-red-500" : "text-muted-foreground"
                         }`}
                       >
@@ -407,7 +386,7 @@ export default function WhatToDoPage() {
                       </div>
 
                       {item?.attributes?.["Длина в мм"] && (
-                        <div className={isMobile ? "mt-1 text-sm text-muted-foreground" : "mt-1 text-xs text-muted-foreground"}>
+                        <div className="mt-1 text-xs text-muted-foreground">
                           {item.attributes["Длина в мм"]} ×{" "}
                           {item.attributes["Ширина в мм"]}
                         </div>
@@ -444,65 +423,3 @@ const extractRowId = rawValue => {
   const last = s.includes("/") ? s.split("/").filter(Boolean).pop() : s;
   return last?.split("?")[0].split("#")[0].trim() ?? "";
 };
-
-function ColumnsFieldGroup({ heaps, visibleKeys, setVisibleKeys, filteredStageCounts }) {
-  return (
-    <FieldGroup>
-      <div className="flex gap-2">
-        <Button variant="outline" onClick={() => {
-          setVisibleKeys(Object.keys(heaps || {}));
-          localStorage.setItem(localStorageKey, JSON.stringify(Object.keys(heaps || {})));
-        }}>
-          Показать все
-        </Button>
-        <Button variant="outline" onClick={() => {
-          setVisibleKeys([]);
-          localStorage.setItem(localStorageKey, JSON.stringify([]));
-        }}>
-          Скрыть все
-        </Button>
-      </div>
-      <div className="grid [grid-template-columns:repeat(auto-fit,minmax(180px,1fr))] gap-2.5">
-        {Object.entries(heaps || {})
-          .sort(([keyA, valueA], [keyB, valueB]) => {
-            if (valueA?.length !== valueB?.length) {
-              return (valueB?.length ?? 0) - (valueA?.length ?? 0);
-            }
-            return keyA.localeCompare(keyB, 'ru');
-          })
-          .map(([key]) => (
-            <Field
-              key={key}
-              orientation="horizontal"
-              className="flex items-center gap-2 min-w-0 border-r pr-2 last:border-r-0"
-            >
-              <Checkbox id={`toggle-checkbox-${key}`}
-                onCheckedChange={() => {
-                  setVisibleKeys((prev) => {
-                    const newVisibleKeys = prev.includes(key)
-                      ? prev.filter((k) => k !== key)
-                      : [...prev, key];
-                    localStorage.setItem(localStorageKey, JSON.stringify(newVisibleKeys));
-                    return newVisibleKeys;
-                  });
-                }}
-                checked={visibleKeys.includes(key)}
-              />
-
-              <Label
-                htmlFor={`toggle-checkbox-${key}`}
-                className="truncate min-w-0 flex-1"
-                title={key}
-              >
-                {key}
-              </Label>
-
-              <span className={`shrink-0 text-xs tabular-nums ${filteredStageCounts[key] > 0 ? "text-green-700 dark:text-green-400" : "text-muted-foreground"}`}>
-                {filteredStageCounts[key]}
-              </span>
-            </Field>
-          ))}
-      </div>
-    </FieldGroup>
-  );
-}

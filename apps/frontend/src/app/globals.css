@@ -125,6 +125,15 @@
     overflow-x: auto;
     min-width: 1280px;
   }
+
+  /* Pages that implement their own responsive/mobile layout (currently just
+     /whattodo) opt out of the fixed desktop width above by toggling this
+     class on <html> while mounted (see that page's component). */
+  html.mobile-layout-page,
+  html.mobile-layout-page body {
+    min-width: 0;
+    overflow-x: hidden;
+  }
   body {
     @apply bg-background text-foreground;
     font-family: var(--font-sans), Arial, Helvetica, sans-serif;

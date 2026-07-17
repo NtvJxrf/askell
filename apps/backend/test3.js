@@ -39,27 +39,21 @@ const gotClient = got.extend({
     throwHttpErrors: false,
 });
 
-const args = {
-    headers: {
-        Authorization: `Bearer b09deb0d3c1804c08710f3d3706d88023291ff8d`,
-    }
-}
-const response = await gotClient.get(`https://api.moysklad.ru/api/remap/1.2/entity/customerorder/5289be44-6a0b-11f1-0a80-0e680003526c?expand=state`, {
-    ...args 
+const orders = await broker.call('proxy.fetchAllRows', { url: `https://api.moysklad.ru/api/remap/1.2/entity/customerorder?filter=`
+    +`state.name=Поставлено в производство`
+    +`;state.name=Поставлено в производство ВИЗ`
+    +`;state.name=В работе`
+    +`&expand=agent`
 })
-const data = JSON.parse(response.body)
-console.log(data.state.name)
-const promises = []
-for(let i = 0 ; i < 35; i++){
-    promises.push(gotClient.get(`https://api.moysklad.ru/api/remap/1.2/entity/customerorder/5289be44-6a0b-11f1-0a80-0e680003526c?expand=state`, {
-        ...args 
-    }).then(res => JSON.parse(res.body))
-        .catch(err => {
-            console.error(err)
-            return { state: { name: 'error' } }
+const result = []
+for(const order of orders){
+    if(!order.productionTasks)
+        result.push({
+            name: order.name,
+            sum: order.sum / 100,
+            deliveryPlannedMoment: order.deliveryPlannedMoment,
+            payedSum: order.payedSum / 100,
+            agent: order.agent.name,
         })
-    )
 }
-const result = await Promise.all(promises)
 console.log(result)
-console.log(result.length)

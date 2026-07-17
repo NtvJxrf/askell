@@ -5,7 +5,7 @@ import { getProcessingStages, getPackagingMaterials, getStores, getUnders, getCo
 import { updateHeaps } from "./utils/productionload.js";
 import { updateSchedule } from "./utils/schedule.js";
 import { valkey, settingsSchema } from "@askell/shared";
-import { scanNonPayedOrders, createCartonLoss } from './utils/skladScaner.js';
+import { scanNonPayedOrders, createCartonLoss, scanOrdersWithoutProductionTasks } from './utils/skladScaner.js';
 import simulation from "@askell/shared/calc/simulation"
 import cron from 'node-cron'
 const { MoleculerClientError } = Errors;
@@ -186,8 +186,18 @@ broker.createService({
         }
         return JSON.parse(res);
       }
+    },
+    getOrdersWithoutProductionTasks: {
+      rest: 'GET /ordersWithoutProductionTasks',
+      async handler(ctx) {
+        const res = await valkey.get('sklad:data:ordersWithoutProductionTasks');
+        if(!res) {
+          throw new MoleculerClientError(`Данные о заказах без производственных задач не найдены.`, 404, 'ORDERS_NOT_FOUND');
+        }
+        return JSON.parse(res);
+      }
     }
-  }     
+  },   
 });
 
 const updateSelfcost = async () => {
@@ -246,6 +256,13 @@ if (process.env.NODE_ENV !== 'development') {
       broker.logger.error({ err }, 'updateProductinLoad error')
     }
   }, 1_020_000)//Каждые 17 минут
+  setInterval(async () => {
+    try {
+      await scanOrdersWithoutProductionTasks()
+    } catch (err) {
+      broker.logger.error({ err }, 'scanOrdersWithoutProductionTasks error')
+    }
+  }, 1_800_000)//Каждые 30 минут
   cron.schedule("0 23 * * *", async () => { // Каждый день в 23 часа ночи
     try {
       await createCartonLoss()
@@ -258,6 +275,7 @@ await broker.start();
 try {
   await broker.waitForServices("proxy", 60_000);
   await broker.call("data-refresher.updateAllEntities");
+  await scanOrdersWithoutProductionTasks()
 } catch (err) {
   // Не роняем процесс на старте: данные подтянутся ближайшим интервалом.
   broker.logger.error({ err }, 'Начальное обновление справочников не удалось')

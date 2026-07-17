@@ -281,12 +281,33 @@ export default function WhatToDoPage() {
           </Button>
         )}
       </div>
-      <div className="flex h-screen overflow-x-auto overflow-y-hidden text-sm">
-        {Object.entries(groupedHeaps).map(([stage, items]) => {
+      <div
+        className={
+          isMobile
+            ? "flex flex-col overflow-y-auto overflow-x-hidden text-sm"
+            : "flex h-screen overflow-x-auto overflow-y-hidden text-sm"
+        }
+      >
+        {Object.entries(groupedHeaps)
+          .filter(([, items]) => !isMobile || items.length > 0)
+          .map(([stage, items]) => {
           return (
-            <div key={stage} className="w-60 shrink-0 border-r border-border">
+            <div
+              key={stage}
+              className={
+                isMobile
+                  ? "w-full border-b border-border"
+                  : "w-60 shrink-0 border-r border-border"
+              }
+            >
               {/* header */}
-              <div className="sticky top-0 z-10 flex items-center gap-2 border-b bg-background p-1">
+              <div
+                className={
+                  isMobile
+                    ? "flex items-center gap-2 border-b bg-background p-2"
+                    : "sticky top-0 z-10 flex items-center gap-2 border-b bg-background p-1"
+                }
+              >
                 <h2 className="flex-1 truncate text-sm font-semibold">
                   {stage}
                 </h2>
@@ -297,7 +318,13 @@ export default function WhatToDoPage() {
               </div>
 
               {/* items */}
-              <div className="overflow-y-auto scrollbar-none max-h-[calc(100vh-56px)] scrollbar-thumb-border">
+              <div
+                className={
+                  isMobile
+                    ? ""
+                    : "overflow-y-auto scrollbar-none max-h-[calc(100vh-56px)] scrollbar-thumb-border"
+                }
+              >
                 {items.map((item, index) => (
                   <div key={item.productionRowId}>
                     <div

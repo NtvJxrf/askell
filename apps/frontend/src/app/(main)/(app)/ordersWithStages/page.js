@@ -9,9 +9,16 @@ import {
 } from "@/components/ui/table"
 import { Input } from "@/components/ui/input"
 import { useSelector } from "react-redux"
-import { useMemo, useState } from "react"
+import { useMemo, useState, useEffect } from "react"
+import { backend } from "@/lib/backend"
+import { buttonVariants } from "@/components/ui/button"
+import { ChevronsUpDown } from 'lucide-react';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
+import { cn } from "@/lib/utils"
 export default function ProductionPage() {
   const heapsRaw = useSelector((state) => state.app.heaps)
+  const [ordersWithoutProductionTasks, setOrdersWithoutProductionTasks] = useState(null);
+  const [open, setOpen] = useState(false);
   const heaps = useMemo(() => {
     if (!heapsRaw) return null;
     const result = {};
@@ -80,8 +87,61 @@ export default function ProductionPage() {
       })
       .sort((a, b) => a.minDate - b.minDate);
   }, [heaps, filters]);
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const response = await backend('/data-refresher/ordersWithoutProductionTasks')
+        setOrdersWithoutProductionTasks(response);
+      } catch (error) {
+        console.error("Error fetching heaps:", error);
+      }
+    };
+    fetchData();
+  }, []);
+  console.log(ordersWithoutProductionTasks)
+  console.log(ordersWithoutProductionTasks?.result && ordersWithoutProductionTasks?.result?.length > 0)
   return (
     <>
+      {ordersWithoutProductionTasks?.result && ordersWithoutProductionTasks?.result?.length > 0 && (
+        <div>
+          <Collapsible open={open} onOpenChange={setOpen} className="mx-2 mt-2">
+            <CollapsibleTrigger className={cn(buttonVariants({ variant: "outline", size: "sm" }), "w-fit gap-1.5")}>
+              <ChevronsUpDown className="size-4" />
+              {open ? 'Скрыть заказы без ПЗ' : 'Показать заказы без ПЗ'}
+            </CollapsibleTrigger>
+            <CollapsibleContent >
+              <h1>Обновлено: {new Date(ordersWithoutProductionTasks.moment).toLocaleString()}</h1>
+              <Table className="table-fixed w-auto">
+                <TableHeader className="text-[14px]">
+                  <TableRow>
+                    <TableHead className="text-center border">№ заказа</TableHead>
+                    <TableHead className="border">Контрагент</TableHead>
+                    <TableHead className="text-center border">Дата отгрузки</TableHead>
+                    <TableHead className="text-center border">Сумма заказа</TableHead>
+                    <TableHead className="text-center border">Оплачено</TableHead>
+                  </TableRow>
+                </TableHeader>
+
+                <TableBody>
+                  {ordersWithoutProductionTasks.result.map(order => {
+                      return (
+                        <TableRow key={order.name}>
+                        <TableCell className="truncate border"><span title={order.name}>{order.name}</span></TableCell>
+                        <TableCell className="truncate border"><span title={order.agent}>{order.agent}</span></TableCell>
+                        <TableCell className="text-center border">
+                          {new Date(order.deliveryPlannedMoment).toLocaleDateString()}
+                        </TableCell>
+                        <TableCell className="text-center border">{order.sum}</TableCell>
+                        <TableCell className="text-center border">{order.payedSum}</TableCell>
+                      </TableRow>
+                      )
+                  })}
+                </TableBody>
+              </Table>
+            </CollapsibleContent>
+          </Collapsible>
+        </div>
+      )}
       <div className="flex gap-2 p-2 border-b items-center">
         <Input
           className="max-w-[200px]"

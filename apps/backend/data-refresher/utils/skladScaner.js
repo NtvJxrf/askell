@@ -100,3 +100,23 @@ export async function createCartonLoss (){
     }
     return true
 }
+export async function scanOrdersWithoutProductionTasks(){
+    const orders = await broker.call('proxy.fetchAllRows', { url: `https://api.moysklad.ru/api/remap/1.2/entity/customerorder?filter=`
+        +`state.name=Поставлено в производство`
+        +`;state.name=Поставлено в производство ВИЗ`
+        +`;state.name=В работе`
+        +`&expand=agent`
+    })
+    const result = []
+    for(const order of orders){
+        if(!order.productionTasks)
+            result.push({
+                name: order.name,
+                sum: order.sum / 100,
+                deliveryPlannedMoment: order.deliveryPlannedMoment,
+                payedSum: order.payedSum / 100,
+                agent: order.agent.name,
+            })
+    }
+    await valkey.set('sklad:data:ordersWithoutProductionTasks', JSON.stringify({result, moment: Date.now()}))
+}

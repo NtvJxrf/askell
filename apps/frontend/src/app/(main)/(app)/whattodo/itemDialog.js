@@ -15,11 +15,13 @@ import { store } from "@/lib/slice";
 import { useSelector } from "react-redux";
 import { ChevronDown } from "lucide-react";
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from "@/components/ui/collapsible"
+import { useIsMobile } from "@/hooks/use-mobile";
 export default function ItemDialog({ item, open, onOpenChange }) {
   const quantityRef = useRef(null);
   const descriptionRef = useRef(null);
   const [disabled, setDisabled] = useState(false);
   const stock = useSelector((state) => state.app?.selfcost?.stock) || {};
+  const isMobile = useIsMobile();
   const handleDefect = async () => {
     if(descriptionRef.current?.value === undefined || descriptionRef.current?.value.trim() === "") {
         toast.error("Введите комментарий для брака");
@@ -110,14 +112,20 @@ export default function ItemDialog({ item, open, onOpenChange }) {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg">
+      <DialogContent
+        className={
+          isMobile
+            ? "top-0 left-0 h-dvh max-h-dvh w-screen max-w-none translate-x-0 translate-y-0 rounded-none"
+            : "max-w-lg"
+        }
+      >
         <DialogHeader>
           <DialogTitle className="text-base line-clamp-3">
             {item?.name}
           </DialogTitle>
         </DialogHeader>
         <Separator />
-        <div className="space-y-4 text-sm">
+        <div className="min-h-0 flex-1 space-y-4 overflow-y-auto text-sm">
           <div className="space-y-1">
             <div>
               <span className="text-muted-foreground">№ заказа:</span>{" "}
@@ -250,11 +258,14 @@ export default function ItemDialog({ item, open, onOpenChange }) {
                 defaultValue={1}
                 onChange={handleChange}
                 onBlur={handleBlur}
+                className={isMobile ? "h-11 text-base" : undefined}
               />
 
               <Button
                 type="button"
                 variant="outline"
+                size={isMobile ? "default" : "sm"}
+                className={isMobile ? "h-11 shrink-0" : undefined}
                 onClick={() => {
                   if (quantityRef.current) {
                     quantityRef.current.value = item?.quantity ?? 1;
@@ -272,30 +283,38 @@ export default function ItemDialog({ item, open, onOpenChange }) {
             <Textarea
               ref={descriptionRef}
               placeholder="Введите комментарий..."
+              className={isMobile ? "text-base" : undefined}
             />
           </div>
+        </div>
 
-          <div className="flex">
-            <Button
-              type="button"
-              variant="destructive"
-              size="sm"
-              onClick={handleDefect}
-              disabled={disabled}
-            >
-              Указать брак
-            </Button>
+        <div
+          className={
+            isMobile
+              ? "flex flex-col gap-2 border-t pt-3"
+              : "flex border-t pt-3"
+          }
+        >
+          <Button
+            type="button"
+            className={isMobile ? "order-1 h-12 w-full text-base" : "order-2 ml-auto"}
+            size={isMobile ? "default" : "sm"}
+            onClick={handleComplete}
+            disabled={disabled}
+          >
+            Выполнить
+          </Button>
 
-            <Button
-              type="button"
-              className="ml-auto"
-              size="sm"
-              onClick={handleComplete}
-              disabled={disabled}
-            >
-              Выполнить
-            </Button>
-          </div>
+          <Button
+            type="button"
+            variant="destructive"
+            className={isMobile ? "order-2 h-12 w-full text-base" : "order-1"}
+            size={isMobile ? "default" : "sm"}
+            onClick={handleDefect}
+            disabled={disabled}
+          >
+            Указать брак
+          </Button>
         </div>
       </DialogContent>
     </Dialog>

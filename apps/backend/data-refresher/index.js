@@ -275,7 +275,6 @@ await broker.start();
 try {
   await broker.waitForServices("proxy", 60_000);
   await broker.call("data-refresher.updateAllEntities");
-  await scanOrdersWithoutProductionTasks()
 } catch (err) {
   // Не роняем процесс на старте: данные подтянутся ближайшим интервалом.
   broker.logger.error({ err }, 'Начальное обновление справочников не удалось')

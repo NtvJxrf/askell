@@ -15,6 +15,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { QrCode, Search, SlidersHorizontal } from "lucide-react";
 import { Sheet, SheetTrigger, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { SidebarTrigger } from "@/components/ui/sidebar";
 import QrScannerDialog from "@/app/(main)/(app)/whattodo/qrScannerDialog";
 import { useIsMobile } from "@/hooks/use-mobile";
 
@@ -171,6 +172,8 @@ export default function WhatToDoPage() {
     <>
       {isMobile ? (
         <div className="flex gap-2 p-2 border-b items-center">
+          <SidebarTrigger className="size-11 shrink-0" />
+
           <Button
             variant="outline"
             size="icon"

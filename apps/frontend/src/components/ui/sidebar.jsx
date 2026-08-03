@@ -1,5 +1,6 @@
 "use client";
 import * as React from "react"
+import { usePathname } from "next/navigation"
 import { mergeProps } from "@base-ui/react/merge-props"
 import { useRender } from "@base-ui/react/use-render"
 import { cva } from "class-variance-authority";
@@ -8,6 +9,7 @@ import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Separator } from "@/components/ui/separator"
+import { useIsMobile } from "@/hooks/use-mobile"
 import {
   Sheet,
   SheetContent,
@@ -50,7 +52,12 @@ function SidebarProvider({
   children,
   ...props
 }) {
-  const isMobile = false // useIsMobile() // Mobile layout is disabled for this app.
+  // Mobile layout is disabled for the app as a whole (see the app's root
+  // layout, which locks the viewport to a fixed desktop width). `/whattodo`
+  // implements a real responsive/mobile layout, so it opts into the
+  // off-canvas Sheet sidebar built below.
+  const pathname = usePathname()
+  const isMobile = useIsMobile() && !!pathname?.startsWith("/whattodo")
   const [openMobile, setOpenMobile] = React.useState(false)
 
   // This is the internal state of the sidebar.

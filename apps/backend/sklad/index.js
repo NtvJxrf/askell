@@ -32,12 +32,8 @@ broker.createService({
             permissions: ['Калькулятор'],
             async handler(ctx) {
                 const { name } = ctx.params;
-                const orders = await ctx.call('proxy.sklad', { url: `https://api.moysklad.ru/api/remap/1.2/entity/customerorder?filter=name=${name}&expand=positions.assortment,agent,organization&limit=100`, priority: true})
-                const order = [...(orders.rows || [])].sort((left, right) => {
-                    const leftTime = new Date(left?.moment || 0).getTime()
-                    const rightTime = new Date(right?.moment || 0).getTime()
-                    return rightTime - leftTime
-                })[0]
+                const order = await ctx.call('proxy.sklad', { url: `https://api.moysklad.ru/api/remap/1.2/entity/customerorder?filter=name=${name}&expand=positions.assortment,agent,organization&limit=1&order=moment,desc`, priority: true})
+                
                 if (!order) throw new MoleculerClientError(`Заказ с номером "${name}" не найден`, 404, 'ORDER_NOT_FOUND', { name })
                 const positions = order.positions?.rows.map(p => {
                     const attrs = (p?.assortment?.attributes || []).reduce((a, x) => {

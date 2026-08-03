@@ -18,6 +18,13 @@ const EXTENSION_WINDOW_MS = 3000;
 const EXTENSION_MAX_WINDOW_REQUESTS = 45;
 const EXTENSION_TOKEN_PARALLEL_LIMIT = 5;
 
+const HEAVY_ENDPOINTS = [
+    'api/remap/1.2/report/stock/all',
+];
+function getRequestWeight(url) {
+    return HEAVY_ENDPOINTS.some(pattern => url?.includes(pattern)) ? 2 : 1;
+}
+
 class KeepAliveAgent extends https.Agent {
     createConnection(options, cb) {
         const socket = super.createConnection(options, cb);
@@ -54,14 +61,14 @@ function getTokenEnv(tokenName) {
             throw new MoleculerError(`Неизвестный токен: ${tokenName}`, 500, 'UNKNOWN_TOKEN', { tokenName });
     }
 }
-function chooseToken(type) {
+function chooseToken(type, weight = 1) {
     if (['post', 'put', 'delete'].includes(type))
-        return (state.main < TOKEN_PARALLEL_LIMIT && state.last_3_sec_count < MAX_WINDOW_REQUESTS) ? 'main' : null;
+        return (state.main < TOKEN_PARALLEL_LIMIT && state.last_3_sec_count + weight <= MAX_WINDOW_REQUESTS) ? 'main' : null;
     // Для GET в приоритете отдельный токен с расширенными лимитами
-    if (state.extension < EXTENSION_TOKEN_PARALLEL_LIMIT && state.last_3_sec_count_extension < EXTENSION_MAX_WINDOW_REQUESTS) {
+    if (state.extension < EXTENSION_TOKEN_PARALLEL_LIMIT && state.last_3_sec_count_extension + weight <= EXTENSION_MAX_WINDOW_REQUESTS) {
         return 'extension';
     }
-    if (state.last_3_sec_count < MAX_WINDOW_REQUESTS) {
+    if (state.last_3_sec_count + weight <= MAX_WINDOW_REQUESTS) {
         for (const token of get_tokens) {
             if (state[token] < TOKEN_PARALLEL_LIMIT) {
                 return token
@@ -101,19 +108,19 @@ const queues = {
     read: { priority: [], normal: [] },
 };
 
-function assignToken(token) {
+function assignToken(token, weight = 1) {
     state[token]++;
     state.totalParallel++;
     if (token === 'extension') {
-        state.last_3_sec_count_extension++;
+        state.last_3_sec_count_extension += weight;
         setTimeout(() => {
-            state.last_3_sec_count_extension--;
+            state.last_3_sec_count_extension -= weight;
             processQueue();
         }, EXTENSION_WINDOW_MS);
     } else {
-        state.last_3_sec_count++;
+        state.last_3_sec_count += weight;
         setTimeout(() => {
-            state.last_3_sec_count--;
+            state.last_3_sec_count -= weight;
             processQueue();
         }, WINDOW_MS);
     }
@@ -128,19 +135,19 @@ function processQueue() {
             const lanes = queues[cat];
             const q = lanes.priority.length > 0 ? lanes.priority : lanes.normal;
             if (q.length === 0) continue;
-            const token = chooseToken(q[0].type);
+            const token = chooseToken(q[0].type, q[0].weight);
             if (!token) continue;
             const item = q.shift();
-            assignToken(token);
+            assignToken(token, item.weight);
             item.resolve(token);
             progressed = true;
         }
     }
 }
 
-function acquireToken(type, priority = false) {
+function acquireToken(type, priority = false, weight = 1) {
     return new Promise(resolve => {
-        const item = { type, resolve };
+        const item = { type, weight, resolve };
         queues[category(type)][priority ? 'priority' : 'normal'].push(item);
         processQueue();
     });
@@ -177,7 +184,8 @@ broker.createService({
                     }
                     return body
                 }
-                const token = await acquireToken(type, priority);
+                const weight = getRequestWeight(url);
+                const token = await acquireToken(type, priority, weight);
 
                 const args = {
                     headers: {
@@ -244,7 +252,7 @@ broker.createService({
                 const responses = await Promise.all(requests);
                 for (const res of responses) {
                     if (res.rows) {
-                    allRows.push(...res.rows);
+                        allRows.push(...res.rows);
                     }
                 }
 

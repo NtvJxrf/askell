@@ -8,15 +8,34 @@ const { MoleculerError } = Errors;
 const broker = createBroker("proxy");
 
 const WINDOW_MS = 3000;
-const MAX_WINDOW_REQUESTS = 11;
-
-const TOKEN_PARALLEL_LIMIT = 5;
 const ACCOUNT_PARALLEL_LIMIT = 20;
+const TOKEN_PARALLEL_LIMIT = 5;
 
-// Отдельный токен с собственными лимитами (используется только для GET)
-const EXTENSION_WINDOW_MS = 3000;
-const EXTENSION_MAX_WINDOW_REQUESTS = 45;
-const EXTENSION_TOKEN_PARALLEL_LIMIT = 5;
+// Окно частоты общее для группы токенов:
+//  - main + token2..4 делят один лимит на всех (11 запросов за 3 с);
+//  - extension - отдельный токен с собственным лимитом (42 за 3 с).
+// Параллелизм считается на каждый токен (TOKEN_PARALLEL_LIMIT)
+// и суммарно на аккаунт (ACCOUNT_PARALLEL_LIMIT).
+const GROUPS = {
+    shared:    { rate: 11 },
+    extension: { rate: 42 },
+};
+const TOKENS = {
+    main:      { env: 'SkladAuthToken',          group: 'shared' },
+    token2:    { env: 'SkladAuthToken2',         group: 'shared' },
+    token3:    { env: 'SkladAuthToken3',         group: 'shared' },
+    token4:    { env: 'SkladAuthToken4',         group: 'shared' },
+    extension: { env: 'SkladAuthTokenExtension', group: 'extension' },
+};
+// Запись идёт только через main, чтение - через extension (самый большой лимит) и запасные токены.
+const WRITE_TOKENS = ['main'];
+const READ_TOKENS = ['extension', 'token2', 'token3', 'token4'];
+
+const MAX_ATTEMPTS = 3;
+const IDEMPOTENT_METHODS = new Set(['get', 'head', 'options']);
+const RETRYABLE_ERROR_CODES = new Set([
+    'ETIMEDOUT', 'ECONNRESET', 'ECONNREFUSED', 'EPIPE', 'ENOTFOUND', 'EAI_AGAIN', 'ERR_STREAM_PREMATURE_CLOSE',
+]);
 
 const HEAVY_ENDPOINTS = [
     'api/remap/1.2/report/stock/all',
@@ -24,6 +43,8 @@ const HEAVY_ENDPOINTS = [
 function getRequestWeight(url) {
     return HEAVY_ENDPOINTS.some(pattern => url?.includes(pattern)) ? 2 : 1;
 }
+// Отчёты МойСклад считаются минутами - им нужны отдельные, более щедрые таймауты.
+const isReportUrl = (url) => Boolean(url?.includes('/report/'));
 
 class KeepAliveAgent extends https.Agent {
     createConnection(options, cb) {
@@ -32,65 +53,94 @@ class KeepAliveAgent extends https.Agent {
         return socket;
     }
 }
+// timeout у агента закрывает ПРОСТАИВАЮЩИЕ сокеты в пуле (активные запросы Node не трогает).
+// Без него мёртвое keep-alive соединение (закрытое МС или NAT) остаётся в пуле, и следующий
+// запрос уходит в никуда - именно так получается "read ETIMEDOUT" через пару минут.
+const httpsAgent = new KeepAliveAgent({
+    keepAlive: true,
+    keepAliveMsecs: 10_000,
+    timeout: 60_000,
+    maxSockets: 30,
+    maxFreeSockets: 8,
+    scheduling: 'lifo',
+});
+
+const DEFAULT_TIMEOUTS = {
+    lookup: 5_000,
+    connect: 10_000,
+    secureConnect: 10_000,
+    socket: 90_000,
+    response: 120_000,
+    request: 180_000,
+};
+const REPORT_TIMEOUTS = {
+    lookup: 5_000,
+    connect: 10_000,
+    secureConnect: 10_000,
+    socket: 300_000,
+    response: 600_000,
+    request: 600_000,
+};
+
 const gotClient = got.extend({
-    agent: { https: new KeepAliveAgent() },
-    retry: {
-        limit: 3,
-        statusCodes: [408, 500, 502, 503, 504],
-        errorCodes: ['ETIMEDOUT', 'ECONNREFUSED'],
-    },
-    timeout: {
-        request: 600_000,
-    },
+    agent: { https: httpsAgent },
+    // Повторы делает сам прокси (см. executeWithLimits): только так они проходят
+    // через лимитер. Встроенный retry got шёл мимо счётчиков и сам провоцировал 429.
+    retry: { limit: 0 },
+    timeout: DEFAULT_TIMEOUTS,
     throwHttpErrors: false,
 });
 
+const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+const backoffMs = (attempt) => Math.min(500 * 2 ** (attempt - 1), 5_000) + Math.floor(Math.random() * 250);
+
 function getTokenEnv(tokenName) {
-    switch (tokenName) {
-        case 'main':
-            return process.env.SkladAuthToken;
-        case 'token2':
-            return process.env.SkladAuthToken2;
-        case 'token3':
-            return process.env.SkladAuthToken3;
-        case 'token4':
-            return process.env.SkladAuthToken4;
-        case 'extension':
-            return process.env.SkladAuthTokenExtension;
-        default:
-            throw new MoleculerError(`Неизвестный токен: ${tokenName}`, 500, 'UNKNOWN_TOKEN', { tokenName });
+    const config = TOKENS[tokenName];
+    if (!config) throw new MoleculerError(`Неизвестный токен: ${tokenName}`, 500, 'UNKNOWN_TOKEN', { tokenName });
+    return process.env[config.env];
+}
+
+// Параллелизм считается на токен, окно частоты - на группу токенов.
+const tokenParallel = Object.fromEntries(Object.keys(TOKENS).map(name => [name, 0]));
+// window - метки времени выданных запросов с весами, pausedUntil - пауза после 429.
+const groupState = Object.fromEntries(Object.keys(GROUPS).map(name => [name, {
+    window: [],
+    windowWeight: 0,
+    pausedUntil: 0,
+}]));
+let totalParallel = 0;
+
+const groupOf = (token) => groupState[TOKENS[token].group];
+
+function snapshot() {
+    const out = { totalParallel };
+    for (const [name, parallel] of Object.entries(tokenParallel)) out[name] = parallel;
+    for (const [name, g] of Object.entries(groupState)) out[`${name}Window`] = g.windowWeight;
+    return out;
+}
+
+// Скользящее окно вместо "отпустить всё через 3 с": иначе счётчик обнуляется пачкой
+// и на стыке окон в реальные 3 секунды сервера улетает до двух лимитов сразу.
+function pruneWindow(g, now) {
+    while (g.window.length && now - g.window[0].t >= WINDOW_MS) {
+        g.windowWeight -= g.window.shift().w;
     }
 }
-function chooseToken(type, weight = 1) {
-    if (['post', 'put', 'delete'].includes(type))
-        return (state.main < TOKEN_PARALLEL_LIMIT && state.last_3_sec_count + weight <= MAX_WINDOW_REQUESTS) ? 'main' : null;
-    // Для GET в приоритете отдельный токен с расширенными лимитами
-    if (state.extension < EXTENSION_TOKEN_PARALLEL_LIMIT && state.last_3_sec_count_extension + weight <= EXTENSION_MAX_WINDOW_REQUESTS) {
-        return 'extension';
-    }
-    if (state.last_3_sec_count + weight <= MAX_WINDOW_REQUESTS) {
-        for (const token of get_tokens) {
-            if (state[token] < TOKEN_PARALLEL_LIMIT) {
-                return token
-            }
-        }
+
+function canRequest(){
+    return totalParallel < ACCOUNT_PARALLEL_LIMIT;
+}
+
+function chooseToken(candidates, weight, now) {
+    for (const name of candidates) {
+        if (tokenParallel[name] >= TOKEN_PARALLEL_LIMIT) continue;
+        const g = groupOf(name);
+        if (g.pausedUntil > now) continue;
+        pruneWindow(g, now);
+        if (g.windowWeight + weight > GROUPS[TOKENS[name].group].rate) continue;
+        return name;
     }
     return null;
-}
-const get_tokens = [ 'token2', 'token3', 'token4'];
-const state = {
-    main: 0,
-    token2: 0,
-    token3: 0,
-    token4: 0,
-    extension: 0,
-    last_3_sec_count: 0,
-    last_3_sec_count_extension: 0,
-    totalParallel: 0,
-}
-function canRequest(){
-    if(state.totalParallel >= ACCOUNT_PARALLEL_LIMIT) return false
-    return true
 }
 
 // Очереди запросов на получение токена, разбитые по двум осям:
@@ -109,21 +159,34 @@ const queues = {
 };
 
 function assignToken(token, weight = 1) {
-    state[token]++;
-    state.totalParallel++;
-    if (token === 'extension') {
-        state.last_3_sec_count_extension += weight;
-        setTimeout(() => {
-            state.last_3_sec_count_extension -= weight;
-            processQueue();
-        }, EXTENSION_WINDOW_MS);
-    } else {
-        state.last_3_sec_count += weight;
-        setTimeout(() => {
-            state.last_3_sec_count -= weight;
-            processQueue();
-        }, WINDOW_MS);
+    const g = groupOf(token);
+    tokenParallel[token]++;
+    totalParallel++;
+    g.window.push({ t: Date.now(), w: weight });
+    g.windowWeight += weight;
+}
+
+// Токены освобождаются не только по завершению запроса, но и по времени
+// (выпадение из окна) / по истечению паузы после 429 - на эти моменты ставим будильник.
+let wakeTimer = null;
+function scheduleWake() {
+    const pending = queues.write.priority.length + queues.write.normal.length
+        + queues.read.priority.length + queues.read.normal.length;
+    if (pending === 0) return;
+    const now = Date.now();
+    let next = Infinity;
+    for (const g of Object.values(groupState)) {
+        pruneWindow(g, now);
+        if (g.window.length) next = Math.min(next, g.window[0].t + WINDOW_MS);
+        if (g.pausedUntil > now) next = Math.min(next, g.pausedUntil);
     }
+    // Ничего не освободится по таймеру - разбудит releaseToken.
+    if (!Number.isFinite(next)) return;
+    if (wakeTimer) clearTimeout(wakeTimer);
+    wakeTimer = setTimeout(() => {
+        wakeTimer = null;
+        processQueue();
+    }, Math.max(1, next - now));
 }
 
 function processQueue() {
@@ -131,11 +194,11 @@ function processQueue() {
     while (progressed) {
         progressed = false;
         for (const cat of ['write', 'read']) {
-            if (!canRequest()) return;
+            if (!canRequest()) { scheduleWake(); return; }
             const lanes = queues[cat];
             const q = lanes.priority.length > 0 ? lanes.priority : lanes.normal;
             if (q.length === 0) continue;
-            const token = chooseToken(q[0].type, q[0].weight);
+            const token = chooseToken(cat === 'write' ? WRITE_TOKENS : READ_TOKENS, q[0].weight, Date.now());
             if (!token) continue;
             const item = q.shift();
             assignToken(token, item.weight);
@@ -143,6 +206,7 @@ function processQueue() {
             progressed = true;
         }
     }
+    scheduleWake();
 }
 
 function acquireToken(type, priority = false, weight = 1) {
@@ -154,9 +218,38 @@ function acquireToken(type, priority = false, weight = 1) {
 }
 
 function releaseToken(token) {
-    state[token]--;
-    state.totalParallel--;
+    tokenParallel[token]--;
+    totalParallel--;
     processQueue();
+}
+
+// МойСклад отдал 429 - тормозим всю группу токенов до указанного им момента,
+// иначе следующая же попытка снова упрётся в тот же лимит.
+function pauseToken(token, ms) {
+    const g = groupOf(token);
+    g.pausedUntil = Math.max(g.pausedUntil, Date.now() + ms);
+    scheduleWake();
+}
+
+function retryAfterMs(headers = {}) {
+    const lognex = Number(headers['x-lognex-retry-after']);
+    if (Number.isFinite(lognex) && lognex > 0) return Math.min(lognex, 60_000);
+    const standard = Number(headers['retry-after']);
+    if (Number.isFinite(standard) && standard > 0) return Math.min(standard * 1000, 60_000);
+    return WINDOW_MS;
+}
+
+function isRetryableError(err, type) {
+    const code = err?.code;
+    if (!code) return false;
+    // Соединение не установилось - запрос точно не дошёл до МС, повтор безопасен для любого метода.
+    if (code === 'ECONNREFUSED' || code === 'ENOTFOUND' || code === 'EAI_AGAIN'
+        || err.syscall === 'connect' || ['lookup', 'connect', 'secureConnect'].includes(err.event)) {
+        return true;
+    }
+    // Дальше запрос мог быть обработан на стороне МС, поэтому POST/PUT/DELETE не повторяем:
+    // иначе получим дубли документов (например, два производственных задания).
+    return IDEMPOTENT_METHODS.has(type) && RETRYABLE_ERROR_CODES.has(code);
 }
 
 broker.createService({
@@ -184,40 +277,7 @@ broker.createService({
                     }
                     return body
                 }
-                const weight = getRequestWeight(url);
-                const token = await acquireToken(type, priority, weight);
-
-                const args = {
-                    headers: {
-                        Authorization: `Bearer ${getTokenEnv(token)}`,
-                    }
-                }
-                if (data) args.json = data;
-
-                try{
-                    this.logger.debug({ type: type.toUpperCase(), url, token, state: { ...state } }, `MoySklad ${type.toUpperCase()} ${url}`);
-                    console.log(`MoySklad ${type.toUpperCase()} ${url} (token: ${token})`, state);
-                    const response = await gotClient[type](url, { ...args });
-                    if(response.statusCode >= 400){
-                        throw new MoleculerError(`Ошибка при запросе к ${url}: ${response.statusCode}`, 502, 'UPSTREAM_ERROR', { url, statusCode: response.statusCode, body: String(response.body).slice(0, 2000) });
-                    }
-                    try{
-                        const body = JSON.parse(response.body);
-                        return body
-                    }catch(err){
-                        this.logger.warn({ url }, `Ответ от ${url} не JSON, возвращаем как есть`);
-                        return response.body
-                    }
-                }
-                catch(err){
-                    console.error(err)
-                    this.logger.error({ err, url, token }, `Ошибка запроса к ${url}`);
-                    if (err instanceof MoleculerError) throw err;
-                    throw new MoleculerError(`Ошибка при запросе к ${url}: ${err.message}`, 502, 'UPSTREAM_ERROR', { url });
-                }
-                finally{
-                    releaseToken(token);
-                }
+                return this.executeWithLimits({ url, type, data, priority, weight: getRequestWeight(url) });
             }
         },
         fetchAllRows: {
@@ -278,6 +338,65 @@ broker.createService({
                 this.logger.error({ err, url }, `Ошибка запроса к ${url}`);
                 if (err instanceof MoleculerError) throw err;
                 throw new MoleculerError(`Ошибка при запросе к ${url}: ${err.message}`, 502, 'UPSTREAM_ERROR', { url });
+            }
+        }
+    },
+
+    methods: {
+        // Один "логический" запрос к МойСклад: каждая попытка заново занимает слот
+        // токена, поэтому повторы тоже учитываются лимитером.
+        async executeWithLimits({ url, type, data, priority, weight }) {
+            for (let attempt = 1; ; attempt++) {
+                const token = await acquireToken(type, priority, weight);
+                let response;
+                try {
+                    const options = { headers: { Authorization: `Bearer ${getTokenEnv(token)}` } };
+                    if (data) options.json = data;
+                    if (isReportUrl(url)) options.timeout = REPORT_TIMEOUTS;
+
+                    this.logger.debug({ type: type.toUpperCase(), url, token, attempt, state: snapshot() }, `MoySklad ${type.toUpperCase()} ${url}`);
+                    console.log(`MoySklad ${type.toUpperCase()} ${url} (token: ${token}, attempt: ${attempt})`);
+                    response = await gotClient[type](url, options);
+                } catch (err) {
+                    if (attempt < MAX_ATTEMPTS && isRetryableError(err, type)) {
+                        this.logger.warn({ url, token, attempt, code: err.code, message: err.message }, `Сетевая ошибка при запросе к ${url}, повтор`);
+                        await sleep(backoffMs(attempt));
+                        continue;
+                    }
+                    this.logger.error({ err, url, token, attempt }, `Ошибка запроса к ${url}`);
+                    if (err instanceof MoleculerError) throw err;
+                    throw new MoleculerError(`Ошибка при запросе к ${url}: ${err.message}`, 502, 'UPSTREAM_ERROR', { url, code: err.code });
+                } finally {
+                    releaseToken(token);
+                }
+
+                if (response.statusCode === 429) {
+                    const waitMs = retryAfterMs(response.headers);
+                    pauseToken(token, waitMs);
+                    if (attempt < MAX_ATTEMPTS) {
+                        this.logger.warn({ url, token, attempt, waitMs, state: snapshot() }, `МойСклад вернул 429, ждём ${waitMs} мс и повторяем`);
+                        await sleep(waitMs);
+                        continue;
+                    }
+                    throw new MoleculerError(`Превышены лимиты МойСклад при запросе к ${url}`, 429, 'RATE_LIMITED', { url });
+                }
+
+                if (response.statusCode >= 500 && attempt < MAX_ATTEMPTS && IDEMPOTENT_METHODS.has(type)) {
+                    this.logger.warn({ url, token, attempt, statusCode: response.statusCode }, `МойСклад вернул ${response.statusCode}, повтор`);
+                    await sleep(backoffMs(attempt));
+                    continue;
+                }
+
+                if (response.statusCode >= 400) {
+                    throw new MoleculerError(`Ошибка при запросе к ${url}: ${response.statusCode}`, 502, 'UPSTREAM_ERROR', { url, statusCode: response.statusCode, body: String(response.body).slice(0, 2000) });
+                }
+
+                try {
+                    return JSON.parse(response.body);
+                } catch (err) {
+                    this.logger.warn({ url }, `Ответ от ${url} не JSON, возвращаем как есть`);
+                    return response.body;
+                }
             }
         }
     }

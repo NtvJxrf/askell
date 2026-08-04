@@ -63,12 +63,18 @@ export default function runSimulation(params) {
         return acc
     }, {});
     
-    heaps = Object.entries(heaps).map(([key, value]) => {
-        return value.filter(candidate => {
-            const isGlasspacket = (materialForItem[candidate.assortmentId]?.attributes?.['Тип изделия'] || materialForItem[candidate.assortmentId]?.productType) === 'Стеклопакет';
-            return !isGlasspacket;
-        });
-    });
+    heaps = Object.fromEntries(
+        Object.entries(heaps).map(([key, value]) => [
+            key,
+            value.filter(candidate => {
+                const isGlasspacket =
+                    (materialForItem[candidate.assortmentId]?.attributes?.['Тип изделия'] ||
+                    materialForItem[candidate.assortmentId]?.productType) === 'Стеклопакет';
+
+                return !isGlasspacket;
+            })
+        ])
+    );
     const machines = [
         new AreaMachine(          {name: 'Раскрой',          availableHeaps: ['Раскрой'],           bufferMinutes: 480 }),
         new PerimeterMachine(        {name: 'Дабл эджер',    availableHeaps: ['ПР Полировка', 'ПР Шлифовка'], bufferMinutes: 480 }),
@@ -160,7 +166,17 @@ export default function runSimulation(params) {
         // Конец рабочего дня → переход на следующий
         if (!isMachinesAvailable() && !isMachinesBusy()) {
             if (!nextDay()){
-                throw new Error(`[SimV4] Schedule exhausted at iteration ${iterations}, time ${simTime}, index ${index}. Cannot advance to next day. Heaps state: ${JSON.stringify(Object.fromEntries(Object.entries(heaps).map(([k,v]) => [k, Array.isArray(v) ? v.length : Object.keys(v || {}).length])))}`);   
+                for(const machine of machines) {
+                    if(machine.task) {
+                        console.warn(`[SimV4] Machine ${machine.name} has task ${getTaskName(machine.task)} with remaining ${machine.remaining} at end of schedule.`);
+                    }
+                }
+                for(const [heapName, heap] of Object.entries(heaps)) {
+                    if(heap.length > 0) {
+                        console.warn(`[SimV4] Heap ${heapName} has ${heap.length} items at end of schedule.`);
+                    }
+                }
+                throw new Error(`[SimV4] Schedule exhausted at iteration ${iterations}, time ${simTime}, index ${index}. Cannot advance to next day.`);   
             }
         }
 
@@ -262,8 +278,8 @@ export default function runSimulation(params) {
     }
     // ─── Проверки состояния ──────────────────────────────
     function isHeapsEmpty() {
-        for (const heap of Object.values(heaps)) {
-            if (heap.length > 0) return false;
+        for (const [heapName, heap] of Object.entries(heaps)) {
+            if (!['Изготовление рамки', 'Сборка стеклопакета', 'Вторичная герметизация'].includes(heapName) && heap.length > 0) return false;
         }
         return true;
     }

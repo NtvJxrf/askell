@@ -2,7 +2,7 @@ import { ServiceBroker } from 'moleculer';
 import '@askell/shared/env';
 import got from 'got';
 import { valkey } from '@askell/shared';
-import simulation from '../../packages/shared/src/simulation2.js'
+import simulation from '../../packages/shared/src/simulation.js'
 const BASE = process.env.NEXT_PUBLIC_ENV === 'development' ? 'http://localhost:6789' : process.env.API_URL
 import { randomUUID } from 'crypto';
 const api = got.extend({
@@ -43,7 +43,7 @@ const simres = simulation({
   logging: true,
   stagesAndNorms,
 })
-// await valkey.set('simulationResult', JSON.stringify(simres))
+await valkey.set('simulationResult', JSON.stringify(simres))
 console.log(simres)
 // const res = await broker.call('$node.services');
 // const res = JSON.parse(await valkey.get('settings'));

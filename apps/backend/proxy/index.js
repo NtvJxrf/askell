@@ -32,9 +32,12 @@ const WRITE_TOKENS = ['main'];
 const READ_TOKENS = ['extension', 'token2', 'token3', 'token4'];
 
 const MAX_ATTEMPTS = 3;
+// Сетевым ошибкам даём больше попыток: они лечатся повтором по новому соединению.
+const MAX_NETWORK_ATTEMPTS = 5;
 const IDEMPOTENT_METHODS = new Set(['get', 'head', 'options']);
 const RETRYABLE_ERROR_CODES = new Set([
     'ETIMEDOUT', 'ECONNRESET', 'ECONNREFUSED', 'EPIPE', 'ENOTFOUND', 'EAI_AGAIN', 'ERR_STREAM_PREMATURE_CLOSE',
+    'ECONNABORTED', 'EHOSTUNREACH', 'ENETUNREACH', 'ENETRESET', 'EPROTO', 'ERR_SOCKET_CONNECTION_TIMEOUT',
 ]);
 
 const HEAVY_ENDPOINTS = [
@@ -46,24 +49,31 @@ function getRequestWeight(url) {
 // Отчёты МойСклад считаются минутами - им нужны отдельные, более щедрые таймауты.
 const isReportUrl = (url) => Boolean(url?.includes('/report/'));
 
-class KeepAliveAgent extends https.Agent {
-    createConnection(options, cb) {
-        const socket = super.createConnection(options, cb);
-        socket.setKeepAlive(true, 15_000);
-        return socket;
-    }
-}
 // timeout у агента закрывает ПРОСТАИВАЮЩИЕ сокеты в пуле (активные запросы Node не трогает).
-// Без него мёртвое keep-alive соединение (закрытое МС или NAT) остаётся в пуле, и следующий
-// запрос уходит в никуда - именно так получается "read ETIMEDOUT" через пару минут.
-const httpsAgent = new KeepAliveAgent({
+// Мёртвое keep-alive соединение (тихо закрытое МС, балансировщиком или NAT) остаётся в пуле,
+// следующий запрос уходит в никуда и падает с "read ETIMEDOUT" - поэтому окно простоя держим
+// заведомо короче любого серверного/NAT keep-alive таймаута.
+const IDLE_SOCKET_MS = 10_000;
+const httpsAgent = new https.Agent({
     keepAlive: true,
-    keepAliveMsecs: 10_000,
-    timeout: 60_000,
+    keepAliveMsecs: 5_000,
+    timeout: IDLE_SOCKET_MS,
     maxSockets: 30,
     maxFreeSockets: 8,
     scheduling: 'lifo',
 });
+// Запись повторить нельзя (будут дубли документов), поэтому POST/PUT/DELETE идут по свежему
+// соединению: сокет из пула может оказаться уже мёртвым, а восстановиться после этого нечем.
+const writeAgent = new https.Agent({ keepAlive: false, maxSockets: ACCOUNT_PARALLEL_LIMIT });
+const agentFor = (type) => ({ https: IDEMPOTENT_METHODS.has(type) ? httpsAgent : writeAgent });
+
+// Соединение умерло на сетевом уровне - обычно вместе с ним протухли и соседние сокеты в пуле
+// (тот же NAT/балансировщик). Выкидываем простаивающие, чтобы повтор пошёл по новому коннекту.
+function dropIdleSockets() {
+    for (const sockets of Object.values(httpsAgent.freeSockets)) {
+        for (const socket of [...sockets]) socket.destroy();
+    }
+}
 
 const DEFAULT_TIMEOUTS = {
     lookup: 5_000,
@@ -324,6 +334,7 @@ broker.createService({
             const args = {};
             if (data) args.json = data;
             if (headers) args.headers = headers;
+            args.agent = agentFor(type);
             try{
                 this.logger.debug({ type: type.toUpperCase(), url }, `HTTP ${type.toUpperCase()} ${url}`);
                 const response = await gotClient[type](url, args);
@@ -350,7 +361,7 @@ broker.createService({
                 const token = await acquireToken(type, priority, weight);
                 let response;
                 try {
-                    const options = { headers: { Authorization: `Bearer ${getTokenEnv(token)}` } };
+                    const options = { headers: { Authorization: `Bearer ${getTokenEnv(token)}` }, agent: agentFor(type) };
                     if (data) options.json = data;
                     if (isReportUrl(url)) options.timeout = REPORT_TIMEOUTS;
 
@@ -358,7 +369,10 @@ broker.createService({
                     console.log(`MoySklad ${type.toUpperCase()} ${url} (token: ${token}, attempt: ${attempt})`);
                     response = await gotClient[type](url, options);
                 } catch (err) {
-                    if (attempt < MAX_ATTEMPTS && isRetryableError(err, type)) {
+                    const retryable = isRetryableError(err, type);
+                    // Пул мог протухнуть целиком - чистим его до повтора, иначе повтор возьмёт такой же мёртвый сокет.
+                    if (retryable) dropIdleSockets();
+                    if (attempt < MAX_NETWORK_ATTEMPTS && retryable) {
                         this.logger.warn({ url, token, attempt, code: err.code, message: err.message }, `Сетевая ошибка при запросе к ${url}, повтор`);
                         await sleep(backoffMs(attempt));
                         continue;

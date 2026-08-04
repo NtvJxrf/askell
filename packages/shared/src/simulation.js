@@ -14,7 +14,7 @@ const getTaskName = (task) => {
 };
 
 export default function runSimulation(params) {
-    const {
+    let {
         schedule,
         startIndex,
         heaps,
@@ -31,6 +31,8 @@ export default function runSimulation(params) {
         if (normaCache[machineName] !== undefined) return normaCache[machineName];
         return (normaCache[machineName] = (toNum(schedule[0][machineName])) || stagesAndNorms?.[machineName]?.ratePerHour || 0);
     };
+
+    const materialForItem = {}
     const materialsRaw = Object.entries(heaps).reduce((acc, [_, heap]) => {
         for (const item of heap) {
             for(const stage of item.productionPath || []) {
@@ -38,6 +40,7 @@ export default function runSimulation(params) {
                     for (const assortmentId of Object.keys(stage.materials)) {
                         acc[assortmentId] ??= 0;
                         acc[assortmentId] += stage.materials[assortmentId];
+                        materialForItem[assortmentId] = item
                     }
                 }
             }
@@ -59,24 +62,33 @@ export default function runSimulation(params) {
         }
         return acc
     }, {});
-
+    
+    heaps = Object.entries(heaps).map(([key, value]) => {
+        return value.filter(candidate => {
+            const isGlasspacket = (materialForItem[candidate.assortmentId]?.attributes?.['Тип изделия'] || materialForItem[candidate.assortmentId]?.productType) === 'Стеклопакет';
+            return !isGlasspacket;
+        });
+    });
     const machines = [
-        new AreaMachine(          {name: 'Раскрой',          availableHeaps: ['Раскрой'],           bufferMinutes: 480, normaCache, materials, maxBatchArea: 15}),
-        new PerimeterMachine(        {name: 'Дабл эджер',    availableHeaps: ['ПР Полировка', 'ПР Шлифовка'], bufferMinutes: 480, normaCache, materials}),
-        new PerimeterMachine(        {name: 'Ялонг',         availableHeaps: ['ПР Притупка'],  bufferMinutes: 480, normaCache, materials}),
-        new PerimeterWithCutsMachine({name: 'Интермак',      availableHeaps: ['КР Полировка', 'КР Шлифовка'],            bufferMinutes: 480, normaCache, pricesAndCoefs, materials}),
-        new PerimeterWithCutsMachine({name: 'Альпа большая', availableHeaps: ['КР Полировка', 'КР Шлифовка'],            bufferMinutes: 480, normaCache, pricesAndCoefs, materials}),
-        new PerimeterWithCutsMachine({name: 'Альпа малая',   availableHeaps: ['КР Полировка', 'КР Шлифовка'],            bufferMinutes: 480, normaCache, pricesAndCoefs, materials}),
-        new DrillingMachine(         {name: 'Сверление',     availableHeaps: ['Сверление'],            bufferMinutes: 480, normaCache, materials}),
-        new AreaMachine(        {name: 'Закалка',            availableHeaps: ['Закалка'],         bufferMinutes: 480, normaCache, materials, maxBatchArea: 16.8}),
+        new AreaMachine(          {name: 'Раскрой',          availableHeaps: ['Раскрой'],           bufferMinutes: 480 }),
+        new PerimeterMachine(        {name: 'Дабл эджер',    availableHeaps: ['ПР Полировка', 'ПР Шлифовка'], bufferMinutes: 480 }),
+        new PerimeterMachine(        {name: 'Ялонг',         availableHeaps: ['ПР Притупка'],  bufferMinutes: 480 }),
+        new PerimeterWithCutsMachine({name: 'Интермак',      availableHeaps: ['КР Полировка', 'КР Шлифовка'],            bufferMinutes: 480 }),
+        new PerimeterWithCutsMachine({name: 'Альпа большая', availableHeaps: ['КР Полировка', 'КР Шлифовка'],            bufferMinutes: 480 }),
+        new PerimeterWithCutsMachine({name: 'Альпа малая',   availableHeaps: ['КР Полировка', 'КР Шлифовка'],            bufferMinutes: 480 }),
+        new DrillingMachine(         {name: 'Сверление',     availableHeaps: ['Сверление'],            bufferMinutes: 480 }),
+        new AreaMachine(        {name: 'Закалка',            availableHeaps: ['Закалка'],         bufferMinutes: 480 }),
         // new PerimeterMachine(        {name: 'Окрашивание',   availableHeaps: ['Окраска стекла', 'ОКР (окрашивание стекла)'],          bufferMinutes: 480, normaCache, materials}),
-        new AreaMachine(          {name: 'Триплекс',         availableHeaps: ['Триплексование'],           bufferMinutes: 480, normaCache, materials, maxBatchArea: 20}),
-        new AreaMachine(          {name: 'Сборка стеклопакета', availableHeaps: ['Сборка стеклопакета'], bufferMinutes: 480, normaCache, materials }),
-        new AreaMachine(          {name: 'Изготовление рамки', availableHeaps: ['Изготовление рамки'], bufferMinutes: 480, normaCache, materials }),
-        new AreaMachine(          {name: 'Вторичная герметизация', availableHeaps: ['Вторичная герметизация'], bufferMinutes: 480, normaCache, materials }),
+        new AreaMachine(          {name: 'Триплекс',         availableHeaps: ['Триплексование'],           bufferMinutes: 480 }),
+        new AreaMachine(          {name: 'Сборка стеклопакета', availableHeaps: ['Сборка стеклопакета'], bufferMinutes: 480 }),
+        new AreaMachine(          {name: 'Изготовление рамки', availableHeaps: ['Изготовление рамки'], bufferMinutes: 480 }),
+        new AreaMachine(          {name: 'Вторичная герметизация', availableHeaps: ['Вторичная герметизация'], bufferMinutes: 480 }),
     ];
     for(const machine of machines) {
-        getNorma(machine.name);
+        machine.normaCache = normaCache;
+        machine.materials = materials;
+        machine.pricesAndCoefs = pricesAndCoefs
+        getNorma(machine.normaName || machine.name);
     }
     const usedHeaps = new Set(
         machines.flatMap(machine => machine.availableHeaps)

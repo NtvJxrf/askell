@@ -28,23 +28,23 @@ await broker.waitForServices(['users', 'proxy']);
 // console.log(test.body)
 // const res = await broker.call("data-refresher.updateHeaps");
 // const scheduleUpdate = await broker.call("data-refresher.updateSchedule");
-// const heaps = await broker.call("data-refresher.getHeaps");
-// const {schedule, index} = await broker.call("data-refresher.getSchedule");
-// const pricesAndCoefs = JSON.parse(await valkey.get('sklad:data:pricesAndCoefs'));
-// const stages = JSON.parse(await valkey.get('sklad:data:processingStages'));
-// const stagesAndNorms = JSON.parse(await valkey.get('sklad:data:stagesAndNorms'));
-// console.time('sim')
-// const simres = simulation({
-//   heaps,
-//   schedule: schedule,
-//   startIndex: index,
-//   pricesAndCoefs,
-//   stages,
-//   logging: true,
-//   stagesAndNorms,
-// })
+const heaps = await broker.call("data-refresher.getHeaps");
+const {schedule, index} = await broker.call("data-refresher.getSchedule");
+const pricesAndCoefs = JSON.parse(await valkey.get('sklad:data:pricesAndCoefs'));
+const stages = JSON.parse(await valkey.get('sklad:data:processingStages'));
+const stagesAndNorms = JSON.parse(await valkey.get('sklad:data:stagesAndNorms'));
+console.time('sim')
+const simres = simulation({
+  heaps,
+  schedule: schedule,
+  startIndex: index,
+  pricesAndCoefs,
+  stages,
+  logging: true,
+  stagesAndNorms,
+})
 // await valkey.set('simulationResult', JSON.stringify(simres))
-// console.log(simres)
+console.log(simres)
 // const res = await broker.call('$node.services');
 // const res = JSON.parse(await valkey.get('settings'));
 // const res = await broker.call("reports.create", { filters: { startDate: '2026-06-20', endDate: '2026-06-20' }, type: 'report1' });

@@ -278,7 +278,7 @@ broker.createService({
             }
         },
         saveorderFromSite: {
-            rest: "POST /saveorder",
+            rest: "POST /saveorderFromSite",
             permissions: ['Калькулятор'],
             async handler(ctx) {
                 const { payload }  = ctx.params

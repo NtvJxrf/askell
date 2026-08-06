@@ -277,7 +277,7 @@ broker.createService({
                 }
             }
         },
-        saveorder: {
+        saveorderFromSite: {
             rest: "POST /saveorder",
             permissions: ['Калькулятор'],
             async handler(ctx) {

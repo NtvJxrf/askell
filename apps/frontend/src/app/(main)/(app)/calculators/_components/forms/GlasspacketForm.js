@@ -157,7 +157,7 @@ export default function GlasspacketForm({ dv = null, editingIndex = null, onOpen
                         <div className='flex-1 min-w-[150px]'>
                             <RenderField
                                 key={'Рамка 1'}
-                                data={{ name: 'plane1', type: 'select', label: 'Рамка 1', options: planeArray,required: true, control: form.control }}
+                                data={{ name: 'plane1', type: 'combobox', label: 'Рамка 1', options: planeArray,required: true, control: form.control }}
                             />
                         </div>
                         <Popover className="flex-1 min-w-0">
@@ -184,7 +184,7 @@ export default function GlasspacketForm({ dv = null, editingIndex = null, onOpen
                         <div className='flex-1 min-w-[150px]'>
                             <RenderField
                                 key={'Рамка 2'}
-                                data={{ name: 'plane2', type: 'select', label: 'Рамка 2', options: planeArray, control: form.control }}
+                                data={{ name: 'plane2', type: 'combobox', label: 'Рамка 2', options: planeArray, control: form.control }}
                             />
                         </div>
                         <Popover className="flex-1 min-w-0">

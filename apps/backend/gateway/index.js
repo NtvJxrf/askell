@@ -65,7 +65,6 @@ broker.createService({
   settings: {
     port: Number(process.env.GATEWAY_PORT || 6789),
     cors: {
-      // На проде задайте CORS_ORIGIN=https://ваш-домен (можно несколько через запятую).
       origin: (process.env.CORS_ORIGIN || "http://localhost:3000").split(",").map(s => s.trim()),
       methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
       allowedHeaders: ["Content-Type", "Authorization"],

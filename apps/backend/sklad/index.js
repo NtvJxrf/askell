@@ -5,7 +5,15 @@ import deleteEntitys from './utils/deleteEntitys.js'
 import generateProductAttributes from './utils/generateProductAttributes.js'
 import { getData, refreshData } from './utils/dataManager.js'
 import { createProductionTask } from './utils/createProductionTask.js'
-const { MoleculerClientError, MoleculerError } = Errors;
+import glassCalc from "@askell/shared/calc/glass"
+import smdCalc from "@askell/shared/calc/smd"
+import triplexCalc from "@askell/shared/calc/triplex"
+import packagingCalc from "@askell/shared/calc/packaging"
+import glasspacketCalc from "@askell/shared/calc/glasspacket"
+import ceraglassCalc from "@askell/shared/calc/ceraglass"
+import recalcDate from './utils/recalcDate.js'
+import trimCalc from "@askell/shared/calc/trimCalc"
+const { MoleculerError } = Errors;
 export const broker = createBroker("sklad");
 
 const priceItems = [
@@ -88,7 +96,7 @@ broker.createService({
             async handler(ctx) {
                 const { attributes, sklad_materials, currencies, priceTypes, stores } = getData()
                 const data = ctx.params
-                const order = await ctx.call('proxy.sklad', {url: `https://api.moysklad.ru/api/remap/1.2/entity/customerorder/${data.order.id}?expand=state,positions.assortment`, priority: true})
+                const order = await ctx.call('proxy.sklad', {url: `https://api.moysklad.ru/api/remap/1.2/entity/customerorder/${data.order.id}?expand=state,positions.assortment,organization`, priority: true})
                 if(['В работе', 'Поставлено в производство'].includes(order.state.name)) throw new MoleculerClientError(`Нельзя менять позиции у заказа который в работе, смените статус на "Карантин"`, 400, 'ORDER_IN_PROGRESS', { order: data.order.name })//Кидаю ошибку чтоб не пересохраняли заказы которые уже в работе
                 const positionsToSave = []
                 let vizEngaged = false
@@ -101,7 +109,7 @@ broker.createService({
                             quantity: pos.quantity,
                             price: pos.prices[data.displayPrice].toFixed(2) * 100, //При передачи заказа на фронт конвертировали все в рубли, а при сохранении обратно в копейки
                             discount: pos.discount,
-                            vat: data.order.organization === 'ООО "А2"' ? 22 : 5
+                            vat: order.organization.name === 'ООО "А2"' ? 22 : 5
                         })
                     }else{
                         const isService = Boolean(pos?.result?.other?.customerSuppliedGlassForTempering);
@@ -140,7 +148,7 @@ broker.createService({
                                     quantity: pos.quantity,
                                     price: pos.prices[data.displayPrice].toFixed(2) * 100,
                                     discount: pos?.discount || 0,
-                                    vat: data.order.organization === 'ООО "А2"' ? 22 : 5
+                                    vat: order.organization.name === 'ООО "А2"' ? 22 : 5
                                 }
                             })
                         );
@@ -235,6 +243,87 @@ broker.createService({
                 handleOrderCreated(ctx)
                 return true
             }
+        },
+        calculate: {
+            rest: "POST /calculate",
+            async handler(ctx) {
+                try{
+                    const { data } = ctx.params
+                    const result = []
+                    const selfcost = await ctx.call('data-refresher.selfcost')
+                    const trims = buildTrimsMap(data)
+                    for(const item of data){
+                        const { calcType, initialData } = item
+                        if(!calcType) result.push({ error: 'Не указан тип калькуляции', item })
+                        if(!initialData) result.push({ error: 'Не указаны исходные данные для калькуляции', item })
+                        switch(calcType){
+                            case 'glass': result.push(glassCalc({...initialData, trims}, selfcost)); break;
+                            case 'smd': result.push(smdCalc({...initialData, trims}, selfcost)); break;
+                            case 'triplex': result.push(triplexCalc({...initialData, trims}, selfcost)); break;
+                            case 'packaging': result.push(packagingCalc({...initialData, trims}, selfcost)); break;
+                            case 'glasspacket': result.push(glasspacketCalc({...initialData, trims}, selfcost)); break;
+                            case 'ceraglass': result.push(ceraglassCalc({...initialData, trims}, selfcost)); break;
+                            default: throw new MoleculerClientError(`Неизвестный тип калькуляции ${calcType}`, 400, 'UNKNOWN_CALC_TYPE', { calcType })
+                        }
+                    }
+                    const simRes = await recalcDate(result.map(el => ({position: { quantity: el.quantity }, data: el})))
+                    const readyDate = formatReadyDate(simRes?.lastTier3End.time)
+                    return { result, readyDate }
+                }
+                catch(err){
+                    ctx.broker.logger.error({ err, params: ctx.params }, "Ошибка во время калькуляции")
+                    console.error(`Ошибка во время калькуляции: ${err?.message || err}`, err)
+                    throw new MoleculerError(`Ошибка во время калькуляции: ${err?.message || err}`, 500, 'CALCULATION_FAILED', { params: ctx.params })
+                }
+            }
+        },
+        saveorder: {
+            rest: "POST /saveorder",
+            permissions: ['Калькулятор'],
+            async handler(ctx) {
+                const { payload }  = ctx.params
+                let description = payload.comment || 'Клиент не оставил комментарий'
+                payload.files.length > 0 && (description += `\nВ заказе есть ${payload.files.length} прикрепленных файлов`)
+                const newOrder = await ctx.call('proxy.sklad', { 
+                    url: 'https://api.moysklad.ru/api/remap/1.2/entity/customerorder?expand=organization',
+                    type: 'post',
+                    data: {
+                        organization: {
+                            meta: {
+                                href: `https://api.moysklad.ru/api/remap/1.2/entity/organization/ecb1e71e-cfd4-11e5-7a69-97110006a2a3`, //Всегда на ООО А2, тк ТТ отказала в предоставлении выбора клинту
+                                type: "organization",
+                                mediaType: "application/json"
+                            }
+                        },
+                        agent: {
+                            meta: {
+                                href: `https://api.moysklad.ru/api/remap/1.2/entity/counterparty/${payload.agentID}`,
+                                type: "counterparty",
+                                mediaType: "application/json"
+                            }
+                        },
+                        state: {
+                            meta: {
+                                href: "https://api.moysklad.ru/api/remap/1.2/entity/customerorder/metadata/states/63a45f89-28cd-11f1-0a80-16d1000299ca",
+                                type: "state",
+                                mediaType: "application/json"
+                            }
+                        },
+                        description,
+                        files: payload.files || []
+                    }})
+                const data = {
+                    order: newOrder,
+                    positions: payload.positions,
+                    displayPrice: payload.priceType,
+                    planDate: {
+                        date: payload.readyDate,
+                        workDays: 0,
+                    },
+                }
+                const result = await ctx.call('sklad.saveOrder', data )
+                return result
+            }
         }
     },
     events: {
@@ -246,6 +335,95 @@ broker.createService({
 
 broker.start();
 
+const formatReadyDate = (value) => {
+    if (!value) {
+        return null
+    }
+
+    const date = value instanceof Date ? value : new Date(value)
+    if (Number.isNaN(date.getTime())) {
+        return null
+    }
+
+    const pad = (part) => String(part).padStart(2, "0")
+
+    return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`
+}
+const buildTrimsMap = (positions) => {
+    const defaultSheet = {
+        width: 3210,
+        height: 2250,
+    }
+    const getMaterials = (initialData = {}) => {
+        if (initialData.material) {
+            return [initialData.material]
+        }
+
+        return Object.entries(initialData)
+            .filter(([key, value]) => key.startsWith("material") && value)
+            .map(([, value]) => value)
+    }
+    const extractThickness = (material) => {
+        const match = String(material).match(/(\d+(?:[.,]\d+)?)\s*мм/i)
+        if (!match) {
+            throw new ApiError(400, `Failed to extract thickness from material: ${material}`)
+        }
+
+        return Number(match[1].replace(",", "."))
+    }
+    const piecesByMaterial = {}
+    const selfcostByMaterial = {}
+
+    positions.forEach((position, index) => {
+        if (!["glass", "triplex"].includes(position.calcType)) {
+            return
+        }
+
+        const { width, height } = position.initialData || {}
+        if (!width || !height) {
+            return
+        }
+
+        const quantity = Number(position.initialData?.quantity) || 1
+        const materials = getMaterials(position.initialData)
+
+        materials.forEach((material) => {
+            if (!material) {
+                return
+            }
+
+            if (!piecesByMaterial[material]) {
+                piecesByMaterial[material] = []
+                selfcostByMaterial[material] = position.selfcost
+            }
+
+            const thickness = extractThickness(material)
+            const trimOffset = thickness >= 8 ? 8 : 4
+
+            piecesByMaterial[material].push({
+                id: `${index}-${material}`,
+                width: Number(width) + trimOffset * 2,
+                height: Number(height) + trimOffset * 2,
+                quantity,
+            })
+        })
+    })
+
+    return Object.entries(piecesByMaterial).reduce((trims, [material, pieces]) => {
+        if (!pieces.length) {
+            return trims
+        }
+
+        const materialSelfcost = selfcostByMaterial[material]
+        const sheetWidth = Number(materialSelfcost?.materials?.[material]?.w || defaultSheet.width) - 40
+        const sheetHeight = Number(materialSelfcost?.materials?.[material]?.l || defaultSheet.height) - 40
+        const trimResult = trimCalc({ width: sheetWidth, height: sheetHeight }, pieces, {}, material)
+        const averageWaste = Number(trimResult?.summary?.averageWaste || 0)
+
+        trims[material] = 1 + averageWaste / 100
+        return trims
+    }, {})
+}
 const keyMap = {
   m: "material",
   t: "tempered",

@@ -12,6 +12,7 @@ import report2 from "./src/report2.js";
 import report3 from "./src/report3.js";
 import report4 from "./src/report4.js";
 import report5 from "./src/report5.js";
+import report6 from "./src/report6.js";
 const { MoleculerClientError } = Errors;
 const broker = createBroker("reports");
 export const map = {
@@ -56,6 +57,13 @@ export const map = {
         description: 'Расход товаров папки "Стекло/Материал от поставщиков" с разбивкой по месяцам',
         ttl: 12 * 60 * 60, // 12 часов
         filters: ['dateRange']
+    },
+    report6: {
+        function: report6,
+        name: 'Стекло заказа для стеклопакетов',
+        description: 'Показывает на каком этапе стекло для стеклопакетов',
+        ttl: 12 * 60 * 60, // 12 часов
+        filters: ['orderNumber']
     },
 }
 broker.createService({

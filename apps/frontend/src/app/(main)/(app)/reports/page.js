@@ -12,6 +12,7 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
 import { toast } from 'sonner'
 export default function ReportsPage() {
   const [reportsList, setReportsList] = useState([]);
@@ -59,6 +60,9 @@ export default function ReportsPage() {
         if(filter === 'dateRange') {
           formattedFilters.startDate = formatDate(filters[filter].from);
           formattedFilters.endDate = formatDate(filters[filter].to);
+        }
+        if(filter === 'orderNumber') {
+          formattedFilters.orderNumber = filters[filter];
         }
       }
       const res = await backend('/reports/create', {
@@ -109,7 +113,7 @@ export default function ReportsPage() {
 
                 <TableCell className="border">{item.createdAt ? new Date(item.createdAt).toLocaleString("ru-RU") : "Не обновлялось"}</TableCell>
                 <TableCell className="border">{item.user ? item.user.fullname : "Неизвестно"}</TableCell>
-                <TableCell className="border">{item.filters ? `${item.filters?.startDate} - ${item.filters?.endDate}` : "Неизвестно"}</TableCell>
+                <TableCell className="border">{item.filters?.orderNumber ? `№ ${item.filters.orderNumber}` : item.filters ? `${item.filters?.startDate} - ${item.filters?.endDate}` : "Неизвестно"}</TableCell>
                 <TableCell className="border">
                   <Button size="xs" variant="outline" onClick={() => handleDownload(item)}>
                     Скачать
@@ -202,6 +206,20 @@ export const ReportCard = ({ data, onCreate, disabled }) => {
                     />
                   </PopoverContent>
                 </Popover>
+              </div>
+            );
+          }
+          if (filter === "orderNumber") {
+            return (
+              <div key={filter} className="space-y-2">
+                <Input
+                  placeholder="№ заказа покупателя"
+                  value={values[filter] || ""}
+                  onChange={(e) => {
+                    const v = e.target.value;
+                    setValues((prev) => ({ ...prev, [filter]: v }));
+                  }}
+                />
               </div>
             );
           }
